@@ -1,8 +1,9 @@
 {
-  "name": "stellar-radio",
+  "name": "sound-core",
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "resend": "^6.16.0",
     "stripe": "^14.21.0"
   }
 }
