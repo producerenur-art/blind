@@ -40,7 +40,7 @@
 
   <!-- ═══ PERSISTENT NAV ═══ -->
   <nav id="main-nav">
-    <a class="nav-logo" id="nav-logo-link" href="#/">Stellar<span>Radio</span></a>
+    <a class="nav-logo" id="nav-logo-link" href="#/">Sound<span>Core</span></a>
     <div class="nav-center" id="nav-search-wrap">
       <div class="search-box">
         <span class="search-icon">⌕</span>
@@ -114,6 +114,42 @@
   <!-- Hidden audio engine -->
   <audio id="audio-engine" preload="metadata" crossorigin="anonymous"></audio>
 
+  <!-- ═══ PLATFORM SWITCHER ═══ -->
+  <div id="platform-widget">
+    <button id="platform-toggle" title="Open on another platform">
+      <span id="platform-icon">📲</span>
+      <span id="platform-label">Platform</span>
+      <span id="platform-chevron">▲</span>
+    </button>
+    <div id="platform-panel">
+      <div class="platform-title">Open on</div>
+      <a class="platform-item" id="platform-mobile" href="#" target="_blank" rel="noopener">
+        <span class="platform-emoji">📱</span>
+        <div class="platform-info">
+          <span class="platform-name">Smartphone</span>
+          <span class="platform-desc">Mobile version</span>
+        </div>
+        <span class="platform-arrow">↗</span>
+      </a>
+      <a class="platform-item" id="platform-desktop" href="#" target="_blank" rel="noopener">
+        <span class="platform-emoji">💻</span>
+        <div class="platform-info">
+          <span class="platform-name">Mac / Laptop</span>
+          <span class="platform-desc">Desktop version</span>
+        </div>
+        <span class="platform-arrow">↗</span>
+      </a>
+      <a class="platform-item" id="platform-appstore" href="#" target="_blank" rel="noopener">
+        <span class="platform-emoji">🏪</span>
+        <div class="platform-info">
+          <span class="platform-name">App Store</span>
+          <span class="platform-desc">iOS & Mac App</span>
+        </div>
+        <span class="platform-arrow">↗</span>
+      </a>
+    </div>
+  </div>
+
   <!-- ═══ LANGUAGE PICKER ═══ -->
   <div id="lang-widget">
     <button id="lang-toggle" title="Choose language">
@@ -151,6 +187,7 @@
   <script src="js/studio.js"></script>
   <script src="js/router.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/platform.js"></script>
   <script src="js/lang.js"></script>
   <script type="text/javascript">
     function googleTranslateElementInit() {

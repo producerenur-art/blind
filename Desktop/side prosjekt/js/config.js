@@ -16,6 +16,11 @@ const CONFIG = {
   // Nettstedets URL (for e-postlenker)
   SITE_URL: window.location.origin + window.location.pathname.replace(/index\.html$/, ''),
 
+  // Platform URLs — update these when you have real links
+  PLATFORM_MOBILE_URL:   '',   // e.g. 'https://m.soundcore.app'
+  PLATFORM_DESKTOP_URL:  '',   // e.g. 'https://soundcore.app'
+  PLATFORM_APPSTORE_URL: '',   // e.g. 'https://apps.apple.com/app/soundcore/id...'
+
   save(anthropicKey, ejsService, ejsTmplAct, ejsTmplRst, ejsTmplMsg, ejsPubKey) {
     localStorage.setItem('pv_anthropic_key',   anthropicKey);
     localStorage.setItem('pv_ejs_service',     ejsService);

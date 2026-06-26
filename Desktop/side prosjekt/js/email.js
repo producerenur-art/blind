@@ -72,7 +72,7 @@ const Email = (() => {
           to_email:  toEmail,
           to_name:   username,
           reset_url: link,
-          site_name: 'Stellar Radio',
+          site_name: 'Sound Core',
         });
         return { success: true };
       } catch (e) {
@@ -97,7 +97,7 @@ const Email = (() => {
         from_username:   fromUsername,
         message_preview: previewText.length > 150 ? previewText.substring(0, 147) + '…' : previewText,
         inbox_url:       window.location.origin + '/#/inbox',
-        site_name:       'Stellar Radio',
+        site_name:       'Sound Core',
       });
       return { success: true };
     } catch (e) {
@@ -116,7 +116,7 @@ const Email = (() => {
         to_email:     toEmail,
         to_name:      username,
         activate_url: window.location.origin,
-        site_name:    'Stellar Radio',
+        site_name:    'Sound Core',
       });
       return { success: true };
     } catch (e) {

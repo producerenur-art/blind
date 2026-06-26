@@ -311,7 +311,7 @@ const App = (() => {
     app.innerHTML = pendingBanner + heroHtml + liveEventsSection + nowPlayingSection + publicMixesSection + comingSoonHtml + `
       <div class="section">
         <div class="section-header">
-          <div class="section-title">Brukere på Stellar Radio <span>${users.length} profiler</span></div>
+          <div class="section-title">Brukere på Sound Core <span>${users.length} profiler</span></div>
         </div>
         <div class="users-grid" id="users-grid">
           <div class="page-loading"><div class="spinner"></div></div>
@@ -403,8 +403,8 @@ const App = (() => {
       <div class="auth-page">
         <div class="auth-card">
           <div class="auth-logo">
-            <h1>Stellar<span>Radio</span></h1>
-            <p>Logg inn på Stellar Radio</p>
+            <h1>Sound<span>Core</span></h1>
+            <p>Logg inn på Sound Core</p>
           </div>
           <div class="form-group">
             <label class="form-label">Brukernavn eller e-post</label>
@@ -450,7 +450,7 @@ const App = (() => {
       return;
     }
     renderNav();
-    toast(`Velkommen tilbake til Stellar Radio, ${result.user.displayName}! 👋`, 'success');
+    toast(`Velkommen tilbake til Sound Core, ${result.user.displayName}! 👋`, 'success');
     Router.go('/');
   }
 
@@ -477,8 +477,8 @@ const App = (() => {
       <div class="auth-page">
         <div class="auth-card">
           <div class="auth-logo">
-            <h1>Stellar<span>Radio</span></h1>
-            <p>Lag din gratis Stellar Radio-profil</p>
+            <h1>Sound<span>Core</span></h1>
+            <p>Lag din gratis Sound Core-profil</p>
           </div>
           <div class="form-group">
             <label class="form-label">Brukernavn</label>
@@ -1115,10 +1115,10 @@ const App = (() => {
         <!-- ══ AI ASSISTENT ══ -->
         <div id="set-tab-ai" class="settings-tab-panel">
           <div class="settings-section">
-            <div class="settings-section-header">🤖 Stellar Radio AI-assistent</div>
+            <div class="settings-section-header">🤖 Core — AI-assistent</div>
             <div class="set-ai-chat">
               <div class="set-ai-messages" id="set-ai-msgs">
-                <div class="set-ai-msg bot">Hei! Jeg er din AI-assistent for Stellar Radio. Jeg kan hjelpe deg med å finne radiokanaler, tilpasse profilen din, svare på spørsmål om siden — eller bare slå av en prat om musikk. Hva lurer du på? 🎵</div>
+                <div class="set-ai-msg bot">Hei! Jeg heter Core og er din AI-assistent på Sound Core. Jeg kan hjelpe deg med å finne radiokanaler, tilpasse profilen din, svare på spørsmål om siden — eller bare slå av en prat om musikk. Hva lurer du på? 🎵</div>
               </div>
               <div class="set-ai-input-row">
                 <input class="form-input" id="set-ai-input" placeholder="Skriv en melding…" onkeydown="if(event.key==='Enter')App.sendAiMessage()">
