@@ -342,36 +342,32 @@ const App = (() => {
         </div>
       </div>`;
 
-    const webRadioSection = `
-      <div class="section web-radio-section" id="web-radio-section">
-        <div class="section-header">
-          <div class="section-title">🎛️ Web Radio</div>
-          <div class="section-sub">Klikk ▶ for å lytte direkte — ingen fanebytting</div>
-        </div>
-        <div class="dice-radio-featured" onclick="Radio.openEmbed('dice-radio')">
-          <div class="dice-radio-glow"></div>
-          <div class="dice-radio-inner">
-            <span class="dice-radio-emoji">🎲</span>
-            <div class="dice-radio-info">
-              <div class="dice-radio-name">Dice Radio</div>
-              <div class="dice-radio-desc">Greek electronic &amp; underground radio — diceradio.gr</div>
+    const homeRadioHtml = `
+      <div class="home-radio-section" id="home-radio-section">
+        <div class="hr-nowplaying" id="hr-nowplaying">
+          <div class="hr-np-left">
+            <span class="hr-live-dot" id="hr-live-dot"></span>
+            <span class="hr-np-status" id="hr-np-status">Starter…</span>
+            <span class="hr-np-emoji" id="hr-np-emoji">📻</span>
+            <div class="hr-np-info">
+              <div class="hr-np-name" id="hr-np-name">Sound Core Radio</div>
+              <div class="hr-np-desc" id="hr-np-desc">Psytrance · Psychill · Downtempo · Progressive · Ambient</div>
             </div>
-            <button class="dice-radio-play-btn" onclick="event.stopPropagation();Radio.openEmbed('dice-radio')">▶ Åpne</button>
           </div>
+          <button class="hr-np-play" id="hr-np-play" onclick="HomeRadio.togglePlay()">▶</button>
         </div>
-        <div class="genre-tab-bar" id="genre-tab-bar">
-          <button class="genre-tab active" onclick="WebRadioTabs.select('progressive',this)">🌀 Progressive</button>
-          <button class="genre-tab" onclick="WebRadioTabs.select('psytrance',this)">🍄 Psy Trance</button>
-          <button class="genre-tab" onclick="WebRadioTabs.select('chillout',this)">🌊 Chill Out</button>
-          <button class="genre-tab" onclick="WebRadioTabs.select('downtempo',this)">🎐 Downtempo</button>
-          <button class="genre-tab" onclick="WebRadioTabs.select('house',this)">🏠 House</button>
-          <button class="genre-tab" onclick="WebRadioTabs.select('edm',this)">⚡ EDM</button>
+        <div class="hr-tab-strip" id="hr-tab-strip">
+          <button class="hr-tab" onclick="HomeRadio.setGenre('psytrance',this)">🌀 Psytrance</button>
+          <button class="hr-tab hr-tab-active" onclick="HomeRadio.setGenre('psychill',this)">🌿 Psychill</button>
+          <button class="hr-tab" onclick="HomeRadio.setGenre('downtempo',this)">🌊 Downtempo</button>
+          <button class="hr-tab" onclick="HomeRadio.setGenre('progressive',this)">🌐 Progressive</button>
+          <button class="hr-tab" onclick="HomeRadio.setGenre('ambient',this)">🌌 Ambient</button>
         </div>
-        <div class="web-radio-grid" id="web-radio-grid"></div>
+        <div class="hr-channel-grid" id="hr-channel-grid"></div>
       </div>`;
 
     const app = document.getElementById('app');
-    app.innerHTML = pendingBanner + heroHtml + liveEventsSection + nowPlayingSection + webRadioSection + publicMixesSection + comingSoonHtml + `
+    app.innerHTML = pendingBanner + heroHtml + homeRadioHtml + liveEventsSection + nowPlayingSection + publicMixesSection + comingSoonHtml + `
       <div class="section">
         <div class="section-header">
           <div class="section-title">Brukere på Sound Core <span>${users.length} profiler</span></div>
@@ -391,35 +387,111 @@ const App = (() => {
         </div>
       </footer>`;
 
-    // Web Radio genre tab controller
-    window.WebRadioTabs = {
-      GENRE_CATS: {
-        progressive: ['Psytrance / Progressive', 'EDM / House'],
-        psytrance:   ['Psytrance / Progressive'],
-        chillout:    ['Chill Out / Downtempo', 'Ibiza Chill'],
-        downtempo:   ['Chill Out / Downtempo'],
-        house:       ['EDM / House'],
-        edm:         ['EDM / House', 'Techno / Minimal'],
-      },
-      select(genre, btn) {
-        document.querySelectorAll('.genre-tab').forEach(b => b.classList.remove('active'));
-        if (btn) btn.classList.add('active');
-        const cats = this.GENRE_CATS[genre] || [];
-        const stations = (Radio.stations || []).filter(s => cats.includes(s.cat));
-        const grid = document.getElementById('web-radio-grid');
-        if (!grid) return;
-        grid.innerHTML = stations.map(s => `
-          <div class="web-radio-card" style="--sc:${s.color}" onclick="Radio.playUrl('${s.url.replace(/'/g,"\\'")}','${(s.name||'').replace(/'/g,"\\'")}','${s.emoji||'📻'}')">
-            <span class="wrc-emoji">${s.emoji}</span>
-            <div class="wrc-info">
-              <div class="wrc-name">${s.name}</div>
-              <div class="wrc-desc">${s.desc}</div>
-            </div>
-            <button class="wrc-play" onclick="event.stopPropagation();Radio.playUrl('${s.url.replace(/'/g,"\\'")}','${(s.name||'').replace(/'/g,"\\'")}','${s.emoji||'📻'}')">▶</button>
-          </div>`).join('') || '<div class="empty-state" style="padding:1rem">Ingen stasjoner i denne kategorien</div>';
+    // Home radio widget controller
+    window.HomeRadio = (() => {
+      const GENRE_IDS = {
+        psytrance:   ['schizoid-psy', 'di-goapsy', 'suburbsofgoa'],
+        psychill:    ['radioq37', 'thetrip', 'fluid'],
+        downtempo:   ['groovesalad', 'lush', 'beatblender', 'gsclassic', 'cafemission', 'frisky-chill'],
+        progressive: ['schizoid-prog', 'frisky-prog'],
+        ambient:     ['dronezone', 'spacestation', 'deepspaceone', 'missioncontrol'],
+      };
+      let _currentId = null;
+      let _playing = false;
+
+      function _updateDisplay(stationId) {
+        const s = (Radio.stations || []).find(x => x.id === stationId);
+        if (!s) return;
+        const el = id => document.getElementById(id);
+        if (el('hr-np-name'))   el('hr-np-name').textContent = s.name;
+        if (el('hr-np-desc'))   el('hr-np-desc').textContent = s.desc;
+        if (el('hr-np-emoji'))  el('hr-np-emoji').textContent = s.emoji || '📻';
+        if (el('hr-live-dot'))  el('hr-live-dot').classList.add('hr-dot-live');
+        if (el('hr-np-status')) el('hr-np-status').textContent = 'LIVE';
+        if (el('hr-np-play'))   el('hr-np-play').textContent = '⏸';
+        _playing = true;
+        _currentId = stationId;
+        // Highlight active card
+        document.querySelectorAll('.hr-channel-card').forEach(c => {
+          c.classList.toggle('hr-card-active', c.dataset.id === stationId);
+        });
       }
-    };
-    WebRadioTabs.select('progressive', document.querySelector('.genre-tab'));
+
+      function _renderGrid(genre) {
+        const grid = document.getElementById('hr-channel-grid');
+        if (!grid) return;
+        const ids = GENRE_IDS[genre] || [];
+        const stations = ids.map(id => (Radio.stations || []).find(s => s.id === id)).filter(Boolean);
+        grid.innerHTML = stations.map(s => `
+          <div class="hr-channel-card" data-id="${s.id}" style="--hc:${s.color}" onclick="HomeRadio.play('${s.id}')">
+            <span class="hr-channel-emoji">${s.emoji || '📻'}</span>
+            <div class="hr-channel-info">
+              <div class="hr-channel-name">${s.name}</div>
+              <div class="hr-channel-desc">${s.desc}</div>
+            </div>
+            <button class="hr-channel-play" onclick="event.stopPropagation();HomeRadio.play('${s.id}')">▶</button>
+          </div>`).join('');
+      }
+
+      function play(id) {
+        Radio.playStation(id);
+        _updateDisplay(id);
+      }
+
+      function setGenre(genre, btn) {
+        document.querySelectorAll('.hr-tab').forEach(b => b.classList.remove('hr-tab-active'));
+        if (btn) btn.classList.add('hr-tab-active');
+        _renderGrid(genre);
+        const ids = GENRE_IDS[genre] || [];
+        if (ids.length) play(ids[0]);
+      }
+
+      function togglePlay() {
+        if (_playing) {
+          const audio = document.getElementById('audio-engine');
+          if (audio) { audio.pause(); }
+          _playing = false;
+          const btn = document.getElementById('hr-np-play');
+          if (btn) btn.textContent = '▶';
+          const dot = document.getElementById('hr-live-dot');
+          if (dot) dot.classList.remove('hr-dot-live');
+        } else {
+          if (_currentId) play(_currentId);
+          else autoStart();
+        }
+      }
+
+      function autoStart() {
+        const defaultId = 'radioq37';
+        Radio.playStation(defaultId);
+        _updateDisplay(defaultId);
+      }
+
+      function init() {
+        _renderGrid('psychill');
+        setTimeout(() => {
+          Radio.playStation('radioq37');
+          _updateDisplay('radioq37');
+          // Check if browser actually started playing
+          setTimeout(() => {
+            const audio = document.getElementById('audio-engine');
+            if (audio && audio.paused) {
+              const status = document.getElementById('hr-np-status');
+              if (status) status.textContent = '▶ Trykk';
+              const dot = document.getElementById('hr-live-dot');
+              if (dot) dot.classList.remove('hr-dot-live');
+              const btn = document.getElementById('hr-np-play');
+              if (btn) btn.textContent = '▶';
+              _playing = false;
+            }
+          }, 700);
+        }, 400);
+      }
+
+      return { play, setGenre, togglePlay, autoStart, init };
+    })();
+
+    HomeRadio.init();
 
     // Render user cards
     const grid = document.getElementById('users-grid');
