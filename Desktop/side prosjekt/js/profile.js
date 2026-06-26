@@ -392,6 +392,8 @@ const Profile = (() => {
         <button class="btn btn-ghost btn-sm" onclick="Radio.playUrl('${user.favoriteRadio.url}','${(user.favoriteRadio.name||'Radio').replace(/'/g,"\\'")}','${user.favoriteRadio.emoji||'📻'}')">▶ Lytt</button>
       </div>` : '';
 
+    const wallCount = (JSON.parse(localStorage.getItem(`pv_wall_${username}`) || '[]')).length;
+
     app.innerHTML = `
       <div class="profile-page" id="profile-root" style="background:${theme.bgColor || '#0f0f1a'}; color:${theme.textColor || '#fff'}">
         <!-- Hero -->
@@ -425,52 +427,44 @@ const Profile = (() => {
 
           <!-- Stats -->
           <div class="profile-stats" style="border-color:${theme.textColor}22">
-            <div class="stat"><div class="stat-value">${user.mediaIds?.length || 0}</div><div class="stat-label" style="color:${theme.textColor}88">Medier</div></div>
-            <div class="stat"><div class="stat-value">${user.musicIds?.length || 0}</div><div class="stat-label" style="color:${theme.textColor}88">Sanger</div></div>
+            <div class="stat"><div class="stat-value">${(user.musicIds?.length || 0) + (user.mixIds?.length || 0) + (user.mediaIds?.length || 0)}</div><div class="stat-label" style="color:${theme.textColor}88">Opplastinger</div></div>
             <div class="stat"><div class="stat-value">${(user.friends || []).length}</div><div class="stat-label" style="color:${theme.textColor}88">Venner</div></div>
+            <div class="stat"><div class="stat-value">${wallCount}</div><div class="stat-label" style="color:${theme.textColor}88">Vegg-innlegg</div></div>
           </div>
 
-          <!-- Role badge -->
-          ${(()=>{const m={lytter:'🎧 Lytter',dj:'🎛️ DJ',produsent:'🎹 Produsent',plateselskap:'🏷️ Plateselskap'};const l=m[user.role||'lytter'];return l?`<div style="margin-bottom:0.75rem"><span class="profile-role-badge" style="background:${theme.primaryColor}33;border:1px solid ${theme.primaryColor}66;color:${theme.textColor}">${l}</span></div>`:'';})()}
+          <!-- Tab bar -->
+          <div class="profile-tabs" id="profile-tabs">
+            <button class="profile-tab-btn active" data-tab="om" onclick="Profile.switchTab('om')">Om</button>
+            <button class="profile-tab-btn" data-tab="innhold" onclick="Profile.switchTab('innhold')">🎵 Innhold</button>
+            <button class="profile-tab-btn" data-tab="vegg" onclick="Profile.switchTab('vegg')">💬 Vegg${wallCount ? ` (${wallCount})` : ''}</button>
+          </div>
 
-          <!-- Bio -->
-          ${user.bio ? `<div class="profile-bio" style="color:${theme.textColor}cc">${user.bio}</div>` : ''}
+          <!-- OM-fanen -->
+          <div class="profile-tab-content" data-tab="om" id="tab-om">
+            ${(()=>{const m={lytter:'🎧 Lytter',dj:'🎛️ DJ',produsent:'🎹 Produsent',plateselskap:'🏷️ Plateselskap'};const l=m[user.role||'lytter'];return l?`<div style="margin-bottom:0.75rem"><span class="profile-role-badge" style="background:${theme.primaryColor}33;border:1px solid ${theme.primaryColor}66;color:${theme.textColor}">${l}</span></div>`:'';})()}
+            ${user.bio ? `<div class="profile-bio" style="color:${theme.textColor}cc">${user.bio}</div>` : isOwner ? `<div class="profile-bio-empty"><span style="color:${theme.textColor}55">Ingen bio ennå.</span> <a href="#/edit" style="color:${theme.primaryColor || 'var(--accent)'}">+ Legg til bio</a></div>` : ''}
+            ${user.links?.length ? `<div class="profile-links">${user.links.map(l => `<a class="profile-link" href="${l.url}" target="_blank" rel="noopener">🔗 ${l.label}</a>`).join('')}</div>` : ''}
+            ${favRadioHtml}
+            ${pendingHtml}
+            ${friendsHtml}
+            ${platformsBadgesHtml(user)}
+            ${mySitesViewHtml(user)}
+            ${festivalBadgesHtml(user)}
+            ${eventsViewHtml(user)}
+            <div id="cp-section"></div>
+          </div>
 
-          <!-- Links -->
-          ${user.links?.length ? `<div class="profile-links">${user.links.map(l => `<a class="profile-link" href="${l.url}" target="_blank" rel="noopener">🔗 ${l.label}</a>`).join('')}</div>` : ''}
+          <!-- INNHOLD-fanen -->
+          <div class="profile-tab-content hidden" data-tab="innhold" id="tab-innhold">
+            <div id="tab-music-player"></div>
+            <div id="tab-mixes"><div class="page-loading"><div class="spinner"></div></div></div>
+            <div id="tab-media"><div class="page-loading"><div class="spinner"></div></div></div>
+          </div>
 
-          <!-- Favorite radio station -->
-          ${favRadioHtml}
-
-          <!-- Pending friend requests (owner only) -->
-          ${pendingHtml}
-
-          <!-- Friends list -->
-          ${friendsHtml}
-
-          <!-- Platforms -->
-          ${platformsBadgesHtml(user)}
-
-          <!-- My Sites -->
-          ${mySitesViewHtml(user)}
-
-          <!-- Festivals -->
-          ${festivalBadgesHtml(user)}
-
-          <!-- Events -->
-          ${eventsViewHtml(user)}
-
-          <!-- Custom page blocks (Min Side) -->
-          <div id="cp-section"></div>
-
-          <!-- Music player -->
-          <div id="tab-music-player"></div>
-
-          <!-- DJ Mixes -->
-          <div id="tab-mixes"><div class="page-loading"><div class="spinner"></div></div></div>
-
-          <!-- Media content -->
-          <div id="tab-media"><div class="page-loading"><div class="spinner"></div></div></div>
+          <!-- VEGG-fanen -->
+          <div class="profile-tab-content hidden" data-tab="vegg" id="tab-vegg">
+            <div id="tab-wall"></div>
+          </div>
         </div>
       </div>
     `;
@@ -486,6 +480,7 @@ const Profile = (() => {
     renderMusicPlayer(user, isOwner);
     renderMixesSection(user, isOwner);
     renderMediaTab(user, isOwner);
+    renderWallTab(username, isOwner);
 
     if (theme.bgType === 'music') _startProfileVisualizer(theme);
   }
