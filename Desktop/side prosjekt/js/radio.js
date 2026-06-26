@@ -879,6 +879,11 @@ const Radio = (() => {
 
         <!-- MAIN -->
         <div class="radio-main">
+          <!-- Hero welcome -->
+          <div class="radio-welcome-hero">
+            <div class="radio-welcome-title">Welcome to SoundCore</div>
+            <div class="radio-welcome-sub">Electronic music streams · Psychedelic · Ambient · Trance</div>
+          </div>
           <!-- Now playing -->
           <div class="radio-now-playing" id="radio-np">
             <div class="radio-station-art" id="np-art" style="background:linear-gradient(135deg,var(--accent),var(--accent2))">

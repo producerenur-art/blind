@@ -374,10 +374,13 @@ const Profile = (() => {
         <div class="friends-title">👥 Venner (${friendsList.length})</div>
         <div class="friends-list">
           ${friendsList.map(f => `
-            <a class="friend-chip" href="#/u/${f.username}">
-              <div class="friend-chip-avatar">${f.displayName.charAt(0).toUpperCase()}</div>
-              <span>${f.displayName}</span>
-            </a>`).join('')}
+            <div class="friend-chip-wrap">
+              <a class="friend-chip" href="#/u/${f.username}">
+                <div class="friend-chip-avatar">${f.displayName.charAt(0).toUpperCase()}</div>
+                <span>${f.displayName}</span>
+              </a>
+              ${current ? `<button class="friend-chip-chat-btn" onclick="event.preventDefault();Router.go('/messages/${f.username}')" title="Send privat melding">💬</button>` : ''}
+            </div>`).join('')}
         </div>
       </div>` : '';
 
@@ -713,11 +716,18 @@ const Profile = (() => {
   }
 
   // ── Friend request actions ────────────────────────────────────────────
-  function sendFriendRequest(targetUsername) {
+  async function sendFriendRequest(targetUsername) {
     const current = Auth.current();
     if (!current) { Router.go('/login'); return; }
     const result = Auth.sendFriendRequest(current.username, targetUsername);
     if (result.error) { App.toast(result.error, 'error'); return; }
+
+    const targetUser = Auth.getUser(targetUsername);
+    if (targetUser?.email) {
+      Email.sendFriendRequest(targetUser.email, targetUser.displayName, current.displayName, current.username)
+        .catch(() => {});
+    }
+
     App.toast(`Venneforespørsel sendt til @${targetUsername} 👥`, 'success');
     App.renderNav();
     renderView(targetUsername);

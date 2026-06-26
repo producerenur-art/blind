@@ -11,6 +11,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <!-- Gun.js — decentralized real-time chat (no server needed) -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
+  <!-- QR Code generator -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -113,6 +115,15 @@
 
   <!-- Hidden audio engine -->
   <audio id="audio-engine" preload="metadata" crossorigin="anonymous"></audio>
+
+  <!-- ═══ EMBED MEDIA PANEL ═══ -->
+  <div id="embed-panel" class="embed-panel hidden">
+    <div class="embed-panel-hdr">
+      <span id="embed-panel-title"></span>
+      <button class="embed-panel-close" onclick="closeEmbedPanel()">✕</button>
+    </div>
+    <iframe id="embed-panel-frame" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
+  </div>
 
   <!-- ═══ PLATFORM SWITCHER ═══ -->
   <div id="platform-widget">

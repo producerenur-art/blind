@@ -68,25 +68,28 @@ const App = (() => {
       const totalBadge = pending + unreadPMs;
       const inboxBadge = totalBadge > 0 ? `<span class="nav-badge">${totalBadge}</span>` : '';
       nav.innerHTML = `
-        <a href="#/radio"    class="btn btn-ghost btn-sm">📻 Radio</a>
-        <a href="#/chat"     class="btn btn-ghost btn-sm">💬 Chat</a>
-        <a href="#/discover" class="btn btn-ghost btn-sm">🎵 Discover</a>
-        <a href="#/shows"    class="btn btn-ghost btn-sm">📅 Shows</a>
-        <a href="#/dj"       class="btn btn-ghost btn-sm">🎛️ DJ</a>
-        <a href="#/inbox"    class="btn btn-ghost btn-sm" style="position:relative">📬 Innboks${inboxBadge}</a>
+        <a href="#/radio"       class="btn btn-ghost btn-sm">📻 Radio</a>
+        <a href="#/chat"        class="btn btn-ghost btn-sm">💬 Chat</a>
+        <a href="#/discover"    class="btn btn-ghost btn-sm">🎵 Discover</a>
+        <a href="#/underground" class="btn btn-ghost btn-sm">🌑 Underground</a>
+        <a href="#/shows"       class="btn btn-ghost btn-sm">📅 Shows</a>
+        <a href="#/dj"          class="btn btn-ghost btn-sm">🎛️ DJ</a>
+        <a href="#/studio"      class="btn btn-ghost btn-sm" title="Blend Studio">🎨 Studio</a>
+        <a href="#/inbox"       class="btn btn-ghost btn-sm" style="position:relative">📬 Innboks${inboxBadge}</a>
         <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">👤 ${user.displayName}</a>
-        <a href="#/edit"     class="btn btn-ghost btn-sm" title="Rediger profil">✏️</a>
-        <a href="#/settings" class="btn btn-ghost btn-sm" title="Innstillinger">⚙️</a>
+        <a href="#/edit"        class="btn btn-ghost btn-sm" title="Rediger profil">✏️</a>
+        <a href="#/settings"    class="btn btn-ghost btn-sm" title="Innstillinger">⚙️</a>
         <button class="btn btn-ghost btn-sm" onclick="App.logout()">Logg ut</button>
       `;
     } else {
       nav.innerHTML = `
-        <a href="#/radio"    class="btn btn-ghost btn-sm">📻 Radio</a>
-        <a href="#/chat"     class="btn btn-ghost btn-sm">💬 Chat</a>
-        <a href="#/discover" class="btn btn-ghost btn-sm">🎵 Discover</a>
-        <a href="#/shows"    class="btn btn-ghost btn-sm">📅 Shows</a>
-        <a href="#/login"    class="btn btn-ghost btn-sm">Logg inn</a>
-        <a href="#/register" class="btn btn-primary btn-sm">Registrer</a>
+        <a href="#/radio"       class="btn btn-ghost btn-sm">📻 Radio</a>
+        <a href="#/chat"        class="btn btn-ghost btn-sm">💬 Chat</a>
+        <a href="#/discover"    class="btn btn-ghost btn-sm">🎵 Discover</a>
+        <a href="#/underground" class="btn btn-ghost btn-sm">🌑 Underground</a>
+        <a href="#/shows"       class="btn btn-ghost btn-sm">📅 Shows</a>
+        <a href="#/login"       class="btn btn-ghost btn-sm">Logg inn</a>
+        <a href="#/register"    class="btn btn-primary btn-sm">Registrer</a>
       `;
     }
   }
@@ -499,6 +502,7 @@ const App = (() => {
               <input class="form-input" id="reg-pass" type="password" placeholder="Minst 6 tegn" autocomplete="new-password">
               <button class="input-group-icon" onclick="togglePassword('reg-pass',this)">👁</button>
             </div>
+            <span class="form-hint">Minst 6 tegn og ett spesialtegn (f.eks. !@#$%)</span>
           </div>
           <div class="form-group">
             <label class="form-label">Bekreft passord</label>
@@ -582,10 +586,14 @@ const App = (() => {
             <h2 style="font-weight:800;margin-bottom:0.5rem">Sjekk e-posten din!</h2>
             <p style="color:var(--text2);margin-bottom:1.5rem">
               Vi har sendt en aktiveringslenke til <strong>${email}</strong>.<br>
-              Klikk på lenken for å aktivere kontoen din.
+              Klikk på lenken i e-posten for å aktivere kontoen din.
             </p>
             ${emailRes.error ? `<div class="badge badge-red" style="margin-bottom:1rem">${emailRes.error}</div>` : ''}
-            <a href="#/login" class="btn btn-primary">Gå til innlogging</a>
+            <a href="#/login" class="btn btn-primary" style="margin-bottom:0.75rem;display:inline-flex">Gå til innlogging</a>
+            <div style="margin-top:0.75rem">
+              <button class="btn btn-ghost btn-sm" id="resend-confirm-btn" onclick="App.resendActivationByEmail('${username}')">📧 Send aktiveringslenke på nytt</button>
+            </div>
+            <p style="color:var(--text2);font-size:0.8rem;margin-top:1rem">Fant du ikke e-posten? Sjekk søppelpost-mappen.</p>
           </div>
         </div>`;
     }
@@ -654,6 +662,7 @@ const App = (() => {
               <input class="form-input" id="reset-pass" type="password" placeholder="Minst 6 tegn">
               <button class="input-group-icon" onclick="togglePassword('reset-pass',this)">👁</button>
             </div>
+            <span class="form-hint">Minst 6 tegn og ett spesialtegn (f.eks. !@#$%)</span>
           </div>
           <div class="form-group">
             <label class="form-label">Bekreft passord</label>
@@ -701,7 +710,7 @@ const App = (() => {
     Router.go(`/u/${result.user.username}`);
   }
 
-  function renderInbox() {
+  function renderInbox(activeTab = 'samtaler') {
     const user = Auth.current();
     if (!user) { toast('Logg inn for å se innboksen', 'error'); Router.go('/login'); return; }
 
@@ -715,122 +724,167 @@ const App = (() => {
       const key  = 'sr_pm_' + [user.username, u.username].sort().join('_');
       const msgs = JSON.parse(localStorage.getItem(key) || '[]');
       if (!msgs.length) continue;
-      const last = msgs[msgs.length - 1];
+      const last     = msgs[msgs.length - 1];
       const readKey  = 'sr_pm_read_' + user.username;
       const reads    = JSON.parse(localStorage.getItem(readKey) || '{}');
       const lastRead = reads[u.username] || 0;
       const unread   = msgs.filter(m => m.from !== user.username && m.ts > lastRead).length;
-      convs.push({ username: u.username, displayName: u.displayName, last, msgCount: msgs.length, unread });
+      const nameKey  = 'sr_pm_name_' + [user.username, u.username].sort().join('_');
+      const chatName = localStorage.getItem(nameKey) || '';
+      convs.push({ username: u.username, displayName: u.displayName, last, msgCount: msgs.length, unread, chatName });
     }
     convs.sort((a, b) => b.last.ts - a.last.ts);
-
-    const requestsHtml = pendingRequests.length ? `
-      <div class="settings-section">
-        <div class="settings-section-header">👥 Venneforespørsler (${pendingRequests.length})</div>
-        <div class="settings-section-body">
-          ${pendingRequests.map(r => {
-            const requester = Auth.getUser(r.from);
-            if (!requester) return '';
-            return `
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0;border-bottom:1px solid var(--border,rgba(255,255,255,0.08))">
-                <a href="#/u/${r.from}" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:inherit">
-                  <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#2563eb);display:flex;align-items:center;justify-content:center;font-weight:700">${requester.displayName.charAt(0).toUpperCase()}</div>
-                  <div>
-                    <div style="font-weight:600">${requester.displayName}</div>
-                    <div style="font-size:0.78rem;color:var(--text2)">@${r.from}</div>
-                  </div>
-                </a>
-                <div style="display:flex;gap:0.5rem">
-                  <button class="btn btn-primary btn-sm" onclick="App.inboxAccept('${r.from}')">✓ Aksepter</button>
-                  <button class="btn btn-ghost btn-sm" onclick="App.inboxReject('${r.from}')">✕ Avslå</button>
-                </div>
-              </div>`;
-          }).join('')}
-        </div>
-      </div>` : '';
-
-    const convHtml = convs.length ? `
-      <div class="settings-section">
-        <div class="settings-section-header">💬 Samtaler (${convs.length})</div>
-        <div class="settings-section-body">
-          ${convs.map(c => {
-            const isMine = c.last.from === user.username;
-            const timeStr = (() => {
-              const d = Date.now() - c.last.ts;
-              if (d < 60000)   return 'Nå nettopp';
-              if (d < 3600000) return `${Math.floor(d/60000)} min siden`;
-              if (d < 86400000) return `${Math.floor(d/3600000)} t siden`;
-              return new Date(c.last.ts).toLocaleDateString('no-NO');
-            })();
-            return `
-              <div class="settings-row" onclick="Router.go('/messages/${c.username}')" style="cursor:pointer${c.unread > 0 ? ';background:rgba(124,58,237,0.06)' : ''}">
-                <div style="display:flex;align-items:center;gap:0.75rem;flex:1;min-width:0">
-                  <div style="position:relative;flex-shrink:0">
-                    <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#2563eb);display:flex;align-items:center;justify-content:center;font-weight:700">${c.displayName.charAt(0).toUpperCase()}</div>
-                    ${c.unread > 0 ? `<span style="position:absolute;top:-3px;right:-3px;background:#ef4444;color:#fff;border-radius:999px;font-size:0.65rem;font-weight:700;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px">${c.unread}</span>` : ''}
-                  </div>
-                  <div style="min-width:0;flex:1">
-                    <div style="font-weight:${c.unread > 0 ? '700' : '600'}">${c.displayName} <span style="font-size:0.75rem;color:var(--text3)">@${c.username}</span></div>
-                    <div style="font-size:0.82rem;color:${c.unread > 0 ? 'var(--text)' : 'var(--text2)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:${c.unread > 0 ? '600' : '400'}">${isMine ? 'Du: ' : ''}${c.last.text}</div>
-                  </div>
-                </div>
-                <div style="font-size:0.75rem;color:var(--text3);white-space:nowrap;margin-left:0.75rem">${timeStr}</div>
-              </div>`;
-          }).join('')}
-        </div>
-      </div>` : '';
 
     const allOtherUsers = allUsers.filter(u => u.username !== user.username);
     const friends = new Set(Auth.getFriends(user.username).map(f => f.username));
     const sent    = new Set(user.sentRequests || []);
 
-    const usersHtml = `
-      <div class="settings-section">
-        <div class="settings-section-header">🌐 Alle brukere — Send venneforespørsel</div>
-        <div class="settings-section-body">
-          ${!allOtherUsers.length ? '<p style="color:var(--text3);font-size:0.85rem">Ingen andre brukere ennå.</p>' : allOtherUsers.map(u => {
-            const isFriend  = friends.has(u.username);
-            const isPending = sent.has(u.username);
-            const isIncoming = (user.friendRequests||[]).some(r => r.from === u.username);
-            let btn = '';
-            if (isFriend) {
-              btn = `<span style="font-size:0.78rem;color:#4ade80">✓ Venner</span>`;
-            } else if (isPending) {
-              btn = `<span style="font-size:0.78rem;color:var(--text3)">⏳ Sendt</span>`;
-            } else if (isIncoming) {
-              btn = `<button class="btn btn-primary btn-sm" onclick="App.inboxAccept('${u.username}')">✓ Aksepter</button>`;
-            } else {
-              btn = `<button class="btn btn-ghost btn-sm" onclick="Profile.sendFriendRequest('${u.username}');App.renderInbox()">👥 Legg til</button>`;
-            }
-            return `
-              <div class="settings-row">
-                <a href="#/u/${u.username}" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:inherit;flex:1;min-width:0">
-                  <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#2563eb);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">${u.displayName.charAt(0).toUpperCase()}</div>
-                  <div>
-                    <div style="font-weight:600;font-size:0.88rem">${u.displayName}</div>
-                    <div style="font-size:0.75rem;color:var(--text2)">@${u.username}</div>
-                  </div>
-                </a>
-                <div style="display:flex;align-items:center;gap:0.5rem">
-                  <button class="btn btn-ghost btn-sm" onclick="Router.go('/messages/${u.username}')">💬</button>
-                  ${btn}
-                </div>
-              </div>`;
-          }).join('')}
+    // ── Tab: Samtaler ────────────────────────────────────────────────────
+    const samtaleRows = convs.length ? convs.map(c => {
+      const isMine = c.last.from === user.username;
+      const timeStr = (() => {
+        const d = Date.now() - c.last.ts;
+        if (d < 60000)    return 'Nå nettopp';
+        if (d < 3600000)  return `${Math.floor(d/60000)} min siden`;
+        if (d < 86400000) return `${Math.floor(d/3600000)} t siden`;
+        return new Date(c.last.ts).toLocaleDateString('no-NO');
+      })();
+      const label = c.chatName || c.displayName;
+      return `
+        <div class="settings-row" onclick="Router.go('/messages/${c.username}')" style="cursor:pointer${c.unread > 0 ? ';background:rgba(124,58,237,0.06)' : ''}">
+          <div style="display:flex;align-items:center;gap:0.75rem;flex:1;min-width:0">
+            <div style="position:relative;flex-shrink:0">
+              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#2563eb);display:flex;align-items:center;justify-content:center;font-weight:700">${c.displayName.charAt(0).toUpperCase()}</div>
+              ${c.unread > 0 ? `<span style="position:absolute;top:-3px;right:-3px;background:#ef4444;color:#fff;border-radius:999px;font-size:0.65rem;font-weight:700;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px">${c.unread}</span>` : ''}
+            </div>
+            <div style="min-width:0;flex:1">
+              <div style="font-weight:${c.unread > 0 ? '700' : '600'}">${label} <span style="font-size:0.75rem;color:var(--text3)">@${c.username}</span></div>
+              <div style="font-size:0.82rem;color:${c.unread > 0 ? 'var(--text)' : 'var(--text2)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:${c.unread > 0 ? '600' : '400'}">${isMine ? 'Du: ' : ''}${c.last.text}</div>
+            </div>
+          </div>
+          <div style="font-size:0.75rem;color:var(--text3);white-space:nowrap;margin-left:0.75rem">${timeStr}</div>
+        </div>`;
+    }).join('') : '<p style="color:var(--text3);font-size:0.85rem;padding:1rem 0">Ingen samtaler ennå. Gå til <strong>Brukere</strong> og inviter noen til å chatte!</p>';
+
+    // ── Tab: Ny chat ─────────────────────────────────────────────────────
+    const nychatContent = `
+      <p style="color:var(--text2);font-size:0.88rem;margin:0 0 1.25rem">Velg hvem du vil chatte med, og gi samtalen et valgfritt navn.</p>
+      <div style="display:flex;flex-direction:column;gap:1rem;max-width:420px">
+        <div>
+          <label style="display:block;font-size:0.82rem;color:var(--text2);margin-bottom:0.35rem;font-weight:600">Bruker *</label>
+          <select id="inbox-new-chat-user" style="width:100%;background:var(--surface,#1a1a2e);border:1px solid var(--border,rgba(255,255,255,0.12));border-radius:8px;padding:0.6rem 0.75rem;color:var(--text,#fff);font-size:0.9rem">
+            <option value="">— Velg bruker —</option>
+            ${allOtherUsers.map(u => `<option value="${u.username}">${u.displayName} (@${u.username})</option>`).join('')}
+          </select>
         </div>
+        <div>
+          <label style="display:block;font-size:0.82rem;color:var(--text2);margin-bottom:0.35rem;font-weight:600">Navn på samtalen <span style="font-weight:400;color:var(--text3)">(valgfritt)</span></label>
+          <input type="text" id="inbox-new-chat-name"
+            placeholder="f.eks. Prosjekt, Musikk-snakk, Samarbeid…"
+            maxlength="60"
+            style="width:100%;background:var(--surface,#1a1a2e);border:1px solid var(--border,rgba(255,255,255,0.12));border-radius:8px;padding:0.6rem 0.75rem;color:var(--text,#fff);font-size:0.9rem;box-sizing:border-box">
+        </div>
+        <button class="btn btn-primary" style="align-self:flex-start" onclick="App.startNewChat()">💬 Start chat</button>
       </div>`;
+
+    // ── Tab: Brukere ─────────────────────────────────────────────────────
+    const brukereRows = !allOtherUsers.length
+      ? '<p style="color:var(--text3);font-size:0.85rem">Ingen andre brukere ennå.</p>'
+      : allOtherUsers.map(u => {
+          const isFriend   = friends.has(u.username);
+          const isPending  = sent.has(u.username);
+          const isIncoming = (user.friendRequests||[]).some(r => r.from === u.username);
+          let friendBtn = '';
+          if (isFriend) {
+            friendBtn = `<span style="font-size:0.78rem;color:#4ade80">✓ Venner</span>`;
+          } else if (isPending) {
+            friendBtn = `<span style="font-size:0.78rem;color:var(--text3)">⏳ Sendt</span>`;
+          } else if (isIncoming) {
+            friendBtn = `<button class="btn btn-primary btn-sm" onclick="App.inboxAccept('${u.username}')">✓ Aksepter</button>`;
+          } else {
+            friendBtn = `<button class="btn btn-ghost btn-sm" onclick="Profile.sendFriendRequest('${u.username}');App.renderInbox('brukere')">👥 Legg til</button>`;
+          }
+          return `
+            <div class="settings-row">
+              <a href="#/u/${u.username}" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:inherit;flex:1;min-width:0">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#2563eb);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">${u.displayName.charAt(0).toUpperCase()}</div>
+                <div>
+                  <div style="font-weight:600;font-size:0.88rem">${u.displayName}</div>
+                  <div style="font-size:0.75rem;color:var(--text2)">@${u.username}</div>
+                </div>
+              </a>
+              <div style="display:flex;align-items:center;gap:0.5rem">
+                <button class="btn btn-primary btn-sm" onclick="App.inviteToChat('${u.username}')">📨 Inviter til chat</button>
+                ${friendBtn}
+              </div>
+            </div>`;
+        }).join('');
+
+    // ── Tab: Forespørsler ─────────────────────────────────────────────────
+    const forsporslerRows = pendingRequests.length
+      ? pendingRequests.map(r => {
+          const requester = Auth.getUser(r.from);
+          if (!requester) return '';
+          return `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0;border-bottom:1px solid var(--border,rgba(255,255,255,0.08))">
+              <a href="#/u/${r.from}" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:inherit">
+                <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#2563eb);display:flex;align-items:center;justify-content:center;font-weight:700">${requester.displayName.charAt(0).toUpperCase()}</div>
+                <div>
+                  <div style="font-weight:600">${requester.displayName}</div>
+                  <div style="font-size:0.78rem;color:var(--text2)">@${r.from}</div>
+                </div>
+              </a>
+              <div style="display:flex;gap:0.5rem">
+                <button class="btn btn-primary btn-sm" onclick="App.inboxAccept('${r.from}')">✓ Aksepter</button>
+                <button class="btn btn-ghost btn-sm" onclick="App.inboxReject('${r.from}')">✕ Avslå</button>
+              </div>
+            </div>`;
+        }).join('')
+      : '<p style="color:var(--text3);font-size:0.85rem;padding:1rem 0">Ingen venneforespørsler.</p>';
+
+    const tabs = [
+      { id: 'samtaler',    label: `💬 Samtaler${convs.length ? ` (${convs.length})` : ''}` },
+      { id: 'nychat',      label: '➕ Ny chat' },
+      { id: 'brukere',     label: `🌐 Brukere${allOtherUsers.length ? ` (${allOtherUsers.length})` : ''}` },
+      { id: 'forsporsler', label: `👥 Forespørsler${pendingRequests.length ? ` (${pendingRequests.length})` : ''}` },
+    ];
+
+    const tabContentMap = {
+      samtaler:    `<div class="settings-section"><div class="settings-section-header">💬 Samtaler</div><div class="settings-section-body">${samtaleRows}</div></div>`,
+      nychat:      `<div class="settings-section"><div class="settings-section-header">➕ Ny chat</div><div class="settings-section-body">${nychatContent}</div></div>`,
+      brukere:     `<div class="settings-section"><div class="settings-section-header">🌐 Alle brukere</div><div class="settings-section-body">${brukereRows}</div></div>`,
+      forsporsler: `<div class="settings-section"><div class="settings-section-header">👥 Venneforespørsler</div><div class="settings-section-body">${forsporslerRows}</div></div>`,
+    };
 
     document.getElementById('app').innerHTML = `
       <div class="settings-page">
         <h1>📬 Innboks</h1>
-        ${!requestsHtml && !convHtml ? '<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">📭</div><p>Ingen meldinger eller venneforespørsler ennå.</p></div>' : ''}
-        ${requestsHtml}
-        ${convHtml}
-        ${usersHtml}
+        <div class="inbox-tabs">
+          ${tabs.map(t => `<button class="inbox-tab-btn${activeTab === t.id ? ' active' : ''}" onclick="App.renderInbox('${t.id}')">${t.label}</button>`).join('')}
+        </div>
+        ${tabContentMap[activeTab] || tabContentMap.samtaler}
       </div>`;
   }
 
-  function quickAddFriend(targetUsername, btn) {
+  function startNewChat() {
+    const userEl = document.getElementById('inbox-new-chat-user');
+    const nameEl = document.getElementById('inbox-new-chat-name');
+    if (!userEl || !userEl.value) { toast('Velg en bruker å starte chat med', 'error'); return; }
+    const targetUsername = userEl.value;
+    const chatName = nameEl?.value?.trim() || '';
+    if (chatName) {
+      const u = Auth.current();
+      const nameKey = 'sr_pm_name_' + [u.username, targetUsername].sort().join('_');
+      localStorage.setItem(nameKey, chatName);
+    }
+    Router.go('/messages/' + targetUsername);
+  }
+
+  function inviteToChat(targetUsername) {
+    Router.go('/messages/' + targetUsername);
+  }
+
+  async function quickAddFriend(targetUsername, btn) {
     const current = Auth.current();
     if (!current) { Router.go('/login'); return; }
     const result = Auth.sendFriendRequest(current.username, targetUsername);
@@ -840,6 +894,11 @@ const App = (() => {
     btn.onclick = null;
     toast(`Venneforespørsel sendt til @${targetUsername}`, 'success');
     renderNav();
+    const targetUser = Auth.getUser(targetUsername);
+    if (targetUser?.email) {
+      Email.sendFriendRequest(targetUser.email, targetUser.displayName, current.displayName, current.username)
+        .catch(() => {});
+    }
   }
 
   function quickAcceptFriend(fromUsername, btn) {
@@ -861,7 +920,7 @@ const App = (() => {
     Auth.acceptFriendRequest(u.username, fromUsername);
     renderNav();
     toast(`Du er nå venner med @${fromUsername}! 🎉`, 'success');
-    renderInbox();
+    renderInbox('forsporsler');
   }
 
   function inboxReject(fromUsername) {
@@ -869,7 +928,7 @@ const App = (() => {
     if (!u) return;
     Auth.rejectFriendRequest(u.username, fromUsername);
     toast('Avslått', 'info');
-    renderInbox();
+    renderInbox('forsporsler');
   }
 
   function renderSettings() {
@@ -954,11 +1013,40 @@ const App = (() => {
           </div>
 
           <div class="settings-section">
+            <div class="settings-section-header">🛠️ Admin — aktivering</div>
+            <div class="settings-section-body">
+              <p style="font-size:0.875rem;color:var(--text2);margin-bottom:1rem">
+                Send aktiveringslenke til alle brukere som ikke er aktivert ennå.<br>
+                <span style="font-size:0.8rem;color:var(--text3)">Uaktiverte brukere: ${Object.values(Auth.getUsers()).filter(u => !u.activated).length}</span>
+              </p>
+              <button class="btn btn-ghost btn-sm" id="activate-all-btn" onclick="App.sendActivationToAll()">📧 Send til alle uaktiverte</button>
+              <span id="activate-all-result" style="font-size:0.8rem;margin-left:0.75rem;color:var(--text2)"></span>
+            </div>
+          </div>
+
+          <div class="settings-section">
             <div class="settings-section-header">🔐 Passord</div>
             <div class="settings-section-body">
               <p style="font-size:0.875rem;color:var(--text2);margin-bottom:1rem">Send en tilbakestillingslenke til <strong>${user.email}</strong></p>
               <button class="btn btn-ghost btn-sm" id="send-reset-btn" onclick="App.sendPasswordResetFromSettings()">🔑 Send tilbakestillingslenke</button>
               <span id="reset-result" style="font-size:0.8rem;margin-left:0.75rem"></span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-header">📱 QR-kode innlogging</div>
+            <div class="settings-section-body">
+              <p style="font-size:0.875rem;color:var(--text2);margin-bottom:1rem">
+                Scan QR-koden med mobil eller nettbrett for å logge inn automatisk som <strong>@${user.username}</strong>.
+                <br><span style="font-size:0.8rem;color:var(--text3)">Koden er gyldig i 15 minutter.</span>
+              </p>
+              <button class="btn btn-primary btn-sm" onclick="App.generateQRLogin()">📲 Generer QR-kode</button>
+              <div id="qr-login-box" style="display:none;margin-top:1.25rem">
+                <div style="background:#fff;display:inline-block;padding:1rem;border-radius:12px">
+                  <canvas id="qr-login-canvas"></canvas>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text3);margin-top:0.5rem" id="qr-login-expiry"></div>
+              </div>
             </div>
           </div>
 
@@ -1235,6 +1323,35 @@ const App = (() => {
     const res = await Email.sendActivation(user.email, user.username, u.activationToken);
     if (btn) { btn.disabled = false; btn.textContent = '📧 Send på nytt'; }
     toast(res.error ? 'Feil: ' + res.error : 'Aktiveringslenke sendt! 📧', res.error ? 'error' : 'success');
+  }
+
+  async function sendActivationToAll() {
+    const btn = document.getElementById('activate-all-btn');
+    const result = document.getElementById('activate-all-result');
+    const allUsers = Object.values(Auth.getUsers()).filter(u => !u.activated);
+
+    if (!allUsers.length) {
+      if (result) result.textContent = 'Alle brukere er allerede aktivert.';
+      return;
+    }
+
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Sender…'; }
+    if (result) result.textContent = '';
+
+    let sent = 0, failed = 0;
+    for (const u of allUsers) {
+      if (!u.activationToken) {
+        const token = Array.from(crypto.getRandomValues(new Uint8Array(40))).map(b => b.toString(16).padStart(2,'0')).join('');
+        Auth.updateUser(u.username, { activationToken: token });
+        u.activationToken = token;
+      }
+      const r = await Email.sendActivation(u.email, u.username, u.activationToken);
+      r.error ? failed++ : sent++;
+    }
+
+    if (btn) { btn.disabled = false; btn.textContent = '📧 Send til alle uaktiverte'; }
+    if (result) result.textContent = `Sendt: ${sent}, Feilet: ${failed}`;
+    toast(`Aktiveringslenker sendt til ${sent} bruker${sent !== 1 ? 'e' : ''}.`, sent ? 'success' : 'error');
   }
 
   async function sendPasswordResetFromSettings() {
@@ -1527,10 +1644,15 @@ const App = (() => {
     Router.define('/underground',        () => Underground.render());
     Router.define('/shows',              () => Shows.render());
     Router.define('/dj',                 () => DJ.render());
+    Router.define('/studio',             () => {
+      if (!Auth.current()) { toast('Logg inn for å bruke Studio', 'error'); Router.go('/login'); return; }
+      Studio.render();
+    });
     Router.define('/messages/:username', ({ username }) => {
       if (!Auth.current()) { toast('Logg inn for å sende meldinger', 'error'); Router.go('/login'); return; }
       DJ.renderPrivateChat(username);
     });
+    Router.define('/qr-login/:token', ({ token }) => renderQRLogin(token));
 
     // Start router
     Router.init();
@@ -1602,23 +1724,163 @@ const App = (() => {
     labelEl.querySelector('input[type=radio]').checked = true;
   }
 
+  // ── QR-kode innlogging ────────────────────────────────────────────────
+  let _qrCountdown = null;
+
+  function generateQRLogin() {
+    const user = Auth.current();
+    if (!user) return;
+
+    const expiry = Date.now() + 15 * 60 * 1000;
+    const payload = JSON.stringify({
+      u: user.username,
+      p: user.password,
+      d: user.displayName,
+      e: user.email,
+      s: user.subscription || 'free',
+      r: user.role || 'lytter',
+      exp: expiry,
+    });
+    const token = btoa(payload).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    const base  = window.location.href.split('#')[0];
+    const url   = `${base}#/qr-login/${token}`;
+
+    const canvas = document.getElementById('qr-login-canvas');
+    if (!canvas || typeof QRCode === 'undefined') {
+      toast('QR-biblioteket er ikke lastet. Prøv igjen.', 'error');
+      return;
+    }
+
+    QRCode.toCanvas(canvas, url, { width: 220, margin: 1, color: { dark: '#000000', light: '#ffffff' } }, err => {
+      if (err) { toast('Kunne ikke generere QR-kode', 'error'); return; }
+    });
+
+    document.getElementById('qr-login-box').style.display = 'block';
+
+    clearInterval(_qrCountdown);
+    let remaining = 15 * 60;
+    const expiryEl = document.getElementById('qr-login-expiry');
+    _qrCountdown = setInterval(() => {
+      remaining--;
+      const m = Math.floor(remaining / 60);
+      const s = remaining % 60;
+      if (expiryEl) expiryEl.textContent = `Utløper om ${m}:${s.toString().padStart(2, '0')}`;
+      if (remaining <= 0) {
+        clearInterval(_qrCountdown);
+        const box = document.getElementById('qr-login-box');
+        if (box) box.style.display = 'none';
+        toast('QR-koden har utløpt. Generer en ny.', 'info');
+      }
+    }, 1000);
+  }
+
+  function renderQRLogin(token) {
+    let payload;
+    try {
+      const padded = token.replace(/-/g, '+').replace(/_/g, '/');
+      const pad4   = padded + '==='.slice((padded.length + 3) % 4);
+      payload = JSON.parse(atob(pad4));
+    } catch {
+      document.getElementById('app').innerHTML = `
+        <div class="empty-state" style="padding:8rem">
+          <div class="empty-icon">❌</div>
+          <p style="font-size:1.1rem;font-weight:600">Ugyldig QR-kode</p>
+          <a href="#/" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">← Hjem</a>
+        </div>`;
+      return;
+    }
+
+    if (Date.now() > payload.exp) {
+      document.getElementById('app').innerHTML = `
+        <div class="empty-state" style="padding:8rem">
+          <div class="empty-icon">⏳</div>
+          <p style="font-size:1.1rem;font-weight:600">QR-koden har utløpt</p>
+          <p style="color:var(--text2)">Logg inn på en annen enhet og generer en ny kode.</p>
+          <a href="#/login" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">Logg inn manuelt</a>
+        </div>`;
+      return;
+    }
+
+    const result = Auth.importQRUser({
+      username:     payload.u,
+      password:     payload.p,
+      displayName:  payload.d,
+      email:        payload.e,
+      subscription: payload.s,
+      role:         payload.r,
+    });
+
+    if (result.error) {
+      document.getElementById('app').innerHTML = `
+        <div class="empty-state" style="padding:8rem">
+          <div class="empty-icon">⚠️</div>
+          <p style="font-size:1.1rem;font-weight:600">${result.error}</p>
+          <a href="#/login" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">Logg inn manuelt</a>
+        </div>`;
+      return;
+    }
+
+    renderNav();
+    toast(`Velkommen tilbake, ${result.user.displayName}! 🎉`, 'success', 4000);
+    Router.go('/');
+  }
+
   return {
     init, toast, openModal, closeModal,
     logout, renderNav, updateNavBadge,
     doLogin, doRegister, doForgotPassword, doResetPassword,
     resendActivationByEmail,
     saveSettings, testEmailJS,
-    renderInbox, inboxAccept, inboxReject,
+    renderInbox, inboxAccept, inboxReject, startNewChat, inviteToChat,
     quickAddFriend, quickAcceptFriend,
     selectRole,
-    settingsTab, resendActivation, sendPasswordResetFromSettings,
+    settingsTab, resendActivation, sendPasswordResetFromSettings, sendActivationToAll,
     confirmDeleteAccount, deleteAccount,
     selectPaymentMethod, savePaymentMethod,
     liveFilter, applyFilterPreset, saveFilterSettings,
     savePageTexts, sendAiMessage,
     renderSettings,
+    generateQRLogin,
   };
 })();
 
 // Bootstrap
 document.addEventListener('DOMContentLoaded', () => App.init());
+
+// ── Media embed panel ─────────────────────────────────────────────────────────
+// Builds an embeddable iframe src from a public music URL, or returns null.
+function _embedSrc(url) {
+  const ytM = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (ytM) return `https://www.youtube.com/embed/${ytM[1]}?autoplay=1`;
+
+  if (url.includes('soundcloud.com'))
+    return `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=true&color=%23ff5500&show_artwork=true&visual=true`;
+
+  const spM = url.match(/open\.spotify\.com\/(track|album|playlist|artist)\/([a-zA-Z0-9]+)/);
+  if (spM) return `https://open.spotify.com/embed/${spM[1]}/${spM[2]}`;
+
+  if (url.includes('mixcloud.com'))
+    return `https://www.mixcloud.com/widget/iframe/?hide_cover=1&autoplay=1&feed=${encodeURIComponent(url)}`;
+
+  return null;
+}
+
+function openMedia(url, title) {
+  if (!url) return;
+  // Direct audio file → use the persistent player bar
+  if (/\.(mp3|ogg|aac|flac|wav|m4a)(\?|$)/i.test(url)) {
+    if (typeof Player !== 'undefined') Player.playExternal(url, title || 'Mix', '');
+    return;
+  }
+  const src = _embedSrc(url);
+  if (!src) { window.open(url, '_blank', 'noopener,noreferrer'); return; }
+
+  document.getElementById('embed-panel-title').textContent = title || '';
+  document.getElementById('embed-panel-frame').src = src;
+  document.getElementById('embed-panel').classList.remove('hidden');
+}
+
+function closeEmbedPanel() {
+  document.getElementById('embed-panel-frame').src = '';
+  document.getElementById('embed-panel').classList.add('hidden');
+}

@@ -1603,7 +1603,31 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
    SETTINGS PAGE
    ════════════════════════════════════════════ */
 .settings-page { max-width: 700px; margin: 0 auto; padding: 2rem 1.5rem; }
-.settings-page h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: 2rem; }
+.settings-page h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: 1.25rem; }
+.inbox-tabs {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+  padding-bottom: 0;
+}
+.inbox-tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text2);
+  font-size: 0.85rem;
+  padding: 0.55rem 1.1rem 0.65rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.15s, border-color 0.15s;
+  margin-bottom: -1px;
+  border-radius: 0;
+  white-space: nowrap;
+}
+.inbox-tab-btn:hover { color: var(--text); }
+.inbox-tab-btn.active { color: var(--accent, #7c3aed); border-bottom-color: var(--accent, #7c3aed); font-weight: 700; }
 .settings-section {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1900,6 +1924,27 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+.radio-welcome-hero {
+  padding: 2.5rem 2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), color-mix(in srgb, var(--accent2) 5%, transparent));
+}
+.radio-welcome-title {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.radio-welcome-sub {
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--text2);
+  letter-spacing: 0.03em;
 }
 .radio-now-playing {
   padding: 1.5rem 2rem;
@@ -4849,6 +4894,7 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
 .friends-section { margin: 1rem 0; }
 .friends-title { font-size: 0.85rem; font-weight: 700; color: var(--text2); margin-bottom: 0.6rem; }
 .friends-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.friend-chip-wrap { display: flex; align-items: center; gap: 0.25rem; }
 .friend-chip {
   display: flex; align-items: center; gap: 0.5rem;
   background: var(--surface); border: 1px solid var(--border);
@@ -4863,6 +4909,14 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
   display: flex; align-items: center; justify-content: center;
   font-size: 0.7rem; font-weight: 700; color: #fff; flex-shrink: 0;
 }
+.friend-chip-chat-btn {
+  background: none; border: 1px solid var(--border); color: var(--text2);
+  border-radius: 50%; width: 26px; height: 26px; font-size: 0.75rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: border-color 0.2s, background 0.2s, color 0.2s;
+  flex-shrink: 0; padding: 0;
+}
+.friend-chip-chat-btn:hover { border-color: var(--accent); background: var(--surface2); color: var(--accent); }
 
 /* ══════════════════════════════════════════════════════════════
    PROFILE — FAVORITE RADIO + MUSIC SECTION
@@ -6256,3 +6310,59 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
 .goog-te-banner-frame, #goog-te-banner-frame { display: none !important; }
 body { top: 0 !important; }
 .skiptranslate { display: none !important; }
+
+/* ═══ EMBED MEDIA PANEL ═══ */
+.embed-panel {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  width: 420px;
+  background: #0d0d16;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.75);
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: opacity .2s;
+}
+.embed-panel.hidden { display: none; }
+.embed-panel-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.05);
+  font-size: 13px;
+  font-weight: 500;
+  color: #e0e0e0;
+  gap: 8px;
+  min-height: 40px;
+}
+.embed-panel-hdr span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.embed-panel-close {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+.embed-panel-close:hover { color: #fff; }
+#embed-panel-frame {
+  width: 100%;
+  height: 236px;
+  border: none;
+  display: block;
+}
+@media (max-width: 500px) {
+  .embed-panel {
+    width: calc(100vw - 32px);
+    right: 16px;
+    left: 16px;
+    bottom: 90px;
+  }
+}

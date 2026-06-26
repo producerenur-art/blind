@@ -51,6 +51,7 @@ const Auth = (() => {
       if (!username || username.length < 3)  return { error: 'Brukernavn må være minst 3 tegn' };
       if (!/^[a-zA-Z0-9_]+$/.test(username)) return { error: 'Brukernavn kan bare ha bokstaver, tall og _' };
       if (!password || password.length < 6)  return { error: 'Passord må være minst 6 tegn' };
+      if (!/[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?~`]/.test(password)) return { error: 'Passord må inneholde minst ett spesialtegn (f.eks. !@#$%)' };
       if (!email || !email.includes('@'))     return { error: 'Ugyldig e-postadresse' };
 
       const users = getUsers();
@@ -155,6 +156,7 @@ const Auth = (() => {
     // Reset password with token
     resetPassword(token, newPassword) {
       if (!newPassword || newPassword.length < 6) return { error: 'Passord må være minst 6 tegn' };
+      if (!/[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?~`]/.test(newPassword)) return { error: 'Passord må inneholde minst ett spesialtegn (f.eks. !@#$%)' };
       const users = getUsers();
       const user = Object.values(users).find(u => u.resetToken === token);
       if (!user)                       return { error: 'Ugyldig eller utløpt lenke' };
@@ -322,5 +324,45 @@ const Auth = (() => {
     },
 
     defaultTheme,
+
+    importQRUser(data) {
+      const users = getUsers();
+      if (users[data.username]) {
+        if (users[data.username].password !== data.password) return { error: 'Bruker finnes allerede med annet passord' };
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ username: data.username, ts: Date.now() }));
+        return { success: true, user: users[data.username] };
+      }
+      users[data.username] = {
+        username:          data.username,
+        displayName:       data.displayName || data.username,
+        password:          data.password,
+        email:             data.email,
+        createdAt:         Date.now(),
+        activated:         true,
+        activationToken:   null,
+        resetToken:        null,
+        resetExpiry:       null,
+        theme:             defaultTheme(),
+        bio:               '',
+        links:             [],
+        mediaIds:          [],
+        musicIds:          [],
+        avatarMediaId:     null,
+        bannerMediaId:     null,
+        followers:         [],
+        following:         [],
+        events:            [],
+        friends:           [],
+        friendRequests:    [],
+        sentRequests:      [],
+        mixIds:            [],
+        subscription:      data.subscription || 'free',
+        role:              data.role || 'lytter',
+        profileVisibility: 'public',
+      };
+      saveUsers(users);
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ username: data.username, ts: Date.now() }));
+      return { success: true, user: users[data.username] };
+    },
   };
 })();

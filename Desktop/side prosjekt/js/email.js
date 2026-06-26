@@ -106,6 +106,22 @@ const Email = (() => {
     }
   }
 
+  async function sendFriendRequest(toEmail, toName, fromName, fromUsername) {
+    const inboxUrl = window.location.origin + '/#/inbox';
+    try {
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'friend_request', toEmail, toName, fromName, fromUsername, inboxUrl }),
+      });
+      const data = await res.json();
+      if (res.ok) return { success: true };
+      return { error: data.error || 'Feil ved sending' };
+    } catch {
+      return { error: 'Nettverksfeil' };
+    }
+  }
+
   async function sendTestEmail(toEmail, username) {
     const apiRes = await callApi('activation', toEmail, username, 'test-token');
     if (apiRes.success) return { success: true };
@@ -125,5 +141,5 @@ const Email = (() => {
     }
   }
 
-  return { sendActivation, sendPasswordReset, sendTestEmail, sendMessageNotification, isConfigured: isEmailJSConfigured };
+  return { sendActivation, sendPasswordReset, sendFriendRequest, sendTestEmail, sendMessageNotification, isConfigured: isEmailJSConfigured };
 })();
