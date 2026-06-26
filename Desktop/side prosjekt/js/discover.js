@@ -1010,6 +1010,36 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎵</span>
+          <span class="disc-psy-section-title">Artisten</span>
+          <span class="disc-psy-section-badge">u-recken.com</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://u-recken.com/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">🌀</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">
+                U-Recken <span style="font-size:0.85rem;opacity:0.7">🇮🇱 Israel</span>
+              </div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Psytrance-produsent og live-artist med 20 år på scena — frå underground til store festivalar.
+                Kjend for emosjonelt ladde dansegolvsett. Grunnleggjar av BigFreq Syndicate og Tree of Life Festival.
+                Siste album: <em>Nothing is Sacred</em> (2017) — nytt album kjem 2026.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">🌀 Psytrance</span>
+                <span class="disc-psy-section-badge">⚡ Full-On</span>
+                <span class="disc-psy-section-badge">🏷 BigFreq Syndicate</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
           <span class="disc-psy-section-icon">☁️</span>
           <span class="disc-psy-section-title">SoundCloud — Miksesett</span>
           <span class="disc-psy-section-badge">SoundCloud</span>
