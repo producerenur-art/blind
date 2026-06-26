@@ -231,6 +231,17 @@ const App = (() => {
         <div class="section-header">
           <div class="section-title">📻 Now Playing <span>${radioUsers.length} kanaler</span></div>
           <div class="section-sub">Klikk ▶ for å lytte direkte — ingen fanebytting</div>
+          <div class="np-mini-player" id="np-mini-player">
+            <button class="np-mini-btn" id="np-mini-btn" onclick="NpMiniPlayer.toggle()" title="Spill av / Pause">▶</button>
+            <div class="np-mini-meta">
+              <div class="np-mini-name" id="np-mini-name">${radioUsers[0]?.favoriteRadio?.emoji || '📻'} ${radioUsers[0]?.favoriteRadio?.name || 'Radio'}</div>
+              <div class="np-mini-live">
+                <span class="np-mini-dot" id="np-mini-dot"></span>
+                <span id="np-mini-status">Live</span>
+              </div>
+            </div>
+            <div class="np-mini-eq" id="np-mini-eq"><span></span><span></span><span></span><span></span></div>
+          </div>
         </div>
         <div class="np-grid" id="np-grid">
           ${radioUsers.map(u => {
@@ -1853,6 +1864,49 @@ const App = (() => {
     renderSettings,
     generateQRLogin,
   };
+})();
+
+// ── Now Playing mini player widget ────────────────────────────────────────────
+window.NpMiniPlayer = (() => {
+  function update() {
+    const btn    = document.getElementById('np-mini-btn');
+    const name   = document.getElementById('np-mini-name');
+    const dot    = document.getElementById('np-mini-dot');
+    const status = document.getElementById('np-mini-status');
+    const eq     = document.getElementById('np-mini-eq');
+    if (!btn) return;
+    const playing = !!window._radioMode && typeof Radio !== 'undefined' && Radio.isPlaying;
+    const station = typeof Radio !== 'undefined' ? Radio.currentStation : null;
+    btn.textContent = playing ? '⏸' : '▶';
+    if (station && name) name.textContent = (station.emoji || '📻') + ' ' + (station.name || 'Radio');
+    if (dot)    dot.classList.toggle('active', playing);
+    if (eq)     eq.classList.toggle('active', playing);
+    if (status) status.textContent = playing ? 'Live nå' : 'Klar';
+  }
+
+  function toggle() {
+    if (typeof Radio === 'undefined') return;
+    if (Radio.currentStation) {
+      Radio.togglePlay();
+    } else {
+      const allUsers = Object.values(Auth.getUsers()).filter(u => u.favoriteRadio?.url);
+      if (allUsers.length) {
+        const r = allUsers[0].favoriteRadio;
+        Radio.playUrl(r.url, r.name || 'Radio', r.emoji || '📻');
+      }
+    }
+    setTimeout(update, 200);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const audio = document.getElementById('audio-engine');
+    if (audio) {
+      audio.addEventListener('play',  update);
+      audio.addEventListener('pause', update);
+    }
+  });
+
+  return { toggle, update };
 })();
 
 // Bootstrap
