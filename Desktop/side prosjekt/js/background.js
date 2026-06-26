@@ -39,6 +39,15 @@ const BgManager = (() => {
     // Apply saved effect
     document.body.dataset.bgEffect = currentEffect;
 
+    // Pause all CSS background animations while the tab is backgrounded — no point
+    // burning GPU/CPU compositing nebula + prism layers nobody is looking at.
+    const bgLayer = document.getElementById('bg-layer');
+    if (bgLayer) {
+      document.addEventListener('visibilitychange', () => {
+        bgLayer.style.animationPlayState = document.hidden ? 'paused' : 'running';
+      });
+    }
+
     // Load saved image from IndexedDB
     try {
       const url = await DB.getBlobUrl('media', BG_ID);
@@ -48,9 +57,18 @@ const BgManager = (() => {
 
   function resize() {
     if (!canvas) return;
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Cap device-pixel-ratio at 1.5 — rendering the fullscreen particle field at
+    // retina 2x–3x quadruples fill cost for no visible gain on a soft glow layer.
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    canvas.width  = Math.floor(window.innerWidth  * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+    canvas.style.width  = window.innerWidth  + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
+  // CSS-pixel dimensions used by spawn/draw logic.
+  function vw() { return canvas.width  / Math.min(window.devicePixelRatio || 1, 1.5); }
+  function vh() { return canvas.height / Math.min(window.devicePixelRatio || 1, 1.5); }
 
   // ── Image upload ──────────────────────────────────────────────────────
   async function uploadImage(input) {
@@ -108,26 +126,35 @@ const BgManager = (() => {
     });
   }
 
+  const FRAME_MS = 1000 / 30;   // throttle particle field to 30fps — plenty for ambient glow
+
   function startParticles() {
     if (frame) cancelAnimationFrame(frame);
     let lastTime = 0;
+    let lastDraw = 0;
     function tick(now) {
       frame = requestAnimationFrame(tick);
+      // Skip work while the tab is hidden, or to hold ~30fps.
+      if (document.hidden) { lastDraw = now; return; }
+      if (now - lastDraw < FRAME_MS) return;
       const dt = now - lastTime;
       lastTime = now;
+      lastDraw = now;
       if (!ctx || !canvas.width) return;
 
+      const W = vw(), H = vh();
+
       if (currentParticles === 'none') {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, W, H);
         return;
       }
 
       // Subtle fade trail
       ctx.fillStyle = 'rgba(0,0,0,0.12)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, W, H);
 
-      // Spawn
-      const maxP = currentParticles === 'sparks' ? 200 : currentParticles === 'aurora' ? 25 : 100;
+      // Spawn (counts trimmed — shadowBlur removal lets these stay lively cheaply)
+      const maxP = currentParticles === 'sparks' ? 120 : currentParticles === 'aurora' ? 18 : 70;
       const spawnRate = currentParticles === 'aurora' ? 0.12 : 0.4;
       if (particles.length < maxP && Math.random() < spawnRate) spawn(now);
 
@@ -136,11 +163,13 @@ const BgManager = (() => {
       for (const p of particles) tick_p(p, now, dt);
     }
     tick(0);
+    // Restart the loop cleanly when returning to the tab so dt doesn't spike.
+    document.addEventListener('visibilitychange', () => { lastTime = performance.now(); });
   }
 
   function spawn(t) {
     const hue = (t * 0.04) % 360;
-    const W = canvas.width, H = canvas.height;
+    const W = vw(), H = vh();
     if (currentParticles === 'stars') {
       particles.push({
         x: Math.random() * W, y: Math.random() * H,
@@ -207,16 +236,19 @@ const BgManager = (() => {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
 
+    // NOTE: ctx.shadowBlur is intentionally avoided — it gaussian-blurs every
+    // particle every frame and was the single biggest canvas cost. Glow is faked
+    // with a cheap larger low-alpha disc instead.
     if (p.type === 'star') {
-      ctx.shadowColor = `hsla(${hue},90%,75%,0.7)`;
-      ctx.shadowBlur  = 8;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * 2.4, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${hue},90%,75%,${alpha * 0.18})`;  // soft halo
+      ctx.fill();
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `hsla(${hue},90%,80%,${alpha * 0.9})`;
+      ctx.fillStyle = `hsla(${hue},90%,82%,${alpha * 0.9})`;   // bright core
       ctx.fill();
     } else if (p.type === 'bubble') {
-      ctx.shadowColor = `hsla(${hue},80%,70%,0.5)`;
-      ctx.shadowBlur  = 10;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       ctx.strokeStyle = `hsla(${hue},85%,75%,${alpha * 0.85})`;
@@ -226,8 +258,6 @@ const BgManager = (() => {
       ctx.fill();
     } else if (p.type === 'spark') {
       const trail = 7;
-      ctx.shadowColor = `hsla(${hue},90%,75%,0.5)`;
-      ctx.shadowBlur  = 6;
       ctx.beginPath();
       ctx.moveTo(p.x, p.y);
       ctx.lineTo(p.x - p.vx * trail, p.y - p.vy * trail);
