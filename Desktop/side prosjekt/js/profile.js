@@ -1622,6 +1622,95 @@ const Profile = (() => {
     if (titleEl) titleEl.textContent = `💬 Kommentarer (${comments.length})`;
   }
 
+  // ── Profile tab switching ─────────────────────────────────────────────
+  function switchTab(tab) {
+    document.querySelectorAll('.profile-tab-content').forEach(el =>
+      el.classList.toggle('hidden', el.dataset.tab !== tab));
+    document.querySelectorAll('.profile-tab-btn').forEach(btn =>
+      btn.classList.toggle('active', btn.dataset.tab === tab));
+  }
+
+  // ── Profile wall (guestbook) ──────────────────────────────────────────
+  function renderWallTab(username, isOwner) {
+    const el = document.getElementById('tab-wall');
+    if (!el) return;
+    const current = Auth.current();
+    const key = `pv_wall_${username}`;
+    const wall = JSON.parse(localStorage.getItem(key) || '[]').reverse();
+
+    const canComment = current && current.username !== username;
+    const inputHtml = canComment ? `
+      <div class="wall-input-wrap">
+        <input class="form-input wall-input" id="wall-input-${username}" placeholder="Skriv noe på veggen til @${username}…" maxlength="500"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();Profile.addWallComment('${username}')}">
+        <button class="btn btn-primary btn-sm" onclick="Profile.addWallComment('${username}')">Send</button>
+      </div>` : !current ? `
+      <div class="wall-login-prompt"><a href="#/login" style="color:var(--accent)">Logg inn</a> for å skrive på veggen.</div>` : '';
+
+    const postsHtml = wall.length ? wall.map(p => {
+      const initial = (p.fromDisplayName || p.fromUsername || '?').charAt(0).toUpperCase();
+      const canDelete = isOwner || (current && current.username === p.fromUsername);
+      return `
+        <div class="wall-post" id="wallpost-${p.id}">
+          <a class="wall-post-avatar" href="#/u/${p.fromUsername}" style="text-decoration:none">${initial}</a>
+          <div class="wall-post-body">
+            <div class="wall-post-header">
+              <a class="wall-post-name" href="#/u/${p.fromUsername}">${esc(p.fromDisplayName)}</a>
+              <span class="wall-post-username">@${esc(p.fromUsername)}</span>
+              <span class="wall-post-time">${timeAgo(p.ts)}</span>
+              ${canDelete ? `<button class="wall-post-delete" onclick="Profile.deleteWallComment('${username}','${p.id}')" title="Slett">✕</button>` : ''}
+            </div>
+            <div class="wall-post-text">${esc(p.text)}</div>
+          </div>
+        </div>`;
+    }).join('') : `<div class="empty-state" style="padding:2.5rem 0"><div class="empty-icon">💬</div><p>Ingen innlegg ennå. Vær den første!</p></div>`;
+
+    el.innerHTML = `<div class="wall-wrap">${inputHtml}${postsHtml}</div>`;
+  }
+
+  function addWallComment(username) {
+    const current = Auth.current();
+    if (!current) { Router.go('/login'); return; }
+    const input = document.getElementById(`wall-input-${username}`);
+    const text = input?.value.trim();
+    if (!text) return;
+    const key = `pv_wall_${username}`;
+    const wall = JSON.parse(localStorage.getItem(key) || '[]');
+    wall.push({
+      id: `w_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      fromUsername: current.username,
+      fromDisplayName: current.displayName,
+      text,
+      ts: Date.now()
+    });
+    localStorage.setItem(key, JSON.stringify(wall));
+    renderWallTab(username, Auth.getUser(username)?.username === current.username);
+    // Update wall count in tab button
+    const tabBtn = document.querySelector('.profile-tab-btn[data-tab="vegg"]');
+    if (tabBtn) tabBtn.textContent = `💬 Vegg (${wall.length})`;
+    const statEl = document.querySelector('.profile-stats .stat:last-child .stat-value');
+    if (statEl) statEl.textContent = wall.length;
+  }
+
+  function deleteWallComment(username, commentId) {
+    const current = Auth.current();
+    if (!current) return;
+    const key = `pv_wall_${username}`;
+    let wall = JSON.parse(localStorage.getItem(key) || '[]');
+    const post = wall.find(p => p.id === commentId);
+    if (!post) return;
+    const profileOwner = Auth.getUser(username);
+    const canDelete = current.username === username || current.username === post.fromUsername;
+    if (!canDelete) return;
+    wall = wall.filter(p => p.id !== commentId);
+    localStorage.setItem(key, JSON.stringify(wall));
+    document.getElementById(`wallpost-${commentId}`)?.remove();
+    const tabBtn = document.querySelector('.profile-tab-btn[data-tab="vegg"]');
+    if (tabBtn) tabBtn.textContent = wall.length ? `💬 Vegg (${wall.length})` : '💬 Vegg';
+    const statEl = document.querySelector('.profile-stats .stat:last-child .stat-value');
+    if (statEl) statEl.textContent = wall.length;
+  }
+
   async function loadEditorMixes(user) {
     const list = document.getElementById('editor-mixes-list');
     if (!list) return;
@@ -2900,6 +2989,8 @@ const Profile = (() => {
 
   return {
     renderView, renderEditor,
+    switchTab,
+    renderWallTab, addWallComment, deleteWallComment,
     playTrack,
     toggleProfileVisibility, setProfileVisibility,
     saveProfile, livePreview, collectTheme,
