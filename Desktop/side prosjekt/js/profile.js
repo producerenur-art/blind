@@ -434,9 +434,9 @@ const Profile = (() => {
 
           <!-- Tab bar -->
           <div class="profile-tabs" id="profile-tabs">
-            <button class="profile-tab-btn active" data-tab="om" onclick="Profile.switchTab('om')">Om</button>
-            <button class="profile-tab-btn" data-tab="innhold" onclick="Profile.switchTab('innhold')">🎵 Innhold</button>
-            <button class="profile-tab-btn" data-tab="vegg" onclick="Profile.switchTab('vegg')">💬 Vegg${wallCount ? ` (${wallCount})` : ''}</button>
+            <button class="tab-btn active" data-tab="om" onclick="Profile.switchTab('om')">Om</button>
+            <button class="tab-btn" data-tab="innhold" onclick="Profile.switchTab('innhold')">🎵 Innhold</button>
+            <button class="tab-btn" data-tab="vegg" onclick="Profile.switchTab('vegg')">💬 Vegg${wallCount ? ` (${wallCount})` : ''}</button>
           </div>
 
           <!-- OM-fanen -->
@@ -1626,7 +1626,7 @@ const Profile = (() => {
   function switchTab(tab) {
     document.querySelectorAll('.profile-tab-content').forEach(el =>
       el.classList.toggle('hidden', el.dataset.tab !== tab));
-    document.querySelectorAll('.profile-tab-btn').forEach(btn =>
+    document.querySelectorAll('#profile-tabs .tab-btn').forEach(btn =>
       btn.classList.toggle('active', btn.dataset.tab === tab));
   }
 
@@ -1686,7 +1686,7 @@ const Profile = (() => {
     localStorage.setItem(key, JSON.stringify(wall));
     renderWallTab(username, Auth.getUser(username)?.username === current.username);
     // Update wall count in tab button
-    const tabBtn = document.querySelector('.profile-tab-btn[data-tab="vegg"]');
+    const tabBtn = document.querySelector('#profile-tabs .tab-btn[data-tab="vegg"]');
     if (tabBtn) tabBtn.textContent = `💬 Vegg (${wall.length})`;
     const statEl = document.querySelector('.profile-stats .stat:last-child .stat-value');
     if (statEl) statEl.textContent = wall.length;
@@ -1705,7 +1705,7 @@ const Profile = (() => {
     wall = wall.filter(p => p.id !== commentId);
     localStorage.setItem(key, JSON.stringify(wall));
     document.getElementById(`wallpost-${commentId}`)?.remove();
-    const tabBtn = document.querySelector('.profile-tab-btn[data-tab="vegg"]');
+    const tabBtn = document.querySelector('#profile-tabs .tab-btn[data-tab="vegg"]');
     if (tabBtn) tabBtn.textContent = wall.length ? `💬 Vegg (${wall.length})` : '💬 Vegg';
     const statEl = document.querySelector('.profile-stats .stat:last-child .stat-value');
     if (statEl) statEl.textContent = wall.length;
