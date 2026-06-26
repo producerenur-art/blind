@@ -287,11 +287,123 @@ const Shows = (() => {
           </div>
         </div>
 
+        <!-- GOA GIL MEMORIAL -->
+        <div class="section" style="max-width:900px">
+          <div style="background:linear-gradient(135deg,#0a0a0a,#1a1010,#2a1a0a);border:1px solid rgba(180,140,80,0.25);border-radius:1rem;padding:2rem;text-align:center">
+            <div style="font-size:2.5rem;margin-bottom:0.75rem">🕊</div>
+            <div style="font-size:1.3rem;font-weight:700;color:#c8a96e;margin-bottom:0.5rem">Goa Gil — Resting In Peace</div>
+            <div style="font-size:0.9rem;color:rgba(200,169,110,0.6);margin-bottom:1.25rem;letter-spacing:0.05em">1950 – 2025</div>
+            <p style="color:rgba(255,255,255,0.75);line-height:1.8;max-width:600px;margin:0 auto 1.25rem">
+              Goa Gil — pioneren, sjamanen og sjela bak Goa Trance-rørsla — kviler no i fred.
+              Han vil alltid bli hugsa av alle som har dansa under stjernane til lyden av hans
+              rituelle sett. Hans ande lever vidare i kvar beat og kvar natt den psykedeliske
+              undergrunnen held i live.
+            </p>
+            <em style="color:#a07850;font-style:italic;font-size:0.95rem">
+              «Redefine the Ancient Tribal Ritual for the 21st Century.»
+            </em>
+          </div>
+        </div>
+
         <!-- FESTIVALS -->
         <div class="section" style="max-width:900px">
           <div class="section-header">
             <div class="section-title">🎪 Kommende festivalar</div>
           </div>
+          <a class="shows-festival-card" href="https://www.astral-projection.com/events" target="_blank" rel="noopener noreferrer"
+             style="margin-bottom:1rem">
+            <div class="shows-festival-banner" style="background:linear-gradient(135deg,#0a1628,#0e2244,#0a1628)">
+              <div class="shows-festival-emoji">⭐</div>
+              <div class="shows-festival-dates">Live 2026</div>
+            </div>
+            <div class="shows-festival-body">
+              <div class="shows-festival-name">Astral Projection — Live Shows</div>
+              <div class="shows-festival-loc">🌍 Turné globalt · astral-projection.com/events</div>
+              <div class="shows-festival-theme">Goa Trance · Psytrance — sidan 1991</div>
+              <div class="shows-festival-tags">
+                <span class="shows-festival-tag">⭐ Goa Trance</span>
+                <span class="shows-festival-tag">🌀 Psytrance</span>
+                <span class="shows-festival-tag">🇮🇱 Israel</span>
+                <span class="shows-festival-tag">Dancing Galaxy</span>
+                <span class="shows-festival-tag">Another World</span>
+              </div>
+              <div class="shows-festival-cta">Sjå kommende shows →</div>
+            </div>
+          </a>
+          <a class="shows-festival-card" href="https://www.dacru.be/" target="_blank" rel="noopener noreferrer"
+             style="margin-bottom:1rem">
+            <div class="shows-festival-banner" style="background:linear-gradient(135deg,#0e0d1f,#1b1040,#0d0a2e)">
+              <div class="shows-festival-emoji">🏔</div>
+              <div class="shows-festival-dates">18–21 jun 2026</div>
+            </div>
+            <div class="shows-festival-body">
+              <div class="shows-festival-name">Solomonari Festival 2026</div>
+              <div class="shows-festival-loc">📍 Transylvania, Romania 🇷🇴</div>
+              <div class="shows-festival-theme">The Transylvanian Gathering — av DaCru Records</div>
+              <div class="shows-festival-tags">
+                <span class="shows-festival-tag">🌀 Psychedelic Trance</span>
+                <span class="shows-festival-tag">⚡ Full-On</span>
+                <span class="shows-festival-tag">🇧🇪 DaCru Records</span>
+              </div>
+              <div class="shows-festival-cta">Meir info på dacru.be →</div>
+            </div>
+          </a>
+          <a class="shows-festival-card" href="https://shunyatarecords.bandcamp.com/" target="_blank" rel="noopener noreferrer"
+             style="margin-bottom:1rem">
+            <div class="shows-festival-banner" style="background:linear-gradient(135deg,#050510,#0d0d2e,#150d3a)">
+              <div class="shows-festival-emoji">🌌</div>
+              <div class="shows-festival-dates">Bandcamp</div>
+            </div>
+            <div class="shows-festival-body">
+              <div class="shows-festival-name">Shunyata Records</div>
+              <div class="shows-festival-loc">🌍 Djup, rituell og meditativ Goa Trance</div>
+              <div class="shows-festival-theme">VA — Active Meditation in the Memory of Goa Gil</div>
+              <div class="shows-festival-tags">
+                <span class="shows-festival-tag">🌌 Goa Trance</span>
+                <span class="shows-festival-tag">🧘 Meditasjon</span>
+                <span class="shows-festival-tag">🕊 Goa Gil Tribute</span>
+              </div>
+              <div class="shows-festival-cta">Utforsk på Bandcamp →</div>
+            </div>
+          </a>
+          <a class="shows-festival-card" href="https://youngerbrothermusic.bandcamp.com/music" target="_blank" rel="noopener noreferrer"
+             style="margin-bottom:1rem">
+            <div class="shows-festival-banner" style="background:linear-gradient(135deg,#0a1a2e,#122840,#1a3a5c)">
+              <div class="shows-festival-emoji">🧬</div>
+              <div class="shows-festival-dates">Kommande 2026</div>
+            </div>
+            <div class="shows-festival-body">
+              <div class="shows-festival-name">Younger Brother</div>
+              <div class="shows-festival-loc">🌍 Simon Posford + Benji Vaughan · Psykedelisk elektronika</div>
+              <div class="shows-festival-theme">A Flock of Bleeps · FFWD>> · Vaccine</div>
+              <div class="shows-festival-tags">
+                <span class="shows-festival-tag">🧬 Electronica</span>
+                <span class="shows-festival-tag">⚡ Psykedelisk</span>
+                <span class="shows-festival-tag">🎛 Simon Posford</span>
+                <span class="shows-festival-tag">Bandcamp</span>
+              </div>
+              <div class="shows-festival-cta">Utforsk musikken på Bandcamp →</div>
+            </div>
+          </a>
+          <a class="shows-festival-card" href="https://www.shponglemusic.com/" target="_blank" rel="noopener noreferrer"
+             style="margin-bottom:1rem">
+            <div class="shows-festival-banner" style="background:linear-gradient(135deg,#0d0829,#1a0b3d,#2a0d5e)">
+              <div class="shows-festival-emoji">🔮</div>
+              <div class="shows-festival-dates">shponglemusic.com</div>
+            </div>
+            <div class="shows-festival-body">
+              <div class="shows-festival-name">Shpongle</div>
+              <div class="shows-festival-loc">🌍 Raja Ram + Simon Posford · Psybient sidan 1998</div>
+              <div class="shows-festival-theme">Are You Shpongled? — Codex VI</div>
+              <div class="shows-festival-tags">
+                <span class="shows-festival-tag">🔮 Psybient</span>
+                <span class="shows-festival-tag">🌊 Psychill</span>
+                <span class="shows-festival-tag">🌍 Verdsmusikk</span>
+                <span class="shows-festival-tag">👑 T.I.P. Records</span>
+              </div>
+              <div class="shows-festival-cta">Offisiell nettstad →</div>
+            </div>
+          </a>
           <a class="shows-festival-card" href="https://hadratrancefestival.net/en/home/" target="_blank" rel="noopener noreferrer">
             <div class="shows-festival-banner" style="background:linear-gradient(135deg,#1a0a2e,#16213e,#0f3460)">
               <div class="shows-festival-emoji">🎪</div>

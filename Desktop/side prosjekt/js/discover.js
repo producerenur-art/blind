@@ -607,6 +607,18 @@ const Discover = (() => {
           onclick="Discover.switchTab('tip-raja')">🌀 Raja Ram / T.I.P.</button>
         <button class="disc-tab-btn ${activeTab === 'astral' ? 'active' : ''}"
           onclick="Discover.switchTab('astral')">⭐ Astral Projection</button>
+        <button class="disc-tab-btn ${activeTab === 'shpongle' ? 'active' : ''}"
+          onclick="Discover.switchTab('shpongle')">🔮 Shpongle</button>
+        <button class="disc-tab-btn ${activeTab === 'younger-brother' ? 'active' : ''}"
+          onclick="Discover.switchTab('younger-brother')">🧬 Younger Brother</button>
+        <button class="disc-tab-btn ${activeTab === 'goa-gil' ? 'active' : ''}"
+          onclick="Discover.switchTab('goa-gil')">🕊 Goa Gil — R.I.P.</button>
+        <button class="disc-tab-btn ${activeTab === 'shunyata' ? 'active' : ''}"
+          onclick="Discover.switchTab('shunyata')">🌌 Shunyata Records</button>
+        <button class="disc-tab-btn ${activeTab === 'kukan-dub' ? 'active' : ''}"
+          onclick="Discover.switchTab('kukan-dub')">🌫 Kukan Dub Lagan</button>
+        <button class="disc-tab-btn ${activeTab === 'cosmic-leaf' ? 'active' : ''}"
+          onclick="Discover.switchTab('cosmic-leaf')">🌿 Cosmic Leaf</button>
       </div>`;
   }
 
@@ -623,7 +635,7 @@ const Discover = (() => {
     const counts = getGenreCounts();
     return GENRES.map(g => {
       const count = g.tag === 'all' ? allTracks.length : (counts[g.tag] || 0);
-      const isEmpty = count === 0 && g.tag !== 'all';
+      const isEmpty = count === 0 && g.tag !== 'all' && g.tag !== 'chill';
       return `
         <button class="disc-genre-btn ${activeGenre === g.tag ? 'active' : ''} ${isEmpty ? 'disc-genre-btn--empty' : ''}"
           onclick="Discover.setGenre('${g.tag}')">${g.emoji} ${g.label}${count > 0 ? `<span class="disc-genre-count">${count}</span>` : ''}</button>
@@ -867,6 +879,7 @@ const Discover = (() => {
                   <a class="disc-useful-link" href="https://triniq.com/" target="_blank" rel="noopener noreferrer">triniq.com</a>
                   <a class="disc-useful-link" href="https://trancentral.tv/" target="_blank" rel="noopener noreferrer">trancentral.tv</a>
                   <a class="disc-useful-link" href="https://www.psybient.org/" target="_blank" rel="noopener noreferrer">psybient.org</a>
+                  <a class="disc-useful-link" href="https://cosmicleaf.gr/" target="_blank" rel="noopener noreferrer">cosmicleaf.gr</a>
                 </div>
               </div>
             </div>
@@ -929,6 +942,36 @@ const Discover = (() => {
         <!-- ASTRAL PROJECTION TAB (hidden by default) -->
         <div id="disc-astral-tab" class="hidden">
           ${renderAstralTab()}
+        </div>
+
+        <!-- SHPONGLE TAB (hidden by default) -->
+        <div id="disc-shpongle-tab" class="hidden">
+          ${renderShpongleTab()}
+        </div>
+
+        <!-- YOUNGER BROTHER TAB (hidden by default) -->
+        <div id="disc-younger-brother-tab" class="hidden">
+          ${renderYoungerBrotherTab()}
+        </div>
+
+        <!-- GOA GIL MEMORIAL TAB (hidden by default) -->
+        <div id="disc-goa-gil-tab" class="hidden">
+          ${renderGoaGilTab()}
+        </div>
+
+        <!-- SHUNYATA RECORDS TAB (hidden by default) -->
+        <div id="disc-shunyata-tab" class="hidden">
+          ${renderShunyataTab()}
+        </div>
+
+        <!-- KUKAN DUB LAGAN TAB (hidden by default) -->
+        <div id="disc-kukan-dub-tab" class="hidden">
+          ${renderKukanDubTab()}
+        </div>
+
+        <!-- COSMIC LEAF TAB (hidden by default) -->
+        <div id="disc-cosmic-leaf-tab" class="hidden">
+          ${renderCosmicLeafTab()}
         </div>
 
       </div>`;
@@ -1438,6 +1481,950 @@ const Discover = (() => {
     `;
   }
 
+  function renderDacruTab() {
+    const ARTISTS = [
+      { icon: '🌀', name: 'DigiCult',           genres: 'Psychedelic Trance · Full-On' },
+      { icon: '⚡', name: 'Talamasca',           genres: 'Psychedelic Trance · Goa' },
+      { icon: '🌊', name: 'E-Mov',              genres: 'Progressive Psytrance' },
+      { icon: '🌿', name: 'Spirit Architect',   genres: 'Psychedelic Trance' },
+      { icon: '🏖', name: 'Tropical Bleyage',   genres: 'Full-On · Psychedelic Trance' },
+      { icon: '🌀', name: 'U-Recken',           genres: 'Psychedelic Trance · Full-On' },
+      { icon: '💡', name: 'Ephedrix',           genres: 'Psychedelic Trance' },
+      { icon: '🔢', name: 'Bitkit',             genres: 'Psychedelic Trance · Progressive' },
+      { icon: '⏱', name: 'Chronos',            genres: 'Psychedelic Trance' },
+      { icon: '🦅', name: 'Aquila',             genres: 'Psychedelic Trance · Full-On' },
+      { icon: '🔄', name: 'Alternative Control', genres: 'Psychedelic Trance' },
+      { icon: '🌙', name: 'Morsei',             genres: 'Psychedelic Trance · Collaboration (ARCANA)' },
+    ];
+    const TRACKS = [
+      'Talamasca – Day Dreaming',
+      'E-Mov – Cenote',
+      'Spirit Architect – Vertigo',
+      'Tropical Bleyage – Deep Motion',
+      'U-Recken – Stop Time',
+      'DigiCult – Star Travel',
+      'Ephedrix – Astral Ignition',
+      'Bitkit – Logical',
+      'Chronos – Between Elements',
+      'Aquila – Down Under',
+      'Alternative Control – Anaxadora',
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0e0d1f,#1b1040,#0d0a2e)">
+        <div class="disc-psy-banner-emoji">🌀</div>
+        <div>
+          <div class="disc-psy-banner-title">DaCru Records</div>
+          <div class="disc-psy-banner-sub">Psychedelic Trance Label & Events — dacru.be</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🏷</span>
+          <span class="disc-psy-section-title">Om labelet</span>
+          <span class="disc-psy-section-badge">dacru.be</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://www.dacru.be/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">🌀</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">DaCru Records</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Belgisk psychedelic trance-label og event-arrangør. Heim til nokre av dei
+                viktigaste psytrance-artistane i verda — Talamasca, DigiCult, U-Recken og fleire.
+                Arrangerer festivalen Solomonari i Transylvania og andre større psytrance-events.
+                Kjend for høg kvalitet og sterk artistprofil.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">🌀 Psychedelic Trance</span>
+                <span class="disc-psy-section-badge">⚡ Full-On</span>
+                <span class="disc-psy-section-badge">🇧🇪 Belgia</span>
+                <span class="disc-psy-section-badge">🎪 Events</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎙</span>
+          <span class="disc-psy-section-title">Artistar</span>
+          <span class="disc-psy-section-badge">${ARTISTS.length} artistar</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${ARTISTS.map(a => `
+            <div class="disc-psy-label-card">
+              <div class="disc-psy-label-icon">${a.icon}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(a.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(a.genres)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎵</span>
+          <span class="disc-psy-section-title">Utvalde spor</span>
+          <span class="disc-psy-section-badge">Frå DaCru-katalogen</span>
+        </div>
+        <div class="disc-psy-mix-grid">
+          ${TRACKS.map(t => `
+            <div class="disc-psy-mix-card" style="cursor:default">
+              <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#1b1040,#0d0a2e);font-size:1.2rem">🌀</div>
+              <div class="disc-psy-mix-info">
+                <div class="disc-psy-mix-title">${escHtml(t.split(' – ')[1] || t)}</div>
+                <div class="disc-psy-mix-artist">${escHtml(t.split(' – ')[0] || '')}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎪</span>
+          <span class="disc-psy-section-title">Solomonari Festival 2026</span>
+          <span class="disc-psy-section-badge">Transylvania, Romania</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://www.dacru.be/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start">
+            <div class="disc-psy-label-icon" style="font-size:2.2rem">🏔</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name">Solomonari Festival 2026</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                18–21 juni 2026 · Transylvania, Romania 🇷🇴<br>
+                Den transylvanske samlinga er tilbake — ein intim psytrance-festival i naturskjønne omgivnader
+                i hjartet av Romania. Arrangert av DaCru Records.
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-title">Finn DaCru Records</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          <a class="disc-psy-label-card" href="https://www.dacru.be/" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">🌐</div>
+            <div><div class="disc-psy-label-name">dacru.be</div><div class="disc-psy-label-desc">Offisiell nettstad — artistar, utgivingar og events</div></div>
+          </a>
+          <a class="disc-psy-label-card" href="https://www.facebook.com/dacrurecords" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">f</div>
+            <div><div class="disc-psy-label-name">Facebook</div><div class="disc-psy-label-desc">Nyhende og utgivingar</div></div>
+          </a>
+          <a class="disc-psy-label-card" href="https://www.instagram.com/dacru_records" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">📸</div>
+            <div><div class="disc-psy-label-name">Instagram</div><div class="disc-psy-label-desc">Artwork og oppdateringar</div></div>
+          </a>
+          <a class="disc-psy-label-card" href="https://www.youtube.com/user/dacru" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">▶</div>
+            <div><div class="disc-psy-label-name">YouTube</div><div class="disc-psy-label-desc">Sett, videoar og live-opptak</div></div>
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTipRajaTab() {
+    const TIP_ARTISTS = [
+      { icon: '👑', name: 'Raja Ram',            genres: 'Goa Trance · Psytrance · Godfather of the Scene' },
+      { icon: '🎛️', name: '1200 Micrograms',     genres: 'Psychedelic Trance · Full-On' },
+      { icon: '🌌', name: 'Astral-Projection',   genres: 'Goa Trance · Psytrance' },
+      { icon: '🎷', name: 'Lucas / SuperModule', genres: 'Psychedelic Trance' },
+      { icon: '🔢', name: 'Mandelbrot',          genres: 'Psychedelic Trance · Progressive' },
+      { icon: '🎵', name: 'DJ CHICAGO',          genres: 'Psychedelic Trance' },
+      { icon: '🚀', name: 'Outsiders',           genres: 'Psychedelic Trance · Progressive' },
+      { icon: '🌟', name: 'IRIDIAN',             genres: 'Psychedelic Trance' },
+      { icon: '💡', name: 'Logic Bomb',          genres: 'Psychedelic Trance · Full-On' },
+      { icon: '⚡', name: 'The Zap!',            genres: 'Psychedelic Trance · Collaborative' },
+      { icon: '🌐', name: 'BRAHMA',              genres: 'Psychedelic Trance' },
+    ];
+    const RAJA_PROJECTS = [
+      { icon: '🎵', name: 'The Quintessence',     desc: 'Psych rock / early spiritual music — Island Records (1969–1972)' },
+      { icon: '∞', name: 'The Infinity Project', desc: 'Klassisk Goa Trance-duo — Mystical Experiences (1995), Feeling Weird (1995)' },
+      { icon: '🔮', name: 'Shpongle',            desc: 'Med Simon Posford — verdas mest kjende psybient-prosjekt. Are You Shpongled? (1998)' },
+      { icon: '💊', name: '1200 Micrograms',     desc: 'Full-On psytrance supergruppe — sjølvtitulert album (2002) og Heroes of Imagination (2003)' },
+      { icon: '⚡', name: 'The Zap!',            desc: 'Dark psychedelic trance — Big Bang (2008)' },
+    ];
+    const MIXES = [
+      'Spaceships Of The Imagination (2000)',
+      "Raja Ram's Stash Bag (2002)",
+      "Raja Ram's Stash Bag Vol. 2 (2003)",
+      "Raja Ram's Stash Bag Vol. 3 — Smokers Jokers (2004)",
+      "Raja Ram's Stash Bag Vol. 4 (2006)",
+      'The Anthology (2007)',
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#1a0d2e,#2d1060,#1a0d2e)">
+        <div class="disc-psy-banner-emoji">👑</div>
+        <div>
+          <div class="disc-psy-banner-title">Raja Ram & T.I.P. Records</div>
+          <div class="disc-psy-banner-sub">Godfather of the Psychedelic Global Underground — sidan 1994</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">👑</span>
+          <span class="disc-psy-section-title">Raja Ram</span>
+          <span class="disc-psy-section-badge">tiprecords.com</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://www.tiprecords.com/artists/raja-ram/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">👑</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Raja Ram — The Godfather</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Raja Ram er "ringmaster" og "gudfaren" av den psykedeliske globale undergrunnen.
+                Han har inspirert artistar og trollbunde publikum verda over i 40 år.
+                Prosjekta og samarbeida er talrike: The Quintessence, The Infinity Project,
+                The Zap!, Shpongle og 1200 Micrograms. Gründar av T.I.P. Records.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">🌀 Goa Trance</span>
+                <span class="disc-psy-section-badge">🔮 Shpongle</span>
+                <span class="disc-psy-section-badge">💊 1200 Mics</span>
+                <span class="disc-psy-section-badge">🇮🇱 Israel</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎼</span>
+          <span class="disc-psy-section-title">Raja Rams prosjektar</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${RAJA_PROJECTS.map(p => `
+            <div class="disc-psy-label-card">
+              <div class="disc-psy-label-icon">${p.icon}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(p.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(p.desc)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎵</span>
+          <span class="disc-psy-section-title">Raja Ram — DJ-miksesett</span>
+        </div>
+        <div class="disc-psy-mix-grid">
+          ${MIXES.map(m => `
+            <div class="disc-psy-mix-card" style="cursor:default">
+              <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#2d1060,#1a0d2e);font-size:1.2rem">👑</div>
+              <div class="disc-psy-mix-info">
+                <div class="disc-psy-mix-title">${escHtml(m)}</div>
+                <div class="disc-psy-mix-artist">Raja Ram · T.I.P. Records</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🏷</span>
+          <span class="disc-psy-section-title">T.I.P. Records — Artistar</span>
+          <span class="disc-psy-section-badge">Sidan 1994</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${TIP_ARTISTS.map(a => `
+            <div class="disc-psy-label-card">
+              <div class="disc-psy-label-icon">${a.icon}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(a.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(a.genres)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-title">Finn T.I.P. Records</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          <a class="disc-psy-label-card" href="https://www.tiprecords.com/" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">🌐</div>
+            <div><div class="disc-psy-label-name">tiprecords.com</div><div class="disc-psy-label-desc">Offisiell nettstad — artistar og utgivingar</div></div>
+          </a>
+          <a class="disc-psy-label-card" href="https://www.instagram.com/raja_rams_tip_records/" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">📸</div>
+            <div><div class="disc-psy-label-name">Instagram</div><div class="disc-psy-label-desc">@raja_rams_tip_records</div></div>
+          </a>
+          <a class="disc-psy-label-card" href="https://www.facebook.com/profile.php?id=100064907913247" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">f</div>
+            <div><div class="disc-psy-label-name">Facebook</div><div class="disc-psy-label-desc">Nyhende og utgivingar</div></div>
+          </a>
+          <a class="disc-psy-label-card" href="https://soundcloud.com/tiprecords" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">☁️</div>
+            <div><div class="disc-psy-label-name">SoundCloud</div><div class="disc-psy-label-desc">Stream T.I.P.-musikk gratis</div></div>
+          </a>
+          <a class="disc-psy-label-card" href="https://www.youtube.com/user/TipWorldRecords" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">▶</div>
+            <div><div class="disc-psy-label-name">YouTube</div><div class="disc-psy-label-desc">Musikkvideor og live-sett</div></div>
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCosmicLeafTab() {
+    const LINKS = [
+      { emoji: '🌐', name: 'cosmicleaf.gr',   desc: 'Offisiell nettstad — artistar, utgivingar og nyhende',    url: 'https://cosmicleaf.gr/' },
+      { emoji: '🎵', name: 'Bandcamp',         desc: 'Stream og kjøp heile katalogen',                         url: 'https://cosmicleaf.bandcamp.com/' },
+      { emoji: '☁️', name: 'SoundCloud',       desc: 'Mixes og kuraterte spillelister',                        url: 'https://soundcloud.com/cosmic-leaf' },
+      { emoji: '▶',  name: 'YouTube',          desc: 'Musikkvideor, livesett og mixes',                        url: 'https://www.youtube.com/@CosmicLeafRecords' },
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#041a08,#0a2e10,#041a08)">
+        <div class="disc-psy-banner-emoji">🌿</div>
+        <div>
+          <div class="disc-psy-banner-title">Cosmic Leaf Records</div>
+          <div class="disc-psy-banner-sub">Psybient · Psychill · Downtempo · Chill — frå Hellas til verda</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🌿</span>
+          <span class="disc-psy-section-title">Om Cosmic Leaf</span>
+          <span class="disc-psy-section-badge">cosmicleaf.gr</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://cosmicleaf.gr/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start;border-color:rgba(60,160,80,0.35);background:rgba(4,20,8,0.5)">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">🌿</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Cosmic Leaf Records</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Cosmic Leaf er eit gresk plateselskap spesialisert i psybient, psychill, downtempo
+                og chill-elektronika. Dei har sidan starten bygd opp ein rik katalog av mjuk,
+                organisk og meditativ musikk frå artistar over heile verda — alltid med fokus på
+                kvalitet, natur og indre ro. Eit must for alle fans av roleg og atmosfærisk elektronika.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">🌿 Chill</span>
+                <span class="disc-psy-section-badge">🌌 Psybient</span>
+                <span class="disc-psy-section-badge">🌊 Psychill</span>
+                <span class="disc-psy-section-badge">🇬🇷 Hellas</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-title">Finn Cosmic Leaf</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${LINKS.map(l => `
+            <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${l.emoji}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(l.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderKukanDubTab() {
+    const LINKS = [
+      { emoji: '🎵', name: 'Searching for a Fogbow — Bandcamp', desc: 'Stream og kjøp albumet på Bandcamp',              url: 'https://kukan-dub-lagan.bandcamp.com/album/searching-for-a-fogbow' },
+      { emoji: '🌐', name: 'Kukan Dub Lagan / Bandcamp',        desc: 'Heile diskografien — alle album og singlar',       url: 'https://kukan-dub-lagan.bandcamp.com/' },
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#071a0f,#0d2b1a,#071a0f)">
+        <div class="disc-psy-banner-emoji">🌫</div>
+        <div>
+          <div class="disc-psy-banner-title">Kukan Dub Lagan</div>
+          <div class="disc-psy-banner-sub">Atmosfærisk dub, chill og eksperimentell elektronika</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🌫</span>
+          <span class="disc-psy-section-title">Om Kukan Dub Lagan</span>
+          <span class="disc-psy-section-badge">Bandcamp</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://kukan-dub-lagan.bandcamp.com/album/searching-for-a-fogbow"
+             target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start;border-color:rgba(60,160,80,0.3);background:rgba(5,20,10,0.5)">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">🌫</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Searching for a Fogbow</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Kukan Dub Lagan lagar atmosfærisk og djup elektronika i skjæringspunktet mellom
+                dub, chill og eksperimentell musikk. «Searching for a Fogbow» er eit vakkert
+                og poetisk album som tek deg med på ei roleg indre reise — perfekt for dei stille
+                timane der musikken smeltar saman med tankane.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">🌿 Chill</span>
+                <span class="disc-psy-section-badge">🎚 Dub</span>
+                <span class="disc-psy-section-badge">🌫 Atmosfærisk</span>
+                <span class="disc-psy-section-badge">🧪 Eksperimentell</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-title">Finn Kukan Dub Lagan</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${LINKS.map(l => `
+            <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${l.emoji}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(l.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderShunyataTab() {
+    const RELEASES = [
+      { emoji: '🕊', title: 'VA — Active Meditation in the Memory of Goa Gil', desc: 'Tributkompilasjon til minne om Goa Gil — djup rituell Goa Trance frå verda over', url: 'https://shunyatarecords.bandcamp.com/album/va-active-meditation-in-the-memory-of-goa-gil' },
+      { emoji: '🌌', title: 'Heile katalogen', desc: 'Alle utgivingar frå Shunyata Records på Bandcamp — stream og last ned', url: 'https://shunyatarecords.bandcamp.com/' },
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#050510,#0d0d2e,#150d3a)">
+        <div class="disc-psy-banner-emoji">🌌</div>
+        <div>
+          <div class="disc-psy-banner-title">Shunyata Records</div>
+          <div class="disc-psy-banner-sub">Djup, rituell og meditativ Goa Trance — frå undergrunnen til verda</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🌌</span>
+          <span class="disc-psy-section-title">Om Shunyata Records</span>
+          <span class="disc-psy-section-badge">shunyatarecords.bandcamp.com</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://shunyatarecords.bandcamp.com/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start;border-color:rgba(80,60,160,0.4);background:rgba(10,5,30,0.5)">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">🌌</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Shunyata Records</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Shunyata Records er eit plateselskap dedikert til djup, rituell og meditativ psykedelisk
+                musikk i Goa Trance-tradisjonen. Namnet «Shunyata» kjem frå sanskrit og tyder tomheit
+                eller openheit — den opne bevisste tilstanden som musikken inviterer deg inn i.
+                Sjekk heile katalogen og dei nyaste utgivingane på Bandcamp.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">🌌 Goa Trance</span>
+                <span class="disc-psy-section-badge">🧘 Meditasjon</span>
+                <span class="disc-psy-section-badge">🥁 Rituell</span>
+                <span class="disc-psy-section-badge">🕊 Goa Gil</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">💿</span>
+          <span class="disc-psy-section-title">Utgivingar</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${RELEASES.map(r => `
+            <a class="disc-psy-label-card" href="${escHtml(r.url)}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${r.emoji}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(r.title)}</div>
+                <div class="disc-psy-label-desc">${escHtml(r.desc)}</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎪</span>
+          <span class="disc-psy-section-title">Kommande shows / events</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <div class="disc-psy-label-card" style="cursor:default;border-color:rgba(80,60,160,0.3)">
+            <div class="disc-psy-label-icon">🌐</div>
+            <div>
+              <div class="disc-psy-label-name">Følg Shunyata Records for kommande shows</div>
+              <div class="disc-psy-label-desc">Sjekk Bandcamp for dei siste nyheitene om utgivingar og events</div>
+            </div>
+          </div>
+        </div>
+        <a class="disc-psy-cal-link" href="https://shunyatarecords.bandcamp.com/" target="_blank" rel="noopener noreferrer">
+          Gå til Shunyata Records på Bandcamp →
+        </a>
+      </div>
+    `;
+  }
+
+  function renderGoaGilTab() {
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0a0a0a,#1a1010,#2a1a0a)">
+        <div class="disc-psy-banner-emoji">🕊</div>
+        <div>
+          <div class="disc-psy-banner-title">Goa Gil — Resting In Peace</div>
+          <div class="disc-psy-banner-sub">1950 – 2025 · Han vil alltid bli hugsa · The Last Shaman of the Psychedelic Underground</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🕊</span>
+          <span class="disc-psy-section-title">In Memoriam — Goa Gil</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <div class="disc-psy-label-card" style="gap:1.2rem;align-items:flex-start;cursor:default;border-color:rgba(180,140,80,0.3);background:rgba(40,25,10,0.5)">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">🕊</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem;color:#c8a96e">Goa Gil — The Last Shaman</div>
+              <div class="disc-psy-label-desc" style="line-height:1.8;font-size:0.95rem">
+                Goa Gil var ein av pionerane bak Goa Trance-rørsla og ein ekte skyttar av den psykedeliske
+                undergrunnen. Frå stranda i Goa, India, leia han legendariske rituelle DJ-sett som varte i
+                dagar — ein transformasjonsritual for heile generasjonar av dansarar og drøymarar.
+                Han henta inspirasjon frå dei gamle shamanistiske tradisjonane og brukte musikken som eit
+                verktøy for indre reiser og kollektiv vaknad.
+                <br><br>
+                <em style="color:#a07850;font-style:italic">
+                  «Redefine the Ancient Tribal Ritual for the 21st Century.»
+                </em>
+                <br><br>
+                Goa Gil kviler i fred. Han vil alltid bli hugsa av alle som har dansa under stjernane til
+                lyden av hans musikk. Hans ande lever vidare i kvar beat, kvart set og kvar natt som
+                den psykedeliske undergrunnen held i live.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge" style="border-color:rgba(180,140,80,0.4);color:#c8a96e">🕊 R.I.P.</span>
+                <span class="disc-psy-section-badge">🌀 Goa Trance</span>
+                <span class="disc-psy-section-badge">🇮🇳 Goa, India</span>
+                <span class="disc-psy-section-badge">🥁 Shaman</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">💿</span>
+          <span class="disc-psy-section-title">VA — Active Meditation in the Memory of Goa Gil</span>
+          <span class="disc-psy-section-badge">Shunyata Records</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://shunyatarecords.bandcamp.com/album/va-active-meditation-in-the-memory-of-goa-gil"
+             target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start;border-color:rgba(100,60,160,0.4);background:rgba(20,10,40,0.5)">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">💿</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Active Meditation in the Memory of Goa Gil</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Ein tributkompilasjon frå Shunyata Records til minne om Goa Gil.
+                Artistar frå heile verda har kome saman for å heidra pioneren med djup,
+                rituelle og meditativt psykedelisk musikk. Stream eller last ned på Bandcamp.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">💿 Shunyata Records</span>
+                <span class="disc-psy-section-badge">🕊 Tribute</span>
+                <span class="disc-psy-section-badge">🌀 Goa Trance</span>
+                <span class="disc-psy-section-badge">🧘 Active Meditation</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-title">Finn Shunyata Records</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          <a class="disc-psy-label-card" href="https://shunyatarecords.bandcamp.com/" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">🎵</div>
+            <div>
+              <div class="disc-psy-label-name">Shunyata Records / Bandcamp</div>
+              <div class="disc-psy-label-desc">Heile katalogen — Goa Trance og psykedelisk musikk</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderYoungerBrotherTab() {
+    const ALBUMS = [
+      { year: '2003', title: 'A Flock of Bleeps',          desc: 'Debut — surrealisme og psykedelisk elektronika. «The Fruiting Body», «Vaccine»' },
+      { year: '2007', title: 'The Last Days of Gravity',   desc: 'Mørkare og meir rock-inspirert. «Sleepy Steeple», «Ribbon on a Branch»' },
+      { year: '2011', title: 'FFWD>>',                     desc: 'Energisk og psykedelisk rave. «Shine», «Train», «Psychic Gibbon»' },
+      { year: '2015', title: 'Vaccine',                    desc: 'Modent og vakkert — electronica, ambient, psybient. «Step Into the Light»' },
+    ];
+    const SHOWS = [
+      { date: 'TBA 2026', name: 'Ozora Festival', loc: 'Ungarn 🇭🇺', url: 'https://ozorafestival.eu/' },
+      { date: 'TBA 2026', name: 'Boom Festival',  loc: 'Portugal 🇵🇹', url: 'https://www.boomfestival.org/' },
+    ];
+    const LINKS = [
+      { emoji: '🎵', name: 'Bandcamp',   desc: 'Stream og kjøp heile diskografien',              url: 'https://youngerbrothermusic.bandcamp.com/music' },
+      { emoji: '🌐', name: 'Nettstad',   desc: 'Offisiell nettstad — nyhende og turné',           url: 'https://www.youngerbrothermusic.com/' },
+      { emoji: '☁️', name: 'SoundCloud', desc: 'Mixes og sporar gratis',                         url: 'https://soundcloud.com/younger-brother-music' },
+      { emoji: '▶',  name: 'YouTube',    desc: 'Musikkvideor og liveopptrekk',                   url: 'https://www.youtube.com/@YoungerBrotherMusic' },
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0a1a2e,#122840,#1a3a5c)">
+        <div class="disc-psy-banner-emoji">🧬</div>
+        <div>
+          <div class="disc-psy-banner-title">Younger Brother</div>
+          <div class="disc-psy-banner-sub">Simon Posford + Benji Vaughan — psykedelisk elektronika og rave sidan 2001</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🧬</span>
+          <span class="disc-psy-section-title">Om Younger Brother</span>
+          <span class="disc-psy-section-badge">Bandcamp</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://youngerbrothermusic.bandcamp.com/music" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">🧬</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Younger Brother — A Flock of Bleeps</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Younger Brother er eit psykedelisk elektronika-prosjekt av Simon Posford (Hallucinogen, Shpongle)
+                og Benji Vaughan. Deira musikk spenner frå surrealisme og eksperimentell elektronika
+                til djup ambient og rave — alltid med ein distinkt psykedelisk og humoristisk edge.
+                Utforsk heile diskografien på Bandcamp.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">🧬 Psykedelisk</span>
+                <span class="disc-psy-section-badge">🎛 Electronica</span>
+                <span class="disc-psy-section-badge">⚡ Rave</span>
+                <span class="disc-psy-section-badge">🎛 Simon Posford</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">📀</span>
+          <span class="disc-psy-section-title">Diskografi</span>
+          <span class="disc-psy-section-badge">2003–2015</span>
+        </div>
+        <div class="disc-psy-mix-grid">
+          ${ALBUMS.map(a => `
+            <div class="disc-psy-mix-card" style="cursor:default">
+              <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#122840,#1a3a5c);font-size:1.2rem">🧬</div>
+              <div class="disc-psy-mix-info">
+                <div class="disc-psy-mix-title">${escHtml(a.title)} <span style="opacity:0.6;font-size:0.8em">(${escHtml(a.year)})</span></div>
+                <div class="disc-psy-mix-artist">${escHtml(a.desc)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎪</span>
+          <span class="disc-psy-section-title">Kommande shows 2026</span>
+        </div>
+        <div class="disc-psy-festival-list">
+          ${SHOWS.map(s => `
+            <a class="disc-psy-festival-card" href="${escHtml(s.url)}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-festival-date">
+                <div class="disc-psy-festival-date-day">TBA</div>
+                <div class="disc-psy-festival-date-mon">2026</div>
+              </div>
+              <div class="disc-psy-festival-body">
+                <div class="disc-psy-festival-name">${escHtml(s.name)}</div>
+                <div class="disc-psy-festival-loc">${s.loc}</div>
+                <div class="disc-psy-festival-tags">
+                  <span class="disc-psy-festival-tag disc-psy-festival-upcoming">Kommande</span>
+                  <span class="disc-psy-festival-tag">🧬 Younger Brother</span>
+                </div>
+              </div>
+              <span class="disc-psy-festival-arrow">→</span>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-title">Finn Younger Brother</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${LINKS.map(l => `
+            <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${l.emoji}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(l.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderShpongleTab() {
+    const ALBUMS = [
+      { year: '1998', title: 'Are You Shpongled?',                   desc: 'Debutalbumet — grunnla psybient-sjangeren. «Divine Moments of Truth», «Shpongle Falls»' },
+      { year: '2001', title: 'Tales of the Inexpressible',           desc: 'Djupare og meir organisk — «Shpongle Falls» og «My Head Feels Like a Frisbee»' },
+      { year: '2005', title: 'Nothing Lasts... But Nothing Is Lost', desc: 'Ambisjøst dobbeltalbum — 22 spor, 73 min. Ei reise gjennom bevisstheit og transformasjon' },
+      { year: '2009', title: 'Ineffable Mysteries from Shpongleland', desc: 'Live-inspirert studio — «Ineffable Mysteries», «The Stamen of the Shaman»' },
+      { year: '2013', title: 'Museum of Consciousness',              desc: 'Maturesert og filmisk. «How the Jellyfish Jumped Up the Mountain», «Further Adventures in Shpongleland»' },
+      { year: '2017', title: 'Codex VI',                             desc: 'Det siste studioalbumet — hypnotisk og djup psybient. «Juggling Molecules», «Qualia»' },
+    ];
+    const LINKS = [
+      { emoji: '🌐', name: 'shponglemusic.com',    desc: 'Offisiell nettstad — musikk, nyhende og turné',    url: 'https://www.shponglemusic.com/' },
+      { emoji: '📀', name: 'Bandcamp',             desc: 'Stream og kjøp heile diskografien',                 url: 'https://shpongle.bandcamp.com/' },
+      { emoji: '☁️', name: 'SoundCloud',           desc: 'Mixes og sporar gratis',                           url: 'https://soundcloud.com/shpongle' },
+      { emoji: '▶',  name: 'YouTube',              desc: 'Offisiell kanal — livesett og musikkvideor',        url: 'https://www.youtube.com/@ShpongleOfficial' },
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0d0829,#1a0b3d,#2a0d5e,#0d0829)">
+        <div class="disc-psy-banner-emoji">🔮</div>
+        <div>
+          <div class="disc-psy-banner-title">Shpongle</div>
+          <div class="disc-psy-banner-sub">Raja Ram + Simon Posford — verdas mest kjende psybient-prosjekt sidan 1998</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🔮</span>
+          <span class="disc-psy-section-title">Om Shpongle</span>
+          <span class="disc-psy-section-badge">shponglemusic.com</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://www.shponglemusic.com/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">🔮</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Shpongle — Are You Shpongled?</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Shpongle er eit psybient-prosjekt av Raja Ram og Simon Posford (Hallucinogen),
+                grunnlagt i 1996. Med sin unike samansmeltning av verdamusikk, psykedelisk trance,
+                ambient og organiske instrument har dei definert og forma heile sjangeren psybient.
+                Frå den ikoniske debuten «Are You Shpongled?» (1998) til «Codex VI» (2017) —
+                ei reise gjennom bevisstheit og det umoglege å setje ord på.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">🔮 Psybient</span>
+                <span class="disc-psy-section-badge">🌊 Psychill</span>
+                <span class="disc-psy-section-badge">🌍 Verdsmusikk</span>
+                <span class="disc-psy-section-badge">👑 Raja Ram</span>
+                <span class="disc-psy-section-badge">🎛 Simon Posford</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">📀</span>
+          <span class="disc-psy-section-title">Diskografi</span>
+          <span class="disc-psy-section-badge">1998–2017</span>
+        </div>
+        <div class="disc-psy-mix-grid">
+          ${ALBUMS.map(a => `
+            <div class="disc-psy-mix-card" style="cursor:default">
+              <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#1a0b3d,#2a0d5e);font-size:1.2rem">🔮</div>
+              <div class="disc-psy-mix-info">
+                <div class="disc-psy-mix-title">${escHtml(a.title)} <span style="opacity:0.6;font-size:0.8em">(${escHtml(a.year)})</span></div>
+                <div class="disc-psy-mix-artist">${escHtml(a.desc)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-title">Finn Shpongle</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${LINKS.map(l => `
+            <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${l.emoji}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(l.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderAstralTab() {
+    const ALBUMS = [
+      { year: '1993', title: 'Trust in Trance',   desc: 'Debutalbumet — ikonisk Goa trance, Trust in Trance Records' },
+      { year: '1997', title: 'Another World',      desc: 'Klassisk psytrance — "People Can Fly", "Mahadeva"' },
+      { year: '1997', title: 'Dancing Galaxy',     desc: 'Eit av dei mest innflytelsesrike psytrance-albuma nokosinne' },
+      { year: '1998', title: 'People Can Fly',     desc: 'Oppsummering av tidlege hits — euforisk og drøymande Goa' },
+      { year: '1999', title: 'Amen',               desc: 'Mørkare og meir progressiv retning' },
+      { year: '2001', title: 'A Way of Life',      desc: 'Tydleg melodisk stil, sterk radio-psytrance' },
+      { year: '2010', title: 'Ten',                desc: 'Tilbakekomst-album — moderne produksjon, klassisk Astral-ånd' },
+      { year: '2016', title: 'Quantum',            desc: 'Siste studioalbum — blanding av Goa-arv og ny psytrance' },
+    ];
+    const CLASSICS = [
+      'Mahadeva', 'People Can Fly', 'Dancing Galaxy', 'Enlightened Evolution',
+      'Kabalah', 'Life on Mars', 'Trust in Trance', 'Flying into a Star',
+      'Run from the City', 'Liquid Sun', 'The Sun', 'Nilaya',
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0a1628,#0e2244,#0a1628)">
+        <div class="disc-psy-banner-emoji">⭐</div>
+        <div>
+          <div class="disc-psy-banner-title">Astral Projection</div>
+          <div class="disc-psy-banner-sub">Goa Trance · Psytrance — Avi Nissim & Lior Perlmutter · Trust in Trance Records</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🌟</span>
+          <span class="disc-psy-section-title">Om Astral Projection</span>
+          <span class="disc-psy-section-badge">astral-projection.com</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://www.astral-projection.com/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">⭐</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Astral Projection — Avi Nissim & Lior Perlmutter</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Eit av dei mest ikoniske og innflytelsesrike Goa Trance- og psytrance-banda nokosinne.
+                Israelske Avi Nissim og Lior Perlmutter har forma Goa-scena sidan tidleg på 1990-talet.
+                Deira klassiske album "Dancing Galaxy", "Another World" og "People Can Fly" er
+                referansepunkt for heile psytrance-universet. Eige label: Trust in Trance Records.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">⭐ Goa Trance</span>
+                <span class="disc-psy-section-badge">🌀 Psytrance</span>
+                <span class="disc-psy-section-badge">🇮🇱 Israel</span>
+                <span class="disc-psy-section-badge">🎵 Sidan 1991</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">💿</span>
+          <span class="disc-psy-section-title">Diskografi</span>
+          <span class="disc-psy-section-badge">${ALBUMS.length} studioalbum</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${ALBUMS.map(a => `
+            <div class="disc-psy-label-card">
+              <div class="disc-psy-label-icon" style="font-size:0.9rem;font-weight:700;min-width:2.5rem;text-align:center;color:var(--accent)">${a.year}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(a.title)}</div>
+                <div class="disc-psy-label-desc">${escHtml(a.desc)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎵</span>
+          <span class="disc-psy-section-title">Klassiske spor</span>
+        </div>
+        <div class="hadra-artist-grid">
+          ${CLASSICS.map(t => `<span class="hadra-artist-pill">⭐ ${escHtml(t)}</span>`).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-title">Finn Astral Projection</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          <a class="disc-psy-label-card" href="https://www.astral-projection.com/" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">🌐</div>
+            <div><div class="disc-psy-label-name">astral-projection.com</div><div class="disc-psy-label-desc">Offisiell nettstad — media, events og musikk</div></div>
+          </a>
+          <a class="disc-psy-label-card" href="https://www.facebook.com/astralprojectionofficial" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">f</div>
+            <div><div class="disc-psy-label-name">Facebook</div><div class="disc-psy-label-desc">Nyhende og live-oppdateringar</div></div>
+          </a>
+          <a class="disc-psy-label-card" href="https://www.instagram.com/astralprojection/" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">📸</div>
+            <div><div class="disc-psy-label-name">Instagram</div><div class="disc-psy-label-desc">Bilete, artwork og oppdateringar</div></div>
+          </a>
+          <a class="disc-psy-label-card" href="https://www.youtube.com/user/astralprojection1" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">▶</div>
+            <div><div class="disc-psy-label-name">YouTube</div><div class="disc-psy-label-desc">Musikkvideor og live-sett</div></div>
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
   function renderPsyTourTab() {
     const SC_MIXES = [
       { title: 'Progressive Psytrance SET 2026', artist: 'STAYOS', url: 'https://soundcloud.com/stayos/progressive-psytrance-set-2026' },
@@ -1747,7 +2734,7 @@ const Discover = (() => {
   // ── Tab / sub-tab switching ───────────────────────────────────────────
   function switchTab(tab) {
     activeTab = tab;
-    const TAB_LABELS = { music: 'Musikk', people: 'folk', 'psy-tour': 'Psytrance', 'ambient-mann': 'Ambient Mann', psybient: 'Psybient', 'altar-records': 'Altar', hadra: 'Hadra', dacru: 'DaCru', 'tip-raja': 'Raja', astral: 'Astral' };
+    const TAB_LABELS = { music: 'Musikk', people: 'folk', 'psy-tour': 'Psytrance', 'ambient-mann': 'Ambient Mann', psybient: 'Psybient', 'altar-records': 'Altar', hadra: 'Hadra', dacru: 'DaCru', 'tip-raja': 'Raja', astral: 'Astral', shpongle: 'Shpongle', 'younger-brother': 'Younger', 'goa-gil': 'Goa Gil', shunyata: 'Shunyata', 'kukan-dub': 'Kukan', 'cosmic-leaf': 'Cosmic' };
     document.querySelectorAll('.disc-tab-btn').forEach(b => {
       const matched = Object.entries(TAB_LABELS).find(([, label]) => b.textContent.includes(label));
       b.classList.toggle('active', matched ? matched[0] === tab : false);
@@ -1762,6 +2749,12 @@ const Discover = (() => {
     document.getElementById('disc-dacru-tab')?.classList.toggle('hidden', tab !== 'dacru');
     document.getElementById('disc-tip-raja-tab')?.classList.toggle('hidden', tab !== 'tip-raja');
     document.getElementById('disc-astral-tab')?.classList.toggle('hidden', tab !== 'astral');
+    document.getElementById('disc-shpongle-tab')?.classList.toggle('hidden', tab !== 'shpongle');
+    document.getElementById('disc-younger-brother-tab')?.classList.toggle('hidden', tab !== 'younger-brother');
+    document.getElementById('disc-goa-gil-tab')?.classList.toggle('hidden', tab !== 'goa-gil');
+    document.getElementById('disc-shunyata-tab')?.classList.toggle('hidden', tab !== 'shunyata');
+    document.getElementById('disc-kukan-dub-tab')?.classList.toggle('hidden', tab !== 'kukan-dub');
+    document.getElementById('disc-cosmic-leaf-tab')?.classList.toggle('hidden', tab !== 'cosmic-leaf');
   }
 
   function switchSubTab(tab) {

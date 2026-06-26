@@ -165,7 +165,17 @@ const App = (() => {
         <div class="stellar-hero-content">
           <div class="stellar-hero-badge">🌌 Psychedelic · Ambient · Dub</div>
           <h1 class="stellar-hero-title">Stellar<span>Radio</span></h1>
-          <p class="stellar-hero-sub">Din plass i det psykedeliske universet. Stream web radio live, lag din egen profil, velg din kanal — og koble med venner.</p>
+          <div class="stellar-hero-for">
+            <span>Friends</span>
+            <span class="stellar-hero-for-dot">·</span>
+            <span>Developers</span>
+            <span class="stellar-hero-for-dot">·</span>
+            <span>Producers</span>
+            <span class="stellar-hero-for-dot">·</span>
+            <span>DJs</span>
+          </div>
+          <p class="stellar-hero-sub">Musikk Er Sosialt — Musikk Connects With People. From Friends To Developers and Producers To DJs, eller Bare Vær her Og Lytt.</p>
+          <p class="stellar-hero-welcome">Lag en bruker · Velkommen å dele din kunst og opplevelser</p>
           <div class="stellar-hero-actions">
             <a href="#/radio" class="btn btn-primary landing-btn-big stellar-cta">📻 Lytt nå</a>
             <a href="#/register" class="btn btn-ghost landing-btn-big">Lag profil gratis</a>
