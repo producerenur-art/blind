@@ -439,12 +439,37 @@ const App = (() => {
     const errEl = document.getElementById('login-error');
     const result = Auth.login(user, pass);
     if (result.error) {
-      if (errEl) { errEl.textContent = result.error; errEl.style.display = 'block'; }
+      if (errEl) {
+        if (result.notActivated) {
+          errEl.innerHTML = `${result.error} <button onclick="App.resendActivationByEmail('${user.replace(/'/g, "\\'")}')" style="background:none;border:none;color:var(--accent);text-decoration:underline;cursor:pointer;padding:0;font-size:inherit">Send aktiveringslenke på nytt</button>`;
+        } else {
+          errEl.textContent = result.error;
+        }
+        errEl.style.display = 'block';
+      }
       return;
     }
     renderNav();
     toast(`Velkommen tilbake til Stellar Radio, ${result.user.displayName}! 👋`, 'success');
     Router.go('/');
+  }
+
+  async function resendActivationByEmail(usernameOrEmail) {
+    const users = Auth.getUsers();
+    let u = users[usernameOrEmail];
+    if (!u) u = Object.values(users).find(x => x.email === usernameOrEmail.toLowerCase().trim());
+    if (!u) { toast('Fant ikke kontoen', 'error'); return; }
+    if (u.activated) { toast('Kontoen er allerede aktivert', 'info'); return; }
+
+    if (!u.activationToken) {
+      const token = Array.from(crypto.getRandomValues(new Uint8Array(40))).map(b => b.toString(16).padStart(2,'0')).join('');
+      Auth.updateUser(u.username, { activationToken: token });
+      u.activationToken = token;
+    }
+
+    toast('Sender aktiveringslenke…', 'info');
+    const res = await Email.sendActivation(u.email, u.username, u.activationToken);
+    toast(res.error ? 'Feil: ' + res.error : 'Aktiveringslenke sendt! Sjekk e-posten din 📧', res.error ? 'error' : 'success');
   }
 
   function renderRegister() {
@@ -584,6 +609,7 @@ const App = (() => {
           <div class="auth-footer"><a href="#/login">← Tilbake til innlogging</a></div>
         </div>
       </div>`;
+    document.getElementById('forgot-email').addEventListener('keydown', e => { if (e.key === 'Enter') App.doForgotPassword(); });
   }
 
   async function doForgotPassword() {
@@ -1508,6 +1534,66 @@ const App = (() => {
 
     // Start router
     Router.init();
+
+    // 5-day profile background notice
+    setTimeout(_checkBgProfileNotice, 2000);
+  }
+
+  function _checkBgProfileNotice() {
+    const user = Auth.current();
+    if (!user) return;
+    const key = `pv_bg_notice_${user.username}`;
+    if (localStorage.getItem(key)) return;
+    const fiveDays = 5 * 24 * 60 * 60 * 1000;
+    if (!user.createdAt || Date.now() - user.createdAt < fiveDays) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'bg-profile-notice-overlay';
+    overlay.innerHTML = `
+      <div class="bg-notice-box">
+        <div class="bg-notice-icon">🌈</div>
+        <h2 class="bg-notice-title">Visste du at du kan tilpasse profilen din?</h2>
+        <p class="bg-notice-body">
+          Dette er hva besøkende ser på <strong>din fremsidevisning</strong>.<br>
+          Du kan velge mellom <em>bilde, video, musikk-visualizer</em> og psykedeliske effekter som bakgrunn.<br>
+          Gjør profilen din unik — akkurat slik du vil!
+        </p>
+        <div class="bg-notice-preview">
+          <canvas id="bg-notice-canvas" width="320" height="80"></canvas>
+        </div>
+        <div class="bg-notice-actions">
+          <button class="btn btn-primary" onclick="Router.go('/edit');document.getElementById('bg-profile-notice-overlay')?.remove()">✏️ Tilpass bakgrunn nå</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('bg-profile-notice-overlay')?.remove()">Kanskje senere</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    localStorage.setItem(key, '1');
+
+    // Mini visualizer in the notice
+    const c = document.getElementById('bg-notice-canvas');
+    if (c) {
+      const ctx = c.getContext('2d');
+      let t = 0;
+      (function anim() {
+        if (!document.getElementById('bg-notice-canvas')) return;
+        requestAnimationFrame(anim);
+        t += 0.025;
+        ctx.clearRect(0, 0, 320, 80);
+        const bars = 40;
+        for (let i = 0; i < bars; i++) {
+          const amp = 0.3 + 0.4 * Math.sin(t * 2 + i * 0.4) + 0.2 * Math.sin(t * 5 + i * 0.9);
+          const h = Math.max(4, amp * 70);
+          const hue = (i / bars * 260 + t * 50) % 360;
+          const g = ctx.createLinearGradient(0, 80, 0, 80 - h);
+          g.addColorStop(0, `hsla(${hue},90%,55%,0.9)`);
+          g.addColorStop(1, `hsla(${(hue+70)%360},95%,75%,0.5)`);
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.roundRect(i * (320 / bars) + 1, 80 - h, 320 / bars - 2, h, [2, 2, 0, 0]);
+          ctx.fill();
+        }
+      })();
+    }
   }
 
   function selectRole(value, labelEl) {
@@ -1520,6 +1606,7 @@ const App = (() => {
     init, toast, openModal, closeModal,
     logout, renderNav, updateNavBadge,
     doLogin, doRegister, doForgotPassword, doResetPassword,
+    resendActivationByEmail,
     saveSettings, testEmailJS,
     renderInbox, inboxAccept, inboxReject,
     quickAddFriend, quickAcceptFriend,

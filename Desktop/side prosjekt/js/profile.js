@@ -313,6 +313,11 @@ const Profile = (() => {
       const vUrl = await DB.getBlobUrl('media', theme.bgVideoId).catch(() => null);
       if (vUrl) heroBgExtra = `<video autoplay muted loop playsinline src="${vUrl}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:${cssFilters(theme.bgImageFilters)}"></video>`;
       heroBgStyle = `background:${theme.bgColor};`;
+    } else if (theme.bgType === 'music') {
+      heroBgStyle = `background:${theme.bgColor || '#0a0010'};`;
+      const trackId = theme.bgMusicTrackId || (user.musicIds || [])[0] || null;
+      const trackUrl = trackId ? await DB.getBlobUrl('music', trackId).catch(() => null) : null;
+      heroBgExtra = `<canvas id="profile-vis-canvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>${trackUrl ? `<audio id="profile-vis-audio" src="${trackUrl}" autoplay loop preload="auto" style="display:none"></audio>` : ''}`;
     } else if (theme.bgType === 'gradient') {
       heroBgStyle = `background:${theme.bgGradient || 'linear-gradient(135deg,#7c3aed,#2563eb)'};`;
     } else {
@@ -478,6 +483,92 @@ const Profile = (() => {
     renderMusicPlayer(user, isOwner);
     renderMixesSection(user, isOwner);
     renderMediaTab(user, isOwner);
+
+    if (theme.bgType === 'music') _startProfileVisualizer(theme);
+  }
+
+  function _startProfileVisualizer(theme) {
+    const canvas = document.getElementById('profile-vis-canvas');
+    if (!canvas) return;
+    canvas.width  = canvas.offsetWidth  || 800;
+    canvas.height = canvas.offsetHeight || 260;
+    const ctx = canvas.getContext('2d');
+    const primary = theme.primaryColor || '#7c3aed';
+    const accent  = theme.accentColor  || '#f59e0b';
+    let raf;
+    let analyser = null;
+    let dataArr  = null;
+
+    const audio = document.getElementById('profile-vis-audio');
+    if (audio) {
+      try {
+        const actx = new (window.AudioContext || window.webkitAudioContext)();
+        const src  = actx.createMediaElementSource(audio);
+        analyser   = actx.createAnalyser();
+        analyser.fftSize = 256;
+        src.connect(analyser);
+        analyser.connect(actx.destination);
+        dataArr = new Uint8Array(analyser.frequencyBinCount);
+        audio.play().catch(() => {});
+      } catch (_) {}
+    }
+
+    let t = 0;
+    function draw() {
+      raf = requestAnimationFrame(draw);
+      t += 0.018;
+      const W = canvas.offsetWidth;
+      const H = canvas.offsetHeight;
+      if (canvas.width !== W) canvas.width = W;
+      if (canvas.height !== H) canvas.height = H;
+
+      ctx.clearRect(0, 0, W, H);
+
+      const bars = 64;
+      const barW = W / bars;
+
+      if (analyser && dataArr) {
+        analyser.getByteFrequencyData(dataArr);
+      }
+
+      for (let i = 0; i < bars; i++) {
+        let amp;
+        if (analyser && dataArr) {
+          const idx = Math.floor(i * dataArr.length / bars);
+          amp = dataArr[idx] / 255;
+        } else {
+          amp = 0.3 + 0.35 * Math.sin(t * 1.6 + i * 0.35) + 0.2 * Math.sin(t * 3.1 + i * 0.8);
+          amp = Math.max(0, Math.min(1, amp));
+        }
+
+        const hue  = (i / bars * 280 + t * 40) % 360;
+        const barH = amp * H * 0.82 + 4;
+        const x    = i * barW;
+        const y    = H - barH;
+
+        const grad = ctx.createLinearGradient(x, H, x, y);
+        grad.addColorStop(0, `hsla(${hue},90%,55%,0.9)`);
+        grad.addColorStop(1, `hsla(${(hue+60)%360},95%,75%,0.4)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(x + 1, y, barW - 2, barH, [3, 3, 0, 0]);
+        ctx.fill();
+
+        // mirror top glow
+        ctx.fillStyle = `hsla(${hue},85%,65%,0.12)`;
+        ctx.fillRect(x + 1, 0, barW - 2, amp * H * 0.15);
+      }
+    }
+    draw();
+
+    // Stop when navigating away
+    const observer = new MutationObserver(() => {
+      if (!document.getElementById('profile-vis-canvas')) {
+        cancelAnimationFrame(raf);
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.getElementById('app') || document.body, { childList: true, subtree: false });
   }
 
   async function renderMediaTab(user, isOwner) {
@@ -856,7 +947,8 @@ const Profile = (() => {
 
   function themeEditorHtml(t) {
     const fonts  = ['Inter','Space Grotesk','Playfair Display','Rajdhani','Nunito'];
-    const bgTypes = ['color','gradient','image','video'];
+    const bgTypes = ['color','gradient','image','video','music'];
+    const userTracks = (Auth.current()?.musicIds || []);
     return `
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem">
         <!-- Colors -->
@@ -875,7 +967,7 @@ const Profile = (() => {
         <div class="editor-section">
           <div class="editor-section-title">Bakgrunn</div>
           <div class="bg-type-row">
-            ${bgTypes.map(t2 => `<button class="bg-type-btn ${t.bgType === t2 ? 'active' : ''}" onclick="setBgType('${t2}',this)">${{color:'Farge',gradient:'Gradient',image:'Bilde',video:'Video'}[t2]}</button>`).join('')}
+            ${bgTypes.map(t2 => `<button class="bg-type-btn ${t.bgType === t2 ? 'active' : ''}" onclick="setBgType('${t2}',this)">${{color:'Farge',gradient:'Gradient',image:'Bilde',video:'Video',music:'🎵 Musikk'}[t2]}</button>`).join('')}
           </div>
           <div id="bg-color-opt" class="${t.bgType !== 'color' ? 'hidden' : ''}">
             ${colorInput('Bakgrunnsfarge','ed-bg2', t.bgColor)}
@@ -900,6 +992,16 @@ const Profile = (() => {
               <div>Klikk for å laste opp bakgrunnsvideo</div>
             </div>
             <input type="file" id="bg-video-file" accept="video/*" style="display:none" onchange="Profile.uploadBgVideo(this)">
+          </div>
+          <div id="bg-music-opt" class="${t.bgType !== 'music' ? 'hidden' : ''}">
+            <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem">Velg en av dine opplastede sanger som animert bakgrunn</div>
+            ${userTracks.length
+              ? `<select class="form-input" id="ed-bg-music-track">
+                   <option value="">— Automatisk (første sang) —</option>
+                   ${userTracks.map(id => `<option value="${id}" ${t.bgMusicTrackId === id ? 'selected' : ''}>${id}</option>`).join('')}
+                 </select>`
+              : `<div style="color:var(--text3);font-size:0.82rem;padding:0.5rem 0">Last opp musikk i Musikk-fanen for å bruke dette.</div>`}
+            <div style="font-size:0.75rem;color:var(--text3);margin-top:0.5rem">Besøkende ser en psykedelisk lydbølge-animasjon i heltbildet ditt</div>
           </div>
         </div>
 
@@ -1025,7 +1127,7 @@ const Profile = (() => {
     window.setBgType = (type, btn) => {
       document.querySelectorAll('.bg-type-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      ['color','gradient','image','video'].forEach(t2 => {
+      ['color','gradient','image','video','music'].forEach(t2 => {
         document.getElementById(`bg-${t2}-opt`)?.classList.toggle('hidden', t2 !== type);
       });
       Profile.livePreview();
@@ -1747,8 +1849,8 @@ const Profile = (() => {
   }
 
   function collectTheme() {
-    const activeBgType = document.querySelector('.bg-type-btn.active')?.textContent?.toLowerCase();
-    const bgTypeMap    = { farge:'color', gradient:'gradient', bilde:'image', video:'video' };
+    const activeBgType = document.querySelector('.bg-type-btn.active')?.textContent?.toLowerCase().replace('🎵 ','');
+    const bgTypeMap    = { farge:'color', gradient:'gradient', bilde:'image', video:'video', musikk:'music' };
     const bgType       = bgTypeMap[activeBgType] || Auth.current()?.theme?.bgType || 'gradient';
 
     const activeLayout   = document.querySelector('.layout-option.active')?.dataset?.layout || document.querySelector('.layout-option.active')?.onclick?.toString()?.match(/'(\w+)'/)?.[1] || 'default';
@@ -1765,6 +1867,7 @@ const Profile = (() => {
       bgGradient:     document.getElementById('ed-gradient')?.value  || 'linear-gradient(135deg,#7c3aed,#2563eb)',
       bgImage:        window._pendingBgImage || Auth.current()?.theme?.bgImage || null,
       bgVideoId:      window._pendingBgVideoId || Auth.current()?.theme?.bgVideoId || null,
+      bgMusicTrackId: document.getElementById('ed-bg-music-track')?.value || Auth.current()?.theme?.bgMusicTrackId || null,
       fontFamily:     document.getElementById('ed-font')?.value      || 'Inter',
       cardStyle:      activeCardStyle,
       layout:         activeLayout,
