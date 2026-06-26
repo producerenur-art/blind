@@ -57,38 +57,6 @@ const Radio = (() => {
     },
 
     // ════════════════════════════════════════════
-    // RADIO PARADISE  — fan-supported, no ads ✓
-    // ════════════════════════════════════════════
-    {
-      id: 'rp-main', cat: 'Radio Paradise',
-      name: 'Radio Paradise — Main Mix',
-      url:  'https://stream.radioparadise.com/mp3-192',
-      emoji: '🎶', color: '#e11d48',
-      desc: 'Eclectic indie/rock/electronic — fan-supported ✓',
-    },
-    {
-      id: 'rp-mellow', cat: 'Radio Paradise',
-      name: 'Radio Paradise — Mellow Mix',
-      url:  'https://stream.radioparadise.com/mellow-192',
-      emoji: '🌅', color: '#f97316',
-      desc: 'Soft, beautiful & chilled-out ✓',
-    },
-    {
-      id: 'rp-rock', cat: 'Radio Paradise',
-      name: 'Radio Paradise — Rock Mix',
-      url:  'https://stream.radioparadise.com/rock-192',
-      emoji: '🎸', color: '#dc2626',
-      desc: 'Indie & alternative rock ✓',
-    },
-    {
-      id: 'rp-world', cat: 'Radio Paradise',
-      name: 'Radio Paradise — World / Etc',
-      url:  'https://stream.radioparadise.com/world-etc-192',
-      emoji: '🌍', color: '#059669',
-      desc: 'World music & global sounds ✓',
-    },
-
-    // ════════════════════════════════════════════
     // AMBIENT / SPACE
     // ════════════════════════════════════════════
     {
@@ -135,10 +103,17 @@ const Radio = (() => {
     },
     {
       id: 'doomed', cat: 'Ambient / Space',
-      name: 'Doomed',
+      name: 'Doomed — Dark Drone',
       url:  'https://ice2.somafm.com/doomed-256-mp3',
       emoji: '💀', color: '#7f1d1d',
-      desc: 'Dark ambient & doom electronics ✓',
+      desc: 'Dark ambient & dark drone electronics ✓',
+    },
+    {
+      id: 'darkzone', cat: 'Ambient / Space',
+      name: 'Dark Zone',
+      url:  'https://ice2.somafm.com/darkzone-256-mp3',
+      emoji: '🌑', color: '#0d0d1a',
+      desc: 'The darker side of deep ambient — music for staring into the Abyss ✓',
     },
 
     // ════════════════════════════════════════════
@@ -149,7 +124,7 @@ const Radio = (() => {
       name: 'Groove Salad',
       url:  'https://ice2.somafm.com/groovesalad-256-mp3',
       emoji: '🥗', color: '#10b981',
-      desc: 'Nu-jazz, IDM & trip-hop ✓',
+      desc: 'IDM, trip-hop & electronic downtempo ✓',
     },
     {
       id: 'gsclassic', cat: 'Chill Out / Downtempo',
@@ -163,21 +138,7 @@ const Radio = (() => {
       name: 'Lush',
       url:  'https://ice2.somafm.com/lush-128-mp3',
       emoji: '🌿', color: '#16a34a',
-      desc: 'Sensuous, slow-moving grooves ✓',
-    },
-    {
-      id: 'illstreet', cat: 'Chill Out / Downtempo',
-      name: 'Illinois Street Lounge',
-      url:  'https://ice2.somafm.com/illstreet-128-mp3',
-      emoji: '🍸', color: '#f59e0b',
-      desc: 'Downtempo & cocktail lounge electronica ✓',
-    },
-    {
-      id: 'bossa', cat: 'Chill Out / Downtempo',
-      name: 'Bossa Beyond',
-      url:  'https://ice2.somafm.com/bossa-128-mp3',
-      emoji: '☕', color: '#84cc16',
-      desc: 'Bossa nova, lounge & soft beats ✓',
+      desc: 'Sensuous, slow-moving electronic grooves ✓',
     },
     {
       id: 'beatblender', cat: 'Chill Out / Downtempo',
@@ -194,13 +155,6 @@ const Radio = (() => {
       desc: 'Smooth downtempo & chill ✓',
     },
     {
-      id: 'secretagent', cat: 'Chill Out / Downtempo',
-      name: 'Secret Agent',
-      url:  'https://ice2.somafm.com/secretagent-128-mp3',
-      emoji: '🕵️', color: '#0369a1',
-      desc: 'Lounge spy jazz & easy listening ✓',
-    },
-    {
       id: 'chilltrax', cat: 'Chill Out / Downtempo',
       name: 'Chilltrax',
       url:  'https://playerservices.streamtheworld.com/api/livestream-redirect/CHILLTRAX',
@@ -214,9 +168,16 @@ const Radio = (() => {
       emoji: '🧊', color: '#38bdf8',
       desc: 'FRISKY Radio — chillout channel',
     },
+    {
+      id: '1fm-chillout', cat: 'Chill Out / Downtempo',
+      name: '1.FM Chillout Lounge',
+      url:  'https://strm112.1.fm/chilloutlounge_mobile_mp3',
+      emoji: '🛋️', color: '#0ea5e9',
+      desc: '1.FM — electronic chill lounge 24/7',
+    },
 
     // ════════════════════════════════════════════
-    // IBIZA CHILL OUT
+    // IBIZA CHILL
     // ════════════════════════════════════════════
     {
       id: 'ibiza-global', cat: 'Ibiza Chill',
@@ -237,7 +198,7 @@ const Radio = (() => {
       name: 'Café del Mar Radio',
       url:  'https://streams.radio.co/s814567310/listen',
       emoji: '☀️', color: '#f59e0b',
-      desc: 'Ibiza iconic chill out — Café del Mar',
+      desc: 'Ibiza iconic psychedelic chill out — Café del Mar',
     },
 
     // ════════════════════════════════════════════
@@ -276,7 +237,7 @@ const Radio = (() => {
       name: 'SomaFM Specials',
       url:  'https://ice2.somafm.com/specials-128-mp3',
       emoji: '⭐', color: '#0891b2',
-      desc: 'Eclectic block party & dance ✓',
+      desc: 'Eclectic electronic block party & dance ✓',
     },
     {
       id: 'fnoob', cat: 'EDM / House',
@@ -284,6 +245,13 @@ const Radio = (() => {
       url:  'https://fnoobtechno.com/listen',
       emoji: '🔌', color: '#7c3aed',
       desc: 'Underground techno & electronic',
+    },
+    {
+      id: 'nrkmpe', cat: 'EDM / House',
+      name: 'NRK mP3',
+      url:  'https://lyd.nrk.no/nrk_radio_mp3_mp3_h',
+      emoji: '⚡', color: '#d97706',
+      desc: 'NRK mP3 — EDM, elektronisk & dance ✓',
     },
 
     // ════════════════════════════════════════════
@@ -340,21 +308,7 @@ const Radio = (() => {
       name: 'Earwax',
       url:  'https://ice2.somafm.com/earwax-128-mp3',
       emoji: '👂', color: '#84cc16',
-      desc: 'Dub, glitch, eclectic electronic ✓',
-    },
-    {
-      id: 'u80s', cat: 'Lo-Fi / IDM',
-      name: 'Underground 80s',
-      url:  'https://ice2.somafm.com/u80s-256-mp3',
-      emoji: '📼', color: '#f472b6',
-      desc: 'New wave, synth-pop & post-punk ✓',
-    },
-    {
-      id: 'indiepop', cat: 'Lo-Fi / IDM',
-      name: 'Indie Pop Rocks!',
-      url:  'https://ice2.somafm.com/indiepop-128-mp3',
-      emoji: '🎸', color: '#f43f5e',
-      desc: 'Alternative & indie pop ✓',
+      desc: 'Dub, glitch & eclectic electronic ✓',
     },
 
     // ════════════════════════════════════════════
@@ -440,169 +394,6 @@ const Radio = (() => {
       url:  'https://ice9.securenetsystems.net/OWTK',
       emoji: '🔊', color: '#dc2626',
       desc: 'Drum & bass 24/7',
-    },
-
-    // ════════════════════════════════════════════
-    // JAZZ / SOUL / LOUNGE
-    // ════════════════════════════════════════════
-    {
-      id: 'sonicuniverse', cat: 'Jazz / Lounge',
-      name: 'Sonic Universe',
-      url:  'https://ice2.somafm.com/sonicuniverse-256-mp3',
-      emoji: '🎷', color: '#a855f7',
-      desc: 'Nu-jazz & electro jazz ✓',
-    },
-    {
-      id: 'secretagent-jazz', cat: 'Jazz / Lounge',
-      name: 'Secret Agent (Spy Jazz)',
-      url:  'https://ice2.somafm.com/secretagent-256-mp3',
-      emoji: '🍹', color: '#0369a1',
-      desc: 'Spy jazz & bossanova lounge ✓',
-    },
-    {
-      id: 'bagel', cat: 'Jazz / Lounge',
-      name: 'BAGeL Radio',
-      url:  'https://ice2.somafm.com/bagel-128-mp3',
-      emoji: '🎺', color: '#d4a017',
-      desc: 'Eclectic & smooth — SomaFM ✓',
-    },
-    {
-      id: 'jazz24', cat: 'Jazz / Lounge',
-      name: 'Jazz24',
-      url:  'https://live.amperwave.net/direct/ppm-jazz24mp3-ibc1',
-      emoji: '🎵', color: '#7f8c8d',
-      desc: 'KNKX Public Radio — Jazz around the clock',
-    },
-    {
-      id: 'fip', cat: 'Jazz / Lounge',
-      name: 'Radio FIP',
-      url:  'https://icecast.radiofrance.fr/fip-midfi.mp3',
-      emoji: '🇫🇷', color: '#db2777',
-      desc: 'World, jazz & indie — Radio France ✓',
-    },
-    {
-      id: '1fm-chillout', cat: 'Jazz / Lounge',
-      name: '1.FM Chillout Lounge',
-      url:  'https://strm112.1.fm/chilloutlounge_mobile_mp3',
-      emoji: '🛋️', color: '#0ea5e9',
-      desc: '1.FM — chill lounge 24/7',
-    },
-
-    // ════════════════════════════════════════════
-    // WORLD / ECLECTIC
-    // ════════════════════════════════════════════
-    {
-      id: 'suburbsgoa', cat: 'World / Eclectic',
-      name: 'Suburbs of Goa',
-      url:  'https://ice2.somafm.com/suburbsofgoa-256-mp3',
-      emoji: '🕉️', color: '#f59e0b',
-      desc: 'Psychedelic Indian & global beats ✓',
-    },
-    {
-      id: 'folkfwd', cat: 'World / Eclectic',
-      name: 'Folk Forward',
-      url:  'https://ice2.somafm.com/folkfwd-128-mp3',
-      emoji: '🪕', color: '#92400e',
-      desc: 'Indie folk & americana ✓',
-    },
-    {
-      id: 'bootliquor', cat: 'World / Eclectic',
-      name: 'Boot Liquor',
-      url:  'https://ice2.somafm.com/bootliquor-256-mp3',
-      emoji: '🤠', color: '#b45309',
-      desc: 'Americana, alt-country & roots ✓',
-    },
-    {
-      id: 'thistle', cat: 'World / Eclectic',
-      name: 'Thistle Radio',
-      url:  'https://ice2.somafm.com/thistle-128-mp3',
-      emoji: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', color: '#1d4ed8',
-      desc: 'Celtic & Scottish folk ✓',
-    },
-    {
-      id: 'heavyreggeae', cat: 'World / Eclectic',
-      name: 'Heavyweight Reggae',
-      url:  'https://ice2.somafm.com/reggae-128-mp3',
-      emoji: '🌴', color: '#15803d',
-      desc: 'Roots reggae & dub classics ✓',
-    },
-    {
-      id: 'wfmu', cat: 'World / Eclectic',
-      name: 'WFMU Freeform',
-      url:  'https://stream0.wfmu.org/freeform-128k',
-      emoji: '📡', color: '#7c3aed',
-      desc: 'Non-commercial freeform radio — NYC ✓',
-    },
-
-    // ════════════════════════════════════════════
-    // NORDIC / SCANDINAVIAN
-    // ════════════════════════════════════════════
-    {
-      id: 'nrk1', cat: 'Nordic',
-      name: 'NRK P1',
-      url:  'https://lyd.nrk.no/nrk_radio_p1_ostlandssendingen_mp3_h',
-      emoji: '🇳🇴', color: '#c41e3a',
-      desc: 'NRK P1 — Norsk rikskringkasting ✓',
-    },
-    {
-      id: 'nrk2', cat: 'Nordic',
-      name: 'NRK P2',
-      url:  'https://lyd.nrk.no/nrk_radio_p2_mp3_h',
-      emoji: '🎼', color: '#1d4ed8',
-      desc: 'NRK P2 — Kultur & klassisk ✓',
-    },
-    {
-      id: 'nrk3', cat: 'Nordic',
-      name: 'NRK P3',
-      url:  'https://lyd.nrk.no/nrk_radio_p3_mp3_h',
-      emoji: '🎧', color: '#7c3aed',
-      desc: 'NRK P3 — Pop & ungdomskanal ✓',
-    },
-    {
-      id: 'nrkjazz', cat: 'Nordic',
-      name: 'NRK Jazz',
-      url:  'https://lyd.nrk.no/nrk_radio_jazz_mp3_h',
-      emoji: '🎺', color: '#2d5a8e',
-      desc: 'NRK Jazz — Norway ✓',
-    },
-    {
-      id: 'nrkmpe', cat: 'Nordic',
-      name: 'NRK mP3',
-      url:  'https://lyd.nrk.no/nrk_radio_mp3_mp3_h',
-      emoji: '⚡', color: '#d97706',
-      desc: 'NRK mP3 — EDM, elektronisk & dance ✓',
-    },
-    {
-      id: 'p4', cat: 'Nordic',
-      name: 'P4 Norge',
-      url:  'https://p4stream.p4.no/p4_mp3',
-      emoji: '📻', color: '#dc2626',
-      desc: 'P4 — Norges musikk ✓',
-    },
-    {
-      id: 'sr-p3', cat: 'Nordic',
-      name: 'Sveriges Radio P3',
-      url:  'https://sverigesradio.se/topsy/direkt/2562-hi.mp3',
-      emoji: '🇸🇪', color: '#f59e0b',
-      desc: 'SR P3 — Sveriges ungdomskanal ✓',
-    },
-
-    // ════════════════════════════════════════════
-    // HEAVY / DARK
-    // ════════════════════════════════════════════
-    {
-      id: 'metal-only', cat: 'Heavy / Dark',
-      name: 'Metal Only',
-      url:  'https://stream.metal-only.de/pub/128.mp3',
-      emoji: '🤘', color: '#6b21a8',
-      desc: 'Pure heavy metal 24/7',
-    },
-    {
-      id: 'darkwave', cat: 'Heavy / Dark',
-      name: 'Gothic Radio',
-      url:  'https://gothic.wgtre.com/gothic128.mp3',
-      emoji: '🖤', color: '#1e1b4b',
-      desc: 'Gothic, darkwave & industrial',
     },
   ];
 

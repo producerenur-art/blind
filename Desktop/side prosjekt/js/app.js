@@ -241,7 +241,6 @@ const App = (() => {
       <div class="section np-section">
         <div class="section-header">
           <div class="section-title">📻 Now Playing <span>${radioUsers.length} kanaler</span></div>
-          <div class="section-sub">Klikk ▶ for å lytte direkte — ingen fanebytting</div>
           <div class="np-mini-player" id="np-mini-player">
             <button class="np-mini-btn" id="np-mini-btn" onclick="NpMiniPlayer.toggle()" title="Spill av / Pause">▶</button>
             <div class="np-mini-meta">
@@ -345,24 +344,12 @@ const App = (() => {
 
     const homeRadioHtml = `
       <div class="home-radio-section" id="home-radio-section">
-        <div class="hr-nowplaying" id="hr-nowplaying">
-          <div class="hr-np-left">
-            <span class="hr-live-dot" id="hr-live-dot"></span>
-            <span class="hr-np-status" id="hr-np-status">Velg en kanal under</span>
-            <span class="hr-np-emoji" id="hr-np-emoji">📻</span>
-            <div class="hr-np-info">
-              <div class="hr-np-name" id="hr-np-name">Sound Core Radio</div>
-              <div class="hr-np-desc" id="hr-np-desc">Psytrance · Psychill · Downtempo · Progressive · Ambient</div>
-            </div>
-          </div>
-          <button class="hr-np-play hr-stop-btn" id="hr-np-play" onclick="HomeRadio.togglePlay()" title="Spill av / Stopp musikk">▶ Spill</button>
-        </div>
-        <div class="hr-tab-strip" id="hr-tab-strip">
-          <button class="hr-tab" onclick="HomeRadio.setGenre('psytrance',this)">🌀 Psytrance</button>
-          <button class="hr-tab hr-tab-active" onclick="HomeRadio.setGenre('psychill',this)">🌿 Psychill</button>
+<div class="hr-tab-strip" id="hr-tab-strip">
+          <button class="hr-tab hr-tab-active" onclick="HomeRadio.setGenre('psytrance',this)">🌀 Psytrance</button>
           <button class="hr-tab" onclick="HomeRadio.setGenre('downtempo',this)">🌊 Downtempo</button>
           <button class="hr-tab" onclick="HomeRadio.setGenre('progressive',this)">🌐 Progressive</button>
           <button class="hr-tab" onclick="HomeRadio.setGenre('ambient',this)">🌌 Ambient</button>
+          <button class="hr-tab" onclick="HomeRadio.setGenre('goa',this)">🕉️ Goa</button>
         </div>
         <div class="hr-channel-grid" id="hr-channel-grid"></div>
       </div>`;
@@ -391,11 +378,11 @@ const App = (() => {
     // Home radio widget controller
     window.HomeRadio = (() => {
       const GENRE_IDS = {
-        psytrance:   ['schizoid-psy', 'di-goapsy', 'suburbsofgoa'],
-        psychill:    ['radioq37', 'thetrip', 'fluid'],
-        downtempo:   ['groovesalad', 'lush', 'beatblender', 'gsclassic', 'cafemission', 'frisky-chill'],
-        progressive: ['schizoid-prog', 'frisky-prog'],
-        ambient:     ['dronezone', 'spacestation', 'deepspaceone', 'missioncontrol'],
+        psytrance:   ['schizoid-psy', 'di-goapsy', 'psychedelik'],
+        downtempo:   ['groovesalad', 'lush', 'beatblender', 'gsclassic', 'cafemission', 'frisky-chill', '1fm-chillout'],
+        progressive: ['schizoid-prog', 'frisky-prog', 'protonradio'],
+        ambient:     ['dronezone', 'darkzone', 'doomed', 'spacestation', 'deepspaceone', 'missioncontrol'],
+        goa:         ['suburbsofgoa', 'di-goapsy'],
       };
       let _currentId = null;
       let _playing = false;
@@ -422,15 +409,32 @@ const App = (() => {
         if (!grid) return;
         const ids = GENRE_IDS[genre] || [];
         const stations = ids.map(id => (Radio.stations || []).find(s => s.id === id)).filter(Boolean);
+        const extraHtml = genre === 'psytrance'
+          ? `<canvas aria-hidden="true" class="g-box-full sceneLayer" width="1008" height="200" style="cursor: pointer;"></canvas>`
+          : genre === 'goa'
+          ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/ZimhFgAlzOU?list=RDZimhFgAlzOU" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
+          : genre === 'progressive'
+          ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/Y91C2yTq8BQ?list=RDY91C2yTq8BQ" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+             <iframe class="hr-yt-embed" src="https://www.youtube.com/embed/XFsZg4YrFZg?list=RDATfycHJvZ3Jlc3NpdmUgcHN5dHJhbmNl" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
+          : genre === 'ambient'
+          ? `<div class="track_info">
+                <span class="title-section hiddenelem">
+                    <a class="title_link primaryText" href="/track/the-end-of-creation"><span class="title"></span></a>
+                </span>
+                <span class="time secondaryText">
+                    <span class="time_elapsed">00:33</span>
+                    /
+                    <span class="time_total">05:22</span>
+                </span>
+                <span class="message hiddenelem"></span>
+            </div>`
+          : '';
         grid.innerHTML = stations.map(s => `
           <div class="hr-channel-card" data-id="${s.id}" style="--hc:${s.color}" onclick="HomeRadio.play('${s.id}')">
             <span class="hr-channel-emoji">${s.emoji || '📻'}</span>
-            <div class="hr-channel-info">
-              <div class="hr-channel-name">${s.name}</div>
-              <div class="hr-channel-desc">${s.desc}</div>
-            </div>
+
             <button class="hr-channel-play" onclick="event.stopPropagation();HomeRadio.play('${s.id}')">▶</button>
-          </div>`).join('');
+          </div>`).join('') + extraHtml;
       }
 
       function play(id) {
@@ -468,7 +472,7 @@ const App = (() => {
       }
 
       function init() {
-        _renderGrid('psychill');
+        _renderGrid('psytrance');
         const status = document.getElementById('hr-np-status');
         if (status) status.textContent = 'Klikk ▶ for å lytte';
         const btn = document.getElementById('hr-np-play');
