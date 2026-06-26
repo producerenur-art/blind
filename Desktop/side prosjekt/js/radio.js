@@ -246,14 +246,6 @@ const Radio = (() => {
       emoji: '🔌', color: '#7c3aed',
       desc: 'Underground techno & electronic',
     },
-    {
-      id: 'nrkmpe', cat: 'EDM / House',
-      name: 'NRK mP3',
-      url:  'https://lyd.nrk.no/nrk_radio_mp3_mp3_h',
-      emoji: '⚡', color: '#d97706',
-      desc: 'NRK mP3 — EDM, elektronisk & dance ✓',
-    },
-
     // ════════════════════════════════════════════
     // TECHNO / MINIMAL
     // ════════════════════════════════════════════
