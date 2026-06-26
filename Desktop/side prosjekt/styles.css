@@ -7000,3 +7000,56 @@ body { top: 0 !important; }
   background: rgba(124,58,237,0.3);
   border-color: rgba(124,58,237,0.6);
 }
+
+/* ── Min side dashboard ── */
+.ms-stat-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  text-align: center;
+  min-width: 90px;
+}
+.ms-stat-num {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+}
+.ms-stat-label {
+  font-size: 0.75rem;
+  color: var(--text2);
+  margin-top: 0.25rem;
+}
+.ms-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.ms-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.ms-item:hover { background: rgba(255,255,255,0.06); }
+.ms-item-icon { font-size: 1.1rem; flex-shrink: 0; }
+.ms-item-label { flex: 1; font-size: 0.88rem; color: var(--text); }
+.ms-empty { font-size: 0.85rem; color: var(--text2); padding: 0.5rem 0; }
+.ms-empty a { color: var(--accent); }
+
+/* ── Stopp-knapp radio ── */
+.hr-stop-btn {
+  min-width: 100px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.hr-stop-active {
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: #fff !important;
+}
+.hr-stop-active:hover {
+  background: #dc2626 !important;
+}

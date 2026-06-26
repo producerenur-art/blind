@@ -79,6 +79,7 @@ const App = (() => {
       const totalBadge = pending + unreadPMs;
       const inboxBadge = totalBadge > 0 ? `<span class="nav-badge">${totalBadge}</span>` : '';
       nav.innerHTML = `
+        <a href="#/minside"     class="btn btn-ghost btn-sm">🏠 Min side</a>
         <a href="#/radio"       class="btn btn-ghost btn-sm">📻 Radio</a>
         <a href="#/chat"        class="btn btn-ghost btn-sm">💬 Chat</a>
         <a href="#/discover"    class="btn btn-ghost btn-sm">🎵 Discover</a>
@@ -347,14 +348,14 @@ const App = (() => {
         <div class="hr-nowplaying" id="hr-nowplaying">
           <div class="hr-np-left">
             <span class="hr-live-dot" id="hr-live-dot"></span>
-            <span class="hr-np-status" id="hr-np-status">Starter…</span>
+            <span class="hr-np-status" id="hr-np-status">Velg en kanal under</span>
             <span class="hr-np-emoji" id="hr-np-emoji">📻</span>
             <div class="hr-np-info">
               <div class="hr-np-name" id="hr-np-name">Sound Core Radio</div>
               <div class="hr-np-desc" id="hr-np-desc">Psytrance · Psychill · Downtempo · Progressive · Ambient</div>
             </div>
           </div>
-          <button class="hr-np-play" id="hr-np-play" onclick="HomeRadio.togglePlay()">▶</button>
+          <button class="hr-np-play hr-stop-btn" id="hr-np-play" onclick="HomeRadio.togglePlay()" title="Spill av / Stopp musikk">▶ Spill</button>
         </div>
         <div class="hr-tab-strip" id="hr-tab-strip">
           <button class="hr-tab" onclick="HomeRadio.setGenre('psytrance',this)">🌀 Psytrance</button>
@@ -408,10 +409,9 @@ const App = (() => {
         if (el('hr-np-emoji'))  el('hr-np-emoji').textContent = s.emoji || '📻';
         if (el('hr-live-dot'))  el('hr-live-dot').classList.add('hr-dot-live');
         if (el('hr-np-status')) el('hr-np-status').textContent = 'LIVE';
-        if (el('hr-np-play'))   el('hr-np-play').textContent = '⏸';
+        if (el('hr-np-play'))   { el('hr-np-play').textContent = '⏹ Stopp'; el('hr-np-play').classList.add('hr-stop-active'); }
         _playing = true;
         _currentId = stationId;
-        // Highlight active card
         document.querySelectorAll('.hr-channel-card').forEach(c => {
           c.classList.toggle('hr-card-active', c.dataset.id === stationId);
         });
@@ -442,8 +442,6 @@ const App = (() => {
         document.querySelectorAll('.hr-tab').forEach(b => b.classList.remove('hr-tab-active'));
         if (btn) btn.classList.add('hr-tab-active');
         _renderGrid(genre);
-        const ids = GENRE_IDS[genre] || [];
-        if (ids.length) play(ids[0]);
       }
 
       function togglePlay() {
@@ -452,9 +450,11 @@ const App = (() => {
           if (audio) { audio.pause(); }
           _playing = false;
           const btn = document.getElementById('hr-np-play');
-          if (btn) btn.textContent = '▶';
+          if (btn) { btn.textContent = '▶ Spill'; btn.classList.remove('hr-stop-active'); }
           const dot = document.getElementById('hr-live-dot');
           if (dot) dot.classList.remove('hr-dot-live');
+          const status = document.getElementById('hr-np-status');
+          if (status) status.textContent = 'Stoppet';
         } else {
           if (_currentId) play(_currentId);
           else autoStart();
@@ -469,23 +469,10 @@ const App = (() => {
 
       function init() {
         _renderGrid('psychill');
-        setTimeout(() => {
-          Radio.playStation('radioq37');
-          _updateDisplay('radioq37');
-          // Check if browser actually started playing
-          setTimeout(() => {
-            const audio = document.getElementById('audio-engine');
-            if (audio && audio.paused) {
-              const status = document.getElementById('hr-np-status');
-              if (status) status.textContent = '▶ Trykk';
-              const dot = document.getElementById('hr-live-dot');
-              if (dot) dot.classList.remove('hr-dot-live');
-              const btn = document.getElementById('hr-np-play');
-              if (btn) btn.textContent = '▶';
-              _playing = false;
-            }
-          }, 700);
-        }, 400);
+        const status = document.getElementById('hr-np-status');
+        if (status) status.textContent = 'Klikk ▶ for å lytte';
+        const btn = document.getElementById('hr-np-play');
+        if (btn) btn.textContent = '▶';
       }
 
       return { play, setGenre, togglePlay, autoStart, init };
@@ -570,6 +557,171 @@ const App = (() => {
           if (subEl) subEl.innerHTML += ` <span style="color:var(--text3);font-size:0.7rem">· ${rec.tracklist.length} spor</span>`;
         }
       }).catch(() => { document.getElementById(`pubmix-${e.mixId}`)?.remove(); });
+    }
+  }
+
+  // ── Min side — personlig dashboard ──────────────────────────────────────
+  async function renderMinSide() {
+    const user = Auth.current();
+    if (!user) { toast('Logg inn for å se din side', 'error'); Router.go('/login'); return; }
+
+    const allUsers = Auth.getUsers();
+
+    // Hent musikk fra IndexedDB
+    let tracks = [];
+    try {
+      const db = await new Promise((res, rej) => {
+        const r = indexedDB.open('ProfilverseDB', 1);
+        r.onsuccess = () => res(r.result);
+        r.onerror   = () => rej(r.error);
+      });
+      tracks = await new Promise((res, rej) => {
+        const tx   = db.transaction('media', 'readonly');
+        const store = tx.objectStore('media');
+        const items = [];
+        store.openCursor().onsuccess = e => {
+          const cur = e.target.result;
+          if (cur) { if ((user.musicIds || []).includes(cur.key)) items.push(cur.value); cur.continue(); }
+          else res(items);
+        };
+      });
+    } catch {}
+
+    // Mixes
+    const mixRows = (user.mixIds || []).length
+      ? (user.mixIds).map(id => `
+          <div class="ms-item" id="ms-mix-${id}">
+            <span class="ms-item-icon">🎛️</span>
+            <span class="ms-item-label" id="ms-mix-label-${id}">Laster…</span>
+            <button class="btn btn-ghost btn-sm" onclick="Profile.playMix('${id}','')">▶ Spill</button>
+          </div>`).join('')
+      : '<p class="ms-empty">Ingen mixes lastet opp ennå. <a href="#/dj">Gå til DJ</a></p>';
+
+    // Musikk
+    const musicRows = tracks.length
+      ? tracks.map((t, i) => `
+          <div class="ms-item">
+            <span class="ms-item-icon">🎵</span>
+            <span class="ms-item-label">${t.name || 'Sang ' + (i + 1)}</span>
+            <button class="btn btn-ghost btn-sm" onclick="Player.loadTrack('${t.id}', true)">▶ Spill</button>
+          </div>`).join('')
+      : '<p class="ms-empty">Ingen musikk lastet opp ennå. <a href="#/edit">Rediger profil</a></p>';
+
+    // Events
+    const eventRows = (user.events || []).length
+      ? user.events.map(ev => `
+          <div class="ms-item">
+            <span class="ms-item-icon">📅</span>
+            <span class="ms-item-label">${ev.title || 'Arrangement'} — ${ev.date ? new Date(ev.date).toLocaleDateString('no-NO') : ''}</span>
+            ${ev.isLive ? '<span class="event-live-dot" style="width:8px;height:8px;margin-left:0.5rem"></span>' : ''}
+          </div>`).join('')
+      : '<p class="ms-empty">Ingen arrangementer ennå. <a href="#/edit">Legg til i profilen</a></p>';
+
+    // Venner
+    const friends = (user.friends || []).map(u => allUsers[u]).filter(Boolean);
+    const friendRows = friends.length
+      ? friends.map(f => `
+          <div class="ms-item" onclick="Router.go('/u/${f.username}')" style="cursor:pointer">
+            <span class="ms-item-icon">👤</span>
+            <span class="ms-item-label">${f.displayName} <span style="color:var(--text3)">@${f.username}</span></span>
+          </div>`).join('')
+      : '<p class="ms-empty">Ingen venner ennå. <a href="#/discover">Finn folk</a></p>';
+
+    document.getElementById('app').innerHTML = `
+      <div class="settings-page-v2">
+        <h1>🏠 Min side</h1>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
+          <div class="ms-stat-card">
+            <div class="ms-stat-num">${(user.musicIds || []).length}</div>
+            <div class="ms-stat-label">Sanger</div>
+          </div>
+          <div class="ms-stat-card">
+            <div class="ms-stat-num">${(user.mixIds || []).length}</div>
+            <div class="ms-stat-label">Mixes</div>
+          </div>
+          <div class="ms-stat-card">
+            <div class="ms-stat-num">${(user.followers || []).length}</div>
+            <div class="ms-stat-label">Følgere</div>
+          </div>
+          <div class="ms-stat-card">
+            <div class="ms-stat-num">${(user.following || []).length}</div>
+            <div class="ms-stat-label">Følger</div>
+          </div>
+          <div class="ms-stat-card">
+            <div class="ms-stat-num">${(user.friends || []).length}</div>
+            <div class="ms-stat-label">Venner</div>
+          </div>
+        </div>
+
+        <div class="settings-tabs">
+          <button class="settings-tab-btn active" onclick="App.settingsTab('ms-musikk',this)">🎵 Musikk</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('ms-mixes',this)">🎛️ Mixes</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('ms-events',this)">📅 Events</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('ms-venner',this)">👥 Venner</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('ms-hurtig',this)">⚡ Hurtiglenker</button>
+        </div>
+
+        <div id="set-tab-ms-musikk" class="settings-tab-panel active">
+          <div class="settings-section">
+            <div class="settings-section-header">🎵 Din musikk</div>
+            <div class="settings-section-body ms-list">${musicRows}</div>
+          </div>
+        </div>
+
+        <div id="set-tab-ms-mixes" class="settings-tab-panel">
+          <div class="settings-section">
+            <div class="settings-section-header">🎛️ Dine DJ-mixes</div>
+            <div class="settings-section-body ms-list">${mixRows}</div>
+          </div>
+        </div>
+
+        <div id="set-tab-ms-events" class="settings-tab-panel">
+          <div class="settings-section">
+            <div class="settings-section-header">📅 Dine arrangementer</div>
+            <div class="settings-section-body ms-list">${eventRows}</div>
+          </div>
+        </div>
+
+        <div id="set-tab-ms-venner" class="settings-tab-panel">
+          <div class="settings-section">
+            <div class="settings-section-header">👥 Venner</div>
+            <div class="settings-section-body ms-list">${friendRows}</div>
+          </div>
+        </div>
+
+        <div id="set-tab-ms-hurtig" class="settings-tab-panel">
+          <div class="settings-section">
+            <div class="settings-section-header">⚡ Hurtiglenker</div>
+            <div class="settings-section-body">
+              <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.25rem">
+                <a href="#/u/${user.username}" class="btn btn-ghost">👤 Min profil</a>
+                <a href="#/edit" class="btn btn-ghost">✏️ Rediger profil</a>
+                <a href="#/radio" class="btn btn-ghost">📻 Radio</a>
+                <a href="#/dj" class="btn btn-ghost">🎛️ DJ Studio</a>
+                <a href="#/studio" class="btn btn-ghost">🎨 Blend Studio</a>
+                <a href="#/inbox" class="btn btn-ghost">📬 Innboks</a>
+                <a href="#/settings" class="btn btn-ghost">⚙️ Innstillinger</a>
+                <a href="#/discover" class="btn btn-ghost">🎵 Discover</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    // Last inn mix-titler fra IndexedDB
+    for (const id of (user.mixIds || [])) {
+      try {
+        const db = await new Promise((res, rej) => {
+          const r = indexedDB.open('ProfilverseDB', 1);
+          r.onsuccess = () => res(r.result); r.onerror = () => rej();
+        });
+        const item = await new Promise((res, rej) => {
+          const tx = db.transaction('media', 'readonly');
+          tx.objectStore('media').get(id).onsuccess = e => res(e.target.result);
+        });
+        const el = document.getElementById(`ms-mix-label-${id}`);
+        if (el && item) el.textContent = item.name || id;
+      } catch {}
     }
   }
 
@@ -1825,6 +1977,7 @@ const App = (() => {
       DJ.renderPrivateChat(username);
     });
     Router.define('/qr-login/:token', ({ token }) => renderQRLogin(token));
+    Router.define('/minside',         () => renderMinSide());
 
     // Start router
     Router.init();
@@ -2013,6 +2166,7 @@ const App = (() => {
     savePageTexts, sendAiMessage,
     renderSettings,
     generateQRLogin,
+    renderMinSide,
   };
 })();
 
