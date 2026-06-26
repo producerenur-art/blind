@@ -24,14 +24,17 @@ const Chat = (() => {
 
   // ── Floating window state ─────────────────────────────────────────────
   let floatAbort = null;
+  let _inputListenersAttached = false;
+  let _msgSubscribed = false;
 
   function defaultFloatState() {
-    const w = window.innerWidth;
-    const h = window.innerHeight - 60;
-    return { x: 0, y: 60, w, h };
+    const w = Math.min(680, window.innerWidth - 32);
+    const h = Math.min(520, window.innerHeight - 120);
+    return { x: Math.max(0, window.innerWidth - w - 16), y: 76, w, h, minimized: false };
   }
 
   let floatState = JSON.parse(localStorage.getItem('pv_chat_float') || 'null') || defaultFloatState();
+  let chatMinimized = floatState.minimized || false;
 
   function saveFloatState() {
     localStorage.setItem('pv_chat_float', JSON.stringify(floatState));
@@ -42,6 +45,23 @@ const Chat = (() => {
     win.style.top    = floatState.y + 'px';
     win.style.width  = floatState.w + 'px';
     win.style.height = floatState.h + 'px';
+    if (floatState.minimized) {
+      win.classList.add('minimized');
+      chatMinimized = true;
+      const btn = document.getElementById('chat-minimize-btn');
+      if (btn) { btn.textContent = '+'; btn.title = 'Utvid'; }
+    }
+  }
+
+  function toggleMinimize() {
+    const win = document.getElementById('chat-float-window');
+    const btn = document.getElementById('chat-minimize-btn');
+    if (!win) return;
+    chatMinimized = !chatMinimized;
+    win.classList.toggle('minimized', chatMinimized);
+    if (btn) { btn.textContent = chatMinimized ? '+' : '—'; btn.title = chatMinimized ? 'Utvid' : 'Minimer'; }
+    floatState.minimized = chatMinimized;
+    saveFloatState();
   }
 
   function randomColor() {
@@ -82,8 +102,174 @@ const Chat = (() => {
     return `https://www.youtube.com/embed/${videoId}?autoplay=0&modestbranding=1&rel=0&playsinline=1`;
   }
 
+  // ── Persistent float: lift window out of #app so it survives navigation ──
+  function liftToBody() {
+    const win = document.getElementById('chat-float-window');
+    if (!win || win.parentElement === document.body) return;
+    applyFloatState(win);
+    document.body.appendChild(win);
+  }
+
+  function toggleFloat() {
+    const win = document.getElementById('chat-float-window');
+    if (!win) {
+      // If we're on the chat page, let normal render handle it
+      const onChatPage = document.getElementById('app') &&
+                         document.getElementById('app').querySelector('.chat-float-window');
+      if (onChatPage) { render(); return; }
+      renderFloat();
+      return;
+    }
+    const hidden = win.style.display === 'none';
+    win.style.display = hidden ? '' : 'none';
+    const btn = document.getElementById('nav-chat-bubble');
+    if (btn) btn.classList.toggle('active', !hidden);
+  }
+
+  function renderFloat() {
+    const nickChosen = !!localStorage.getItem('pv_chat_nick');
+    if (!myNick) myNick = randomNick();
+    const stations    = (typeof Radio !== 'undefined' && Radio.stations) ? Radio.stations : [];
+    const currentSt   = (typeof Radio !== 'undefined') ? Radio.currentStation : null;
+    const radioPlaying = (typeof Radio !== 'undefined') ? Radio.isPlaying : false;
+
+    const tmp = document.createElement('div');
+    tmp.innerHTML = `<div id="chat-float-window" class="chat-float-window">
+      <div id="chat-float-drag-bar" class="chat-float-drag-bar">
+        <span class="chat-float-grip" aria-hidden="true">⠿</span>
+        <span class="chat-float-title">📻 Sound Core — Live Chat</span>
+        <button class="chat-float-btn" id="chat-minimize-btn" onclick="Chat.toggleMinimize()" title="Minimer">—</button>
+      </div>
+      <div class="chat-page">
+        <div class="chat-stream-panel">
+          <div class="chat-panel-tabs">
+            <button class="chat-panel-tab ${activeTab === 'radio' ? 'active' : ''}" id="tab-radio" onclick="Chat.showTab('radio')">📻 Radio</button>
+            <button class="chat-panel-tab ${activeTab === 'youtube' ? 'active' : ''}" id="tab-youtube" onclick="Chat.showTab('youtube')">📺 YouTube</button>
+          </div>
+          <div class="chat-radio-tab" id="chat-radio-tab" style="${activeTab !== 'radio' ? 'display:none' : ''}">
+            <div class="chat-radio-search-wrap">
+              <input class="chat-radio-search-input" id="chat-radio-search"
+                     placeholder="🔍 Søk etter radiokanal…" autocomplete="off"
+                     oninput="Chat.onRadioSearch(this.value)">
+              <div class="chat-radio-search-results hidden" id="chat-radio-search-results"></div>
+            </div>
+            <div class="chat-radio-list" id="chat-radio-list">
+              ${stations.length ? stations.map(s => `
+                <button class="chat-radio-station ${currentSt?.id === s.id ? 'active' : ''}"
+                        id="crbtn-${s.id}" style="--scolor:${s.color}"
+                        onclick="Chat.playRadioStation('${s.id}')">
+                  <span class="crs-emoji">${s.emoji}</span>
+                  <span class="crs-info">
+                    <span class="crs-name">${s.name}</span>
+                    <span class="crs-desc">${s.desc}</span>
+                  </span>
+                  ${currentSt?.id === s.id && radioPlaying ? '<span class="station-live-dot"></span>' : ''}
+                </button>`).join('') : '<div class="crs-empty-hint">Søk etter en kanal ↑</div>'}
+            </div>
+            <div class="chat-radio-now-playing" id="chat-radio-np">
+              <span id="chat-rnp-emoji">${currentSt ? (currentSt.emoji || '📻') : '📻'}</span>
+              <span id="chat-rnp-name">${currentSt ? currentSt.name : 'Velg en stasjon ▲'}</span>
+              <button class="chat-rnp-play-btn" id="chat-rnp-play" onclick="Chat.toggleRadioPlay()">
+                ${currentSt && radioPlaying ? '⏸' : '▶'}
+              </button>
+            </div>
+          </div>
+          <div class="chat-yt-tab" id="chat-yt-tab" style="${activeTab !== 'youtube' ? 'display:none' : ''}">
+            <div class="chat-stream-header">
+              <span class="yt-live-badge">● LIVE</span>
+              <input class="form-input stream-url-input" id="yt-url-input"
+                placeholder="Lim inn YouTube Live URL…"
+                value="${ytVideoId ? 'https://www.youtube.com/watch?v=' + ytVideoId : ''}"
+                style="font-size:0.82rem">
+              <button class="btn btn-primary btn-sm" onclick="Chat.loadYoutube()">Last inn</button>
+              <button class="btn btn-ghost btn-sm" onclick="Chat.clearYoutube()" title="Fjern">✕</button>
+            </div>
+            <div id="yt-iframe-wrap">
+              ${ytVideoId
+                ? `<iframe src="${buildEmbedUrl(ytVideoId)}" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"></iframe>`
+                : `<div class="yt-placeholder"><div class="yt-icon">▶️</div><p>Lim inn en YouTube Live-lenke ovenfor.</p></div>`}
+            </div>
+          </div>
+        </div>
+        <div class="chat-panel">
+          <div class="chat-header">
+            <h2>💬 Chat</h2>
+            <div class="online-count"><span class="online-dot"></span><span id="online-count">Live</span></div>
+            <button class="btn-icon" title="Tøm chat" onclick="Chat.clearMessages()">🗑</button>
+          </div>
+          <div class="nick-bar" id="nick-bar">
+            <label>Nick:</label>
+            <div class="nick-display ${nickChosen ? '' : 'hidden'}" id="nick-display" onclick="Chat.showNickEdit()">
+              <span style="color:${myColor}">●</span>
+              <span>${myNick}</span>
+              <span style="font-size:0.75rem;color:var(--text3)">✏️</span>
+            </div>
+            <div class="nick-edit-form ${!nickChosen ? '' : 'hidden'}" id="nick-edit-form">
+              <input class="form-input" id="nick-input" value="${myNick}" maxlength="24" placeholder="Ditt nick" style="font-size:0.82rem">
+              <div class="nick-color-wrap">
+                <input type="color" id="nick-color" value="${myColor}" style="width:32px;height:32px;border:none;border-radius:50%;cursor:pointer;padding:2px;background:none">
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="Chat.saveNick()">OK</button>
+            </div>
+          </div>
+          <div id="chat-messages"><div class="chat-system-msg">Kobler til chat… 🔗</div></div>
+          <div class="chat-input-area">
+            <div class="emoji-bar">
+              ${EMOJIS.map(e => `<button class="emoji-pill" onclick="Chat.insertEmoji('${e}')">${e}</button>`).join('')}
+            </div>
+            <div class="chat-input-row">
+              <label class="chat-color-swatch" style="background:${myColor}" title="Velg tekstfarge">
+                <input type="color" id="quick-color-picker" value="${myColor}"
+                       oninput="Chat.quickColor(this.value)" onchange="Chat.quickColor(this.value)">
+              </label>
+              <input id="chat-text" placeholder="Skriv en melding… (Enter)" maxlength="400" autocomplete="off">
+              <button id="chat-send" onclick="Chat.sendMessage()">➤</button>
+            </div>
+            <div class="chat-status" id="chat-status">${connected ? '🟢 Tilkoblet' : '🟡 Kobler til…'}</div>
+          </div>
+        </div>
+      </div>
+      <div class="cfr n" data-resize="n"></div>
+      <div class="cfr s" data-resize="s"></div>
+      <div class="cfr e" data-resize="e"></div>
+      <div class="cfr w" data-resize="w"></div>
+      <div class="cfr ne" data-resize="ne"></div>
+      <div class="cfr nw" data-resize="nw"></div>
+      <div class="cfr se" data-resize="se"></div>
+      <div class="cfr sw" data-resize="sw"></div>
+    </div>`;
+
+    const win = tmp.firstElementChild;
+    applyFloatState(win);
+    document.body.appendChild(win);
+
+    if (!_inputListenersAttached) {
+      _inputListenersAttached = true;
+      const inp = document.getElementById('chat-text');
+      if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); Chat.sendMessage(); } });
+      const nickInp = document.getElementById('nick-input');
+      if (nickInp) nickInp.addEventListener('keydown', e => { if (e.key === 'Enter') Chat.saveNick(); });
+    }
+
+    initGun();
+    if (gun) { subscribeMessages(); updateStatus('🟢 Tilkoblet via P2P'); } else { useFallback(); }
+    initDragResize();
+
+    const btn = document.getElementById('nav-chat-bubble');
+    if (btn) btn.classList.add('active');
+  }
+
   // ── Render ────────────────────────────────────────────────────────────
   function render() {
+    // If float window already lives on body, just show it
+    const existing = document.getElementById('chat-float-window');
+    if (existing && existing.parentElement === document.body) {
+      existing.style.display = '';
+      if (chatMinimized) toggleMinimize();
+      const btn = document.getElementById('nav-chat-bubble');
+      if (btn) btn.classList.add('active');
+      return;
+    }
     const app = document.getElementById('app');
     const nickChosen = !!localStorage.getItem('pv_chat_nick');
     if (!myNick) myNick = randomNick();
@@ -97,6 +283,7 @@ const Chat = (() => {
         <div id="chat-float-drag-bar" class="chat-float-drag-bar">
           <span class="chat-float-grip" aria-hidden="true">⠿</span>
           <span class="chat-float-title">📻 Sound Core — Live Chat</span>
+          <button class="chat-float-btn" id="chat-minimize-btn" onclick="Chat.toggleMinimize()" title="Minimer">—</button>
         </div>
 
         <div class="chat-page">
@@ -234,16 +421,14 @@ const Chat = (() => {
       </div>`;
 
     // Enter key for chat
-    const inp = document.getElementById('chat-text');
-    if (inp) {
-      inp.addEventListener('keydown', e => {
+    if (!_inputListenersAttached) {
+      _inputListenersAttached = true;
+      const inp = document.getElementById('chat-text');
+      if (inp) inp.addEventListener('keydown', e => {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); Chat.sendMessage(); }
       });
-    }
-    // Enter key for nick
-    const nickInp = document.getElementById('nick-input');
-    if (nickInp) {
-      nickInp.addEventListener('keydown', e => { if (e.key === 'Enter') Chat.saveNick(); });
+      const nickInp = document.getElementById('nick-input');
+      if (nickInp) nickInp.addEventListener('keydown', e => { if (e.key === 'Enter') Chat.saveNick(); });
     }
 
     initGun();
@@ -255,6 +440,10 @@ const Chat = (() => {
     }
 
     initDragResize();
+    liftToBody();
+    // Mark chat bubble as active
+    const chatBtn = document.getElementById('nav-chat-bubble');
+    if (chatBtn) chatBtn.classList.add('active');
   }
 
   // ── Floating window drag & resize ─────────────────────────────────────
@@ -322,14 +511,10 @@ const Chat = (() => {
     }
 
     dragBar.addEventListener('mousedown', e => {
-      if (e.button !== 0) return;
+      if (e.button !== 0 || e.target.closest('button')) return;
       e.preventDefault();
       beginDrag(e.clientX, e.clientY);
     }, { signal: sig });
-
-    dragBar.addEventListener('touchstart', e => {
-      beginDrag(e.touches[0].clientX, e.touches[0].clientY);
-    }, { passive: true, signal: sig });
 
     win.querySelectorAll('.cfr').forEach(handle => {
       handle.addEventListener('mousedown', e => {
@@ -337,16 +522,10 @@ const Chat = (() => {
         e.preventDefault(); e.stopPropagation();
         beginResize(e.clientX, e.clientY, handle.dataset.resize);
       }, { signal: sig });
-      handle.addEventListener('touchstart', e => {
-        e.stopPropagation();
-        beginResize(e.touches[0].clientX, e.touches[0].clientY, handle.dataset.resize);
-      }, { passive: true, signal: sig });
     });
 
     document.addEventListener('mousemove', e => applyMove(e.clientX, e.clientY), { signal: sig });
-    document.addEventListener('touchmove', e => applyMove(e.touches[0].clientX, e.touches[0].clientY), { passive: true, signal: sig });
     document.addEventListener('mouseup', endAction, { signal: sig });
-    document.addEventListener('touchend', endAction, { signal: sig });
   }
 
   // ── Tab switching ─────────────────────────────────────────────────────
@@ -468,7 +647,8 @@ const Chat = (() => {
 
   // ── Gun message subscription ──────────────────────────────────────────
   function subscribeMessages() {
-    if (!messagesRef) return;
+    if (!messagesRef || _msgSubscribed) return;
+    _msgSubscribed = true;
     const msgs = document.getElementById('chat-messages');
     if (!msgs) return;
     msgs.innerHTML = '';
@@ -640,6 +820,6 @@ const Chat = (() => {
     showNickEdit, saveNick, clearMessages,
     loadYoutube, clearYoutube,
     showTab, playRadioStation, toggleRadioPlay, updateChatRadioUI,
-    onRadioSearch, playSearchRadio, quickColor,
+    onRadioSearch, playSearchRadio, quickColor, toggleMinimize, toggleFloat,
   };
 })();

@@ -58,6 +58,8 @@
 
   <!-- ═══ SOCIAL FOOTER ═══ -->
   <footer id="site-footer">
+    <div class="footer-drag-handle" id="footer-drag-handle" title="Dra for å flytte">⠿</div>
+    <div id="footer-links" class="footer-links">
     <a class="social-link" href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" title="Facebook">
       <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.532-4.697 1.312 0 2.686.235 2.686.235v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
@@ -96,7 +98,11 @@
     <a class="social-link social-link-img" href="https://stepstoknowledge.com/" target="_blank" rel="noopener noreferrer" title="Steps to Knowledge">
       <img src="https://www.google.com/s2/favicons?domain=stepstoknowledge.com&sz=128" alt="Steps to Knowledge" class="social-logo-img social-logo-img--round">
     </a>
+    </div><!-- /footer-links -->
+    <button class="footer-toggle-btn" id="footer-toggle-btn" onclick="FooterWidget.toggle()" title="Skjul">−</button>
   </footer>
+  <!-- Floating restore bubble shown when footer is minimized -->
+  <button id="footer-restore-btn" class="footer-restore-btn" onclick="FooterWidget.show()" title="Vis lenker" style="display:none">🔗</button>
 
   <!-- ═══ TOAST NOTIFICATIONS ═══ -->
   <div id="toast-container"></div>
@@ -108,50 +114,63 @@
 
   <!-- ═══ PERSISTENT MUSIC PLAYER (never unmounts) ═══ -->
   <div id="player-bar" class="player-bar hidden">
-    <div class="player-left" id="player-left">
-      <div class="player-artwork" id="player-artwork">
-        <span class="artwork-note">♪</span>
-      </div>
-      <div class="player-meta">
-        <div class="player-title" id="player-title">Ingen sang valgt</div>
-        <div class="player-artist" id="player-artist">—</div>
+
+    <!-- Drag handle + minimize strip -->
+    <div class="player-bar-header" id="player-drag-handle">
+      <span class="player-drag-dots">⠿</span>
+      <div class="player-bar-hdr-btns">
+        <button class="pbar-hdr-btn" id="player-dock-btn" onclick="PlayerDrag.dock()" title="Fest til bunnen">⊞</button>
+        <button class="pbar-hdr-btn" id="player-minimize-btn" onclick="PlayerDrag.toggleMinimize()" title="Minimer">—</button>
       </div>
     </div>
 
-    <div class="player-center">
-      <div class="player-controls">
-        <button class="ctrl-btn" id="ctrl-shuffle" title="Bland">⇄</button>
-        <button class="ctrl-btn" id="ctrl-prev" title="Forrige">⏮</button>
-        <button class="ctrl-btn ctrl-play" id="ctrl-play" title="Spill av">▶</button>
-        <button class="ctrl-btn" id="ctrl-next" title="Neste">⏭</button>
-        <button class="ctrl-btn" id="ctrl-repeat" title="Repeter">↻</button>
-      </div>
-      <div class="player-progress-row">
-        <span id="time-current">0:00</span>
-        <div class="progress-track">
-          <div class="progress-fill" id="progress-fill"></div>
-          <input type="range" id="progress-bar" value="0" min="0" max="100" step="0.1">
+    <!-- Main body -->
+    <div class="player-bar-body">
+      <div class="player-left" id="player-left">
+        <div class="player-artwork" id="player-artwork">
+          <span class="artwork-note">♪</span>
         </div>
-        <span id="time-total">0:00</span>
+        <div class="player-meta">
+          <div class="player-title" id="player-title">Ingen sang valgt</div>
+          <div class="player-artist" id="player-artist">—</div>
+        </div>
       </div>
-    </div>
 
-    <div class="player-right">
-      <button class="ctrl-btn" id="ctrl-queue" title="Køen">☰</button>
-      <span class="vol-icon">🔊</span>
-      <div class="progress-track vol-track">
-        <div class="progress-fill" id="vol-fill" style="width:80%"></div>
-        <input type="range" id="volume-bar" value="80" min="0" max="100">
+      <div class="player-center">
+        <div class="player-controls">
+          <button class="ctrl-btn" id="ctrl-shuffle" title="Bland">⇄</button>
+          <button class="ctrl-btn" id="ctrl-prev" title="Forrige">⏮</button>
+          <button class="ctrl-btn ctrl-play" id="ctrl-play" title="Spill av">▶</button>
+          <button class="ctrl-btn" id="ctrl-next" title="Neste">⏭</button>
+          <button class="ctrl-btn" id="ctrl-repeat" title="Repeter">↻</button>
+        </div>
+        <div class="player-progress-row">
+          <span id="time-current">0:00</span>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+            <input type="range" id="progress-bar" value="0" min="0" max="100" step="0.1">
+          </div>
+          <span id="time-total">0:00</span>
+        </div>
       </div>
-    </div>
 
-    <!-- Queue panel -->
-    <div id="queue-panel" class="queue-panel hidden">
-      <div class="queue-header">
-        <h3>Spilleliste</h3>
-        <button onclick="document.getElementById('queue-panel').classList.add('hidden')" class="btn-icon">✕</button>
+      <div class="player-right">
+        <button class="ctrl-btn" id="ctrl-queue" title="Køen">☰</button>
+        <span class="vol-icon">🔊</span>
+        <div class="progress-track vol-track">
+          <div class="progress-fill" id="vol-fill" style="width:80%"></div>
+          <input type="range" id="volume-bar" value="80" min="0" max="100">
+        </div>
       </div>
-      <div id="queue-list"></div>
+
+      <!-- Queue panel -->
+      <div id="queue-panel" class="queue-panel hidden">
+        <div class="queue-header">
+          <h3>Spilleliste</h3>
+          <button onclick="document.getElementById('queue-panel').classList.add('hidden')" class="btn-icon">✕</button>
+        </div>
+        <div id="queue-list"></div>
+      </div>
     </div>
   </div>
 
@@ -242,6 +261,8 @@
   <script src="js/app.js"></script>
   <script src="js/platform.js"></script>
   <script src="js/lang.js"></script>
+  <script src="js/playerDrag.js"></script>
+  <script src="js/footerDrag.js"></script>
   <script type="text/javascript">
     function googleTranslateElementInit() {
       new google.translate.TranslateElement(

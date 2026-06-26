@@ -46,6 +46,7 @@ const App = (() => {
     localStorage.setItem(`pv_wall_seen_${username}`, Date.now().toString());
   }
 
+  let _lastBadgeTotal = -1;
   function updateNavBadge() {
     const user = Auth.current();
     if (!user) return;
@@ -55,6 +56,8 @@ const App = (() => {
     const unreadPMs     = getUnreadPMTotal(user.username);
     const unreadWall    = _getUnreadWallCount(user.username);
     const total         = pendingFriend + unreadPMs + unreadWall;
+    if (total === _lastBadgeTotal) return;
+    _lastBadgeTotal = total;
     let badge = link.querySelector('.nav-badge');
     if (total > 0) {
       if (!badge) { badge = document.createElement('span'); badge.className = 'nav-badge'; link.appendChild(badge); }
@@ -91,6 +94,7 @@ const App = (() => {
         <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">👤 ${user.displayName}</a>
         <a href="#/edit"        class="btn btn-ghost btn-sm" title="Rediger profil">✏️</a>
         <a href="#/settings"    class="btn btn-ghost btn-sm" title="Innstillinger">⚙️</a>
+        <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne flytende chat">💬 Float</button>
         <button class="btn btn-ghost btn-sm" onclick="App.logout()">Logg ut</button>
       `;
     } else {
@@ -102,6 +106,7 @@ const App = (() => {
         <a href="#/shows"       class="btn btn-ghost btn-sm">📅 Shows</a>
         <a href="#/login"       class="btn btn-ghost btn-sm">Logg inn</a>
         <a href="#/register"    class="btn btn-primary btn-sm">Registrer</a>
+        <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne flytende chat">💬 Float</button>
       `;
     }
   }
@@ -2219,6 +2224,12 @@ window.NpMiniPlayer = (() => {
 
 // Bootstrap
 document.addEventListener('DOMContentLoaded', () => App.init());
+
+// Pause background animations when tab is not visible
+document.addEventListener('visibilitychange', () => {
+  const bg = document.getElementById('bg-layer');
+  if (bg) bg.style.animationPlayState = document.hidden ? 'paused' : 'running';
+});
 
 // ── Media embed panel ─────────────────────────────────────────────────────────
 // Builds an embeddable iframe src from a public music URL, or returns null.
