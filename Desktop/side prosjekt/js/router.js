@@ -1,0 +1,54 @@
+// Hash-based SPA router — keeps music player alive across route changes
+const Router = (() => {
+  const routes = {};
+  let currentRoute = null;
+
+  function define(path, handler) {
+    routes[path] = handler;
+  }
+
+  function go(path) {
+    window.location.hash = path.startsWith('/') ? path : '/' + path;
+  }
+
+  function parse(hash) {
+    const path = (hash || '').replace(/^#/, '') || '/';
+    // Match dynamic segments: /u/:username, /activate/:token, /reset/:token
+    for (const pattern of Object.keys(routes)) {
+      const paramNames = [];
+      const regexStr   = pattern.replace(/:([^/]+)/g, (_, name) => { paramNames.push(name); return '([^/]+)'; });
+      const match      = path.match(new RegExp(`^${regexStr}$`));
+      if (match) {
+        const params = {};
+        paramNames.forEach((name, i) => params[name] = decodeURIComponent(match[i + 1]));
+        return { handler: routes[pattern], params };
+      }
+    }
+    return null;
+  }
+
+  async function dispatch() {
+    const hash  = window.location.hash;
+    const found = parse(hash);
+    if (found) {
+      currentRoute = hash;
+      await found.handler(found.params);
+    } else {
+      // 404
+      document.getElementById('app').innerHTML = `
+        <div class="empty-state" style="padding:8rem">
+          <div class="empty-icon">🔍</div>
+          <p style="font-size:1.1rem;font-weight:600;margin-bottom:0.5rem">Side ikke funnet</p>
+          <p>Sjekk nettadressen og prøv igjen.</p>
+          <a href="#/" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">← Hjem</a>
+        </div>`;
+    }
+  }
+
+  function init() {
+    window.addEventListener('hashchange', dispatch);
+    dispatch();
+  }
+
+  return { define, go, init, dispatch };
+})();

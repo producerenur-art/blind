@@ -1,0 +1,1537 @@
+// Main app — init, nav, routes, pages
+const App = (() => {
+
+  // ── Toast ─────────────────────────────────────────────────────────────
+  function toast(msg, type = 'info', duration = 3000) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.textContent = msg;
+    container.appendChild(t);
+    setTimeout(() => t.remove(), duration);
+  }
+
+  // ── Modal ─────────────────────────────────────────────────────────────
+  function openModal() {
+    document.getElementById('modal-overlay')?.classList.remove('hidden');
+  }
+  function closeModal() {
+    document.getElementById('modal-overlay')?.classList.add('hidden');
+  }
+
+  // ── Uleste PM-er ──────────────────────────────────────────────────────
+  function getUnreadPMTotal(username) {
+    const allUsers = Auth.getAllPublicUsers();
+    const readKey  = 'sr_pm_read_' + username;
+    const reads    = JSON.parse(localStorage.getItem(readKey) || '{}');
+    let total = 0;
+    for (const u of allUsers) {
+      if (u.username === username) continue;
+      const convKey  = 'sr_pm_' + [username, u.username].sort().join('_');
+      const msgs     = JSON.parse(localStorage.getItem(convKey) || '[]');
+      const lastRead = reads[u.username] || 0;
+      total += msgs.filter(m => m.from !== username && m.ts > lastRead).length;
+    }
+    return total;
+  }
+
+  function updateNavBadge() {
+    const user = Auth.current();
+    if (!user) return;
+    const link = document.querySelector('#nav-links a[href="#/inbox"]');
+    if (!link) return;
+    const pendingFriend = Auth.getPendingRequestsCount(user.username);
+    const unreadPMs     = getUnreadPMTotal(user.username);
+    const total         = pendingFriend + unreadPMs;
+    let badge = link.querySelector('.nav-badge');
+    if (total > 0) {
+      if (!badge) { badge = document.createElement('span'); badge.className = 'nav-badge'; link.appendChild(badge); }
+      badge.textContent = total;
+    } else if (badge) {
+      badge.remove();
+    }
+  }
+
+  // ── Nav ───────────────────────────────────────────────────────────────
+  function renderNav() {
+    const nav  = document.getElementById('nav-links');
+    const user = Auth.current();
+    if (!nav) return;
+    // Update logo link: logged-in users go to own profile
+    const logoLink = document.getElementById('nav-logo-link');
+    if (logoLink) logoLink.href = user ? `#/u/${user.username}` : '#/';
+
+    if (user) {
+      const pending    = Auth.getPendingRequestsCount(user.username);
+      const unreadPMs  = getUnreadPMTotal(user.username);
+      const totalBadge = pending + unreadPMs;
+      const inboxBadge = totalBadge > 0 ? `<span class="nav-badge">${totalBadge}</span>` : '';
+      nav.innerHTML = `
+        <a href="#/radio"    class="btn btn-ghost btn-sm">📻 Radio</a>
+        <a href="#/chat"     class="btn btn-ghost btn-sm">💬 Chat</a>
+        <a href="#/discover" class="btn btn-ghost btn-sm">🎵 Discover</a>
+        <a href="#/shows"    class="btn btn-ghost btn-sm">📅 Shows</a>
+        <a href="#/dj"       class="btn btn-ghost btn-sm">🎛️ DJ</a>
+        <a href="#/inbox"    class="btn btn-ghost btn-sm" style="position:relative">📬 Innboks${inboxBadge}</a>
+        <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">👤 ${user.displayName}</a>
+        <a href="#/edit"     class="btn btn-ghost btn-sm" title="Rediger profil">✏️</a>
+        <a href="#/settings" class="btn btn-ghost btn-sm" title="Innstillinger">⚙️</a>
+        <button class="btn btn-ghost btn-sm" onclick="App.logout()">Logg ut</button>
+      `;
+    } else {
+      nav.innerHTML = `
+        <a href="#/radio"    class="btn btn-ghost btn-sm">📻 Radio</a>
+        <a href="#/chat"     class="btn btn-ghost btn-sm">💬 Chat</a>
+        <a href="#/discover" class="btn btn-ghost btn-sm">🎵 Discover</a>
+        <a href="#/shows"    class="btn btn-ghost btn-sm">📅 Shows</a>
+        <a href="#/login"    class="btn btn-ghost btn-sm">Logg inn</a>
+        <a href="#/register" class="btn btn-primary btn-sm">Registrer</a>
+      `;
+    }
+  }
+
+  function logout() {
+    Auth.logout();
+    renderNav();
+    Router.go('/');
+    toast('Du er nå logget ut.', 'info');
+  }
+
+  // ── Search ────────────────────────────────────────────────────────────
+  function initSearch() {
+    const input = document.getElementById('nav-search');
+    const drop  = document.getElementById('search-results');
+    if (!input || !drop) return;
+
+    let debounce;
+    input.addEventListener('input', () => {
+      clearTimeout(debounce);
+      debounce = setTimeout(() => {
+        const q = input.value.trim().toLowerCase();
+        if (!q) { drop.classList.add('hidden'); return; }
+        const users = Auth.getAllPublicUsers().filter(u =>
+          u.username.toLowerCase().includes(q) || u.displayName.toLowerCase().includes(q)
+        ).slice(0, 8);
+        if (!users.length) { drop.classList.add('hidden'); return; }
+        drop.innerHTML = users.map(u => `
+          <div class="search-item" onclick="Router.go('/u/${u.username}');document.getElementById('nav-search').value='';document.getElementById('search-results').classList.add('hidden')">
+            <div class="search-item-avatar">${u.displayName.charAt(0).toUpperCase()}</div>
+            <div>
+              <div style="font-size:0.85rem;font-weight:600">${u.displayName}</div>
+              <div style="font-size:0.75rem;color:var(--text2)">@${u.username}</div>
+            </div>
+          </div>`).join('');
+        drop.classList.remove('hidden');
+      }, 200);
+    });
+
+    document.addEventListener('click', e => {
+      if (!input.contains(e.target) && !drop.contains(e.target)) drop.classList.add('hidden');
+    });
+  }
+
+  // ── Pages ─────────────────────────────────────────────────────────────
+  async function renderHome() {
+    const user  = Auth.current();
+    const users = Auth.getAllPublicUsers()
+      .sort((a, b) => b.createdAt - a.createdAt);
+
+    const pendingCount = user ? Auth.getPendingRequestsCount(user.username) : 0;
+    const pendingBanner = (user && pendingCount > 0) ? `
+      <div class="friend-req-banner" onclick="Router.go('/u/${user.username}')">
+        <span>👥</span>
+        <span>Du har <strong>${pendingCount}</strong> venneforespørsel${pendingCount !== 1 ? 'er' : ''} — klikk for å se dem</span>
+        <span>→</span>
+      </div>` : '';
+
+    const heroHtml = !user ? `
+      <div class="stellar-hero">
+        <div class="stellar-hero-glow"></div>
+        <div class="stellar-hero-content">
+          <div class="stellar-hero-badge">🌌 Psychedelic · Ambient · Dub</div>
+          <h1 class="stellar-hero-title">Stellar<span>Radio</span></h1>
+          <p class="stellar-hero-sub">Din plass i det psykedeliske universet. Stream web radio live, lag din egen profil, velg din kanal — og koble med venner.</p>
+          <div class="stellar-hero-actions">
+            <a href="#/radio" class="btn btn-primary landing-btn-big stellar-cta">📻 Lytt nå</a>
+            <a href="#/register" class="btn btn-ghost landing-btn-big">Lag profil gratis</a>
+            <a href="#/chat" class="btn btn-ghost landing-btn-big">💬 Chat</a>
+            <a href="#/login" class="btn btn-ghost landing-btn-big">Logg inn</a>
+          </div>
+        </div>
+      </div>` : `
+      <div class="stellar-hero stellar-hero-compact">
+        <div class="stellar-hero-glow"></div>
+        <div class="stellar-hero-content">
+          <h2 class="stellar-hero-greeting">Hei, ${user.displayName} 👋</h2>
+          <div class="stellar-hero-actions">
+            <a href="#/radio" class="btn btn-primary">📻 Radio</a>
+            <a href="#/u/${user.username}" class="btn btn-ghost">👤 Min profil</a>
+            <a href="#/edit" class="btn btn-ghost">✏️ Rediger</a>
+            <a href="#/chat" class="btn btn-ghost">💬 Chat</a>
+          </div>
+        </div>
+      </div>`;
+
+    const radioUsers    = users.filter(u => u.favoriteRadio?.url);
+    const liveEventUsers = users.filter(u => u.liveEvent);
+
+    const liveEventsSection = liveEventUsers.length ? `
+      <div class="section np-section">
+        <div class="section-header">
+          <div class="section-title" style="display:flex;align-items:center;gap:0.5rem"><span class="event-live-dot" style="width:8px;height:8px"></span> Live Events <span>${liveEventUsers.length} live nå</span></div>
+          <div class="section-sub">Klikk ▶ for å lytte direkte</div>
+        </div>
+        <div class="np-grid">
+          ${liveEventUsers.map(u => {
+            const ev = u.liveEvent;
+            const t  = u.theme || {};
+            const bg = t.bgType === 'gradient' ? (t.bgGradient || 'linear-gradient(135deg,#ef4444,#b91c1c)')
+                     : `linear-gradient(135deg,${t.primaryColor || '#ef4444'},${t.secondaryColor || '#b91c1c'})`;
+            const safeTitle = (ev.title || '').replace(/'/g,"\\'");
+            const safeUrl   = (ev.liveUrl || '').replace(/'/g,"\\'");
+            return `
+              <div class="np-card" style="border-color:rgba(239,68,68,0.3)">
+                <div class="np-card-glow" style="background:#ef4444;opacity:0.12"></div>
+                <a class="np-card-user" href="#/u/${u.username}">
+                  <div class="np-card-avatar" style="background:${bg}" id="live-av-${u.username}">
+                    ${u.displayName.charAt(0).toUpperCase()}
+                  </div>
+                  <div class="np-card-meta">
+                    <div class="np-card-name">${u.displayName}</div>
+                    <div class="np-card-username">@${u.username}</div>
+                  </div>
+                </a>
+                <div class="np-card-station">
+                  <span class="event-live-dot" style="width:7px;height:7px;margin-right:0.25rem"></span>
+                  <div class="np-card-station-name">${ev.title}</div>
+                </div>
+                ${ev.liveUrl ? `<button class="np-play-btn" style="background:#ef4444" onclick="Radio.playUrl('${safeUrl}','${safeTitle}','🔴');event.preventDefault()">▶ Lytt live</button>` : `<a class="np-play-btn" href="#/u/${u.username}" style="background:#ef4444;text-decoration:none">Se profil</a>`}
+              </div>`;
+          }).join('')}
+        </div>
+      </div>` : '';
+
+    const nowPlayingSection = radioUsers.length ? `
+      <div class="section np-section">
+        <div class="section-header">
+          <div class="section-title">📻 Now Playing <span>${radioUsers.length} kanaler</span></div>
+          <div class="section-sub">Klikk ▶ for å lytte direkte — ingen fanebytting</div>
+        </div>
+        <div class="np-grid" id="np-grid">
+          ${radioUsers.map(u => {
+            const r = u.favoriteRadio;
+            const t = u.theme || {};
+            const bg = t.bgType === 'gradient' ? (t.bgGradient || 'linear-gradient(135deg,#7c3aed,#2563eb)')
+                     : `linear-gradient(135deg,${t.primaryColor || '#7c3aed'},${t.secondaryColor || '#2563eb'})`;
+            return `
+              <div class="np-card">
+                <div class="np-card-glow" style="background:${bg}"></div>
+                <a class="np-card-user" href="#/u/${u.username}">
+                  <div class="np-card-avatar" style="background:${bg}" id="np-av-${u.username}">
+                    ${u.displayName.charAt(0).toUpperCase()}
+                  </div>
+                  <div class="np-card-meta">
+                    <div class="np-card-name">${u.displayName}</div>
+                    <div class="np-card-username">@${u.username}</div>
+                  </div>
+                </a>
+                <div class="np-card-station">
+                  <span class="np-card-emoji">${r.emoji || '📻'}</span>
+                  <div class="np-card-station-name">${r.name || 'Radio'}</div>
+                </div>
+                <button class="np-play-btn" onclick="Radio.playUrl('${r.url}','${(r.name||'Radio').replace(/'/g,"\\'")}','${r.emoji||'📻'}');event.preventDefault()">
+                  ▶ Lytt
+                </button>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>` : '';
+
+    // ── Public DJ mixes from all users ─────────────────────────────────
+    const allUsers = Auth.getUsers();
+    const allMixEntries = [];
+    for (const u of Object.values(allUsers)) {
+      for (const id of (u.mixIds || [])) {
+        allMixEntries.push({ mixId: id, username: u.username, displayName: u.displayName });
+      }
+    }
+    const publicMixesSection = allMixEntries.length ? `
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">🎛️ DJ Mixes <span>${allMixEntries.length} mixes</span></div>
+          <div class="section-sub">Last opp din egen mix fra profileditoren · privat/offentlig med Pro</div>
+        </div>
+        <div class="pub-mixes-grid" id="pub-mixes-grid">
+          ${allMixEntries.map(e => `
+            <div class="pub-mix-row" id="pubmix-${e.mixId}">
+              <div class="pub-mix-icon" id="pubmix-icon-${e.mixId}">🎛️</div>
+              <div class="pub-mix-meta">
+                <div class="pub-mix-title" id="pubmix-title-${e.mixId}">Laster…</div>
+                <div class="pub-mix-sub" id="pubmix-sub-${e.mixId}"><a href="#/u/${e.username}" style="color:var(--accent);text-decoration:none">@${e.username}</a></div>
+              </div>
+              <button class="pub-mix-play" onclick="Profile.playMix('${e.mixId}','')">▶ Spill</button>
+            </div>`).join('')}
+        </div>
+      </div>` : '';
+
+    const comingSoonHtml = `
+      <div class="section coming-soon-section">
+        <div class="section-header">
+          <div class="section-title">🚀 Kommer snart</div>
+          <div class="section-sub">Funksjoner under utvikling</div>
+        </div>
+        <div class="coming-soon-grid">
+          <div class="cs-card">
+            <div class="cs-icon">💬</div>
+            <div class="cs-label">Kommentarer</div>
+            <div class="cs-desc">Kommenter på profiler og musikk</div>
+            <div class="cs-badge">Snart</div>
+          </div>
+          <div class="cs-card">
+            <div class="cs-icon">🔗</div>
+            <div class="cs-label">Del musikk</div>
+            <div class="cs-desc">Del sanger og spillelister med venner</div>
+            <div class="cs-badge">Snart</div>
+          </div>
+          <div class="cs-card cs-card-premium">
+            <div class="cs-icon">⏱️</div>
+            <div class="cs-label">Live Mix Tid</div>
+            <div class="cs-desc cs-price">
+              <div>1 time &nbsp;<strong>150 NOK</strong></div>
+              <div>2 timer &nbsp;<strong>300 NOK</strong></div>
+              <div>Ytterligere timer <strong>+150 NOK/t</strong></div>
+            </div>
+            <div class="cs-badge cs-badge-gold">Premium</div>
+          </div>
+        </div>
+      </div>`;
+
+    const app = document.getElementById('app');
+    app.innerHTML = pendingBanner + heroHtml + liveEventsSection + nowPlayingSection + publicMixesSection + comingSoonHtml + `
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Brukere på Stellar Radio <span>${users.length} profiler</span></div>
+        </div>
+        <div class="users-grid" id="users-grid">
+          <div class="page-loading"><div class="spinner"></div></div>
+        </div>
+      </div>`;
+
+    // Render user cards
+    const grid = document.getElementById('users-grid');
+    if (!users.length) {
+      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><p>Ingen brukere ennå. Vær den første!</p></div>`;
+      return;
+    }
+    const currentUser = Auth.current();
+    grid.innerHTML = users.map(u => {
+      const t = u.theme || {};
+      const bg = t.bgType === 'gradient' ? (t.bgGradient || 'linear-gradient(135deg,#7c3aed,#2563eb)')
+               : `linear-gradient(135deg,${t.primaryColor || '#7c3aed'},${t.secondaryColor || '#2563eb'})`;
+      const online = Auth.isOnline(u.username);
+      let friendBtn = '';
+      if (currentUser && currentUser.username !== u.username) {
+        const fs = Auth.getFriendStatus(currentUser.username, u.username);
+        if (fs === 'friends') {
+          friendBtn = `<div class="user-card-friend-status">✓ Venner</div>`;
+        } else if (fs === 'pending_sent') {
+          friendBtn = `<div class="user-card-friend-status user-card-friend-status--pending">⏳ Forespørsel sendt</div>`;
+        } else if (fs === 'pending_received') {
+          friendBtn = `<button class="user-card-friend-btn user-card-friend-btn--accept" onclick="event.stopPropagation();event.preventDefault();App.quickAcceptFriend('${u.username}',this)">✓ Aksepter</button>`;
+        } else {
+          friendBtn = `<button class="user-card-friend-btn" onclick="event.stopPropagation();event.preventDefault();App.quickAddFriend('${u.username}',this)">+ Legg til venn</button>`;
+        }
+      }
+      return `
+        <div class="user-card hover-lift" data-username="${u.username}" onclick="Router.go('/u/${u.username}')">
+          <div class="user-card-banner" style="background:${bg}">
+            <div class="user-card-avatar" style="background:${bg}">
+              ${u.displayName.charAt(0).toUpperCase()}
+            </div>
+            ${online ? '<div class="user-online-dot" title="Online nå"></div>' : ''}
+          </div>
+          <div class="user-card-body">
+            <div class="user-card-name">${u.displayName}</div>
+            <div class="user-card-username">@${u.username}</div>
+            ${u.bio ? `<div class="user-card-bio">${u.bio}</div>` : ''}
+            ${friendBtn}
+          </div>
+        </div>`;
+    }).join('');
+
+    // Load avatars async (user cards + now-playing cards)
+    for (const u of users) {
+      if (u.avatarMediaId) {
+        DB.getBlobUrl('media', u.avatarMediaId).then(url => {
+          if (!url) return;
+          document.querySelectorAll(`[data-username="${u.username}"] .user-card-avatar`).forEach(el => {
+            el.innerHTML = `<img src="${url}" alt="${u.displayName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+          });
+          const npAv = document.getElementById(`np-av-${u.username}`);
+          if (npAv) npAv.innerHTML = `<img src="${url}" alt="${u.displayName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+          const liveAv = document.getElementById(`live-av-${u.username}`);
+          if (liveAv) liveAv.innerHTML = `<img src="${url}" alt="${u.displayName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+        }).catch(() => {});
+      }
+    }
+
+    // Load public mix titles + filter private ones async
+    for (const e of allMixEntries) {
+      DB.get('mixes', e.mixId).then(async rec => {
+        if (!rec) { document.getElementById(`pubmix-${e.mixId}`)?.remove(); return; }
+        if (rec.visibility === 'private') { document.getElementById(`pubmix-${e.mixId}`)?.remove(); return; }
+        const titleEl = document.getElementById(`pubmix-title-${e.mixId}`);
+        if (titleEl) titleEl.textContent = rec.title || rec.name || 'Ukjent mix';
+        const btn = document.querySelector(`#pubmix-${e.mixId} .pub-mix-play`);
+        if (btn) btn.onclick = () => Profile.playMix(e.mixId, rec.title || rec.name || 'DJ Mix');
+        if (rec.coverMediaId) {
+          const url = await DB.getBlobUrl('media', rec.coverMediaId).catch(() => null);
+          const iconEl = document.getElementById(`pubmix-icon-${e.mixId}`);
+          if (iconEl && url) iconEl.innerHTML = `<img src="${url}" class="pub-mix-cover-thumb">`;
+        }
+        if (rec.tracklist?.length) {
+          const subEl = document.getElementById(`pubmix-sub-${e.mixId}`);
+          if (subEl) subEl.innerHTML += ` <span style="color:var(--text3);font-size:0.7rem">· ${rec.tracklist.length} spor</span>`;
+        }
+      }).catch(() => { document.getElementById(`pubmix-${e.mixId}`)?.remove(); });
+    }
+  }
+
+  function renderLogin() {
+    document.getElementById('app').innerHTML = `
+      <div class="auth-page">
+        <div class="auth-card">
+          <div class="auth-logo">
+            <h1>Stellar<span>Radio</span></h1>
+            <p>Logg inn på Stellar Radio</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Brukernavn eller e-post</label>
+            <input class="form-input" id="login-user" placeholder="ditt_brukernavn" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Passord</label>
+            <div class="input-group">
+              <input class="form-input" id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+              <button class="input-group-icon" onclick="togglePassword('login-pass',this)">👁</button>
+            </div>
+          </div>
+          <div id="login-error" class="form-error" style="margin-bottom:0.75rem;display:none"></div>
+          <button class="btn btn-primary w-full" onclick="App.doLogin()">Logg inn</button>
+          <div class="auth-divider">eller</div>
+          <div class="auth-footer">
+            <a href="#/forgot">Glemt passord?</a>
+          </div>
+          <div class="auth-footer">
+            Ny bruker? <a href="#/register">Registrer deg</a>
+          </div>
+        </div>
+      </div>`;
+
+    document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') App.doLogin(); });
+    document.getElementById('login-user').addEventListener('keydown', e => { if (e.key === 'Enter') App.doLogin(); });
+  }
+
+  async function doLogin() {
+    const user = document.getElementById('login-user')?.value?.trim();
+    const pass = document.getElementById('login-pass')?.value;
+    const errEl = document.getElementById('login-error');
+    const result = Auth.login(user, pass);
+    if (result.error) {
+      if (errEl) { errEl.textContent = result.error; errEl.style.display = 'block'; }
+      return;
+    }
+    renderNav();
+    toast(`Velkommen tilbake til Stellar Radio, ${result.user.displayName}! 👋`, 'success');
+    Router.go('/');
+  }
+
+  function renderRegister() {
+    document.getElementById('app').innerHTML = `
+      <div class="auth-page">
+        <div class="auth-card">
+          <div class="auth-logo">
+            <h1>Stellar<span>Radio</span></h1>
+            <p>Lag din gratis Stellar Radio-profil</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Brukernavn</label>
+            <input class="form-input" id="reg-username" placeholder="kun_bokstaver_tall_" autocomplete="username">
+            <span class="form-hint">Kun bokstaver, tall og underscore. Minst 3 tegn.</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Visningsnavn</label>
+            <input class="form-input" id="reg-displayname" placeholder="Ditt fulle navn">
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-postadresse</label>
+            <input class="form-input" id="reg-email" type="email" placeholder="deg@eksempel.no" autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Passord</label>
+            <div class="input-group">
+              <input class="form-input" id="reg-pass" type="password" placeholder="Minst 6 tegn" autocomplete="new-password">
+              <button class="input-group-icon" onclick="togglePassword('reg-pass',this)">👁</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bekreft passord</label>
+            <input class="form-input" id="reg-pass2" type="password" placeholder="Gjenta passord" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hva er du?</label>
+            <div class="role-selector" id="reg-role-selector">
+              <label class="role-option" onclick="App.selectRole('lytter',this)">
+                <input type="radio" name="reg-role" value="lytter" checked style="display:none">
+                <div class="role-option-inner active"><span class="role-option-emoji">🎧</span><span class="role-option-label">Lytter</span></div>
+              </label>
+              <label class="role-option" onclick="App.selectRole('dj',this)">
+                <input type="radio" name="reg-role" value="dj" style="display:none">
+                <div class="role-option-inner"><span class="role-option-emoji">🎛️</span><span class="role-option-label">DJ</span></div>
+              </label>
+              <label class="role-option" onclick="App.selectRole('produsent',this)">
+                <input type="radio" name="reg-role" value="produsent" style="display:none">
+                <div class="role-option-inner"><span class="role-option-emoji">🎹</span><span class="role-option-label">Produsent</span></div>
+              </label>
+              <label class="role-option" onclick="App.selectRole('plateselskap',this)">
+                <input type="radio" name="reg-role" value="plateselskap" style="display:none">
+                <div class="role-option-inner"><span class="role-option-emoji">🏷️</span><span class="role-option-label">Plateselskap</span></div>
+              </label>
+            </div>
+          </div>
+          <div id="reg-error" class="form-error" style="margin-bottom:0.75rem;display:none"></div>
+          <button class="btn btn-primary w-full" id="reg-btn" onclick="App.doRegister()">Registrer</button>
+          <div class="auth-footer" style="margin-top:1rem">
+            Har du allerede en konto? <a href="#/login">Logg inn</a>
+          </div>
+        </div>
+      </div>`;
+
+    document.getElementById('reg-pass2').addEventListener('keydown', e => { if (e.key === 'Enter') App.doRegister(); });
+  }
+
+  async function doRegister() {
+    const username    = document.getElementById('reg-username')?.value?.trim();
+    const displayName = document.getElementById('reg-displayname')?.value?.trim();
+    const email       = document.getElementById('reg-email')?.value?.trim();
+    const pass        = document.getElementById('reg-pass')?.value;
+    const pass2       = document.getElementById('reg-pass2')?.value;
+    const errEl       = document.getElementById('reg-error');
+    const btn         = document.getElementById('reg-btn');
+
+    if (pass !== pass2) {
+      if (errEl) { errEl.textContent = 'Passordene stemmer ikke overens'; errEl.style.display = 'block'; }
+      return;
+    }
+
+    const roleInput = document.querySelector('input[name="reg-role"]:checked');
+    const role = roleInput?.value || 'lytter';
+
+    if (btn) { btn.textContent = 'Registrerer…'; btn.disabled = true; }
+    const result = Auth.register(username, pass, displayName, email);
+    if (btn) { btn.textContent = 'Registrer'; btn.disabled = false; }
+
+    if (result.error) {
+      if (errEl) { errEl.textContent = result.error; errEl.style.display = 'block'; }
+      return;
+    }
+
+    Auth.updateUser(username, { roles: [role] });
+
+    // Send activation email
+    const emailRes = await Email.sendActivation(email, username, result.activationToken);
+
+    if (emailRes.devMode) {
+      // Auto-activated in dev mode — log the user in immediately
+      localStorage.setItem('pv_session', JSON.stringify({ username, ts: Date.now() }));
+      renderNav();
+      toast(`Konto opprettet! Velkommen, ${displayName || username}! 🎉`, 'success');
+      Router.go(`/u/${username}`);
+    } else {
+      // Show confirmation page
+      document.getElementById('app').innerHTML = `
+        <div class="auth-page">
+          <div class="auth-card" style="text-align:center">
+            <div style="font-size:4rem;margin-bottom:1rem">📧</div>
+            <h2 style="font-weight:800;margin-bottom:0.5rem">Sjekk e-posten din!</h2>
+            <p style="color:var(--text2);margin-bottom:1.5rem">
+              Vi har sendt en aktiveringslenke til <strong>${email}</strong>.<br>
+              Klikk på lenken for å aktivere kontoen din.
+            </p>
+            ${emailRes.error ? `<div class="badge badge-red" style="margin-bottom:1rem">${emailRes.error}</div>` : ''}
+            <a href="#/login" class="btn btn-primary">Gå til innlogging</a>
+          </div>
+        </div>`;
+    }
+  }
+
+  function renderForgotPassword() {
+    document.getElementById('app').innerHTML = `
+      <div class="auth-page">
+        <div class="auth-card">
+          <div class="auth-logo">
+            <h1>Stellar<span>Radio</span></h1>
+            <p>Tilbakestill passord</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-postadresse</label>
+            <input class="form-input" id="forgot-email" type="email" placeholder="deg@eksempel.no" autocomplete="email">
+          </div>
+          <div id="forgot-error" class="form-error" style="margin-bottom:0.75rem;display:none"></div>
+          <div id="forgot-success" style="display:none;margin-bottom:0.75rem;color:var(--green);font-size:0.875rem"></div>
+          <button class="btn btn-primary w-full" id="forgot-btn" onclick="App.doForgotPassword()">Send tilbakestillingslenke</button>
+          <div class="auth-footer"><a href="#/login">← Tilbake til innlogging</a></div>
+        </div>
+      </div>`;
+  }
+
+  async function doForgotPassword() {
+    const email  = document.getElementById('forgot-email')?.value?.trim();
+    const errEl  = document.getElementById('forgot-error');
+    const sucEl  = document.getElementById('forgot-success');
+    const btn    = document.getElementById('forgot-btn');
+
+    if (!email) { if (errEl) { errEl.textContent = 'Skriv inn e-postadressen din'; errEl.style.display = 'block'; } return; }
+
+    if (btn) { btn.textContent = 'Sender…'; btn.disabled = true; }
+    const result = Auth.forgotPassword(email);
+    if (btn) { btn.textContent = 'Send tilbakestillingslenke'; btn.disabled = false; }
+
+    if (result.error) {
+      if (errEl) { errEl.textContent = result.error; errEl.style.display = 'block'; }
+      return;
+    }
+
+    const emailRes = await Email.sendPasswordReset(email, result.username, result.token);
+
+    if (errEl) errEl.style.display = 'none';
+    if (sucEl) {
+      sucEl.style.display = 'block';
+      sucEl.innerHTML = emailRes.devMode
+        ? `✅ (Dev-modus) Lenke: <a href="${emailRes.link}" style="color:var(--accent)">${emailRes.link}</a>`
+        : `✅ Tilbakestillingslenke sendt til ${email}`;
+    }
+  }
+
+  function renderResetPassword(token) {
+    document.getElementById('app').innerHTML = `
+      <div class="auth-page">
+        <div class="auth-card">
+          <div class="auth-logo">
+            <h1>Stellar<span>Radio</span></h1>
+            <p>Nytt passord</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nytt passord</label>
+            <div class="input-group">
+              <input class="form-input" id="reset-pass" type="password" placeholder="Minst 6 tegn">
+              <button class="input-group-icon" onclick="togglePassword('reset-pass',this)">👁</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bekreft passord</label>
+            <input class="form-input" id="reset-pass2" type="password" placeholder="Gjenta passord">
+          </div>
+          <div id="reset-error" class="form-error" style="margin-bottom:0.75rem;display:none"></div>
+          <button class="btn btn-primary w-full" onclick="App.doResetPassword('${token}')">Sett nytt passord</button>
+        </div>
+      </div>`;
+  }
+
+  async function doResetPassword(token) {
+    const pass  = document.getElementById('reset-pass')?.value;
+    const pass2 = document.getElementById('reset-pass2')?.value;
+    const errEl = document.getElementById('reset-error');
+    if (pass !== pass2) {
+      if (errEl) { errEl.textContent = 'Passordene stemmer ikke'; errEl.style.display = 'block'; }
+      return;
+    }
+    const result = Auth.resetPassword(token, pass);
+    if (result.error) {
+      if (errEl) { errEl.textContent = result.error; errEl.style.display = 'block'; }
+      return;
+    }
+    toast('Passord oppdatert! Logg inn.', 'success');
+    Router.go('/login');
+  }
+
+  function renderActivate(token) {
+    const result = Auth.activate(token);
+    if (result.error) {
+      document.getElementById('app').innerHTML = `
+        <div class="auth-page"><div class="auth-card" style="text-align:center">
+          <div style="font-size:3rem">⚠️</div>
+          <h2>Ugyldig lenke</h2>
+          <p style="color:var(--text2);margin-top:0.5rem">${result.error}</p>
+          <a href="#/register" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">Prøv igjen</a>
+        </div></div>`;
+      return;
+    }
+    toast(`Konto aktivert! Velkommen, ${result.user.displayName}! 🎉`, 'success');
+    // Auto-login after activation
+    localStorage.setItem('pv_session', JSON.stringify({ username: result.user.username, ts: Date.now() }));
+    renderNav();
+    Router.go(`/u/${result.user.username}`);
+  }
+
+  function renderInbox() {
+    const user = Auth.current();
+    if (!user) { toast('Logg inn for å se innboksen', 'error'); Router.go('/login'); return; }
+
+    const pendingRequests = user.friendRequests || [];
+    const allUsers        = Auth.getAllPublicUsers();
+
+    // Find all PM conversations involving this user
+    const convs = [];
+    for (const u of allUsers) {
+      if (u.username === user.username) continue;
+      const key  = 'sr_pm_' + [user.username, u.username].sort().join('_');
+      const msgs = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!msgs.length) continue;
+      const last = msgs[msgs.length - 1];
+      const readKey  = 'sr_pm_read_' + user.username;
+      const reads    = JSON.parse(localStorage.getItem(readKey) || '{}');
+      const lastRead = reads[u.username] || 0;
+      const unread   = msgs.filter(m => m.from !== user.username && m.ts > lastRead).length;
+      convs.push({ username: u.username, displayName: u.displayName, last, msgCount: msgs.length, unread });
+    }
+    convs.sort((a, b) => b.last.ts - a.last.ts);
+
+    const requestsHtml = pendingRequests.length ? `
+      <div class="settings-section">
+        <div class="settings-section-header">👥 Venneforespørsler (${pendingRequests.length})</div>
+        <div class="settings-section-body">
+          ${pendingRequests.map(r => {
+            const requester = Auth.getUser(r.from);
+            if (!requester) return '';
+            return `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0;border-bottom:1px solid var(--border,rgba(255,255,255,0.08))">
+                <a href="#/u/${r.from}" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:inherit">
+                  <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#2563eb);display:flex;align-items:center;justify-content:center;font-weight:700">${requester.displayName.charAt(0).toUpperCase()}</div>
+                  <div>
+                    <div style="font-weight:600">${requester.displayName}</div>
+                    <div style="font-size:0.78rem;color:var(--text2)">@${r.from}</div>
+                  </div>
+                </a>
+                <div style="display:flex;gap:0.5rem">
+                  <button class="btn btn-primary btn-sm" onclick="App.inboxAccept('${r.from}')">✓ Aksepter</button>
+                  <button class="btn btn-ghost btn-sm" onclick="App.inboxReject('${r.from}')">✕ Avslå</button>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>` : '';
+
+    const convHtml = convs.length ? `
+      <div class="settings-section">
+        <div class="settings-section-header">💬 Samtaler (${convs.length})</div>
+        <div class="settings-section-body">
+          ${convs.map(c => {
+            const isMine = c.last.from === user.username;
+            const timeStr = (() => {
+              const d = Date.now() - c.last.ts;
+              if (d < 60000)   return 'Nå nettopp';
+              if (d < 3600000) return `${Math.floor(d/60000)} min siden`;
+              if (d < 86400000) return `${Math.floor(d/3600000)} t siden`;
+              return new Date(c.last.ts).toLocaleDateString('no-NO');
+            })();
+            return `
+              <div class="settings-row" onclick="Router.go('/messages/${c.username}')" style="cursor:pointer${c.unread > 0 ? ';background:rgba(124,58,237,0.06)' : ''}">
+                <div style="display:flex;align-items:center;gap:0.75rem;flex:1;min-width:0">
+                  <div style="position:relative;flex-shrink:0">
+                    <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#2563eb);display:flex;align-items:center;justify-content:center;font-weight:700">${c.displayName.charAt(0).toUpperCase()}</div>
+                    ${c.unread > 0 ? `<span style="position:absolute;top:-3px;right:-3px;background:#ef4444;color:#fff;border-radius:999px;font-size:0.65rem;font-weight:700;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px">${c.unread}</span>` : ''}
+                  </div>
+                  <div style="min-width:0;flex:1">
+                    <div style="font-weight:${c.unread > 0 ? '700' : '600'}">${c.displayName} <span style="font-size:0.75rem;color:var(--text3)">@${c.username}</span></div>
+                    <div style="font-size:0.82rem;color:${c.unread > 0 ? 'var(--text)' : 'var(--text2)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:${c.unread > 0 ? '600' : '400'}">${isMine ? 'Du: ' : ''}${c.last.text}</div>
+                  </div>
+                </div>
+                <div style="font-size:0.75rem;color:var(--text3);white-space:nowrap;margin-left:0.75rem">${timeStr}</div>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>` : '';
+
+    const allOtherUsers = allUsers.filter(u => u.username !== user.username);
+    const friends = new Set(Auth.getFriends(user.username).map(f => f.username));
+    const sent    = new Set(user.sentRequests || []);
+
+    const usersHtml = `
+      <div class="settings-section">
+        <div class="settings-section-header">🌐 Alle brukere — Send venneforespørsel</div>
+        <div class="settings-section-body">
+          ${!allOtherUsers.length ? '<p style="color:var(--text3);font-size:0.85rem">Ingen andre brukere ennå.</p>' : allOtherUsers.map(u => {
+            const isFriend  = friends.has(u.username);
+            const isPending = sent.has(u.username);
+            const isIncoming = (user.friendRequests||[]).some(r => r.from === u.username);
+            let btn = '';
+            if (isFriend) {
+              btn = `<span style="font-size:0.78rem;color:#4ade80">✓ Venner</span>`;
+            } else if (isPending) {
+              btn = `<span style="font-size:0.78rem;color:var(--text3)">⏳ Sendt</span>`;
+            } else if (isIncoming) {
+              btn = `<button class="btn btn-primary btn-sm" onclick="App.inboxAccept('${u.username}')">✓ Aksepter</button>`;
+            } else {
+              btn = `<button class="btn btn-ghost btn-sm" onclick="Profile.sendFriendRequest('${u.username}');App.renderInbox()">👥 Legg til</button>`;
+            }
+            return `
+              <div class="settings-row">
+                <a href="#/u/${u.username}" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:inherit;flex:1;min-width:0">
+                  <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#2563eb);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">${u.displayName.charAt(0).toUpperCase()}</div>
+                  <div>
+                    <div style="font-weight:600;font-size:0.88rem">${u.displayName}</div>
+                    <div style="font-size:0.75rem;color:var(--text2)">@${u.username}</div>
+                  </div>
+                </a>
+                <div style="display:flex;align-items:center;gap:0.5rem">
+                  <button class="btn btn-ghost btn-sm" onclick="Router.go('/messages/${u.username}')">💬</button>
+                  ${btn}
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+
+    document.getElementById('app').innerHTML = `
+      <div class="settings-page">
+        <h1>📬 Innboks</h1>
+        ${!requestsHtml && !convHtml ? '<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">📭</div><p>Ingen meldinger eller venneforespørsler ennå.</p></div>' : ''}
+        ${requestsHtml}
+        ${convHtml}
+        ${usersHtml}
+      </div>`;
+  }
+
+  function quickAddFriend(targetUsername, btn) {
+    const current = Auth.current();
+    if (!current) { Router.go('/login'); return; }
+    const result = Auth.sendFriendRequest(current.username, targetUsername);
+    if (result.error) { toast(result.error, 'error'); return; }
+    btn.textContent = '⏳ Sendt';
+    btn.className = 'user-card-friend-btn user-card-friend-btn--pending';
+    btn.onclick = null;
+    toast(`Venneforespørsel sendt til @${targetUsername}`, 'success');
+    renderNav();
+  }
+
+  function quickAcceptFriend(fromUsername, btn) {
+    const current = Auth.current();
+    if (!current) { Router.go('/login'); return; }
+    const result = Auth.acceptFriendRequest(current.username, fromUsername);
+    if (result.error) { toast(result.error, 'error'); return; }
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'user-card-friend-status';
+    statusDiv.textContent = '✓ Venner';
+    btn.replaceWith(statusDiv);
+    toast(`Du er nå venner med @${fromUsername}! 🎉`, 'success');
+    renderNav();
+  }
+
+  function inboxAccept(fromUsername) {
+    const u = Auth.current();
+    if (!u) return;
+    Auth.acceptFriendRequest(u.username, fromUsername);
+    renderNav();
+    toast(`Du er nå venner med @${fromUsername}! 🎉`, 'success');
+    renderInbox();
+  }
+
+  function inboxReject(fromUsername) {
+    const u = Auth.current();
+    if (!u) return;
+    Auth.rejectFriendRequest(u.username, fromUsername);
+    toast('Avslått', 'info');
+    renderInbox();
+  }
+
+  function renderSettings() {
+    const user = Auth.current();
+    if (!user) { toast('Logg inn for å se innstillinger', 'error'); Router.go('/login'); return; }
+
+    const isPro = user.subscription === 'pro';
+    const filters = user.theme?.bgImageFilters || { brightness: 100, contrast: 100, saturation: 100, hue: 0 };
+
+    document.getElementById('app').innerHTML = `
+      <div class="settings-page-v2">
+        <h1>⚙️ Innstillinger</h1>
+
+        <div class="settings-tabs">
+          <button class="settings-tab-btn active" onclick="App.settingsTab('abonnement',this)">🌟 Abonnement</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('konto',this)">👤 Konto</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('betaling',this)">💳 Betaling</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('minside',this)">🎨 Min Side</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('ai',this)">🤖 AI-assistent</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('konfig',this)">🔧 Konfigurasjon</button>
+        </div>
+
+        <!-- ══ ABONNEMENT ══ -->
+        <div id="set-tab-abonnement" class="settings-tab-panel active">
+          <div class="plan-cards">
+            <div class="plan-card ${!isPro ? 'current-plan' : ''}">
+              <div class="plan-card-name">🎧 Gratis</div>
+              <div class="plan-card-price">0 kr / måned</div>
+              <ul class="plan-card-features">
+                <li>Profil og avatar</li>
+                <li>Radio og chat</li>
+                <li>Opplasting av musikk</li>
+                <li>Offentlige DJ-mixes</li>
+              </ul>
+            </div>
+            <div class="plan-card ${isPro ? 'current-plan' : ''}">
+              <div class="plan-card-name">⭐ Pro</div>
+              <div class="plan-card-price">149 kr / måned</div>
+              <ul class="plan-card-features">
+                <li>Alt i Gratis</li>
+                <li>Private DJ-mixes</li>
+                <li>Live Mix tid</li>
+                <li>Prioritert støtte</li>
+              </ul>
+              ${!isPro
+                ? `<button class="btn btn-primary w-full" onclick="Payment.startCheckout('${user.username}')">Oppgrader til Pro</button>`
+                : `<div style="text-align:center;color:#4ade80;font-weight:700;margin-top:0.5rem">✓ Aktivt abonnement</div>`}
+            </div>
+          </div>
+
+          <div class="admin-contact-box">
+            <div class="admin-icon">💬</div>
+            <div>
+              <div style="font-weight:700;margin-bottom:0.2rem">Kontakt admin</div>
+              <div style="font-size:0.85rem;color:var(--text2)">Spørsmål om abonnement eller betaling? Ta kontakt: <a href="mailto:producerenur@gmail.com">producerenur@gmail.com</a></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ KONTO ══ -->
+        <div id="set-tab-konto" class="settings-tab-panel">
+          <div class="settings-section">
+            <div class="settings-section-header">👤 Kontoinformasjon</div>
+            <div class="settings-section-body">
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">Innlogget som</div>
+                  <div class="settings-row-hint">@${user.username} · ${user.email}</div>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="App.logout()">Logg ut</button>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-row-label">E-postaktivering</div>
+                  <div class="settings-row-hint">${user.activated ? '✅ Kontoen er aktivert' : '⚠️ Ikke aktivert'}</div>
+                </div>
+                ${!user.activated
+                  ? `<button class="btn btn-ghost btn-sm" id="resend-act-btn" onclick="App.resendActivation()">📧 Send på nytt</button>`
+                  : ''}
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-header">🔐 Passord</div>
+            <div class="settings-section-body">
+              <p style="font-size:0.875rem;color:var(--text2);margin-bottom:1rem">Send en tilbakestillingslenke til <strong>${user.email}</strong></p>
+              <button class="btn btn-ghost btn-sm" id="send-reset-btn" onclick="App.sendPasswordResetFromSettings()">🔑 Send tilbakestillingslenke</button>
+              <span id="reset-result" style="font-size:0.8rem;margin-left:0.75rem"></span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-header" style="color:var(--red)">⚠️ Faresone</div>
+            <div class="settings-section-body">
+              <div class="danger-zone">
+                <div class="danger-zone-title">Slett profil</div>
+                <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.75rem">Dette sletter kontoen din permanent. Handlingen kan ikke angres.</p>
+                <button class="btn btn-danger btn-sm" onclick="App.confirmDeleteAccount()">🗑️ Slett min profil</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ BETALING ══ -->
+        <div id="set-tab-betaling" class="settings-tab-panel">
+          <div class="settings-section">
+            <div class="settings-section-header">💳 Betalingsmetode</div>
+            <div class="settings-section-body">
+              <p style="font-size:0.875rem;color:var(--text2);margin-bottom:1rem">Velg foretrukket betalingsmetode for abonnement. Faktisk betaling behandles sikkert via Stripe.</p>
+              <div class="payment-methods">
+                <div class="payment-method-btn ${(user.paymentMethod || 'card') === 'card' ? 'selected' : ''}" onclick="App.selectPaymentMethod('card',this)">
+                  <div class="pm-icon">💳</div>
+                  <div class="pm-label">Bankkort</div>
+                </div>
+                <div class="payment-method-btn ${user.paymentMethod === 'paypal' ? 'selected' : ''}" onclick="App.selectPaymentMethod('paypal',this)">
+                  <div class="pm-icon">🅿️</div>
+                  <div class="pm-label">PayPal</div>
+                </div>
+              </div>
+              <div id="set-card-fields" style="${(user.paymentMethod || 'card') !== 'card' ? 'display:none' : ''}">
+                <div class="form-group">
+                  <label class="form-label">Kortinnehaver</label>
+                  <input class="form-input" id="set-card-name" placeholder="Fullt navn" value="${user.cardName || ''}">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Kortnummer (lagres ikke, kun referanse)</label>
+                  <input class="form-input" id="set-card-last4" placeholder="Siste 4 sifre" maxlength="4" value="${user.cardLast4 || ''}">
+                </div>
+              </div>
+              <div id="set-paypal-fields" style="${user.paymentMethod !== 'paypal' ? 'display:none' : ''}">
+                <div class="form-group">
+                  <label class="form-label">PayPal e-post</label>
+                  <input class="form-input" id="set-paypal-email" type="email" placeholder="din@paypal.no" value="${user.paypalEmail || ''}">
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" style="margin-top:0.5rem" onclick="App.savePaymentMethod()">💾 Lagre betalingsinfo</button>
+            </div>
+          </div>
+
+          ${isPro ? `
+          <div class="settings-section">
+            <div class="settings-section-header">📋 Abonnementsstatus</div>
+            <div class="settings-section-body">
+              <div class="settings-row">
+                <div><div class="settings-row-label">Plan</div><div class="settings-row-hint">Pro</div></div>
+                <span style="color:#4ade80;font-weight:700">✓ Aktiv</span>
+              </div>
+              <div class="settings-row">
+                <div><div class="settings-row-label">Spørsmål om faktura?</div></div>
+                <a href="mailto:producerenur@gmail.com" class="btn btn-ghost btn-sm">Kontakt admin</a>
+              </div>
+            </div>
+          </div>` : ''}
+        </div>
+
+        <!-- ══ MIN SIDE ══ -->
+        <div id="set-tab-minside" class="settings-tab-panel">
+          <div class="settings-section">
+            <div class="settings-section-header">🖼️ Bakgrunnsbilde</div>
+            <div class="settings-section-body">
+              <p style="font-size:0.85rem;color:var(--text2);margin-bottom:1rem">Last opp et bilde som vises i bakgrunnen på hele siden.</p>
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bg-file-input').click()">📷 Last opp bakgrunnsbilde</button>
+              <div style="margin-top:1.25rem">
+                <div style="font-size:0.82rem;font-weight:700;color:var(--text2);margin-bottom:0.5rem">Psykedelisk effekt</div>
+                <div class="effect-grid">
+                  <button class="effect-btn" data-effect="psychedelic" onclick="BgManager.setEffect('psychedelic')">🌀 Psykedelisk</button>
+                  <button class="effect-btn" data-effect="acid" onclick="BgManager.setEffect('acid')">⚡ Acid</button>
+                  <button class="effect-btn" data-effect="space" onclick="BgManager.setEffect('space')">🚀 Space</button>
+                  <button class="effect-btn" data-effect="chill" onclick="BgManager.setEffect('chill')">🌿 Chill</button>
+                </div>
+              </div>
+              <div style="margin-top:1.25rem">
+                <div style="font-size:0.82rem;font-weight:700;color:var(--text2);margin-bottom:0.5rem">Partikler</div>
+                <div class="particle-grid">
+                  <button class="particle-btn" data-pstyle="stars" onclick="BgManager.setParticleStyle('stars')">✨ Stjerner</button>
+                  <button class="particle-btn" data-pstyle="bubbles" onclick="BgManager.setParticleStyle('bubbles')">🫧 Bobler</button>
+                  <button class="particle-btn" data-pstyle="sparks" onclick="BgManager.setParticleStyle('sparks')">⚡ Gnister</button>
+                  <button class="particle-btn" data-pstyle="aurora" onclick="BgManager.setParticleStyle('aurora')">🌌 Aurora</button>
+                  <button class="particle-btn" data-pstyle="none" onclick="BgManager.setParticleStyle('none')">✕ Ingen</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-header">🎚️ Bildejusteringer</div>
+            <div class="settings-section-body">
+              <div class="filter-sliders">
+                <div class="filter-row">
+                  <label>Lysstyrke</label>
+                  <input type="range" min="20" max="200" value="${filters.brightness}" oninput="App.liveFilter('brightness',this.value)">
+                  <span class="filter-val" id="fv-brightness">${filters.brightness}%</span>
+                </div>
+                <div class="filter-row">
+                  <label>Kontrast</label>
+                  <input type="range" min="20" max="200" value="${filters.contrast}" oninput="App.liveFilter('contrast',this.value)">
+                  <span class="filter-val" id="fv-contrast">${filters.contrast}%</span>
+                </div>
+                <div class="filter-row">
+                  <label>Metning</label>
+                  <input type="range" min="0" max="300" value="${filters.saturation}" oninput="App.liveFilter('saturation',this.value)">
+                  <span class="filter-val" id="fv-saturation">${filters.saturation}%</span>
+                </div>
+                <div class="filter-row">
+                  <label>Fargetone</label>
+                  <input type="range" min="0" max="360" value="${filters.hue}" oninput="App.liveFilter('hue',this.value)">
+                  <span class="filter-val" id="fv-hue">${filters.hue}°</span>
+                </div>
+              </div>
+              <div style="margin-top:1.25rem">
+                <div style="font-size:0.82rem;font-weight:700;color:var(--text2);margin-bottom:0.5rem">Hurtigforvalg</div>
+                <div class="preset-grid">
+                  <button class="preset-btn" onclick="App.applyFilterPreset('normal')">🎨 Normal</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('bw')">⬛ Svart/hvitt</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('lys')">☀️ Lys</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('mork')">🌑 Mørk</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('vibrant')">🌈 Vibrant</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('cool')">❄️ Kald</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('warm')">🔥 Varm</button>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" style="margin-top:1rem" onclick="App.saveFilterSettings()">💾 Lagre justeringer</button>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-header">✍️ Tekster på siden</div>
+            <div class="settings-section-body">
+              <div class="form-group">
+                <label class="form-label">Bio / Beskrivelse</label>
+                <textarea class="form-input" id="set-bio" rows="3" placeholder="Fortell noe om deg selv…">${user.bio || ''}</textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Profillenker (én per linje, format: Tekst|URL)</label>
+                <textarea class="form-input" id="set-links" rows="3" placeholder="SoundCloud|https://soundcloud.com/deg">${(user.links || []).map(l => l.label + '|' + l.url).join('\n')}</textarea>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="App.savePageTexts()">💾 Lagre tekster</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ AI ASSISTENT ══ -->
+        <div id="set-tab-ai" class="settings-tab-panel">
+          <div class="settings-section">
+            <div class="settings-section-header">🤖 Stellar Radio AI-assistent</div>
+            <div class="set-ai-chat">
+              <div class="set-ai-messages" id="set-ai-msgs">
+                <div class="set-ai-msg bot">Hei! Jeg er din AI-assistent for Stellar Radio. Jeg kan hjelpe deg med å finne radiokanaler, tilpasse profilen din, svare på spørsmål om siden — eller bare slå av en prat om musikk. Hva lurer du på? 🎵</div>
+              </div>
+              <div class="set-ai-input-row">
+                <input class="form-input" id="set-ai-input" placeholder="Skriv en melding…" onkeydown="if(event.key==='Enter')App.sendAiMessage()">
+                <button class="btn btn-primary btn-sm" onclick="App.sendAiMessage()">Send</button>
+              </div>
+            </div>
+            ${!AI.hasKey() ? `<p style="font-size:0.8rem;color:var(--text3);padding:0.75rem 1rem">ℹ️ Legg inn Claude API-nøkkel i Konfigurasjon-fanen for å aktivere AI-assistenten.</p>` : ''}
+          </div>
+        </div>
+
+        <!-- ══ KONFIGURASJON ══ -->
+        <div id="set-tab-konfig" class="settings-tab-panel">
+          <div class="settings-section">
+            <div class="settings-section-header">🤖 AI-integrasjon (Claude API)</div>
+            <div class="settings-section-body">
+              <p class="text-muted text-sm" style="margin-bottom:1rem">
+                Legg inn din Claude API-nøkkel for AI bio-generator, fargeforslag og AI-assistent.
+                <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">Få nøkkel →</a>
+              </p>
+              <div class="form-group">
+                <label class="form-label">Claude (Anthropic) API-nøkkel</label>
+                <div class="api-key-field input-group">
+                  <input class="form-input" id="set-anthropic-key" type="password" placeholder="sk-ant-…" value="${CONFIG.ANTHROPIC_API_KEY}">
+                  <button class="api-key-toggle" onclick="togglePassword('set-anthropic-key',this)">👁</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-header">📧 E-post (EmailJS)</div>
+            <div class="settings-section-body">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+                <p class="text-muted text-sm" style="margin:0">
+                  Konfigurer EmailJS for aktiverings- og tilbakestillingslenker.
+                  <a href="https://www.emailjs.com" target="_blank" style="color:var(--accent)">Opprett konto →</a>
+                </p>
+                <span id="ejs-status-badge" style="font-size:0.78rem;font-weight:600;padding:0.25rem 0.65rem;border-radius:999px;background:${Email.isConfigured() ? 'rgba(34,197,94,0.15)' : 'rgba(251,191,36,0.15)'};color:${Email.isConfigured() ? '#4ade80' : '#fbbf24'}">
+                  ${Email.isConfigured() ? '✅ Konfigurert' : '⚠️ Ikke konfigurert'}
+                </span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Service ID</label>
+                <input class="form-input" id="set-ejs-service" placeholder="service_xxxxxxx" value="${CONFIG.EMAILJS_SERVICE_ID}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Aktiveringsmal ID</label>
+                <input class="form-input" id="set-ejs-tmpl-act" placeholder="template_xxxxxxx" value="${CONFIG.EMAILJS_TEMPLATE_ACTIVATION}">
+                <span class="form-hint">Variabler: <code>{{to_email}}</code> <code>{{to_name}}</code> <code>{{activate_url}}</code></span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tilbakestillingsmal ID</label>
+                <input class="form-input" id="set-ejs-tmpl-rst" placeholder="template_xxxxxxx" value="${CONFIG.EMAILJS_TEMPLATE_RESET}">
+                <span class="form-hint">Variabler: <code>{{to_email}}</code> <code>{{to_name}}</code> <code>{{reset_url}}</code></span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Meldingsvarsel-mal ID <span style="font-size:0.75rem;color:var(--text3)">(valgfri)</span></label>
+                <input class="form-input" id="set-ejs-tmpl-msg" placeholder="template_xxxxxxx" value="${CONFIG.EMAILJS_TEMPLATE_MESSAGE}">
+                <span class="form-hint">Variabler: <code>{{to_email}}</code> <code>{{to_name}}</code> <code>{{from_name}}</code> <code>{{message_preview}}</code> <code>{{inbox_url}}</code></span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Public Key</label>
+                <div class="api-key-field input-group">
+                  <input class="form-input" id="set-ejs-pubkey" type="password" placeholder="xxxxxxxxxxxxxxx" value="${CONFIG.EMAILJS_PUBLIC_KEY}">
+                  <button class="api-key-toggle" onclick="togglePassword('set-ejs-pubkey',this)">👁</button>
+                </div>
+              </div>
+              ${Auth.current() ? `
+              <div style="margin-top:0.75rem">
+                <button class="btn btn-ghost btn-sm" id="ejs-test-btn" onclick="App.testEmailJS()">
+                  📨 Send test-e-post til ${Auth.current().email}
+                </button>
+                <span id="ejs-test-result" style="font-size:0.8rem;margin-left:0.75rem"></span>
+              </div>` : ''}
+            </div>
+          </div>
+
+          <div style="display:flex;gap:0.75rem;margin-top:1.5rem">
+            <button class="btn btn-primary" onclick="App.saveSettings()">💾 Lagre konfigurasjon</button>
+            <a href="#/" class="btn btn-ghost">← Hjem</a>
+          </div>
+        </div>
+      </div>`;
+
+    // Reset AI chat history when settings page is re-entered
+    _aiHistory.length = 0;
+    window._pendingFilters = null;
+  }
+
+  function settingsTab(name, btn) {
+    document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.settings-tab-panel').forEach(p => p.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    const panel = document.getElementById('set-tab-' + name);
+    if (panel) panel.classList.add('active');
+  }
+
+  async function resendActivation() {
+    const user = Auth.current();
+    if (!user) return;
+    const btn = document.getElementById('resend-act-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Sender…'; }
+
+    const users = Auth.getUsers();
+    const u = users[user.username];
+    if (!u) return;
+
+    if (!u.activationToken) {
+      const token = Array.from(crypto.getRandomValues(new Uint8Array(40))).map(b => b.toString(16).padStart(2,'0')).join('');
+      u.activationToken = token;
+      Auth.updateUser(user.username, { activationToken: token });
+    }
+
+    const res = await Email.sendActivation(user.email, user.username, u.activationToken);
+    if (btn) { btn.disabled = false; btn.textContent = '📧 Send på nytt'; }
+    toast(res.error ? 'Feil: ' + res.error : 'Aktiveringslenke sendt! 📧', res.error ? 'error' : 'success');
+  }
+
+  async function sendPasswordResetFromSettings() {
+    const user = Auth.current();
+    if (!user) return;
+    const btn    = document.getElementById('send-reset-btn');
+    const result = document.getElementById('reset-result');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Sender…'; }
+
+    const res = Auth.forgotPassword(user.email);
+    if (res.error) {
+      if (btn) { btn.disabled = false; btn.textContent = '🔑 Send tilbakestillingslenke'; }
+      toast(res.error, 'error'); return;
+    }
+
+    const emailRes = await Email.sendPasswordReset(user.email, res.username, res.token);
+    if (btn) { btn.disabled = false; btn.textContent = '🔑 Send tilbakestillingslenke'; }
+    if (result) {
+      result.textContent = emailRes.error ? '❌ ' + emailRes.error : '✅ Sendt!';
+      result.style.color = emailRes.error ? '#f87171' : '#4ade80';
+    }
+  }
+
+  function confirmDeleteAccount() {
+    const user = Auth.current();
+    if (!user) return;
+    const box = document.getElementById('modal-box');
+    if (!box) return;
+    box.innerHTML = `
+      <div class="modal-header"><h2>🗑️ Slett profil</h2></div>
+      <div style="padding:1.25rem">
+        <p style="margin-bottom:1rem;color:var(--text2)">Er du sikker på at du vil slette kontoen <strong>@${user.username}</strong>? Dette kan ikke angres.</p>
+        <div style="display:flex;gap:0.75rem">
+          <button class="btn btn-danger" onclick="App.deleteAccount()">Ja, slett kontoen</button>
+          <button class="btn btn-ghost" onclick="App.closeModal()">Avbryt</button>
+        </div>
+      </div>`;
+    openModal();
+  }
+
+  function deleteAccount() {
+    const user = Auth.current();
+    if (!user) return;
+    const users = Auth.getUsers();
+    delete users[user.username];
+    localStorage.setItem('pv_users', JSON.stringify(users));
+    Auth.logout();
+    closeModal();
+    renderNav();
+    toast('Kontoen er slettet.', 'info');
+    Router.go('/');
+  }
+
+  function selectPaymentMethod(method, el) {
+    document.querySelectorAll('.payment-method-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('set-card-fields').style.display   = method === 'card'   ? '' : 'none';
+    document.getElementById('set-paypal-fields').style.display = method === 'paypal' ? '' : 'none';
+    window._selectedPaymentMethod = method;
+  }
+
+  function savePaymentMethod() {
+    const user = Auth.current();
+    if (!user) return;
+    const method = window._selectedPaymentMethod || user.paymentMethod || 'card';
+    const data = { paymentMethod: method };
+    if (method === 'card') {
+      data.cardName  = document.getElementById('set-card-name')?.value?.trim() || '';
+      data.cardLast4 = document.getElementById('set-card-last4')?.value?.replace(/\D/g,'').slice(-4) || '';
+    } else if (method === 'paypal') {
+      data.paypalEmail = document.getElementById('set-paypal-email')?.value?.trim() || '';
+    }
+    Auth.updateUser(user.username, data);
+    toast('Betalingsinfo lagret ✓', 'success');
+  }
+
+  // Live-update background image CSS filter as sliders move
+  function liveFilter(prop, val) {
+    const valEl = document.getElementById('fv-' + prop);
+    if (valEl) valEl.textContent = prop === 'hue' ? val + '°' : val + '%';
+
+    const f = _currentFilters();
+    f[prop] = Number(val);
+    _applyFilters(f);
+    window._pendingFilters = f;
+  }
+
+  function _currentFilters() {
+    if (window._pendingFilters) return { ...window._pendingFilters };
+    const user = Auth.current();
+    return { ...(user?.theme?.bgImageFilters || { brightness: 100, contrast: 100, saturation: 100, hue: 0 }) };
+  }
+
+  function _applyFilters(f) {
+    const img = document.getElementById('bg-img');
+    if (!img) return;
+    img.style.filter = `brightness(${f.brightness/100}) contrast(${f.contrast/100}) saturate(${f.saturation/100}) hue-rotate(${f.hue}deg)`;
+    img.style.animation = 'none'; // pause animated effects while manually adjusting
+  }
+
+  const FILTER_PRESETS = {
+    normal:  { brightness: 100, contrast: 100, saturation: 100, hue: 0 },
+    bw:      { brightness: 100, contrast: 110, saturation: 0,   hue: 0 },
+    lys:     { brightness: 160, contrast: 95,  saturation: 90,  hue: 0 },
+    mork:    { brightness: 45,  contrast: 110, saturation: 120, hue: 0 },
+    vibrant: { brightness: 105, contrast: 115, saturation: 220, hue: 0 },
+    cool:    { brightness: 95,  contrast: 105, saturation: 130, hue: 200 },
+    warm:    { brightness: 105, contrast: 105, saturation: 130, hue: 30 },
+  };
+
+  function applyFilterPreset(preset) {
+    const f = FILTER_PRESETS[preset];
+    if (!f) return;
+    window._pendingFilters = { ...f };
+    _applyFilters(f);
+    // Update sliders
+    const map = { brightness: [20,200,'%'], contrast: [20,200,'%'], saturation: [0,300,'%'], hue: [0,360,'°'] };
+    for (const [prop, [,, unit]] of Object.entries(map)) {
+      const slider = document.querySelector(`.filter-row input[oninput*="'${prop}'"]`);
+      if (slider) slider.value = f[prop];
+      const valEl = document.getElementById('fv-' + prop);
+      if (valEl) valEl.textContent = f[prop] + unit;
+    }
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    event?.target?.classList.add('active');
+  }
+
+  function saveFilterSettings() {
+    const user = Auth.current();
+    if (!user) return;
+    const f = window._pendingFilters || _currentFilters();
+    const theme = { ...(user.theme || {}), bgImageFilters: f };
+    Auth.updateUser(user.username, { theme });
+    window._pendingFilters = null;
+    toast('Justeringer lagret ✓', 'success');
+  }
+
+  function savePageTexts() {
+    const user = Auth.current();
+    if (!user) return;
+    const bio = document.getElementById('set-bio')?.value?.trim() || '';
+    const linksRaw = document.getElementById('set-links')?.value?.trim() || '';
+    const links = linksRaw.split('\n').filter(Boolean).map(line => {
+      const [label, ...rest] = line.split('|');
+      return { label: label.trim(), url: rest.join('|').trim() };
+    }).filter(l => l.label && l.url);
+    Auth.updateUser(user.username, { bio, links });
+    toast('Tekster lagret ✓', 'success');
+  }
+
+  // AI chat in settings tab
+  const _aiHistory = [];
+  async function sendAiMessage() {
+    const input = document.getElementById('set-ai-input');
+    const msgs  = document.getElementById('set-ai-msgs');
+    if (!input || !msgs) return;
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+
+    const userEl = document.createElement('div');
+    userEl.className = 'set-ai-msg user';
+    userEl.textContent = text;
+    msgs.appendChild(userEl);
+
+    const typingEl = document.createElement('div');
+    typingEl.className = 'set-ai-msg bot typing';
+    typingEl.textContent = 'Skriver…';
+    msgs.appendChild(typingEl);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    _aiHistory.push({ role: 'user', content: text });
+
+    try {
+      const reply = await AI.siteAssistantChat(_aiHistory);
+      _aiHistory.push({ role: 'assistant', content: reply });
+      typingEl.className = 'set-ai-msg bot';
+      typingEl.textContent = reply;
+    } catch (e) {
+      typingEl.className = 'set-ai-msg bot';
+      typingEl.textContent = e.message === 'no_key'
+        ? 'Legg inn API-nøkkel i Konfigurasjon-fanen for å bruke AI-assistenten.'
+        : 'Beklager, noe gikk galt. Prøv igjen.';
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function saveSettings() {
+    const anthropicKey = document.getElementById('set-anthropic-key')?.value?.trim() || '';
+    const ejsService   = document.getElementById('set-ejs-service')?.value?.trim()   || '';
+    const ejsTmplAct   = document.getElementById('set-ejs-tmpl-act')?.value?.trim()  || '';
+    const ejsTmplRst   = document.getElementById('set-ejs-tmpl-rst')?.value?.trim()  || '';
+    const ejsTmplMsg   = document.getElementById('set-ejs-tmpl-msg')?.value?.trim()  || '';
+    const ejsPubKey    = document.getElementById('set-ejs-pubkey')?.value?.trim()    || '';
+    CONFIG.save(anthropicKey, ejsService, ejsTmplAct, ejsTmplRst, ejsTmplMsg, ejsPubKey);
+    toast('Konfigurasjon lagret! ✓', 'success');
+
+    const badge = document.getElementById('ejs-status-badge');
+    if (badge) {
+      const ok = Email.isConfigured();
+      badge.textContent = ok ? '✅ Konfigurert' : '⚠️ Ikke konfigurert';
+      badge.style.background = ok ? 'rgba(34,197,94,0.15)' : 'rgba(251,191,36,0.15)';
+      badge.style.color = ok ? '#4ade80' : '#fbbf24';
+    }
+  }
+
+  async function testEmailJS() {
+    const user = Auth.current();
+    if (!user) return;
+    const btn    = document.getElementById('ejs-test-btn');
+    const result = document.getElementById('ejs-test-result');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Sender…'; }
+    if (result) result.textContent = '';
+
+    const res = await Email.sendTestEmail(user.email, user.username);
+
+    if (btn) { btn.disabled = false; btn.textContent = `📨 Send test-e-post til ${user.email}`; }
+    if (result) {
+      result.textContent = res.success ? '✅ Sendt!' : `❌ ${res.error}`;
+      result.style.color = res.success ? '#4ade80' : '#f87171';
+    }
+  }
+
+  // ── Utility ───────────────────────────────────────────────────────────
+  window.togglePassword = (inputId, btn) => {
+    const inp = document.getElementById(inputId);
+    if (!inp) return;
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+  };
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  async function init() {
+    // Open IndexedDB first
+    await DB.getBlobUrl('media', '__warmup__').catch(() => {});
+
+    // Handle Stripe payment success redirect
+    await Payment.handleSuccessRedirect();
+
+    // Init psychedelic background
+    await BgManager.init();
+
+    // Init player
+    Player.init();
+
+    // Render nav
+    renderNav();
+
+    // Notifikasjonstillatelse for PM-varsler
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    // Oppdater innboks-badge hvert 5. sekund
+    setInterval(() => { if (Auth.current()) updateNavBadge(); }, 5000);
+
+    // Online heartbeat
+    (function startHeartbeat() {
+      const tick = () => { const u = Auth.current(); if (u) Auth.setOnline(u.username); };
+      tick();
+      setInterval(tick, 30000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+    })();
+
+    // Init search
+    initSearch();
+
+    // Modal close on backdrop
+    document.getElementById('modal-overlay')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-overlay')) closeModal();
+    });
+
+    // Define routes
+    Router.define('/',                   () => renderHome());
+    Router.define('/login',              () => renderLogin());
+    Router.define('/register',           () => renderRegister());
+    Router.define('/forgot',             () => renderForgotPassword());
+    Router.define('/reset/:token',       ({ token }) => renderResetPassword(token));
+    Router.define('/activate/:token',    ({ token }) => renderActivate(token));
+    Router.define('/u/:username',        ({ username }) => Profile.renderView(username));
+    Router.define('/edit',               () => {
+      if (!Auth.current()) { toast('Logg inn for å redigere', 'error'); Router.go('/login'); return; }
+      Profile.renderEditor();
+    });
+    Router.define('/inbox',              () => renderInbox());
+    Router.define('/settings',           () => renderSettings());
+    Router.define('/radio',              () => Radio.render());
+    Router.define('/chat',               () => Chat.render());
+    Router.define('/discover',           () => Discover.render());
+    Router.define('/underground',        () => Underground.render());
+    Router.define('/shows',              () => Shows.render());
+    Router.define('/dj',                 () => DJ.render());
+    Router.define('/messages/:username', ({ username }) => {
+      if (!Auth.current()) { toast('Logg inn for å sende meldinger', 'error'); Router.go('/login'); return; }
+      DJ.renderPrivateChat(username);
+    });
+
+    // Start router
+    Router.init();
+  }
+
+  function selectRole(value, labelEl) {
+    document.querySelectorAll('#reg-role-selector .role-option-inner').forEach(el => el.classList.remove('active'));
+    labelEl.querySelector('.role-option-inner').classList.add('active');
+    labelEl.querySelector('input[type=radio]').checked = true;
+  }
+
+  return {
+    init, toast, openModal, closeModal,
+    logout, renderNav, updateNavBadge,
+    doLogin, doRegister, doForgotPassword, doResetPassword,
+    saveSettings, testEmailJS,
+    renderInbox, inboxAccept, inboxReject,
+    quickAddFriend, quickAcceptFriend,
+    selectRole,
+    settingsTab, resendActivation, sendPasswordResetFromSettings,
+    confirmDeleteAccount, deleteAccount,
+    selectPaymentMethod, savePaymentMethod,
+    liveFilter, applyFilterPreset, saveFilterSettings,
+    savePageTexts, sendAiMessage,
+    renderSettings,
+  };
+})();
+
+// Bootstrap
+document.addEventListener('DOMContentLoaded', () => App.init());

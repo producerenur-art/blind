@@ -1,0 +1,302 @@
+// Psychedelic background — image upload, CSS animations, particle canvas
+const BgManager = (() => {
+
+  const BG_ID        = 'site_bg_v1';
+  const EFFECT_KEY   = 'pv_bg_effect';
+  const PARTICLE_KEY = 'pv_bg_particles';
+
+  const EFFECTS = {
+    psychedelic: { label: '🌀 Psykedelisk', hue: '10s',  breathe: '9s',  sat: 2.2, bright: 0.55 },
+    acid:        { label: '⚡ Acid',         hue: '3s',   breathe: '2.5s',sat: 4.0, bright: 0.65 },
+    space:       { label: '🚀 Space',        hue: '30s',  breathe: '20s', sat: 1.6, bright: 0.40 },
+    chill:       { label: '🌿 Chill',        hue: '25s',  breathe: '16s', sat: 1.8, bright: 0.60 },
+  };
+
+  const PARTICLES = {
+    stars:   '✨ Stjerner',
+    bubbles: '🫧 Bobler',
+    sparks:  '⚡ Gnister',
+    aurora:  '🌌 Aurora',
+    none:    '✕ Ingen',
+  };
+
+  let currentEffect   = localStorage.getItem(EFFECT_KEY)   || 'psychedelic';
+  let currentParticles= localStorage.getItem(PARTICLE_KEY) || 'stars';
+
+  let canvas, ctx, frame, particles = [];
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  async function init() {
+    // Particle canvas
+    canvas = document.getElementById('bg-particles-canvas');
+    if (canvas) {
+      resize();
+      window.addEventListener('resize', resize);
+      ctx = canvas.getContext('2d');
+      startParticles();
+    }
+
+    // Apply saved effect
+    document.body.dataset.bgEffect = currentEffect;
+
+    // Load saved image from IndexedDB
+    try {
+      const url = await DB.getBlobUrl('media', BG_ID);
+      if (url) _showImage(url);
+    } catch {}
+  }
+
+  function resize() {
+    if (!canvas) return;
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  // ── Image upload ──────────────────────────────────────────────────────
+  async function uploadImage(input) {
+    const file = input.files?.[0];
+    if (!file) return;
+    input.value = ''; // reset so same file can be re-selected
+
+    const btn = document.getElementById('bg-change-btn');
+    if (btn) { btn.textContent = '⏳'; btn.style.pointerEvents = 'none'; }
+
+    try {
+      await DB.storeFile('media', BG_ID, file);
+      const url = await DB.getBlobUrl('media', BG_ID);
+      _showImage(url);
+      if (typeof App !== 'undefined') App.toast('Bakgrunn oppdatert ✓', 'success');
+    } catch (e) {
+      if (typeof App !== 'undefined') App.toast('Feil ved opplasting', 'error');
+    } finally {
+      if (btn) { btn.textContent = '🖼️'; btn.style.pointerEvents = ''; }
+    }
+  }
+
+  function _showImage(url) {
+    const img = document.getElementById('bg-img');
+    if (!img) return;
+    img.src = url;
+    img.style.display = '';
+    // Reapply current effect so animation restarts cleanly
+    _applyEffect(currentEffect);
+  }
+
+  // ── Effect controls ───────────────────────────────────────────────────
+  function _applyEffect(id) {
+    currentEffect = id;
+    localStorage.setItem(EFFECT_KEY, id);
+    document.body.dataset.bgEffect = id;
+    // CSS @keyframes + body data attribute handle everything else
+  }
+
+  function setEffect(id) {
+    _applyEffect(id);
+    // Update picker buttons if panel is open
+    document.querySelectorAll('.effect-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.effect === id);
+    });
+  }
+
+  // ── Particle system ───────────────────────────────────────────────────
+  function setParticleStyle(style) {
+    currentParticles = style;
+    localStorage.setItem(PARTICLE_KEY, style);
+    particles = [];
+    document.querySelectorAll('.particle-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.pstyle === style);
+    });
+  }
+
+  function startParticles() {
+    if (frame) cancelAnimationFrame(frame);
+    let lastTime = 0;
+    function tick(now) {
+      frame = requestAnimationFrame(tick);
+      const dt = now - lastTime;
+      lastTime = now;
+      if (!ctx || !canvas.width) return;
+
+      if (currentParticles === 'none') {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+
+      // Subtle fade trail
+      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Spawn
+      const maxP = currentParticles === 'sparks' ? 200 : currentParticles === 'aurora' ? 25 : 100;
+      const spawnRate = currentParticles === 'aurora' ? 0.12 : 0.4;
+      if (particles.length < maxP && Math.random() < spawnRate) spawn(now);
+
+      // Update + draw
+      particles = particles.filter(p => p.life > 0.01);
+      for (const p of particles) tick_p(p, now, dt);
+    }
+    tick(0);
+  }
+
+  function spawn(t) {
+    const hue = (t * 0.04) % 360;
+    const W = canvas.width, H = canvas.height;
+    if (currentParticles === 'stars') {
+      particles.push({
+        x: Math.random() * W, y: Math.random() * H,
+        r: 0.8 + Math.random() * 2.5,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: -0.15 - Math.random() * 0.4,
+        hue, life: 1, decay: 0.003 + Math.random() * 0.004,
+        type: 'star',
+      });
+    } else if (currentParticles === 'bubbles') {
+      particles.push({
+        x: Math.random() * W, y: H + 15,
+        r: 4 + Math.random() * 10,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: -0.4 - Math.random() * 0.9,
+        hue, life: 1, decay: 0.0025 + Math.random() * 0.002,
+        wobble: Math.random() * Math.PI * 2,
+        type: 'bubble',
+      });
+    } else if (currentParticles === 'sparks') {
+      const sx = Math.random() * W, sy = Math.random() * H;
+      for (let i = 0; i < 4; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 1 + Math.random() * 3.5;
+        particles.push({
+          x: sx, y: sy,
+          vx: Math.cos(a) * s, vy: Math.sin(a) * s - 1.5,
+          r: 1 + Math.random() * 1.5,
+          hue: hue + i * 30, life: 1,
+          decay: 0.018 + Math.random() * 0.02,
+          type: 'spark',
+        });
+      }
+    } else if (currentParticles === 'aurora') {
+      particles.push({
+        x: Math.random() * W,
+        y: H * 0.1 + Math.random() * H * 0.6,
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: (Math.random() - 0.5) * 0.3,
+        r: 60 + Math.random() * 120,
+        hue, life: 1,
+        decay: 0.002 + Math.random() * 0.002,
+        phase: Math.random() * Math.PI * 2,
+        type: 'aurora',
+      });
+    }
+  }
+
+  function tick_p(p, now, dt) {
+    p.life -= p.decay;
+    p.x   += p.vx;
+    p.y   += p.vy;
+
+    if (p.type === 'bubble') {
+      p.wobble = (p.wobble || 0) + 0.04;
+      p.x += Math.sin(p.wobble) * 0.35;
+    }
+    if (p.type === 'spark') p.vy += 0.06; // gravity
+    if (p.type === 'aurora') p.y += Math.sin((p.phase || 0) + now * 0.0005) * 0.4;
+
+    const hue  = (p.hue + now * 0.05) % 360;
+    const alpha = p.life;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+
+    if (p.type === 'star') {
+      ctx.shadowColor = `hsla(${hue},90%,75%,0.7)`;
+      ctx.shadowBlur  = 8;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${hue},90%,80%,${alpha * 0.9})`;
+      ctx.fill();
+    } else if (p.type === 'bubble') {
+      ctx.shadowColor = `hsla(${hue},80%,70%,0.5)`;
+      ctx.shadowBlur  = 10;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.strokeStyle = `hsla(${hue},85%,75%,${alpha * 0.85})`;
+      ctx.lineWidth   = 1.5;
+      ctx.stroke();
+      ctx.fillStyle   = `hsla(${hue},60%,80%,${alpha * 0.08})`;
+      ctx.fill();
+    } else if (p.type === 'spark') {
+      const trail = 7;
+      ctx.shadowColor = `hsla(${hue},90%,75%,0.5)`;
+      ctx.shadowBlur  = 6;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x - p.vx * trail, p.y - p.vy * trail);
+      ctx.strokeStyle = `hsla(${hue},95%,80%,${alpha})`;
+      ctx.lineWidth   = p.r;
+      ctx.lineCap     = 'round';
+      ctx.stroke();
+    } else if (p.type === 'aurora') {
+      const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+      grad.addColorStop(0,   `hsla(${hue},85%,65%,${alpha * 0.18})`);
+      grad.addColorStop(0.4, `hsla(${(hue+60)%360},80%,60%,${alpha * 0.10})`);
+      grad.addColorStop(1,   `hsla(${(hue+120)%360},75%,55%,0)`);
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, p.r, p.r * 0.35, now * 0.0002, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  // ── Picker UI ─────────────────────────────────────────────────────────
+  function openPicker() {
+    const existing = document.getElementById('bg-picker-panel');
+    if (existing) { existing.remove(); return; }
+
+    const panel = document.createElement('div');
+    panel.id = 'bg-picker-panel';
+    panel.innerHTML = `
+      <div class="picker-section-label">Ditt bakgrunnsbilde</div>
+      <button class="picker-upload-btn" onclick="document.getElementById('bg-file-input').click()">
+        📷 Last opp bilde
+      </button>
+
+      <div class="picker-section-label">Psykedelisk effekt</div>
+      <div class="effect-grid">
+        ${Object.entries(EFFECTS).map(([id, e]) => `
+          <button class="effect-btn ${currentEffect === id ? 'active' : ''}"
+                  data-effect="${id}"
+                  onclick="BgManager.setEffect('${id}')">
+            ${e.label}
+          </button>`).join('')}
+      </div>
+
+      <div class="picker-section-label">Partikler</div>
+      <div class="particle-grid">
+        ${Object.entries(PARTICLES).map(([id, label]) => `
+          <button class="particle-btn ${currentParticles === id ? 'active' : ''}"
+                  data-pstyle="${id}"
+                  onclick="BgManager.setParticleStyle('${id}')">
+            ${label}
+          </button>`).join('')}
+      </div>`;
+
+    document.body.appendChild(panel);
+
+    // Close on outside click
+    setTimeout(() => {
+      document.addEventListener('click', function close(e) {
+        const btn   = document.getElementById('bg-change-btn');
+        const panel = document.getElementById('bg-picker-panel');
+        if (!panel) { document.removeEventListener('click', close); return; }
+        if (!panel.contains(e.target) && e.target !== btn) {
+          panel.remove();
+          document.removeEventListener('click', close);
+        }
+      });
+    }, 50);
+  }
+
+  return { init, uploadImage, openPicker, setEffect, setParticleStyle };
+})();
