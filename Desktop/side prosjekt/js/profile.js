@@ -73,7 +73,7 @@ const Profile = (() => {
 
   function cssFilters(f) {
     if (!f) return '';
-    return `brightness(${f.brightness ?? 100}%) contrast(${f.contrast ?? 100}%) saturate(${f.saturation ?? 100}%) hue-rotate(${f.hue ?? 0}deg)`;
+    return `brightness(${f.brightness ?? 100}%) contrast(${f.contrast ?? 100}%) saturate(${f.saturation ?? 100}%) hue-rotate(${f.hue ?? 0}deg) grayscale(${f.grayscale ?? 0}%)`;
   }
 
   function applyTheme(theme, container) {
@@ -582,9 +582,9 @@ const Profile = (() => {
     const recs = await DB.getAllByIds('media', ids);
     el.innerHTML = `<div class="media-grid">${recs.map(r => mediaCard(r, isOwner)).join('')}</div>`;
 
-    // Lazy-load images/videos
-    recs.forEach(async r => {
-      const url = await DB.getBlobUrl('media', r.id);
+    // Lazy-load images/videos in parallel
+    await Promise.all(recs.map(async r => {
+      const url = await DB.getBlobUrl('media', r.id).catch(() => null);
       const container = document.getElementById(`media-${r.id}`);
       if (!container || !url) return;
       if (r.type.startsWith('video/')) {
@@ -592,7 +592,7 @@ const Profile = (() => {
       } else {
         container.innerHTML = `<img src="${url}" alt="${r.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`;
       }
-    });
+    }));
   }
 
   function mediaCard(r, isOwner) {
@@ -652,7 +652,7 @@ const Profile = (() => {
     const title  = r.name || r.title || 'Untitled';
     return `
       <div class="music-item" id="mitem-${esc(r.id)}">
-        <div class="music-thumb" onclick="Profile.playTrack('${esc(username)}', ${index})" style="cursor:pointer">♪</div>
+        <div class="music-thumb" id="mthumb-${esc(r.id)}" onclick="Profile.playTrack('${esc(username)}', ${index})" style="cursor:pointer">♪</div>
         <div class="music-meta" onclick="Profile.playTrack('${esc(username)}', ${index})" style="cursor:pointer;flex:1;min-width:0">
           <div class="music-name">${esc(title)}</div>
           <div class="music-artist">${esc(r.artist || 'Ukjent artist')}</div>
@@ -661,6 +661,7 @@ const Profile = (() => {
         </div>
         <div class="music-item-right">
           <span class="music-dur">${dur}</span>
+          ${isOwner ? `<label class="music-cover-upload" title="Endre cover" onclick="event.stopPropagation()">📷<input type="file" accept="image/*" style="display:none" onchange="Profile.uploadMusicCover('${esc(r.id)}',this.files[0])"></label>` : ''}
           ${isOwner && cat ? `
           <div class="music-demo-wrap">
             <button class="music-demo-btn" title="Send demo til plateselskap"
@@ -687,6 +688,16 @@ const Profile = (() => {
     menu.style.display = isOpen ? 'none' : 'block';
   }
 
+  function loadMusicCoverArts(recs) {
+    recs.forEach(async r => {
+      if (!r.coverMediaId) return;
+      const url = await DB.getBlobUrl('media', r.coverMediaId).catch(() => null);
+      if (!url) return;
+      const el = document.getElementById(`mthumb-${r.id}`);
+      if (el) el.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px;pointer-events:none">`;
+    });
+  }
+
   async function renderMusicPlayer(user, isOwner) {
     const el = document.getElementById('tab-music-player');
     if (!el) return;
@@ -701,6 +712,7 @@ const Profile = (() => {
         <div class="profile-music-title">🎵 Musikk</div>
         <div class="music-list">${recs.map((r, i) => musicItem(r, i, user.username, isOwner)).join('')}</div>
       </div>`;
+    loadMusicCoverArts(recs);
   }
 
   async function playTrack(username, index) {
@@ -999,6 +1011,7 @@ const Profile = (() => {
             </div>
             <input type="file" id="bg-image-file" accept="image/*" style="display:none" onchange="Profile.uploadBgImage(this)">
             ${t.bgImage ? `<img src="${t.bgImage}" style="width:100%;height:80px;object-fit:cover;border-radius:8px;margin-top:0.5rem" id="bg-preview">` : '<div id="bg-preview"></div>'}
+            <button class="paint-open-btn" id="open-paint-btn" onclick="Profile.openImagePaintEditor()" ${!t.bgImage ? 'style="display:none"' : ''}>🎨 Åpne i bilderedigerer</button>
           </div>
           <div id="bg-video-opt" class="${t.bgType !== 'video' ? 'hidden' : ''}">
             <div class="upload-zone" onclick="document.getElementById('bg-video-file').click()">
@@ -1027,6 +1040,11 @@ const Profile = (() => {
             ${filterSlider('Kontrast',  'f-contrast',   t.bgImageFilters?.contrast  ?? 100, 0, 200)}
             ${filterSlider('Metning',   'f-saturation', t.bgImageFilters?.saturation ?? 100, 0, 200)}
             ${filterSlider('Fargetone', 'f-hue',        t.bgImageFilters?.hue        ?? 0, 0, 360)}
+            ${filterSlider('Svart/Hvitt','f-grayscale', t.bgImageFilters?.grayscale  ?? 0, 0, 100)}
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
+            <button class="paint-open-btn" style="width:auto;padding:4px 10px;font-size:0.75rem" onclick="document.getElementById('f-grayscale').value=100;document.getElementById('f-grayscale-val').textContent=100;document.getElementById('f-saturation').value=0;document.getElementById('f-saturation-val').textContent=0;Profile.livePreview()">⬛ Svart/Hvitt</button>
+            <button class="paint-open-btn" style="width:auto;padding:4px 10px;font-size:0.75rem;background:#6d28d9" onclick="document.getElementById('f-brightness').value=100;document.getElementById('f-brightness-val').textContent=100;document.getElementById('f-contrast').value=100;document.getElementById('f-contrast-val').textContent=100;document.getElementById('f-saturation').value=100;document.getElementById('f-saturation-val').textContent=100;document.getElementById('f-hue').value=0;document.getElementById('f-hue-val').textContent=0;document.getElementById('f-grayscale').value=0;document.getElementById('f-grayscale-val').textContent=0;Profile.livePreview()">↺ Tilbakestill</button>
           </div>
         </div>
 
@@ -1197,8 +1215,8 @@ const Profile = (() => {
     if (!ids.length) { grid.innerHTML = '<p class="text-muted text-sm">Ingen medier ennå.</p>'; return; }
     const recs = await DB.getAllByIds('media', ids);
     grid.innerHTML = `<div class="media-grid">${recs.map(r => mediaCard(r, true)).join('')}</div>`;
-    recs.forEach(async r => {
-      const url = await DB.getBlobUrl('media', r.id);
+    await Promise.all(recs.map(async r => {
+      const url = await DB.getBlobUrl('media', r.id).catch(() => null);
       const el = document.getElementById(`media-${r.id}`);
       if (!el || !url) return;
       if (r.type.startsWith('video/')) {
@@ -1206,7 +1224,7 @@ const Profile = (() => {
       } else {
         el.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover">`;
       }
-    });
+    }));
   }
 
   async function loadEditorMusic(user) {
@@ -1216,6 +1234,7 @@ const Profile = (() => {
     if (!ids.length) { list.innerHTML = '<p class="text-muted text-sm">Ingen musikk ennå.</p>'; return; }
     const recs = await DB.getAllByIds('music', ids);
     list.innerHTML = `<div class="music-list">${recs.map((r, i) => musicItem(r, i, user.username, true)).join('')}</div>`;
+    loadMusicCoverArts(recs);
   }
 
   // ── DJ Mixes ──────────────────────────────────────────────────────────
@@ -1888,7 +1907,7 @@ const Profile = (() => {
       } catch {}
       // Clean name
       const name = file.name.replace(/\.[^.]+$/, '');
-      await DB.storeFile('music', id, file, { name, artist: '', duration });
+      await DB.storeFile('music', id, file, { name, artist: '', duration, coverMediaId: null });
       current.musicIds = [...(current.musicIds || []), id];
       Auth.updateUser(current.username, { musicIds: current.musicIds });
       if (listEl) { row.innerHTML = `✅ ${file.name}`; setTimeout(() => row.remove(), 2000); }
@@ -1923,6 +1942,28 @@ const Profile = (() => {
     App.toast('Banner oppdatert!', 'success');
   }
 
+  async function uploadMusicCover(trackId, file) {
+    if (!file) return;
+    const current = Auth.current();
+    if (!current) return;
+    const rec = await DB.get('music', trackId);
+    if (!rec) return;
+    const id = `mcover_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    if (rec.coverMediaId) {
+      DB.invalidateBlobCache('media', rec.coverMediaId);
+      await DB.delete('media', rec.coverMediaId).catch(() => {});
+    }
+    await DB.storeFile('media', id, file);
+    rec.coverMediaId = id;
+    await DB.put('music', rec);
+    const url = await DB.getBlobUrl('media', id).catch(() => null);
+    if (url) {
+      const el = document.getElementById(`mthumb-${trackId}`);
+      if (el) el.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px;pointer-events:none">`;
+    }
+    App.toast('Cover oppdatert! 🖼️', 'success');
+  }
+
   async function uploadBgImage(input) {
     const file = input.files[0];
     if (!file) return;
@@ -1932,6 +1973,8 @@ const Profile = (() => {
       const prev = document.getElementById('bg-preview');
       if (prev) prev.innerHTML = `<img src="${b64}" style="width:100%;height:80px;object-fit:cover;border-radius:8px;margin-top:0.5rem">`;
       window._pendingBgImage = b64;
+      const btn = document.getElementById('open-paint-btn');
+      if (btn) btn.style.display = '';
       Profile.livePreview();
     };
     reader.readAsDataURL(file);
@@ -1983,6 +2026,7 @@ const Profile = (() => {
         contrast:   parseInt(document.getElementById('f-contrast')?.value   || 100),
         saturation: parseInt(document.getElementById('f-saturation')?.value || 100),
         hue:        parseInt(document.getElementById('f-hue')?.value        || 0),
+        grayscale:  parseInt(document.getElementById('f-grayscale')?.value  || 0),
       },
     };
   }
@@ -2738,32 +2782,32 @@ const Profile = (() => {
         <div class="profile-events-title">📅 Events</div>
         ${events.map(e => {
           const typeEmoji = EVENT_TYPES.find(t => t.id === e.type)?.emoji || '📅';
-          const dt = new Date(\`\${e.date}T\${e.time || '00:00'}\`);
+          const dt = new Date(`${e.date}T${e.time || '00:00'}`);
           const dateStr = dt.toLocaleDateString('no-NO', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-          const timeStr = e.time ? \` · kl. \${e.time}\` : '';
-          const safeTitle = (e.title || '').replace(/'/g,"\\\\'");
-          const safeUrl   = (e.liveUrl || '').replace(/'/g,"\\\\'");
-          return \`
-            <div class="event-card\${e.isLive ? ' event-card--live' : ''}">
-              \${e.isLive ? '<div class="event-live-badge"><span class="event-live-dot"></span> LIVE NÅ</div>' : ''}
+          const timeStr = e.time ? ` · kl. ${e.time}` : '';
+          const safeTitle = (e.title || '').replace(/'/g, "\\'");
+          const safeUrl   = (e.liveUrl || '').replace(/'/g, "\\'");
+          return `
+            <div class="event-card${e.isLive ? ' event-card--live' : ''}">
+              ${e.isLive ? '<div class="event-live-badge"><span class="event-live-dot"></span> LIVE NÅ</div>' : ''}
               <div class="event-card-header">
-                <span class="event-type-emoji">\${typeEmoji}</span>
+                <span class="event-type-emoji">${typeEmoji}</span>
                 <div class="event-card-info">
-                  <div class="event-title">\${e.title}</div>
-                  \${!e.isLive ? \`<div class="event-meta">\${dateStr}\${timeStr}\${e.location ? ' · 📍 ' + e.location : ''}</div>\` : (e.location ? \`<div class="event-meta">📍 \${e.location}</div>\` : '')}
+                  <div class="event-title">${e.title}</div>
+                  ${!e.isLive ? `<div class="event-meta">${dateStr}${timeStr}${e.location ? ' · 📍 ' + e.location : ''}</div>` : (e.location ? `<div class="event-meta">📍 ${e.location}</div>` : '')}
                 </div>
-                \${e.isLive && e.liveUrl ? \`<button class="event-listen-btn" onclick="Radio.playUrl('\${safeUrl}','\${safeTitle}','🔴')">▶ Lytt live</button>\` : ''}
+                ${e.isLive && e.liveUrl ? `<button class="event-listen-btn" onclick="Radio.playUrl('${safeUrl}','${safeTitle}','🔴')">▶ Lytt live</button>` : ''}
               </div>
-              \${e.description ? \`<div class="event-desc">\${e.description}</div>\` : ''}
-            </div>\`;
+              ${e.description ? `<div class="event-desc">${e.description}</div>` : ''}
+            </div>`;
         }).join('')}
       </div>`;
   }
 
   function eventsTabHtml(user) {
     const events = [...(user.events || [])].sort((a, b) =>
-      new Date(\`\${b.date}T\${b.time||'00:00'}\`) - new Date(\`\${a.date}T\${a.time||'00:00'}\`));
-    return \`
+      new Date(`${b.date}T${b.time||'00:00'}`) - new Date(`${a.date}T${a.time||'00:00'}`));
+    return `
       <div style="max-width:580px">
         <div class="editor-section-title" style="margin-bottom:0.5rem">📅 Legg til event</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem;line-height:1.6">
@@ -2778,7 +2822,7 @@ const Profile = (() => {
             <div class="form-group">
               <label class="form-label">Type</label>
               <select class="form-input" id="ev-type">
-                \${EVENT_TYPES.map(t => \`<option value="\${t.id}">\${t.emoji} \${t.label}</option>\`).join('')}
+                ${EVENT_TYPES.map(t => `<option value="${t.id}">${t.emoji} ${t.label}</option>`).join('')}
               </select>
             </div>
             <div class="form-group">
@@ -2812,11 +2856,11 @@ const Profile = (() => {
           </div>
           <button class="btn btn-primary" style="margin-top:1rem" onclick="Profile.addEvent()">➕ Legg til event</button>
         </div>
-        <div class="editor-section-title" style="margin-bottom:0.75rem">Mine events (\${events.length})</div>
+        <div class="editor-section-title" style="margin-bottom:0.75rem">Mine events (${events.length})</div>
         <div id="events-list">
-          \${events.length ? events.map(eventsEditorItem).join('') : '<p style="font-size:0.82rem;color:var(--text2)">Ingen events ennå.</p>'}
+          ${events.length ? events.map(eventsEditorItem).join('') : '<p style="font-size:0.82rem;color:var(--text2)">Ingen events ennå.</p>'}
         </div>
-      </div>\`;
+      </div>`;
   }
 
   function eventsEditorItem(e) {
@@ -3000,6 +3044,305 @@ const Profile = (() => {
     App.toast(value === 'private' ? '🔒 Profil satt til privat' : '🌐 Profil satt til offentlig', 'success');
   }
 
+  // ── Paint / Image Editor ────────────────────────────────────────────
+  function openImagePaintEditor() {
+    const src = window._pendingBgImage || Auth.current()?.theme?.bgImage;
+
+    const modal = document.createElement('div');
+    modal.id = 'paint-modal';
+    modal.className = 'paint-modal';
+    modal.innerHTML = `
+      <div class="paint-editor">
+        <div class="paint-toolbar">
+          <div class="paint-tools-group">
+            <button class="paint-tool active" id="ptool-pencil" onclick="window._setPaintTool('pencil',this)" title="Blyant">✏️</button>
+            <button class="paint-tool" id="ptool-line"   onclick="window._setPaintTool('line',this)"   title="Linje">╱</button>
+            <button class="paint-tool" id="ptool-rect"   onclick="window._setPaintTool('rect',this)"   title="Rektangel">▭</button>
+            <button class="paint-tool" id="ptool-eraser" onclick="window._setPaintTool('eraser',this)" title="Viskelær">⬜</button>
+            <button class="paint-tool" id="ptool-text"   onclick="window._setPaintTool('text',this)"   title="Tekst">T</button>
+          </div>
+          <div class="paint-divider"></div>
+          <div class="paint-color-group">
+            <span class="paint-label">Farge</span>
+            <input type="color" id="paint-color" value="#ff0000" class="paint-color-input" title="Fargevelger">
+            <span class="paint-label">Str.</span>
+            <input type="range" id="paint-size" min="1" max="50" value="4" class="paint-size-range">
+            <span id="paint-size-val" class="paint-size-val">4</span>
+          </div>
+          <div class="paint-divider"></div>
+          <div class="paint-text-group" id="paint-text-group" style="display:none">
+            <input type="text" id="paint-text-input" placeholder="Skriv tekst her..." class="paint-text-field">
+            <select id="paint-font-size" class="paint-font-sel">
+              ${[12,16,20,24,32,48,64,80].map(s => `<option value="${s}" ${s===24?'selected':''}>${s}px</option>`).join('')}
+            </select>
+            <label class="paint-bold-check"><input type="checkbox" id="paint-text-bold" checked> <b>B</b></label>
+          </div>
+          <div class="paint-actions">
+            <button class="paint-action-btn" onclick="window._paintUndo()">↩ Angre</button>
+            <button class="paint-action-btn p-danger" onclick="window._closePaintEditor(false)">✕ Avbryt</button>
+            <button class="paint-action-btn p-primary" onclick="window._closePaintEditor(true)">✓ Bruk</button>
+          </div>
+        </div>
+        <div class="paint-canvas-area">
+          <div class="paint-canvas-wrap" id="paint-canvas-wrap">
+            <canvas id="paint-canvas"></canvas>
+            <div class="rh" id="rh-nw" data-dir="nw"></div>
+            <div class="rh" id="rh-ne" data-dir="ne"></div>
+            <div class="rh" id="rh-sw" data-dir="sw"></div>
+            <div class="rh" id="rh-se" data-dir="se"></div>
+          </div>
+        </div>
+        <div class="paint-statusbar">
+          <span id="paint-info">Blyant — klikk og dra for å tegne</span>
+          <span id="paint-coords"></span>
+          <span id="paint-dims" class="paint-canvas-dims"></span>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const canvas  = document.getElementById('paint-canvas');
+    const wrap    = document.getElementById('paint-canvas-wrap');
+    const ctx     = canvas.getContext('2d');
+    const infoEl  = document.getElementById('paint-info');
+    const coordEl = document.getElementById('paint-coords');
+    const dimsEl  = document.getElementById('paint-dims');
+
+    let currentTool = 'pencil';
+    let drawing     = false;
+    let startX = 0, startY = 0;
+    let history = [];
+    let snapData = null;
+
+    const toolNames = {pencil:'Blyant',line:'Linje',rect:'Rektangel',eraser:'Viskelær',text:'Tekst'};
+    const toolCursors = {pencil:'crosshair',line:'crosshair',rect:'crosshair',eraser:'cell',text:'text'};
+
+    function saveHistory() {
+      history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+      if (history.length > 50) history.shift();
+    }
+
+    function updateDims() {
+      dimsEl.textContent = `${canvas.width} × ${canvas.height} px`;
+    }
+
+    function updateWrapSize() {
+      wrap.style.width  = canvas.width  + 'px';
+      wrap.style.height = canvas.height + 'px';
+      canvas.style.width  = canvas.width  + 'px';
+      canvas.style.height = canvas.height + 'px';
+      updateDims();
+    }
+
+    window._paintUndo = () => {
+      if (history.length < 2) return;
+      history.pop();
+      ctx.putImageData(history[history.length - 1], 0, 0);
+    };
+
+    window._setPaintTool = (tool, btn) => {
+      currentTool = tool;
+      document.querySelectorAll('.paint-tool').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('paint-text-group').style.display = tool === 'text' ? 'flex' : 'none';
+      infoEl.textContent = toolNames[tool] + (tool === 'text' ? ' — klikk på bildet for å plassere tekst' : ' — klikk og dra for å tegne');
+      canvas.style.cursor = toolCursors[tool];
+    };
+
+    document.getElementById('paint-size').addEventListener('input', e => {
+      document.getElementById('paint-size-val').textContent = e.target.value;
+    });
+
+    function getPos(e) {
+      const r = canvas.getBoundingClientRect();
+      const scaleX = canvas.width  / r.width;
+      const scaleY = canvas.height / r.height;
+      const cx = ((e.touches ? e.touches[0].clientX : e.clientX) - r.left) * scaleX;
+      const cy = ((e.touches ? e.touches[0].clientY : e.clientY) - r.top)  * scaleY;
+      return [cx, cy];
+    }
+
+    function getColor() { return document.getElementById('paint-color').value; }
+    function getSize()  { return parseInt(document.getElementById('paint-size').value); }
+
+    canvas.addEventListener('mousemove', e => {
+      const [x, y] = getPos(e);
+      coordEl.textContent = `${Math.round(x)}, ${Math.round(y)}`;
+      if (!drawing) return;
+
+      const color = getColor();
+      const size  = getSize();
+
+      if (currentTool === 'pencil') {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = color;
+        ctx.lineWidth   = size;
+        ctx.lineCap     = 'round';
+        ctx.lineJoin    = 'round';
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        startX = x; startY = y;
+      } else if (currentTool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
+        ctx.lineWidth   = size * 3;
+        ctx.lineCap     = 'round';
+        ctx.lineJoin    = 'round';
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        startX = x; startY = y;
+      } else if ((currentTool === 'line' || currentTool === 'rect') && snapData) {
+        ctx.putImageData(snapData, 0, 0);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = color;
+        ctx.lineWidth   = size;
+        ctx.lineCap     = 'round';
+        if (currentTool === 'line') {
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        } else {
+          ctx.strokeRect(startX, startY, x - startX, y - startY);
+        }
+      }
+    });
+
+    canvas.addEventListener('mousedown', e => {
+      e.preventDefault();
+      const [x, y] = getPos(e);
+
+      if (currentTool === 'text') {
+        const txt = document.getElementById('paint-text-input').value.trim();
+        if (!txt) { infoEl.textContent = 'Skriv inn tekst i feltet over først!'; return; }
+        saveHistory();
+        const fontSize = parseInt(document.getElementById('paint-font-size').value);
+        const bold     = document.getElementById('paint-text-bold').checked;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle  = getColor();
+        ctx.font       = `${bold ? 'bold ' : ''}${fontSize}px sans-serif`;
+        ctx.fillText(txt, x, y);
+        return;
+      }
+
+      drawing = true;
+      startX = x; startY = y;
+
+      if (currentTool === 'line' || currentTool === 'rect') {
+        snapData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      } else {
+        saveHistory();
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      if (!drawing) return;
+      drawing = false;
+      if (currentTool === 'line' || currentTool === 'rect') {
+        saveHistory();
+        snapData = null;
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    });
+
+    canvas.addEventListener('mouseleave', () => { drawing = false; });
+
+    // Load image onto canvas
+    function initCanvas(imageSrc) {
+      if (imageSrc) {
+        const img = new Image();
+        img.onload = () => {
+          const maxW  = Math.min(img.width, 1400);
+          const scale = maxW / img.width;
+          canvas.width  = Math.round(maxW);
+          canvas.height = Math.round(img.height * scale);
+          updateWrapSize();
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          saveHistory();
+        };
+        img.src = imageSrc;
+      } else {
+        canvas.width  = 800;
+        canvas.height = 500;
+        updateWrapSize();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        saveHistory();
+      }
+    }
+
+    initCanvas(src);
+
+    // Corner resize handles
+    document.querySelectorAll('#paint-modal .rh').forEach(h => {
+      h.addEventListener('mousedown', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        const dir = h.dataset.dir;
+        const ox = e.clientX, oy = e.clientY;
+        const ow = canvas.width, oh = canvas.height;
+        const snapshot = ctx.getImageData(0, 0, ow, oh);
+
+        const onMove = ev => {
+          const dx = ev.clientX - ox;
+          const dy = ev.clientY - oy;
+          let nw = ow, nh = oh;
+          if (dir.includes('e')) nw = Math.max(80, ow + dx);
+          if (dir.includes('s')) nh = Math.max(80, oh + dy);
+          if (dir.includes('w')) nw = Math.max(80, ow - dx);
+          if (dir.includes('n')) nh = Math.max(80, oh - dy);
+          nw = Math.round(nw); nh = Math.round(nh);
+          canvas.width  = nw;
+          canvas.height = nh;
+          updateWrapSize();
+          const tmp = document.createElement('canvas');
+          tmp.width = ow; tmp.height = oh;
+          tmp.getContext('2d').putImageData(snapshot, 0, 0);
+          ctx.drawImage(tmp, 0, 0, nw, nh);
+        };
+
+        const onUp = () => {
+          saveHistory();
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
+
+    window._closePaintEditor = (apply) => {
+      if (apply) {
+        // Flatten canvas (preserve dark bg where eraser was used)
+        const flat = document.createElement('canvas');
+        flat.width  = canvas.width;
+        flat.height = canvas.height;
+        const fctx = flat.getContext('2d');
+        fctx.fillStyle = '#000000';
+        fctx.fillRect(0, 0, flat.width, flat.height);
+        fctx.drawImage(canvas, 0, 0);
+        const dataUrl = flat.toDataURL('image/jpeg', 0.92);
+        window._pendingBgImage = dataUrl;
+        const prev = document.getElementById('bg-preview');
+        if (prev) {
+          const existImg = prev.tagName === 'IMG' ? prev : prev.querySelector('img');
+          if (existImg) existImg.src = dataUrl;
+          else prev.innerHTML = `<img src="${dataUrl}" style="width:100%;height:80px;object-fit:cover;border-radius:8px;margin-top:0.5rem">`;
+        }
+        Profile.livePreview();
+      }
+      modal.remove();
+      delete window._paintUndo;
+      delete window._setPaintTool;
+      delete window._closePaintEditor;
+    };
+  }
+
   return {
     renderView, renderEditor,
     switchTab,
@@ -3007,8 +3350,8 @@ const Profile = (() => {
     playTrack,
     toggleProfileVisibility, setProfileVisibility,
     saveProfile, livePreview, collectTheme,
-    uploadMedia, uploadMusic, uploadAvatar, uploadBanner,
-    uploadBgImage, uploadBgVideo,
+    uploadMedia, uploadMusic, uploadMusicCover, uploadAvatar, uploadBanner,
+    uploadBgImage, uploadBgVideo, openImagePaintEditor,
     aiBio, aiColors, aiLayout, applyAiColors, applyAiLayout,
     updateRoleLabel, saveRoles, selectEditorRole,
     removeLink,

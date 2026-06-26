@@ -3,6 +3,7 @@ const DB = (() => {
   const NAME = 'ProfilVerse';
   const VER  = 4;
   let _db = null;
+  const _blobCache = {};
 
   function open() {
     return new Promise((resolve, reject) => {
@@ -43,20 +44,27 @@ const DB = (() => {
     async getAll(store)       { return tx(store, 'readonly',  s => wrap(s.getAll())); },
     async delete(store, id)   { return tx(store, 'readwrite', s => wrap(s.delete(id))); },
     async getAllByIds(store, ids) {
-      const all = await this.getAll(store);
-      return all.filter(r => ids.includes(r.id));
+      const recs = await Promise.all(ids.map(id => this.get(store, id).catch(() => null)));
+      return recs.filter(Boolean);
     },
     // Read a File into an ArrayBuffer and store it
     async storeFile(store, id, file, extra = {}) {
       const buf = await file.arrayBuffer();
+      delete _blobCache[`${store}:${id}`];
       return this.put(store, { id, data: buf, type: file.type, name: file.name, size: file.size, ...extra });
     },
-    // Get a blob URL for a stored record
+    // Get a blob URL for a stored record (cached to avoid duplicate ObjectURLs)
     async getBlobUrl(store, id) {
+      const key = `${store}:${id}`;
+      if (_blobCache[key]) return _blobCache[key];
       const rec = await this.get(store, id);
       if (!rec) return null;
       const blob = new Blob([rec.data], { type: rec.type });
-      return URL.createObjectURL(blob);
+      _blobCache[key] = URL.createObjectURL(blob);
+      return _blobCache[key];
+    },
+    invalidateBlobCache(store, id) {
+      delete _blobCache[`${store}:${id}`];
     }
   };
 })();
