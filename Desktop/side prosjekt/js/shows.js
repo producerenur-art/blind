@@ -226,7 +226,7 @@ const Shows = (() => {
           <div class="shows-hero-inner">
             <div class="shows-hero-badge">📻 Sendeskjema</div>
             <h1 class="shows-hero-title">Radio Shows</h1>
-            <p class="shows-hero-sub">Utforsk ukentlige livesendinger fra Stellar Radio — psytrance, ambient, techno, jazz og mer.</p>
+            <p class="shows-hero-sub">Utforsk ukentlige livesendinger fra Sound Core — psytrance, ambient, techno, jazz og mer.</p>
           </div>
           <div class="shows-hero-live">
             ${live ? `
@@ -316,7 +316,7 @@ const Shows = (() => {
   function shareShow(id) {
     const show = SHOWS.find(s => s.id === id);
     if (!show) return;
-    const text = `${show.emoji} ${show.name} på Stellar Radio — ${DAYS_NO[show.day]} ${fmtHour(show.startHour)}`;
+    const text = `${show.emoji} ${show.name} på Sound Core — ${DAYS_NO[show.day]} ${fmtHour(show.startHour)}`;
     if (navigator.share) {
       navigator.share({ title: show.name, text, url: location.href });
     } else {

@@ -267,6 +267,31 @@ const Discover = (() => {
       demoContact: 'support@consouling.be',
       demoNote: 'Send demo via e-post med lenke til musikk (Bandcamp/SoundCloud) + pressebilde og bio. Belgisk/europeisk-fokusert. Non-profit med sterk kunstnarleg profil.',
     },
+    {
+      name: 'Ultimae Records',
+      flag: '🇫🇷',
+      country: 'Frankrike (Lyon)',
+      founded: '2002',
+      desc: 'Fransk boutique-label grunnlagt av Aes Dana (Vincent Villuis). Spesialisert på ambient, psybient og downtempo — kjend for høg lydkvalitet og konsistente utgivingar i psykedelisk undergrunnsscene.',
+      artists: 'Aes Dana, Solar Fields, Carbon Based Lifeforms, Shulman, Circular, Asura, Sync24',
+      website: 'https://ultimae.com',
+      bandcamp: 'https://ultimae.bandcamp.com',
+      facebook: 'https://www.facebook.com/ultimaerecords',
+      demoContact: 'Kontaktskjema på ultimae.com',
+      demoNote: 'Bruk kontaktskjema på ultimae.com. Fokus på ambient, psybient og downtempo av høg kvalitet. Label med sterk kunstnarleg profil — send ferdig materiale med bio og lenke.',
+    },
+    {
+      name: 'Cosmic Leaf',
+      flag: '🇬🇷',
+      country: 'Hellas',
+      founded: '2002',
+      desc: 'Gresk boutique-label spesialisert på psybient, psykedelisk ambient, space og progressiv elektronisk musikk. Eit av dei leiande uavhengige labela i den psykedeliske undergrunnsscena globalt.',
+      artists: 'Globular, Distant System, Solar Fields, Amanita, Mystical Sun, Ultimae-artistar',
+      website: 'https://cosmicleaf.gr',
+      bandcamp: 'https://cosmicleaf.bandcamp.com',
+      demoContact: 'Kontaktskjema på cosmicleaf.gr',
+      demoNote: 'Bruk kontaktskjema på cosmicleaf.gr. Fokus på psybient, ambient og psykedelisk elektronika av høg kvalitet.',
+    },
   ];
 
   // ── Utils ─────────────────────────────────────────────────────────────
@@ -775,7 +800,7 @@ const Discover = (() => {
                 ${!allTracks.length ? `
                 <div class="disc-editorial">
                   <div class="disc-section-header" style="margin-top:2rem">
-                    <h2 class="disc-section-title">Utvalgt fra Stellar Radio</h2>
+                    <h2 class="disc-section-title">Utvalgt fra Sound Core</h2>
                   </div>
                   <div class="disc-editorial-grid">${editorialCards()}</div>
                 </div>` : ''}
@@ -828,6 +853,7 @@ const Discover = (() => {
                   <a class="disc-useful-link" href="https://electreelife.com/" target="_blank" rel="noopener noreferrer">electreelife.com</a>
                   <a class="disc-useful-link" href="https://cyblinks.com/" target="_blank" rel="noopener noreferrer">cyblinks.com</a>
                   <a class="disc-useful-link" href="https://triniq.com/" target="_blank" rel="noopener noreferrer">triniq.com</a>
+                  <a class="disc-useful-link" href="https://trancentral.tv/" target="_blank" rel="noopener noreferrer">trancentral.tv</a>
                 </div>
               </div>
             </div>
@@ -990,14 +1016,14 @@ const Discover = (() => {
         </div>
         <div class="disc-psy-mix-grid">
           ${SC_MIXES.map(m => `
-            <a class="disc-psy-mix-card" href="${m.url}" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-mix-card" role="button" style="cursor:pointer" onclick="openMedia('${escHtml(m.url)}','${escHtml(m.title).replace(/'/g,'&#39;')}')">
               <div class="disc-psy-mix-thumb disc-psy-mix-thumb--sc">☁</div>
               <div class="disc-psy-mix-info">
                 <div class="disc-psy-mix-title">${escHtml(m.title)}</div>
                 <div class="disc-psy-mix-artist">${escHtml(m.artist)}</div>
               </div>
-              <span class="disc-psy-mix-arrow">→</span>
-            </a>
+              <span class="disc-psy-mix-arrow">▶</span>
+            </div>
           `).join('')}
         </div>
       </div>
@@ -1010,14 +1036,14 @@ const Discover = (() => {
         </div>
         <div class="disc-psy-mix-grid">
           ${YT_MIXES.map(m => `
-            <a class="disc-psy-mix-card" href="${m.url}" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-mix-card" role="button" style="cursor:pointer" onclick="openMedia('${escHtml(m.url)}','${escHtml(m.title).replace(/'/g,'&#39;')}')">
               <div class="disc-psy-mix-thumb disc-psy-mix-thumb--yt">▶</div>
               <div class="disc-psy-mix-info">
                 <div class="disc-psy-mix-title">${escHtml(m.title)}</div>
                 <div class="disc-psy-mix-artist">${escHtml(m.artist)}</div>
               </div>
-              <span class="disc-psy-mix-arrow">→</span>
-            </a>
+              <span class="disc-psy-mix-arrow">▶</span>
+            </div>
           `).join('')}
         </div>
       </div>

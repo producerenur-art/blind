@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
         price_data: {
           currency: 'nok',
           product_data: {
-            name: 'Stellar Radio Pro',
+            name: 'Sound Core Pro',
             description: 'Pro-abonnement: privat mixes, Pro-badge og ubegrenset lagring',
             images: [],
           },

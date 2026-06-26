@@ -96,7 +96,7 @@ const Chat = (() => {
       <div id="chat-float-window" class="chat-float-window">
         <div id="chat-float-drag-bar" class="chat-float-drag-bar">
           <span class="chat-float-grip" aria-hidden="true">⠿</span>
-          <span class="chat-float-title">📻 Stellar Radio — Live Chat</span>
+          <span class="chat-float-title">📻 Sound Core — Live Chat</span>
         </div>
 
         <div class="chat-page">

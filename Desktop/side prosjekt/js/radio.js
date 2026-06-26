@@ -11,6 +11,22 @@ const Radio = (() => {
       desc: 'Radio for the mind travellers',
       url: 'https://radioq37.com/player/', // ← bytt til din faktiske player-URL
     },
+    {
+      id: 'u-recken',
+      name: 'U-Recken',
+      emoji: '🌀',
+      color: '#7c3aed',
+      desc: 'Psytrance to chill out',
+      url: 'https://u-recken.com/',
+    },
+    {
+      id: 'dice-radio',
+      name: 'Dice Radio',
+      emoji: '🎲',
+      color: '#1d4ed8',
+      desc: 'Greek electronic & underground radio',
+      url: 'https://www.diceradio.gr/',
+    },
   ];
 
   // ── Station catalogue ─────────────────────────────────────────────────
@@ -36,7 +52,7 @@ const Radio = (() => {
       name: 'Stellar PSY',
       url:  'https://ice2.somafm.com/spacestation-256-mp3',
       emoji: '🌠', color: '#7c3aed',
-      desc: 'Psychedelic Dub · Stellar Radio sin hovedkanal',
+      desc: 'Psychedelic Dub · Sound Core sin hovedkanal',
       featured: true,
     },
 
@@ -750,7 +766,7 @@ const Radio = (() => {
                 <div class="stellar-featured-inner">
                   <div class="stellar-featured-emoji">${featured.emoji}</div>
                   <div class="stellar-featured-info">
-                    <div class="stellar-featured-label">⭐ Stellar Radio Hovedkanal</div>
+                    <div class="stellar-featured-label">⭐ Sound Core Hovedkanal</div>
                     <div class="stellar-featured-name">${featured.name}</div>
                     <div class="stellar-featured-desc">${featured.desc}</div>
                   </div>
@@ -1479,7 +1495,7 @@ const Radio = (() => {
     try {
       const res = await fetch(
         `https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}&limit=12&order=votes&reverse=true&hidebroken=true`,
-        { headers: { 'User-Agent': 'StellarRadio/1.0' } }
+        { headers: { 'User-Agent': 'SoundCore/1.0' } }
       );
       if (!res.ok) return [];
       return await res.json();

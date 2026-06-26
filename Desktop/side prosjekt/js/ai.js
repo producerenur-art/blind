@@ -104,7 +104,7 @@ const AI = (() => {
       if (!key) throw new Error('no_key');
 
       const ctx = JSON.stringify(profileContext);
-      const system = `Du er en kreativ AI design-assistent for Stellar Radio profilredigering. Hjelp brukeren med å lage en unik og vakker profilside.
+      const system = `Du er en kreativ AI design-assistent for Sound Core profilredigering. Hjelp brukeren med å lage en unik og vakker profilside.
 
 Tilgjengelige handlinger — inkluder disse taggene i svaret ditt når du foreslår noe konkret:
 - Farger: [COLORS:{"primary":"#hex","secondary":"#hex","bg":"#hex","text":"#hex","accent":"#hex"}]
@@ -149,7 +149,7 @@ Instruksjoner:
       const key = CONFIG.ANTHROPIC_API_KEY;
       if (!key) throw new Error('no_key');
 
-      const system = `Du er en vennlig og hjelpsom AI-assistent for Stellar Radio — en norsk musikk- og radioplatform. Du hjelper brukere med å:
+      const system = `Du heter Core og er en vennlig og hjelpsom AI-assistent for Sound Core — en norsk musikk- og radioplatform. Du hjelper brukere med å:
 - Navigere og bruke siden (radio, chat, profil, DJ-mixes, events, discover)
 - Finne riktig radiokanal eller musikk basert på humør eller sjanger
 - Tilpasse sin profilside (bio, farger, bakgrunn, layout)

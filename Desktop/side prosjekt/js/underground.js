@@ -198,7 +198,7 @@ const Underground = (() => {
           <p class="ug-artist-desc">${escHtml(a.desc)}</p>
           <div class="ug-artist-links">
             <a href="${escHtml(a.ra)}" target="_blank" rel="noopener" class="ug-link-btn ug-link-ra">Resident Advisor</a>
-            ${a.sc ? `<a href="${escHtml(a.sc)}" target="_blank" rel="noopener" class="ug-link-btn ug-link-sc">SoundCloud</a>` : ''}
+            ${a.sc ? `<button onclick="openMedia('${escHtml(a.sc)}','${escHtml(a.name)} på SoundCloud')" class="ug-link-btn ug-link-sc">SoundCloud</button>` : ''}
           </div>
         </div>
       </div>`;
@@ -221,6 +221,15 @@ const Underground = (() => {
   }
 
   function musicCard(m) {
+    const embeddable = m.url.includes('soundcloud.com') || m.url.includes('mixcloud.com');
+    if (embeddable) {
+      return `
+        <div class="ug-music-card" role="button" style="cursor:pointer" onclick="openMedia('${escHtml(m.url)}','${escHtml(m.name).replace(/'/g,'&#39;')}')">
+          <div class="ug-music-icon" style="background:${escHtml(m.color)}">${m.icon}</div>
+          <div class="ug-music-name">${escHtml(m.name)}</div>
+          <div class="ug-music-desc">${escHtml(m.desc)}</div>
+        </div>`;
+    }
     return `
       <a class="ug-music-card" href="${escHtml(m.url)}" target="_blank" rel="noopener">
         <div class="ug-music-icon" style="background:${escHtml(m.color)}">${m.icon}</div>
@@ -329,10 +338,10 @@ const Underground = (() => {
                 <h2 class="ug-demo-title">Send Demo</h2>
                 <p class="ug-demo-desc">
                   Har du produsert techno eller elektronisk musikk og vil nå ut til klubber, plateselskaper og DJer?
-                  Send din demo til redaksjonen på Stellar Radio — vi lytter til alt vi mottar.
+                  Send din demo til redaksjonen på Sound Core — vi lytter til alt vi mottar.
                 </p>
-                <a href="mailto:demos@stellarradio.com" class="ug-demo-email">
-                  ✉️ demos@stellarradio.com
+                <a href="mailto:demos@soundcore.no" class="ug-demo-email">
+                  ✉️ demos@soundcore.no
                 </a>
                 <div class="ug-demo-tips">
                   <p class="ug-demo-tips-title">Tips for innsending:</p>
