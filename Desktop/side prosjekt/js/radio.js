@@ -381,6 +381,41 @@ const Radio = (() => {
       emoji: '🤖', color: '#06b6d4',
       desc: 'Electropop & hypnotic synth grooves ✓',
     },
+    {
+      id: 'schizoid-psy', cat: 'Psytrance / Progressive',
+      name: 'Radio Schizoid — Psy',
+      url:  'http://94.130.113.214:8000/psytrance',
+      emoji: '🍄', color: '#7c3aed',
+      desc: 'Free psytrance stream 24/7',
+    },
+    {
+      id: 'schizoid-prog', cat: 'Psytrance / Progressive',
+      name: 'Radio Schizoid — Progressive',
+      url:  'http://94.130.113.214:8000/progressive',
+      emoji: '🌀', color: '#6d28d9',
+      desc: 'Psychill & progressive psy',
+    },
+    {
+      id: 'di-goapsy', cat: 'Psytrance / Progressive',
+      name: 'Goa-Psy Trance',
+      url:  'https://stream.rcs.revma.com/ypqpa4ys2tzuv',
+      emoji: '🕉️', color: '#f59e0b',
+      desc: 'Goa & full-on psychedelic trance',
+    },
+    {
+      id: 'psychedelik', cat: 'Psytrance / Progressive',
+      name: 'Psychedelik Radio',
+      url:  'https://psychedelik.com:8100/stream/1/',
+      emoji: '🌈', color: '#ec4899',
+      desc: 'French psy trance — psychedelik.com',
+    },
+    {
+      id: 'tranceone', cat: 'Psytrance / Progressive',
+      name: 'TranceAround.FM',
+      url:  'https://strm112.1.fm/trance_mobile_mp3',
+      emoji: '⚡', color: '#9333ea',
+      desc: '1.FM — trance around the clock 24/7',
+    },
 
     // ════════════════════════════════════════════
     // DRUM & BASS / BREAKS

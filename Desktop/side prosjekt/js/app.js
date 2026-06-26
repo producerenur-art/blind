@@ -332,8 +332,36 @@ const App = (() => {
         </div>
       </div>`;
 
+    const webRadioSection = `
+      <div class="section web-radio-section" id="web-radio-section">
+        <div class="section-header">
+          <div class="section-title">🎛️ Web Radio</div>
+          <div class="section-sub">Klikk ▶ for å lytte direkte — ingen fanebytting</div>
+        </div>
+        <div class="dice-radio-featured" onclick="Radio.openEmbed('dice-radio')">
+          <div class="dice-radio-glow"></div>
+          <div class="dice-radio-inner">
+            <span class="dice-radio-emoji">🎲</span>
+            <div class="dice-radio-info">
+              <div class="dice-radio-name">Dice Radio</div>
+              <div class="dice-radio-desc">Greek electronic &amp; underground radio — diceradio.gr</div>
+            </div>
+            <button class="dice-radio-play-btn" onclick="event.stopPropagation();Radio.openEmbed('dice-radio')">▶ Åpne</button>
+          </div>
+        </div>
+        <div class="genre-tab-bar" id="genre-tab-bar">
+          <button class="genre-tab active" onclick="WebRadioTabs.select('progressive',this)">🌀 Progressive</button>
+          <button class="genre-tab" onclick="WebRadioTabs.select('psytrance',this)">🍄 Psy Trance</button>
+          <button class="genre-tab" onclick="WebRadioTabs.select('chillout',this)">🌊 Chill Out</button>
+          <button class="genre-tab" onclick="WebRadioTabs.select('downtempo',this)">🎐 Downtempo</button>
+          <button class="genre-tab" onclick="WebRadioTabs.select('house',this)">🏠 House</button>
+          <button class="genre-tab" onclick="WebRadioTabs.select('edm',this)">⚡ EDM</button>
+        </div>
+        <div class="web-radio-grid" id="web-radio-grid"></div>
+      </div>`;
+
     const app = document.getElementById('app');
-    app.innerHTML = pendingBanner + heroHtml + liveEventsSection + nowPlayingSection + publicMixesSection + comingSoonHtml + `
+    app.innerHTML = pendingBanner + heroHtml + liveEventsSection + nowPlayingSection + webRadioSection + publicMixesSection + comingSoonHtml + `
       <div class="section">
         <div class="section-header">
           <div class="section-title">Brukere på Sound Core <span>${users.length} profiler</span></div>
@@ -342,6 +370,36 @@ const App = (() => {
           <div class="page-loading"><div class="spinner"></div></div>
         </div>
       </div>`;
+
+    // Web Radio genre tab controller
+    window.WebRadioTabs = {
+      GENRE_CATS: {
+        progressive: ['Psytrance / Progressive', 'EDM / House'],
+        psytrance:   ['Psytrance / Progressive'],
+        chillout:    ['Chill Out / Downtempo', 'Ibiza Chill'],
+        downtempo:   ['Chill Out / Downtempo'],
+        house:       ['EDM / House'],
+        edm:         ['EDM / House', 'Techno / Minimal'],
+      },
+      select(genre, btn) {
+        document.querySelectorAll('.genre-tab').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        const cats = this.GENRE_CATS[genre] || [];
+        const stations = (Radio.stations || []).filter(s => cats.includes(s.cat));
+        const grid = document.getElementById('web-radio-grid');
+        if (!grid) return;
+        grid.innerHTML = stations.map(s => `
+          <div class="web-radio-card" style="--sc:${s.color}" onclick="Radio.playUrl('${s.url.replace(/'/g,"\\'")}','${(s.name||'').replace(/'/g,"\\'")}','${s.emoji||'📻'}')">
+            <span class="wrc-emoji">${s.emoji}</span>
+            <div class="wrc-info">
+              <div class="wrc-name">${s.name}</div>
+              <div class="wrc-desc">${s.desc}</div>
+            </div>
+            <button class="wrc-play" onclick="event.stopPropagation();Radio.playUrl('${s.url.replace(/'/g,"\\'")}','${(s.name||'').replace(/'/g,"\\'")}','${s.emoji||'📻'}')">▶</button>
+          </div>`).join('') || '<div class="empty-state" style="padding:1rem">Ingen stasjoner i denne kategorien</div>';
+      }
+    };
+    WebRadioTabs.select('progressive', document.querySelector('.genre-tab'));
 
     // Render user cards
     const grid = document.getElementById('users-grid');

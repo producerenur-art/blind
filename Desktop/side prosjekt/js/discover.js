@@ -595,6 +595,18 @@ const Discover = (() => {
           onclick="Discover.switchTab('psy-tour')">🌀 Psytrance Peak Tour</button>
         <button class="disc-tab-btn ${activeTab === 'ambient-mann' ? 'active' : ''}"
           onclick="Discover.switchTab('ambient-mann')">🌊 Ambient Mann</button>
+        <button class="disc-tab-btn ${activeTab === 'psybient' ? 'active' : ''}"
+          onclick="Discover.switchTab('psybient')">🌿 Psybient Events</button>
+        <button class="disc-tab-btn ${activeTab === 'altar-records' ? 'active' : ''}"
+          onclick="Discover.switchTab('altar-records')">🕍 Altar Records</button>
+        <button class="disc-tab-btn ${activeTab === 'hadra' ? 'active' : ''}"
+          onclick="Discover.switchTab('hadra')">🎪 Hadra Festival</button>
+        <button class="disc-tab-btn ${activeTab === 'dacru' ? 'active' : ''}"
+          onclick="Discover.switchTab('dacru')">🌀 DaCru Records</button>
+        <button class="disc-tab-btn ${activeTab === 'tip-raja' ? 'active' : ''}"
+          onclick="Discover.switchTab('tip-raja')">🌀 Raja Ram / T.I.P.</button>
+        <button class="disc-tab-btn ${activeTab === 'astral' ? 'active' : ''}"
+          onclick="Discover.switchTab('astral')">⭐ Astral Projection</button>
       </div>`;
   }
 
@@ -854,6 +866,7 @@ const Discover = (() => {
                   <a class="disc-useful-link" href="https://cyblinks.com/" target="_blank" rel="noopener noreferrer">cyblinks.com</a>
                   <a class="disc-useful-link" href="https://triniq.com/" target="_blank" rel="noopener noreferrer">triniq.com</a>
                   <a class="disc-useful-link" href="https://trancentral.tv/" target="_blank" rel="noopener noreferrer">trancentral.tv</a>
+                  <a class="disc-useful-link" href="https://www.psybient.org/" target="_blank" rel="noopener noreferrer">psybient.org</a>
                 </div>
               </div>
             </div>
@@ -886,6 +899,36 @@ const Discover = (() => {
         <!-- AMBIENT MANN TAB (hidden by default) -->
         <div id="disc-ambient-mann-tab" class="hidden">
           ${renderAmbientMannTab()}
+        </div>
+
+        <!-- PSYBIENT EVENTS TAB (hidden by default) -->
+        <div id="disc-psybient-tab" class="hidden">
+          ${renderPsybientTab()}
+        </div>
+
+        <!-- ALTAR RECORDS TAB (hidden by default) -->
+        <div id="disc-altar-records-tab" class="hidden">
+          ${renderAltarRecordsTab()}
+        </div>
+
+        <!-- HADRA FESTIVAL TAB (hidden by default) -->
+        <div id="disc-hadra-tab" class="hidden">
+          ${renderHadraTab()}
+        </div>
+
+        <!-- DACRU RECORDS TAB (hidden by default) -->
+        <div id="disc-dacru-tab" class="hidden">
+          ${renderDacruTab()}
+        </div>
+
+        <!-- RAJA RAM / TIP RECORDS TAB (hidden by default) -->
+        <div id="disc-tip-raja-tab" class="hidden">
+          ${renderTipRajaTab()}
+        </div>
+
+        <!-- ASTRAL PROJECTION TAB (hidden by default) -->
+        <div id="disc-astral-tab" class="hidden">
+          ${renderAstralTab()}
         </div>
 
       </div>`;
@@ -959,6 +1002,435 @@ const Discover = (() => {
             <div>
               <div class="disc-psy-label-name">Experimental / Bandcamp</div>
               <div class="disc-psy-label-desc">Grensesprengande eksperimentell elektronika</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPsybientTab() {
+    const EVENTS = [
+      {
+        day: 'Jul',
+        month: '2026',
+        name: 'ZNA Gathering',
+        loc: 'Portugal 🇵🇹',
+        tags: ['Psybient', 'Chillout', 'Peninsula Stage'],
+        url: 'https://www.psybient.org/love/zna-portugal/',
+        website: 'https://znagathering.com/',
+      },
+      {
+        day: 'Sommar',
+        month: '2026',
+        name: 'Gaia Beats',
+        loc: 'Thailand 🇹🇭',
+        tags: ['Psybient', 'Downtempo', 'Psytrance'],
+        url: 'https://www.psybient.org/love/trance-festivals-list-calendar/',
+        website: null,
+      },
+      {
+        day: 'Jul',
+        month: '2026',
+        name: 'S.U.N. Festival',
+        loc: 'Ungarn 🇭🇺',
+        tags: ['Psytrance', 'Ambient', 'Community'],
+        url: 'https://www.psybient.org/love/trance-festivals-list-calendar/',
+        website: 'https://sunfestival.org/',
+      },
+      {
+        day: 'Jun 25',
+        month: '2025',
+        name: '7Chakras Festival',
+        loc: 'Tuscania (VT), Italia 🇮🇹',
+        tags: ['Psytrance', 'Psybient', 'Healing'],
+        url: 'https://www.psybient.org/love/7chakras-festival-italy/',
+        website: null,
+      },
+      {
+        day: 'Jun',
+        month: '2025',
+        name: 'Psy-Fi Festival',
+        loc: 'Nederland 🇳🇱',
+        tags: ['Psytrance', 'Workshops', 'Art'],
+        url: 'https://www.psybient.org/love/psy-fi-2025-netherlands/',
+        website: 'https://www.psy-fi.nl/',
+      },
+      {
+        day: 'Sommar',
+        month: '2025',
+        name: 'Psychedelicious',
+        loc: 'Tsjekkia 🇨🇿',
+        tags: ['Psytrance', 'Psychedelic', 'Community'],
+        url: 'https://www.psybient.org/love/psychedelicious/',
+        website: null,
+      },
+      {
+        day: 'Nyttår',
+        month: '2025/26',
+        name: 'Sola Luna Festival',
+        loc: 'Thailand 🇹🇭 — strand',
+        tags: ['Beach Psy', 'Ambient', 'New Year'],
+        url: 'https://www.psybient.org/love/sola-luna-festival-thailand/',
+        website: null,
+      },
+    ];
+
+    const RESOURCES = [
+      { emoji: '📅', name: 'Psybient Festival Calendar', desc: 'Full liste over 500+ festivalar sidan 2011', url: 'https://www.psybient.org/love/trance-festivals-list-calendar/' },
+      { emoji: '🌿', name: 'Psybient Kalender', desc: 'Chill & transformasjonsfestivalar globalt', url: 'https://www.psybient.org/love/psybient-calendar/' },
+      { emoji: '🎵', name: 'Events kategori', desc: 'Artiklar og omtalar av kommande events', url: 'https://www.psybient.org/love/category/events/' },
+      { emoji: '🌐', name: 'Goabase', desc: 'Søk etter psytrance- og psybient-events', url: 'https://www.goabase.net/' },
+    ];
+
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0a1628,#1a3a2a,#0d2b1e)">
+        <div class="disc-psy-banner-emoji">🌿</div>
+        <div>
+          <div class="disc-psy-banner-title">Psybient.org Events</div>
+          <div class="disc-psy-banner-sub">Festivalar og samlingar frå psybient, psytrance og transformasjonsscena — kuratert av <a href="https://www.psybient.org/" target="_blank" rel="noopener noreferrer" style="color:inherit;opacity:0.8">psybient.org</a></div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎪</span>
+          <span class="disc-psy-section-title">Kommande festivalar 2025–2026</span>
+          <span class="disc-psy-section-badge">psybient.org</span>
+        </div>
+        <div class="disc-psy-festival-list">
+          ${EVENTS.map(f => `
+            <a class="disc-psy-festival-card" href="${escHtml(f.url)}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-festival-date">
+                <div class="disc-psy-festival-date-day">${escHtml(f.day)}</div>
+                <div class="disc-psy-festival-date-mon">${escHtml(f.month)}</div>
+              </div>
+              <div class="disc-psy-festival-body">
+                <div class="disc-psy-festival-name">${escHtml(f.name)}</div>
+                <div class="disc-psy-festival-loc">${f.loc}</div>
+                <div class="disc-psy-festival-tags">
+                  <span class="disc-psy-festival-tag disc-psy-festival-upcoming">Kommande</span>
+                  ${f.tags.map(t => `<span class="disc-psy-festival-tag">${escHtml(t)}</span>`).join('')}
+                </div>
+              </div>
+              <span class="disc-psy-festival-arrow">→</span>
+            </a>
+          `).join('')}
+        </div>
+        <a class="disc-psy-cal-link" href="https://www.psybient.org/love/trance-festivals-list-calendar/" target="_blank" rel="noopener noreferrer">
+          Sjå full festivalkalender på psybient.org →
+        </a>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-title">Ressursar frå psybient.org</span>
+          <span class="disc-psy-section-badge">Kalender & meir</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${RESOURCES.map(r => `
+            <a class="disc-psy-label-card" href="${escHtml(r.url)}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${r.emoji}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(r.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(r.desc)}</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderAltarRecordsTab() {
+    const ARTISTS = [
+      { icon: '🌊', name: 'Astral Waves',      genres: 'Psychill · Ambient · Trance · Cinematic' },
+      { icon: '🧘', name: 'Asura',              genres: 'Psychill · Ambient · Trance' },
+      { icon: '✨', name: 'E-Mantra',           genres: 'Psychill · Ambient · Goachill' },
+      { icon: '🌿', name: 'Suduaya',            genres: 'Psychill · Ambient · Progressive' },
+      { icon: '🔵', name: 'Androcell',          genres: 'Psychill · Ambient · Dub' },
+      { icon: '🚀', name: 'Astropilot',         genres: 'Psychill · Ambient · Cinematic' },
+      { icon: '🌲', name: 'Alwoods',            genres: 'Psychill · Downtempo' },
+      { icon: '☁️', name: "Lab's Cloud",        genres: 'Downtempo · Ambient' },
+      { icon: '🌀', name: 'Dimension 5',        genres: 'Goatrance' },
+      { icon: '🌙', name: 'Cabeiri',            genres: 'Psychill · Downtempo' },
+      { icon: '🎵', name: 'Argus',              genres: 'Psychill · Ambient · Trance' },
+      { icon: '🌕', name: 'Moon Tripper',       genres: 'Psytrance · Downtempo · Psychill' },
+      { icon: '🥁', name: 'Dhamika',            genres: 'Psychill' },
+      { icon: '🌸', name: 'Dreaming Cooper',    genres: 'Psychill · Ambient · Trance' },
+      { icon: '🎶', name: 'Elea',               genres: 'Psychill · Ambient · Trance' },
+      { icon: '🌊', name: 'Hoova',              genres: 'Psychill · Ambient · Downtempo' },
+      { icon: '🎼', name: 'I.M.D',              genres: 'Psychill · Ambient · Trance' },
+      { icon: '🌺', name: 'Lydia',              genres: 'Psychill · Ambient · Downtempo' },
+      { icon: '🌍', name: 'Ra',                 genres: 'Goachill · Ambient · Downtempo' },
+      { icon: '🌟', name: 'Profondita',         genres: 'Progressive Chill' },
+      { icon: '🎛️', name: 'DJ Zen',             genres: 'Techno · Label Manager · DJ' },
+      { icon: '🔮', name: 'Akshan',             genres: 'Progressive Chill · Downtempo' },
+      { icon: '🌑', name: 'Mobitex',            genres: 'Psychill · Progressive Chill' },
+      { icon: '🎷', name: 'Red Sun Rising',     genres: 'Psychill · Ambient · Trance' },
+      { icon: '🌀', name: 'Zymosis',            genres: 'Psychill · Ambient · Breaks' },
+      { icon: '💫', name: 'prah-ladji',         genres: 'Chill-Out · Downtempo · Ecstatic Dance' },
+    ];
+
+    const SUBLABELS = [
+      { emoji: '🍁', name: 'Altar Records Canada',          desc: 'Downtempo Electronica · Psychill — kanadisk grein' },
+      { emoji: '🇪🇺', name: 'Altar Records Europe',         desc: 'Downtempo Electronica · Psychill — europeisk avdeling' },
+      { emoji: '🥁', name: 'Altar Organic — Tribal/Shamanic', desc: 'Ritual Beats · organisk og shamanisk rytmikk' },
+      { emoji: '🌀', name: 'Altar Progressive',             desc: 'Progressive Trance · Psytrance — energisk og evolverande' },
+      { emoji: '⚡', name: 'Altar Techno',                  desc: 'Techno · Electro · Tech-Trance' },
+      { emoji: '🧘', name: 'Altar Relax',                   desc: 'Meditative · Yoga · Chill-Out — musikk for sjelen' },
+      { emoji: '📖', name: 'Altar Relax Lo-Fi',             desc: 'Lo-Fi · Lounge — musikk for studiar og konsentrasjon' },
+      { emoji: '🌌', name: 'Dark Ambient / Space Electronica', desc: 'Cinematic music — kjem snart', comingSoon: true },
+    ];
+
+    const LINKS = [
+      { emoji: '🌐', name: 'altar-records.com',  desc: 'Offisiell nettstad — artistar, utgivingar, samples og mastering', url: 'https://www.altar-records.com/' },
+      { emoji: '🎵', name: 'Bandcamp',            desc: 'Støtt artistane direkte — kjøp og stream',                         url: 'https://altar.bandcamp.com/' },
+      { emoji: '🎧', name: 'Spotify',             desc: 'Spelelister og album på Spotify',                                  url: 'https://open.spotify.com/user/altarrecords' },
+      { emoji: '▶',  name: 'YouTube',             desc: 'Videoar, sett og musikkvideor',                                   url: 'https://www.youtube.com/c/AltarRecords' },
+      { emoji: 'f',  name: 'Facebook',            desc: 'Nyhende og utgivingar',                                           url: 'https://www.facebook.com/AltarRecords' },
+      { emoji: '📸', name: 'Instagram',           desc: 'Bilete, artwork og oppdateringar',                                url: 'https://www.instagram.com/altar_records/' },
+    ];
+
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0d1f17,#1a3a2a,#102518)">
+        <div class="disc-psy-banner-emoji">🕍</div>
+        <div>
+          <div class="disc-psy-banner-title">Altar Records</div>
+          <div class="disc-psy-banner-sub">Psychill · Downtempo · Ambient — dei reinaste frekvensane av Zen, Trance og Spirit</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🏷</span>
+          <span class="disc-psy-section-title">Om labelet</span>
+          <span class="disc-psy-section-badge">altar-records.com</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://www.altar-records.com/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">🕍</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Altar Records</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Uavhengig label dedikert til "dei reinaste frekvensane av Zen, Trance og Spirit."
+                Med eit av dei mest mangfaldige psychill-rosterane på verdsbasis — over 26 artistar
+                frå heile verda — og fleire sub-kategoriar under same tak, er Altar Records eit
+                ankerpunkt i den globale psychill- og downtempo-undergrunnen.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">🌿 Psychill</span>
+                <span class="disc-psy-section-badge">🌊 Downtempo</span>
+                <span class="disc-psy-section-badge">🌌 Ambient</span>
+                <span class="disc-psy-section-badge">🧘 Meditative</span>
+                <span class="disc-psy-section-badge">🌀 Goatrance</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎙</span>
+          <span class="disc-psy-section-title">Artistar</span>
+          <span class="disc-psy-section-badge">${ARTISTS.length} artistar</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${ARTISTS.map(a => `
+            <div class="disc-psy-label-card">
+              <div class="disc-psy-label-icon">${a.icon}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(a.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(a.genres)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🗂</span>
+          <span class="disc-psy-section-title">Sub-selskap & Kategoriar</span>
+          <span class="disc-psy-section-badge">${SUBLABELS.length} kategoriar</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${SUBLABELS.map(s => `
+            <a class="disc-psy-label-card" href="https://www.altar-records.com/" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${s.emoji}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(s.name)}${s.comingSoon ? ' <span style="font-size:0.73rem;opacity:0.55">(kjem snart)</span>' : ''}</div>
+                <div class="disc-psy-label-desc">${escHtml(s.desc)}</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-title">Finn Altar Records</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${LINKS.map(l => `
+            <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${l.emoji}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(l.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHadraTab() {
+    const MAIN_STAGE = [
+      '5F.U','Agop VS BlackDrop','Ajja','AlvinTep','Antidot','Audiofools','Aynix.x',
+      'Back to Mars','Bakubaï','Beardy','Cubic Spline VS Alderaan','Delirium Tremens',
+      'Digital Hippie','DJ Dhira','Dr Fractal','Earthling','Ebony Willis',
+      'Eco Jafar VS Wataru VS Senskrypt','EMIRI','Fagin\'s Reject','FutureMoon',
+      'G-Alien VS Elyxir','Gina','Kadum','Khromata','Kokmok','Lampé','Lapsykay',
+      'Lou-K VS Clitorock','Magenta','Miss TeKiX to Arkeya','Modus','Mr Frisson',
+      'Ne Yam','Need One','Past','Paula','Pyron','Shotu & Manu','Sleeck','Sourone',
+      'Transient Disorder','Tsubi','Varanoïd','Zeridium',
+    ];
+    const PARADOXE = [
+      'Actress M','Adil Smaâli','Ayim','Balaphonik Sound System','Bamby','Capon',
+      'Captain Pastek','Chichiga','DIGMA','DNA','Esteban Desigual','Gabzh B2B Ecla',
+      'Ginette Prod','Krimska','Krumelur','Mad\'J & Rajah T','Mel-uu','Mescud',
+      'Neon Vapor','New Funk Order','Pyrokine','Smooth Criminal','TILDA','Tor.Ma in Dub',
+      'TRUDGE','Vent des Forêts','Viking','Visages','Willy The Kick',
+    ];
+    const LE_COCON = [
+      'Aora Paradox','Compost Collaps','Echosmos','Electro Ma Non Troppo','Elle Danse',
+      'Encore & Encor','Fáni Bácsi','Fran de Lobster ft. Captain Frictus','Heimya',
+      'Jan Loup','L-Xir','La Forasteria','Leya Touch','LUNR','Manteyis','Mars O10C',
+      'Mavvi & Antonia','Meremix','Nhacada feat. Leïla Zitouni','Planet Zyha',
+      'Run!Rabbit Run!','Saalyx','sòn du maquís','Tales & Ahlam','Toneside',
+    ];
+    const LA_BULLE = ['Gagarin Project Beats','Lo.Renzo','Saalyx'];
+
+    function stageGrid(artists) {
+      return `<div class="hadra-artist-grid">${artists.map(a =>
+        `<span class="hadra-artist-pill">${escHtml(a)}</span>`
+      ).join('')}</div>`;
+    }
+
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#1a0a2e,#16213e,#0f3460)">
+        <div class="disc-psy-banner-emoji">🎪</div>
+        <div>
+          <div class="disc-psy-banner-title">Hadra Trance Festival 2026</div>
+          <div class="disc-psy-banner-sub">Solar Punk Chronicles: The Seed — 27–30 august 2026 · Vieure, Allier, Frankrike</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">📍</span>
+          <span class="disc-psy-section-title">Festivalinfo</span>
+          <span class="disc-psy-section-badge">hadratrancefestival.net</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://hadratrancefestival.net/en/home/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">🎪</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Hadra Trance Festival 2026</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Ein av Frankrikes viktigaste psytrance-festivalar — 4 scener, 90 timar med musikk,
+                68 artistar og 24 framsyningar. Tema: <em>Solar Punk Chronicles: The Seed.</em>
+                Psytrance, techno, drum &amp; bass, elektroakustikk, ambient og downtempo.
+                Med handverksmarknad, workshops, sirkuskunst og camping.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">📅 27–30 aug 2026</span>
+                <span class="disc-psy-section-badge">📍 Vieure, Frankrike 🇫🇷</span>
+                <span class="disc-psy-section-badge">🎪 4 scener</span>
+                <span class="disc-psy-section-badge">🎵 68 artistar</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🌀</span>
+          <span class="disc-psy-section-title">La Main — Psytrance Hovudscene</span>
+          <span class="disc-psy-section-badge">${MAIN_STAGE.length} artistar · Progressive · Dark-Prog · Full-On · Forest</span>
+        </div>
+        ${stageGrid(MAIN_STAGE)}
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">⚡</span>
+          <span class="disc-psy-section-title">Paradoxe — Alternativ Scene</span>
+          <span class="disc-psy-section-badge">${PARADOXE.length} artistar · Techno · DnB · Hi-Tech · Dub · Verdsmusikk</span>
+        </div>
+        ${stageGrid(PARADOXE)}
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎼</span>
+          <span class="disc-psy-section-title">Le Cocon — Live & Eksperimentell Scene</span>
+          <span class="disc-psy-section-badge">${LE_COCON.length} artistar · Elektroakustikk · Eksperimentell</span>
+        </div>
+        ${stageGrid(LE_COCON)}
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🌿</span>
+          <span class="disc-psy-section-title">La Bulle — Chill-Out Sone</span>
+          <span class="disc-psy-section-badge">${LA_BULLE.length} artistar · Downtempo · Ambient · Psybass · Psychill</span>
+        </div>
+        ${stageGrid(LA_BULLE)}
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-title">Billettar & Sosiale medium</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          <a class="disc-psy-label-card" href="https://hadratrancefestival.net/en/tickets/" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">🎟</div>
+            <div>
+              <div class="disc-psy-label-name">Kjøp billettar</div>
+              <div class="disc-psy-label-desc">Offisiell billettside — 27–30 august 2026</div>
+            </div>
+          </a>
+          <a class="disc-psy-label-card" href="https://www.facebook.com/hadratrancefestival/" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">f</div>
+            <div>
+              <div class="disc-psy-label-name">Facebook</div>
+              <div class="disc-psy-label-desc">Nyhende, kunngjøringar og oppdateringar</div>
+            </div>
+          </a>
+          <a class="disc-psy-label-card" href="https://www.instagram.com/hadratrancefestival/" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">📸</div>
+            <div>
+              <div class="disc-psy-label-name">Instagram</div>
+              <div class="disc-psy-label-desc">Bilete og artwork frå festivalen</div>
+            </div>
+          </a>
+          <a class="disc-psy-label-card" href="https://www.youtube.com/user/hadrarecords" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">▶</div>
+            <div>
+              <div class="disc-psy-label-name">YouTube</div>
+              <div class="disc-psy-label-desc">Sett og videoar frå tidlegare år</div>
             </div>
           </a>
         </div>
@@ -1275,7 +1747,7 @@ const Discover = (() => {
   // ── Tab / sub-tab switching ───────────────────────────────────────────
   function switchTab(tab) {
     activeTab = tab;
-    const TAB_LABELS = { music: 'Musikk', people: 'folk', 'psy-tour': 'Psytrance', 'ambient-mann': 'Ambient Mann' };
+    const TAB_LABELS = { music: 'Musikk', people: 'folk', 'psy-tour': 'Psytrance', 'ambient-mann': 'Ambient Mann', psybient: 'Psybient', 'altar-records': 'Altar', hadra: 'Hadra', dacru: 'DaCru', 'tip-raja': 'Raja', astral: 'Astral' };
     document.querySelectorAll('.disc-tab-btn').forEach(b => {
       const matched = Object.entries(TAB_LABELS).find(([, label]) => b.textContent.includes(label));
       b.classList.toggle('active', matched ? matched[0] === tab : false);
@@ -1284,6 +1756,12 @@ const Discover = (() => {
     document.getElementById('disc-people-tab')?.classList.toggle('hidden', tab !== 'people');
     document.getElementById('disc-psy-tour-tab')?.classList.toggle('hidden', tab !== 'psy-tour');
     document.getElementById('disc-ambient-mann-tab')?.classList.toggle('hidden', tab !== 'ambient-mann');
+    document.getElementById('disc-psybient-tab')?.classList.toggle('hidden', tab !== 'psybient');
+    document.getElementById('disc-altar-records-tab')?.classList.toggle('hidden', tab !== 'altar-records');
+    document.getElementById('disc-hadra-tab')?.classList.toggle('hidden', tab !== 'hadra');
+    document.getElementById('disc-dacru-tab')?.classList.toggle('hidden', tab !== 'dacru');
+    document.getElementById('disc-tip-raja-tab')?.classList.toggle('hidden', tab !== 'tip-raja');
+    document.getElementById('disc-astral-tab')?.classList.toggle('hidden', tab !== 'astral');
   }
 
   function switchSubTab(tab) {

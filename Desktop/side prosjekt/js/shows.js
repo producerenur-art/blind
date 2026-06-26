@@ -287,6 +287,34 @@ const Shows = (() => {
           </div>
         </div>
 
+        <!-- FESTIVALS -->
+        <div class="section" style="max-width:900px">
+          <div class="section-header">
+            <div class="section-title">🎪 Kommende festivalar</div>
+          </div>
+          <a class="shows-festival-card" href="https://hadratrancefestival.net/en/home/" target="_blank" rel="noopener noreferrer">
+            <div class="shows-festival-banner" style="background:linear-gradient(135deg,#1a0a2e,#16213e,#0f3460)">
+              <div class="shows-festival-emoji">🎪</div>
+              <div class="shows-festival-dates">27–30 aug 2026</div>
+            </div>
+            <div class="shows-festival-body">
+              <div class="shows-festival-name">Hadra Trance Festival 2026</div>
+              <div class="shows-festival-loc">📍 Vieure, Allier, Frankrike 🇫🇷</div>
+              <div class="shows-festival-theme">Solar Punk Chronicles: The Seed</div>
+              <div class="shows-festival-tags">
+                <span class="shows-festival-tag">🌀 Psytrance</span>
+                <span class="shows-festival-tag">⚡ Techno</span>
+                <span class="shows-festival-tag">🌿 Downtempo</span>
+                <span class="shows-festival-tag">🎼 Live</span>
+                <span class="shows-festival-tag">4 scener</span>
+                <span class="shows-festival-tag">68 artistar</span>
+                <span class="shows-festival-tag">90t musikk</span>
+              </div>
+              <div class="shows-festival-cta">Sjå program & billettar →</div>
+            </div>
+          </a>
+        </div>
+
         <!-- SUBSCRIBE BANNER -->
         <div class="section" style="max-width:900px">
           <div class="shows-subscribe-banner">

@@ -6622,3 +6622,107 @@ body { top: 0 !important; }
   font-size: 0.7rem; color: #666; flex-shrink: 0;
 }
 .paint-canvas-dims { font-size: 0.68rem; color: #555; }
+
+/* ── Web Radio Section ────────────────────────────────── */
+.web-radio-section { margin-bottom: 2rem; }
+
+.dice-radio-featured {
+  display: flex; align-items: center; gap: 1rem;
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  border: 1px solid rgba(29,78,216,0.4);
+  border-radius: 14px; padding: 1rem 1.25rem;
+  cursor: pointer; position: relative; overflow: hidden;
+  margin-bottom: 1rem; transition: transform 0.15s, box-shadow 0.15s;
+}
+.dice-radio-featured:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(29,78,216,0.4); }
+.dice-radio-glow {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(99,130,255,0.25), transparent 70%);
+  pointer-events: none;
+}
+.dice-radio-inner { display: flex; align-items: center; gap: 1rem; width: 100%; position: relative; }
+.dice-radio-emoji { font-size: 2rem; flex-shrink: 0; }
+.dice-radio-info { flex: 1; }
+.dice-radio-name { font-weight: 700; font-size: 1rem; color: #fff; }
+.dice-radio-desc { font-size: 0.78rem; color: rgba(255,255,255,0.65); margin-top: 2px; }
+.dice-radio-play-btn {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; border-radius: 8px; padding: 0.4rem 1rem;
+  font-size: 0.85rem; cursor: pointer; font-weight: 600;
+  transition: background 0.15s; white-space: nowrap;
+}
+.dice-radio-play-btn:hover { background: rgba(255,255,255,0.28); }
+
+.genre-tab-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.genre-tab {
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text2); border-radius: 20px;
+  padding: 0.35rem 0.9rem; font-size: 0.8rem;
+  cursor: pointer; transition: all 0.15s; font-weight: 500;
+}
+.genre-tab:hover { border-color: var(--accent); color: var(--accent); }
+.genre-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.web-radio-grid { display: flex; flex-direction: column; gap: 0.4rem; }
+.web-radio-card {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 0.6rem 0.8rem;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  border-left: 3px solid var(--sc, var(--accent));
+}
+.web-radio-card:hover { background: rgba(255,255,255,0.04); border-color: var(--sc, var(--accent)); }
+.wrc-emoji { font-size: 1.3rem; flex-shrink: 0; }
+.wrc-info { flex: 1; min-width: 0; }
+.wrc-name { font-weight: 600; font-size: 0.88rem; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wrc-desc { font-size: 0.74rem; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wrc-play {
+  background: var(--sc, var(--accent)); color: #fff;
+  border: none; border-radius: 6px; padding: 0.3rem 0.6rem;
+  font-size: 0.8rem; cursor: pointer; flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.wrc-play:hover { opacity: 0.82; }
+
+/* ── Hadra Festival artist pills ───────────────────────────────────── */
+.hadra-artist-grid {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  padding: 0.25rem 0 0.5rem;
+}
+.hadra-artist-pill {
+  background: rgba(99,60,180,0.18); color: var(--text1);
+  border: 1px solid rgba(124,58,237,0.3);
+  border-radius: 20px; padding: 0.25rem 0.7rem;
+  font-size: 0.78rem; white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.hadra-artist-pill:hover { background: rgba(124,58,237,0.28); border-color: rgba(124,58,237,0.6); }
+
+/* ── Shows page — festival card ────────────────────────────────────── */
+.shows-festival-card {
+  display: flex; flex-direction: column;
+  border-radius: 14px; overflow: hidden;
+  border: 1px solid var(--border);
+  text-decoration: none; color: inherit;
+  transition: transform 0.18s, border-color 0.18s;
+}
+.shows-festival-card:hover { transform: translateY(-2px); border-color: rgba(124,58,237,0.5); }
+.shows-festival-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+}
+.shows-festival-emoji { font-size: 2.8rem; }
+.shows-festival-dates { font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.9); }
+.shows-festival-body { padding: 1.1rem 1.4rem 1.3rem; background: var(--card); }
+.shows-festival-name { font-size: 1.1rem; font-weight: 700; color: var(--text1); margin-bottom: 0.2rem; }
+.shows-festival-loc  { font-size: 0.82rem; color: var(--text2); margin-bottom: 0.2rem; }
+.shows-festival-theme { font-size: 0.8rem; color: var(--accent); font-style: italic; margin-bottom: 0.65rem; }
+.shows-festival-tags {
+  display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.8rem;
+}
+.shows-festival-tag {
+  background: rgba(124,58,237,0.14); color: var(--text2);
+  border: 1px solid rgba(124,58,237,0.25);
+  border-radius: 20px; padding: 0.18rem 0.55rem; font-size: 0.74rem;
+}
+.shows-festival-cta { font-size: 0.82rem; color: var(--accent); font-weight: 600; }
