@@ -423,7 +423,7 @@ const Profile = (() => {
           </div>
 
           <!-- Role badge -->
-          ${(user.role && user.role !== 'lytter') || user.role === 'lytter' ? `<div style="margin-bottom:0.75rem"><span class="profile-role-badge" style="background:${theme.primaryColor}33;border:1px solid ${theme.primaryColor}66;color:${theme.textColor}">${{lytter:'🎧 Lytter',dj:'🎛️ DJ',produsent:'🎹 Produsent',plateselskap:'🏷️ Plateselskap'}[user.role||'lytter']||'🎧 Lytter'}</span></div>` : ''}
+          ${(()=>{const m={lytter:'🎧 Lytter',dj:'🎛️ DJ',produsent:'🎹 Produsent',plateselskap:'🏷️ Plateselskap'};const l=m[user.role||'lytter'];return l?`<div style="margin-bottom:0.75rem"><span class="profile-role-badge" style="background:${theme.primaryColor}33;border:1px solid ${theme.primaryColor}66;color:${theme.textColor}">${l}</span></div>`:'';})()}
 
           <!-- Bio -->
           ${user.bio ? `<div class="profile-bio" style="color:${theme.textColor}cc">${user.bio}</div>` : ''}
@@ -725,20 +725,12 @@ const Profile = (() => {
 
         <!-- ROLES PANEL -->
         <div class="editor-panel" style="margin-bottom:1rem">
-          <div class="editor-panel-header">🎭 Jeg er…</div>
+          <div class="editor-panel-header">🎭 Din rolle</div>
           <div class="editor-panel-body">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem">
-              ${['lytter','musikk-skaper','dj','sosial'].map(r => {
-                const icons = {lytter:'🎧','musikk-skaper':'🎵',dj:'🎛️',sosial:'👥'};
-                const labels = {lytter:'Lytter','musikk-skaper':'Musikk-skaper',dj:'DJ',sosial:'Sosial'};
-                const checked = (current.roles || []).includes(r);
-                return `<label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.82rem;padding:0.4rem 0.6rem;border-radius:8px;background:var(--surface);border:1px solid ${checked ? 'var(--accent)' : 'transparent'};transition:all 0.2s" id="role-lbl-${r}">
-                  <input type="checkbox" value="${r}" id="role-${r}" ${checked ? 'checked' : ''} onchange="Profile.updateRoleLabel('${r}',this.checked)" style="accent-color:var(--accent)">
-                  ${icons[r]} ${labels[r]}
-                </label>`;
-              }).join('')}
+            <div class="role-selector" id="ed-role-selector">
+              ${[['lytter','🎧','Lytter'],['dj','🎛️','DJ'],['produsent','🎹','Produsent'],['plateselskap','🏷️','Plateselskap']].map(([val,emoji,label]) => `<label class="role-option" onclick="Profile.selectEditorRole('${val}',this)"><input type="radio" name="ed-role" value="${val}" ${(current.role||'lytter')===val?'checked':''} style="display:none"><div class="role-option-inner ${(current.role||'lytter')===val?'active':''}"><span class="role-option-emoji">${emoji}</span><span class="role-option-label">${label}</span></div></label>`).join('')}
             </div>
-            <button class="btn btn-ghost btn-sm w-full" onclick="Profile.saveRoles()">💾 Lagre roller</button>
+            <button class="btn btn-ghost btn-sm w-full" style="margin-top:0.75rem" onclick="Profile.saveProfile()">💾 Lagre rolle</button>
           </div>
         </div>
 
@@ -2022,13 +2014,7 @@ const Profile = (() => {
   }
 
   function saveRoles() {
-    const current = Auth.current();
-    if (!current) return;
-    const roles = ['lytter','musikk-skaper','dj','sosial']
-      .filter(r => document.getElementById(`role-${r}`)?.checked);
-    Auth.updateUser(current.username, { roles });
-    current.roles = roles;
-    App.toast('Roller lagret! 🎭', 'success');
+    // Legacy stub — role is now saved via saveProfile()
   }
 
   // ── Festival actions ──────────────────────────────────────────────────

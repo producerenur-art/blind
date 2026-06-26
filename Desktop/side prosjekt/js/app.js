@@ -537,7 +537,7 @@ const App = (() => {
       return;
     }
 
-    Auth.updateUser(username, { roles: [role] });
+    Auth.updateUser(username, { role });
 
     // Send activation email
     const emailRes = await Email.sendActivation(email, username, result.activationToken);

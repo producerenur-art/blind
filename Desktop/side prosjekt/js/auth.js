@@ -87,7 +87,7 @@ const Auth = (() => {
         sentRequests:      [], // outgoing: [username]
         mixIds:            [],
         subscription:      'free', // 'free' | 'pro'
-        roles:             [],     // lytter | musikk-skaper | dj | sosial (multi-select)
+        role:              'lytter', // 'lytter' | 'dj' | 'produsent' | 'plateselskap'
         profileVisibility: 'public', // 'public' | 'private'
       };
       saveUsers(users);
@@ -189,7 +189,7 @@ const Auth = (() => {
         favoriteRadio: u.favoriteRadio || null,
         liveEvent: (u.events || []).find(e => e.isLive) || null,
         musicIds:  u.musicIds  || [],
-        roles:     u.roles     || [],
+        role:      u.role      || 'lytter',
       }));
     },
 
