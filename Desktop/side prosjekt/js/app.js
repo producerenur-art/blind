@@ -36,6 +36,16 @@ const App = (() => {
     return total;
   }
 
+  function _getUnreadWallCount(username) {
+    const wall = JSON.parse(localStorage.getItem(`pv_wall_${username}`) || '[]');
+    const seen = parseInt(localStorage.getItem(`pv_wall_seen_${username}`) || '0', 10);
+    return wall.filter(p => p.ts > seen && p.fromUsername !== username).length;
+  }
+
+  function markWallSeen(username) {
+    localStorage.setItem(`pv_wall_seen_${username}`, Date.now().toString());
+  }
+
   function updateNavBadge() {
     const user = Auth.current();
     if (!user) return;
@@ -43,7 +53,8 @@ const App = (() => {
     if (!link) return;
     const pendingFriend = Auth.getPendingRequestsCount(user.username);
     const unreadPMs     = getUnreadPMTotal(user.username);
-    const total         = pendingFriend + unreadPMs;
+    const unreadWall    = _getUnreadWallCount(user.username);
+    const total         = pendingFriend + unreadPMs + unreadWall;
     let badge = link.querySelector('.nav-badge');
     if (total > 0) {
       if (!badge) { badge = document.createElement('span'); badge.className = 'nav-badge'; link.appendChild(badge); }
@@ -1827,7 +1838,7 @@ const App = (() => {
 
   return {
     init, toast, openModal, closeModal,
-    logout, renderNav, updateNavBadge,
+    logout, renderNav, updateNavBadge, markWallSeen,
     doLogin, doRegister, doForgotPassword, doResetPassword,
     resendActivationByEmail,
     saveSettings, testEmailJS,

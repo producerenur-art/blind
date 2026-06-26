@@ -948,6 +948,15 @@ const Profile = (() => {
     loadEditorMedia(current);
     loadEditorMusic(current);
     loadEditorMixes(current);
+    _loadBgMusicSelector(current, t);
+  }
+
+  async function _loadBgMusicSelector(user, t) {
+    const sel = document.getElementById('ed-bg-music-track');
+    if (!sel || !user.musicIds?.length) return;
+    const recs = await DB.getAllByIds('music', user.musicIds);
+    sel.innerHTML = `<option value="">— Automatisk (første sang) —</option>` +
+      recs.map(r => `<option value="${r.id}" ${t.bgMusicTrackId === r.id ? 'selected' : ''}>${r.name || r.id}</option>`).join('');
   }
 
   function themeEditorHtml(t) {
@@ -1628,6 +1637,10 @@ const Profile = (() => {
       el.classList.toggle('hidden', el.dataset.tab !== tab));
     document.querySelectorAll('#profile-tabs .tab-btn').forEach(btn =>
       btn.classList.toggle('active', btn.dataset.tab === tab));
+    if (tab === 'vegg') {
+      const u = typeof Auth !== 'undefined' ? Auth.current() : null;
+      if (u && typeof App !== 'undefined') App.markWallSeen(u.username);
+    }
   }
 
   // ── Profile wall (guestbook) ──────────────────────────────────────────
