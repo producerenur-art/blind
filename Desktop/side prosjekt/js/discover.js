@@ -106,63 +106,83 @@ const Discover = (() => {
     {
       name: 'Kammarheit',
       country: '🇸🇪 Sverige',
-      bio: 'Peter Petterssons mørke ambient-prosjekt — sidan tidleg 2000-tal ein av dei viktigaste stemmene i dark drone. Tett, langsam og kvalmande vakker.',
-      albums: ['The Nest (2002)', 'Uhrwald Orange (2007)', 'Abysmal Resonance Projection (2010)'],
-      label: 'Cyclic Law / Cryochamber',
+      bio: 'Pär Boströms mørke ambient-prosjekt — sidan tidleg 2000-tal ein av dei viktigaste stemmene i dark drone. Tett, langsam, og kvalmande vakker. "The Starwheel" reknast som eit av dei beste dark ambient-albuma nokosinne.',
+      albums: ['Asleep and Well Hidden (2003)', 'The Starwheel (2005)', 'The Nest (2015)', 'Thronal (2020)'],
+      label: 'Cyclic Law',
       bandcamp: 'https://kammarheit.bandcamp.com',
-      youtube: 'https://www.youtube.com/results?search_query=kammarheit+dark+ambient',
-      facebook: 'https://www.facebook.com/kammarheit',
+      youtube: 'https://www.youtube.com/channel/UCrIhFRfU627QkVjdlr6baag',
+      facebook: 'https://www.facebook.com/kammarheitofficial',
+      website: 'https://www.kammarheit.com',
     },
     {
       name: 'Atrium Carceri',
-      country: '🇸🇪 Sverige',
-      bio: 'Simon Heaths flaggskipprosjekt og gründer av Cryochamber. Dystopisk, kinematisk dark ambient som fortel mørke science-fiction-historier gjennom lyd.',
-      albums: ['Cellblock (2004)', 'Void (2006)', 'Codex (2013)'],
-      label: 'Cryochamber',
-      bandcamp: 'https://atriucarceri.bandcamp.com',
-      youtube: 'https://www.youtube.com/results?search_query=atrium+carceri',
-      facebook: 'https://www.facebook.com/AtriuCarceri',
+      country: '🇸🇪 Sverige / 🇺🇸 USA',
+      bio: 'Simon Heaths flaggskipprosjekt og gründar av Cryo Chamber. Dystopisk, kinematisk dark ambient som fortel mørke science-fiction-historier gjennom lyd — post-apokalyptisk lydkunst av høgaste klasse.',
+      albums: ['Cellblock (2004)', 'Ptahil (2008)', 'Codex (2013)', 'The Untold (2016)', 'Forgotten Gods (2022)'],
+      label: 'Cryo Chamber',
+      bandcamp: 'https://cryochamber.bandcamp.com',
+      youtube: 'https://www.youtube.com/@cryochamberlabel',
+      facebook: 'https://www.facebook.com/p/Atrium-Carceri-100063521439906',
     },
     {
       name: 'Sabled Sun',
-      country: '🇸🇪 Sverige',
-      bio: 'Simons sci-fi dark ambient-alias. Ein øydeleggande rein dronebasert reise gjennom dystre framtidslandskap — heile universet i eit lydbilete.',
-      albums: ['2145 (2012)', '2146 (2012)', 'Signals (2013)'],
-      label: 'Cryochamber',
-      bandcamp: 'https://sabledsun.bandcamp.com',
-      youtube: 'https://www.youtube.com/results?search_query=sabled+sun+dark+ambient',
+      country: '🇸🇪 Sverige / 🇺🇸 USA',
+      bio: 'Simon Heaths sci-fi dark ambient-alias. Ein øydeleggjande rein dronebasert reise gjennom dystre framtidslandskap — heile den post-apokalyptiske framtida i eit lydbilete.',
+      albums: ['2145 (2012)', '2146 (2012)', '2147 (2013)', 'Signals I (2013)', 'Signals II (2014)'],
+      label: 'Cryo Chamber',
+      bandcamp: 'https://cryochamber.bandcamp.com',
+      youtube: 'https://www.youtube.com/@cryochamberlabel',
+    },
+    {
+      name: 'Dronny Darko',
+      country: '🇺🇦 Ukraina',
+      bio: 'Oleg Puzan frå Kyiv lagar massivt, ruvande dark ambient og drone. Ein av dei mest produktive kunstnarane på Cryo Chamber — djup, kosmisk og grenselaus.',
+      albums: ['Our Darkest Days (2015)', 'Desolate Lighthouse (2016)', 'Architect of Shadows (2019)'],
+      label: 'Cryo Chamber / Petroglyph Music',
+      bandcamp: 'https://dronnydarko.bandcamp.com',
+      youtube: 'https://www.youtube.com/channel/UCWIeF6dIcewYGRRq1tANydw',
+      facebook: 'https://www.facebook.com/dronnydarko',
+    },
+    {
+      name: 'Alphaxone',
+      country: '🇮🇷 Iran',
+      bio: 'Mehdi Saleh frå Teheran lagar cinematic, atmosfærisk dark ambient og space drone. Djupe romteksturer med ein unik blanding av orientalsk og kosmisk estetikk.',
+      albums: ['The Forgotten (2013)', 'Edge of Abyss (2015)', 'Membrane (2019)', 'Solitary Retreat (2022)'],
+      label: 'Cryo Chamber',
+      bandcamp: 'https://alphaxone.bandcamp.com',
+      facebook: 'https://www.facebook.com/alphaxone',
+    },
+    {
+      name: 'Northumbria',
+      country: '🇨🇦 Canada',
+      bio: 'Jim Field og Dorian Williamson frå Toronto lagar massive, improviserte drone-veggar med gitar og bass. Uropplevande og fysisk overveldande — musikk som kjennest meir enn du høyrer ho.',
+      albums: ['Helluland (2016)', 'Markland (2016)', 'Vinland (2017)', 'Isolering (2019)'],
+      label: 'Cryo Chamber',
+      bandcamp: 'https://northumbria.bandcamp.com',
+      facebook: 'https://www.facebook.com/NorthumbriaDrone',
     },
     {
       name: 'Council of Nine',
-      country: '🇬🇧 England',
-      bio: 'Mystisk ritual dark ambient frå England. Djup kosmisk drone med okkulte undertoner — som å lytte til ei eldgamal seremoni i mørket.',
-      albums: ['Monuments to the Collapse (2016)', 'Equinox (2019)', 'Sovereign (2021)'],
-      label: 'Cryochamber',
-      bandcamp: 'https://councilofnine.bandcamp.com',
+      country: '🇺🇸 USA',
+      bio: 'Maximillian Olivier frå California lagar mystisk rituell dark ambient. Djup kosmisk drone med okkulte undertoner — som å lytte til ei eldgamal seremoni frå innsida av mørket.',
+      albums: ['Dakhma (2017)', 'Diagnosis (2018)', 'Trinity (2019)', 'Exit Earth (2020)', 'Davidian (2021)'],
+      label: 'Cryo Chamber',
+      bandcamp: 'https://cryochamber.bandcamp.com',
       youtube: 'https://www.youtube.com/results?search_query=council+of+nine+dark+ambient',
     },
     {
       name: 'Ugasanie',
       country: '🇧🇾 Belarus',
-      bio: 'Evgeny Kuznetsov lagar breathtaking atmosfærisk dark ambient inspirert av arktiske landskap og sibirsk natur. Isande og vidstrakt.',
-      albums: ['Altai (2014)', 'Tundra (2016)', 'Polar Silence (2018)'],
-      label: 'Cryochamber',
+      bio: 'Evgeny Kuznetsov lagar iseande, vidstrakt dark ambient inspirert av arktiske landskap og sibirsk natur. Kvart album er ei reise gjennom tundra og permafrost.',
+      albums: ['Altai (2014)', 'Tundra (2016)', 'Polar Silence (2018)', 'Taiga (2020)'],
+      label: 'Cryo Chamber',
       bandcamp: 'https://ugasanie.bandcamp.com',
       youtube: 'https://www.youtube.com/results?search_query=ugasanie+dark+ambient',
     },
     {
-      name: 'Apocryphos',
-      country: '🇺🇸 USA',
-      bio: 'Intens og rituell dark drone frå USA. Kombinerer field recordings med djup drone — musikk som kjennest som å gå ned i ei katakombe.',
-      albums: ['The Immortalist (2013)', 'Stone Speak (2016)', 'Khentkaus (2019)'],
-      label: 'Cryochamber',
-      bandcamp: 'https://apocryphos.bandcamp.com',
-      youtube: 'https://www.youtube.com/results?search_query=apocryphos+dark+ambient',
-    },
-    {
       name: 'Cities Last Broadcast',
-      country: '🇳🇱 Nederland',
-      bio: 'Fryktinngytande mørk ambient frå Nederland. Tome byar, falleferdige strukturar og post-apokalyptiske stemningsbilete gjort til lyd.',
+      country: '🇸🇪 Sverige',
+      bio: 'Sideprojektet til Pär Boström (Kammarheit). Fryktinngytande mørk ambient inspirert av tomme byar og falleferdige strukturar — post-apokalyptiske stemningsbilete gjort til lyd.',
       albums: ['The Humming Tapes (2012)', 'The Cancelled Earth (2013)'],
       label: 'Cyclic Law',
       bandcamp: 'https://citieslastbroadcast.bandcamp.com',
@@ -171,9 +191,9 @@ const Discover = (() => {
     {
       name: 'Trepaneringsritualen',
       country: '🇸🇪 Sverige',
-      bio: 'T.M.R. sitt kompromisslause ritual industrial / drone-prosjekt. Mørkt, brutalt og meditativt på same tid — ikkje for sarte sjeler.',
+      bio: 'T.M.R. sitt kompromisslause ritual industrial / drone-prosjekt. Mørkt, brutalt og meditativt samstundes — ein av dei mest særeigne stemmene i underground drone.',
       albums: ['Perfection & Permanence (2012)', 'Deathward, To The Womb (2015)', 'TA∞ (2018)'],
-      label: 'Cyclic Law / Hospital Productions',
+      label: 'Cyclic Law / Malignant Records',
       bandcamp: 'https://trepaneringsritualen.bandcamp.com',
       youtube: 'https://www.youtube.com/results?search_query=trepaneringsritualen',
     },
@@ -181,56 +201,71 @@ const Discover = (() => {
 
   const DRONE_LABELS = [
     {
-      name: 'Cryochamber',
-      flag: '🇸🇪',
-      country: 'Sverige',
+      name: 'Cryo Chamber',
+      flag: '🇺🇸',
+      country: 'USA (grunnlagt av svensk)',
       founded: '2011',
-      desc: 'Verdas leiande dark ambient-label, drive av Simon Heath (Atrium Carceri). Utgir digital og fysisk, med fokus på dark ambient, ritual ambient og drone.',
-      artists: 'Kammarheit, Atrium Carceri, Sabled Sun, Council of Nine, Ugasanie, Apocryphos',
-      website: 'https://cryochamber.com',
+      desc: 'Verdas leiande dark ambient-label, drive av Simon Heath (Atrium Carceri). Gjev ut digitalt og fysisk med fokus på mørk, kinematisk ambient og drone. Over 500 utgivingar.',
+      artists: 'Kammarheit, Atrium Carceri, Sabled Sun, Dronny Darko, Alphaxone, Northumbria, Council of Nine, Ugasanie',
+      website: 'https://www.cryochamberlabel.com',
       bandcamp: 'https://cryochamber.bandcamp.com',
-      facebook: 'https://www.facebook.com/cryochambermusic',
-      youtube: 'https://www.youtube.com/@Cryochamber',
-      demoContact: 'Via kontaktskjema på cryochamber.com',
-      demoNote: 'Send ferdig album eller EP. Inkluder biografi og lenker til musikk. Svar kan ta tid grunna stor pågang.',
+      facebook: 'https://www.facebook.com/CryoChamber',
+      youtube: 'https://www.youtube.com/@cryochamberlabel',
+      demoContact: 'cryochamber@hotmail.com',
+      demoNote: 'Send ferdig album eller EP som lenke. Inkluder biografi og bakgrunn. Simon Heath svarer sjølv — vær konkret og profesjonell. Stor pågang.',
     },
     {
       name: 'Cyclic Law',
       flag: '🇨🇦',
-      country: 'Canada',
-      founded: '2003',
-      desc: 'Kanadisk label drive av Frédéric Arbour. Spesialisert på ritual dark ambient, drone og eksperimentell elektronika. Ein av dei eldste og mest respekterte i sjangeren.',
-      artists: 'Kammarheit, Cities Last Broadcast, Trepaneringsritualen, Lustmord, Phelios',
-      website: 'https://cycliclaw.com',
+      country: 'Canada (no. Frankrike)',
+      founded: '2002',
+      desc: 'Canadisk label drive av Frédéric Arbour, no basert i dei franske Pyreneane. Spesialisert på rituell dark ambient, drone og eksperimentell elektronika. 140+ utgivingar sidan 2002.',
+      artists: 'Kammarheit, Cities Last Broadcast, Trepaneringsritualen, Lustmord, Halgrath, Phelios',
+      website: 'https://www.cycliclaw.com',
       bandcamp: 'https://cycliclaw.bandcamp.com',
-      facebook: 'https://www.facebook.com/cyclic.law',
-      demoContact: 'info@cycliclaw.com',
-      demoNote: 'Send EP eller album som lenke (Bandcamp, SoundCloud, Drive). Inkluder kort bio og tidlegare utgivingar om det finst. Fokus på kvalitet og konsept.',
+      facebook: 'https://www.facebook.com/cycliclaw',
+      youtube: 'https://www.youtube.com/@cycliclaw',
+      demoContact: 'Kontaktskjema på cycliclaw.com/contact',
+      demoNote: 'Ingen offentleg demo-epost — bruk kontaktskjema på nettstaden. Send ferdig EP/album som lenke + kort bio. Fokus på kvalitet og konsept framfor mengde.',
     },
     {
       name: 'Malignant Records',
       flag: '🇺🇸',
-      country: 'USA',
-      founded: '1993',
+      country: 'USA (Maryland)',
+      founded: '1994',
       desc: 'Veteran dark ambient, power electronics og industrial-label frå USA. Over 30 år med kompromisslause utgivingar i dei mørkaste hjørnene av eksperimentell musikk.',
-      artists: 'Navicon Torture Technologies, Theologian, Trepaneringsritualen, Skin Area',
+      artists: 'Gnawed, Trepaneringsritualen, Theologian, Karmacipher, Atrax Morgue (reissues)',
       website: 'https://www.malignantrecords.com',
-      bandcamp: 'https://malignantrecords.bandcamp.com',
-      demoContact: 'malignantrecords@gmail.com',
-      demoNote: 'Kontakt via e-post med lenke til musikk + kort bio. Fokus på dark ambient, noise, industrial og ritual music.',
+      bandcamp: 'https://malignantrecs.bandcamp.com',
+      facebook: 'https://www.facebook.com/malignantrecords',
+      demoContact: 'malignant@malignantrecords.com',
+      demoNote: '⚠️ Tek ikkje i mot demoar for tida — sjekk nettstaden malignantrecords.com for oppdatert status. Fokus på dark ambient, noise, industrial og ritual music.',
+    },
+    {
+      name: 'Tesco Organisation',
+      flag: '🇩🇪',
+      country: 'Tyskland',
+      founded: '1987',
+      desc: 'Ein av Europas lengst-levande underground industrial-operasjonar. Startar som postordre i 1987, no aktivt plateselskap. Svært underground-orientert — ingen PR, berre musikk.',
+      artists: 'Diverse power electronics, industrial, neofolk og dark ambient-artistar',
+      website: 'https://tesco-germany.com/en',
+      bandcamp: 'https://tescogermany.bandcamp.com',
+      facebook: 'https://www.facebook.com/TescoGermany',
+      demoContact: 'tesco-germany@t-online.de',
+      demoNote: 'Send e-post med lenke til musikk. Ingen formelle krav — men vera ekte underground. Fokus på industrial, power electronics, neofolk og mørk eksperimentell musikk.',
     },
     {
       name: 'Consouling Sounds',
       flag: '🇧🇪',
       country: 'Belgia',
-      founded: '2010',
-      desc: 'Belgisk label for post-metal, doom, sludge og mørk eksperimentell musikk — inkludert drone og dark ambient. Sterk europeisk profil.',
-      artists: 'Oathbreaker, A+, Amenra-relaterte prosjekt, diverse drone/doom',
-      website: 'https://consoulingsounds.com',
-      bandcamp: 'https://consoulingsounds.bandcamp.com',
-      facebook: 'https://www.facebook.com/consoulingsounds',
-      demoContact: 'info@consoulingsounds.com',
-      demoNote: 'Send demo via e-post med lenke til musikk (Bandcamp/SoundCloud). Belgisk/europeisk-fokusert. Gjerne med pressebilde og bio.',
+      founded: '2008',
+      desc: 'Belgisk non-profit label for post-metal, doom, sludge og mørk eksperimentell musikk — inkludert drone og dark ambient. Sterk europeisk profil og kunstnarisk integritet.',
+      artists: 'Oathbreaker, A+, diverse drone/doom/post-metal',
+      website: 'https://consouling.be',
+      bandcamp: 'https://consouling.bandcamp.com',
+      facebook: 'https://www.facebook.com/ConsoulingSounds',
+      demoContact: 'support@consouling.be',
+      demoNote: 'Send demo via e-post med lenke til musikk (Bandcamp/SoundCloud) + pressebilde og bio. Belgisk/europeisk-fokusert. Non-profit med sterk kunstnarleg profil.',
     },
   ];
 
@@ -531,6 +566,10 @@ const Discover = (() => {
           onclick="Discover.switchTab('music')">🎵 Musikk</button>
         <button class="disc-tab-btn ${activeTab === 'people' ? 'active' : ''}"
           onclick="Discover.switchTab('people')">👥 Finn folk</button>
+        <button class="disc-tab-btn ${activeTab === 'psy-tour' ? 'active' : ''}"
+          onclick="Discover.switchTab('psy-tour')">🌀 Psytrance Peak Tour</button>
+        <button class="disc-tab-btn ${activeTab === 'ambient-mann' ? 'active' : ''}"
+          onclick="Discover.switchTab('ambient-mann')">🌊 Ambient Mann</button>
       </div>`;
   }
 
@@ -813,27 +852,337 @@ const Discover = (() => {
           </div>
         </div>
 
+        <!-- PSY TOUR TAB (hidden by default) -->
+        <div id="disc-psy-tour-tab" class="hidden">
+          ${renderPsyTourTab()}
+        </div>
+
+        <!-- AMBIENT MANN TAB (hidden by default) -->
+        <div id="disc-ambient-mann-tab" class="hidden">
+          ${renderAmbientMannTab()}
+        </div>
+
       </div>`;
 
     startActivityScroll();
     loadPeopleAvatars(allUsers);
   }
 
+  function renderAmbientMannTab() {
+    const TAGS = [
+      { label: 'Psychill',      emoji: '🧠' },
+      { label: 'Downtempo',     emoji: '🌊' },
+      { label: 'Experimental',  emoji: '🧪' },
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0f2027,#203a43,#2c5364)">
+        <div class="disc-psy-banner-emoji">🌊</div>
+        <div>
+          <div class="disc-psy-banner-title">Ambient Mann</div>
+          <div class="disc-psy-banner-sub">Psychill · Downtempo · Experimental — atmosfærisk elektronika frå undergrunnen</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎵</span>
+          <span class="disc-psy-section-title">Artisten</span>
+          <span class="disc-psy-section-badge">radioq37.com</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://radioq37.com/artist/ambient-mann/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">🌊</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Ambient Mann</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Djup, dronerande og atmosfærisk elektronika i skjæringspunktet mellom psychill,
+                downtempo og eksperimentell elektronika. Utforsk heile artisten på radioq37.com.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                ${TAGS.map(t => `<span class="disc-psy-section-badge">${t.emoji} ${t.label}</span>`).join('')}
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🏷</span>
+          <span class="disc-psy-section-title">Sjangere</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          <a class="disc-psy-label-card" href="https://bandcamp.com/tag/psychill" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">🧠</div>
+            <div>
+              <div class="disc-psy-label-name">Psychill / Bandcamp</div>
+              <div class="disc-psy-label-desc">Alle utgivingar tagget psychill</div>
+            </div>
+          </a>
+          <a class="disc-psy-label-card" href="https://bandcamp.com/tag/downtempo" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">🌊</div>
+            <div>
+              <div class="disc-psy-label-name">Downtempo / Bandcamp</div>
+              <div class="disc-psy-label-desc">Langsom, hypnotisk elektronika</div>
+            </div>
+          </a>
+          <a class="disc-psy-label-card" href="https://bandcamp.com/tag/experimental" target="_blank" rel="noopener noreferrer">
+            <div class="disc-psy-label-icon">🧪</div>
+            <div>
+              <div class="disc-psy-label-name">Experimental / Bandcamp</div>
+              <div class="disc-psy-label-desc">Grensesprengande eksperimentell elektronika</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPsyTourTab() {
+    const SC_MIXES = [
+      { title: 'Progressive Psytrance SET 2026', artist: 'STAYOS', url: 'https://soundcloud.com/stayos/progressive-psytrance-set-2026' },
+      { title: 'Fantasia — Progressive Psytrance 2026', artist: 'DJ NightStar', url: 'https://soundcloud.com/djnightstar_official/fantasia-progressive-psytrance-mix-2026' },
+      { title: 'Progressive Psytrance mix February 2026', artist: 'Electric Samurai', url: 'https://soundcloud.com/dj-electric-samurai/progressive-psytrance-mix-february-2026' },
+      { title: 'Feelings — Psytrance Love Mix 2026', artist: 'DJ NightStar', url: 'https://soundcloud.com/djnightstar_official/dj-nightstar-feelings-progressive-psytrance-love-mix-2026' },
+      { title: 'Another Dimension — Progressive Psy', artist: 'DJ SAIZ', url: 'https://soundcloud.com/djsaiz/progressive-psytrance-mix' },
+      { title: 'Best of Progressive Psytrance (speleliste)', artist: 'Jilax', url: 'https://soundcloud.com/jilaxofficial/sets/bestofpsytrance' },
+    ];
+    const YT_MIXES = [
+      { title: 'Psytrance Full-On — Psychedelic Trips 2026', artist: 'Speed Sound Records', url: 'https://www.youtube.com/watch?v=eVUyzYVhU3c' },
+      { title: 'High Energy Progressive & Full-On 2026', artist: 'Psytrance Mix', url: 'https://www.youtube.com/watch?v=EHKus8WnZoc' },
+      { title: 'Psytrance Festival Mix 2026 — Massive Drops', artist: 'Festival Vibes', url: 'https://www.youtube.com/watch?v=nuKCevMh7Rk' },
+      { title: 'Melodic Full-On Journey 2026 (AI Visuals)', artist: 'Radioactive Project', url: 'https://www.youtube.com/watch?v=iRKh6NbFogY' },
+      { title: 'Melodic Psytrance Mix 2026 — Emotional Journey', artist: 'DJ Nightstar', url: 'https://www.youtube.com/watch?v=Y9hZ0OFmM40' },
+      { title: 'Psytrance Mix — Juni 2026', artist: 'Nytt sett', url: 'https://www.youtube.com/watch?v=1OgActV73I4' },
+    ];
+    const LABELS = [
+      { emoji: '🏷', name: 'Psytrance på Bandcamp', desc: 'Alle utgivelser tagget psytrance', url: 'https://bandcamp.com/tag/psytrance' },
+      { emoji: '🌀', name: 'Progressive Psytrance / Bandcamp', desc: 'Progressiv underkategori — deep & evolving', url: 'https://bandcamp.com/tag/progressive-psytrance' },
+      { emoji: '⏱', name: 'Timelapse Records', desc: 'Trance / Psy label — grunnlagt av Timelock', url: 'https://timelapserec.bandcamp.com/' },
+      { emoji: '🦏', name: 'Flying Rhino Records', desc: 'UK pionér — progressiv psytrance sidan 90-tallet', url: 'https://flyingrhino.bandcamp.com/' },
+      { emoji: '🌐', name: 'Psytrance Guide', desc: 'Oversikt: artistar, labels, subsjangere', url: 'https://psytranceguide.com/' },
+      { emoji: '📻', name: 'DMT-FM Psytrance Radio', desc: 'Gratis webradio 24/7 — full-on & progressive', url: 'https://dmt-fm.com/' },
+    ];
+    const FESTIVALS = [
+      { day: '24 jul', month: 'aug 2026', name: 'O.Z.O.R.A. Festival', loc: 'Dádpuszta, Ungarn 🇭🇺', tags: ['Psytrance', 'Downtempo', 'Arts'], url: 'https://2026.ozorafestival.eu/' },
+      { day: 'Aug', month: '2026', name: 'Free Earth Festival', loc: 'Hellas 🇬🇷 — strand & hav', tags: ['Beach Psy', 'Full-On'], url: 'https://freeearth-festival.com/' },
+      { day: 'Jul', month: '2026', name: 'VooV Experience', loc: 'Putlitz, Tyskland 🇩🇪', tags: ['Progressive', 'Full-On', 'Forest'], url: 'https://voov.de/' },
+      { day: 'Sommar', month: '2026', name: 'Psy-Fi Festival', loc: 'Nederland 🇳🇱 — innsjø', tags: ['Psy', 'Workshops', 'Art'], url: 'https://www.psy-fi.nl/' },
+      { day: 'Sommar', month: '2026', name: 'Solar Light Festival', loc: 'Italia 🇮🇹', tags: ['Psy', 'Ritual', 'Community'], url: 'https://psymedia.co.za/event_continent/europe/' },
+    ];
+
+    return `
+      <div class="disc-psy-banner">
+        <div class="disc-psy-banner-emoji">🌀</div>
+        <div>
+          <div class="disc-psy-banner-title">Psytrance Peak Tour</div>
+          <div class="disc-psy-banner-sub">Kuraterte miksesett, plateselskap og kommande festivalar frå det psykedeliske undergrunnsuniverset — SoundCloud, YouTube, Bandcamp og live events.</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">☁️</span>
+          <span class="disc-psy-section-title">SoundCloud — Miksesett</span>
+          <span class="disc-psy-section-badge">SoundCloud</span>
+        </div>
+        <div class="disc-psy-mix-grid">
+          ${SC_MIXES.map(m => `
+            <a class="disc-psy-mix-card" href="${m.url}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-mix-thumb disc-psy-mix-thumb--sc">☁</div>
+              <div class="disc-psy-mix-info">
+                <div class="disc-psy-mix-title">${escHtml(m.title)}</div>
+                <div class="disc-psy-mix-artist">${escHtml(m.artist)}</div>
+              </div>
+              <span class="disc-psy-mix-arrow">→</span>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">▶️</span>
+          <span class="disc-psy-section-title">YouTube — Fulle sett 2026</span>
+          <span class="disc-psy-section-badge">YouTube</span>
+        </div>
+        <div class="disc-psy-mix-grid">
+          ${YT_MIXES.map(m => `
+            <a class="disc-psy-mix-card" href="${m.url}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-mix-thumb disc-psy-mix-thumb--yt">▶</div>
+              <div class="disc-psy-mix-info">
+                <div class="disc-psy-mix-title">${escHtml(m.title)}</div>
+                <div class="disc-psy-mix-artist">${escHtml(m.artist)}</div>
+              </div>
+              <span class="disc-psy-mix-arrow">→</span>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🏷</span>
+          <span class="disc-psy-section-title">Bandcamp & Plateselskap</span>
+          <span class="disc-psy-section-badge">Bandcamp</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${LABELS.map(l => `
+            <a class="disc-psy-label-card" href="${l.url}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${l.emoji}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(l.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">🎪</span>
+          <span class="disc-psy-section-title">Kommande festivalar 2026</span>
+          <span class="disc-psy-section-badge">Live events</span>
+        </div>
+        <div class="disc-psy-festival-list">
+          ${FESTIVALS.map(f => `
+            <a class="disc-psy-festival-card" href="${f.url}" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-festival-date">
+                <div class="disc-psy-festival-date-day">${escHtml(f.day)}</div>
+                <div class="disc-psy-festival-date-mon">${escHtml(f.month)}</div>
+              </div>
+              <div class="disc-psy-festival-body">
+                <div class="disc-psy-festival-name">${escHtml(f.name)}</div>
+                <div class="disc-psy-festival-loc">${f.loc}</div>
+                <div class="disc-psy-festival-tags">
+                  <span class="disc-psy-festival-tag disc-psy-festival-upcoming">Kommande</span>
+                  ${f.tags.map(t => `<span class="disc-psy-festival-tag">${escHtml(t)}</span>`).join('')}
+                </div>
+              </div>
+              <span class="disc-psy-festival-arrow">→</span>
+            </a>
+          `).join('')}
+        </div>
+        <a class="disc-psy-cal-link" href="https://www.psycalendar.com/psyfestivals" target="_blank" rel="noopener noreferrer">
+          Sjå alle festivalar på PsyCalendar →
+        </a>
+      </div>
+    `;
+  }
+
   function editorialCards() {
     const cards = [
-      { emoji:'🌌', title:'Drone Zone Essentials', desc:'Atmosfærisk ambient for dype reiser',              action: () => `Discover.setGenre('drone')` },
-      { emoji:'🌀', title:'Psytrance Peak Hour',   desc:'Progressiv trance fra undergrunnen',               action: () => `Discover.setGenre('psytrance')` },
+      { emoji:'🌌', title:'Drone Zone Essentials', desc:'Artistar, plateselskap og demo-kontaktar',          action: () => `Discover.openDroneZone()`, highlight: true, droneStyle: true },
+      { emoji:'🌀', title:'Psytrance Peak Tour',   desc:'Miksesett, festivalar & plateselskap',              action: () => `Discover.switchTab('psy-tour')`, highlight: true, psyStyle: true },
       { emoji:'⚡', title:'Tekno Undergrunden',    desc:'Artister, events og demos — England & Ibiza',      action: () => `Router.go('/underground')`, highlight: true },
       { emoji:'🌿', title:'Chill Afternoon',       desc:'Downtempo & lounge for hverdagen',                 action: () => `Discover.setGenre('chill')` },
     ];
     return cards.map(c => `
-      <div class="disc-editorial-card${c.highlight ? ' disc-editorial-card--ug' : ''}" onclick="${c.action()}">
+      <div class="disc-editorial-card${c.highlight ? (c.droneStyle ? ' disc-editorial-card--drone' : c.psyStyle ? ' disc-editorial-card--psy' : ' disc-editorial-card--ug') : ''}" onclick="${c.action()}">
         <div class="disc-editorial-art">${c.emoji}</div>
         <div class="disc-editorial-title">${c.title}</div>
         <div class="disc-editorial-desc">${c.desc}</div>
-        ${c.highlight ? '<div class="disc-editorial-cta">Utforsk →</div>' : ''}
+        ${c.highlight ? `<div class="disc-editorial-cta">Utforsk →</div>` : ''}
       </div>
     `).join('');
+  }
+
+  // ── Drone Zone ────────────────────────────────────────────────────────
+  function renderDroneZone() {
+    function linkBtn(href, icon, label, cls) {
+      return `<a class="dz-link-btn dz-link-btn--${cls}" href="${escHtml(href)}" target="_blank" rel="noopener">${icon} ${escHtml(label)}</a>`;
+    }
+
+    const artistsHtml = DRONE_ARTISTS.map(a => `
+      <div class="dz-artist-card">
+        <div class="dz-artist-header">
+          <span class="dz-artist-name">${escHtml(a.name)}</span>
+          <span class="dz-artist-badge">${escHtml(a.country)}</span>
+          <span class="dz-artist-badge dz-artist-badge--label">${escHtml(a.label)}</span>
+        </div>
+        <p class="dz-artist-bio">${escHtml(a.bio)}</p>
+        <div class="dz-artist-albums">
+          ${a.albums.map(al => `<span class="dz-album-pill">${escHtml(al)}</span>`).join('')}
+        </div>
+        <div class="dz-artist-links">
+          ${a.bandcamp ? linkBtn(a.bandcamp, '🎵', 'Bandcamp', 'bc') : ''}
+          ${a.youtube  ? linkBtn(a.youtube,  '▶', 'YouTube',  'yt') : ''}
+          ${a.facebook ? linkBtn(a.facebook, 'f', 'Facebook', 'fb') : ''}
+          ${a.website  ? linkBtn(a.website,  '🌐', 'Nettstad', 'web') : ''}
+        </div>
+      </div>
+    `).join('');
+
+    const labelsHtml = DRONE_LABELS.map(l => `
+      <div class="dz-label-card">
+        <div class="dz-label-header">
+          <span class="dz-label-flag">${l.flag}</span>
+          <span class="dz-label-name">${escHtml(l.name)}</span>
+          <span class="dz-label-meta">${escHtml(l.country)} · est. ${escHtml(l.founded)}</span>
+        </div>
+        <p class="dz-label-desc">${escHtml(l.desc)}</p>
+        <p class="dz-label-artists">🎤 ${escHtml(l.artists)}</p>
+        <div class="dz-label-links">
+          ${l.website  ? linkBtn(l.website,  '🌐', 'Nettstad', 'web') : ''}
+          ${l.bandcamp ? linkBtn(l.bandcamp, '🎵', 'Bandcamp', 'bc') : ''}
+          ${l.facebook ? linkBtn(l.facebook, 'f', 'Facebook', 'fb') : ''}
+          ${l.youtube  ? linkBtn(l.youtube,  '▶', 'YouTube',  'yt') : ''}
+        </div>
+        <div class="dz-demo-box">
+          <div class="dz-demo-title">📬 Send demo</div>
+          <div class="dz-demo-contact">${escHtml(l.demoContact)}</div>
+          <div class="dz-demo-note">${escHtml(l.demoNote)}</div>
+        </div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="dz-wrap">
+        <div class="dz-hero">
+          <button class="dz-back-btn" onclick="Discover.closeDroneZone()">← Tilbake</button>
+          <div class="dz-hero-title">🌌 Drone Zone Essentials</div>
+          <div class="dz-hero-sub">Dark Ambient · Ritual Drone · Atmosfærisk</div>
+          <div class="dz-hero-tags">
+            <span class="dz-hero-tag">Cryo Chamber</span>
+            <span class="dz-hero-tag">Cyclic Law</span>
+            <span class="dz-hero-tag">Bandcamp</span>
+            <span class="dz-hero-tag">Demo-kontaktar</span>
+          </div>
+        </div>
+
+        <div class="dz-section">
+          <div class="dz-section-header">
+            <h2 class="dz-section-title">🎙 Artistar</h2>
+            <span class="dz-section-count">${DRONE_ARTISTS.length} artistar</span>
+          </div>
+          <div class="dz-artists-grid">${artistsHtml}</div>
+        </div>
+
+        <div class="dz-section">
+          <div class="dz-section-header">
+            <h2 class="dz-section-title">🏷 Plateselskap — Send Demo</h2>
+            <span class="dz-section-count">${DRONE_LABELS.length} selskap</span>
+          </div>
+          <div class="dz-labels-grid">${labelsHtml}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function openDroneZone() {
+    droneZoneOpen = true;
+    // Switch to tracks sub-tab so the content area is visible
+    if (activeSubTab !== 'tracks') switchSubTab('tracks');
+    const content = document.getElementById('disc-tracks-content');
+    if (content) content.innerHTML = renderDroneZone();
+  }
+
+  function closeDroneZone() {
+    droneZoneOpen = false;
+    setGenre('drone');
   }
 
   function startActivityScroll() {
@@ -870,10 +1219,15 @@ const Discover = (() => {
   // ── Tab / sub-tab switching ───────────────────────────────────────────
   function switchTab(tab) {
     activeTab = tab;
-    document.querySelectorAll('.disc-tab-btn').forEach(b =>
-      b.classList.toggle('active', b.textContent.includes(tab === 'music' ? 'Musikk' : 'folk')));
+    const TAB_LABELS = { music: 'Musikk', people: 'folk', 'psy-tour': 'Psytrance', 'ambient-mann': 'Ambient Mann' };
+    document.querySelectorAll('.disc-tab-btn').forEach(b => {
+      const matched = Object.entries(TAB_LABELS).find(([, label]) => b.textContent.includes(label));
+      b.classList.toggle('active', matched ? matched[0] === tab : false);
+    });
     document.getElementById('disc-music-tab')?.classList.toggle('hidden', tab !== 'music');
     document.getElementById('disc-people-tab')?.classList.toggle('hidden', tab !== 'people');
+    document.getElementById('disc-psy-tour-tab')?.classList.toggle('hidden', tab !== 'psy-tour');
+    document.getElementById('disc-ambient-mann-tab')?.classList.toggle('hidden', tab !== 'ambient-mann');
   }
 
   function switchSubTab(tab) {
@@ -902,6 +1256,7 @@ const Discover = (() => {
 
   // ── Genre / role filters ──────────────────────────────────────────────
   function setGenre(tag) {
+    droneZoneOpen = false;
     activeGenre = tag;
 
     document.querySelectorAll('.disc-genre-btn').forEach(b => {
@@ -1242,5 +1597,6 @@ const Discover = (() => {
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange,
     onCategoryChange, setDiscGenreRadio, clearGenreRadio,
     downloadTrack, closeDownloadModal, confirmDownloadPayment,
+    openDroneZone, closeDroneZone,
   };
 })();
