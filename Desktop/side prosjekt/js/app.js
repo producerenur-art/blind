@@ -379,7 +379,17 @@ const App = (() => {
         <div class="users-grid" id="users-grid">
           <div class="page-loading"><div class="spinner"></div></div>
         </div>
-      </div>`;
+      </div>
+      <footer class="site-footer">
+        <div class="site-footer-inner">
+          <div class="site-footer-logo">🌌 Sound Core</div>
+          <div class="site-footer-contact">
+            <div class="site-footer-label">Kontakt</div>
+            <a class="site-footer-email" href="mailto:producerenur@gmail.com">producerenur@gmail.com</a>
+          </div>
+          <div class="site-footer-copy">© ${new Date().getFullYear()} Sound Core</div>
+        </div>
+      </footer>`;
 
     // Web Radio genre tab controller
     window.WebRadioTabs = {
