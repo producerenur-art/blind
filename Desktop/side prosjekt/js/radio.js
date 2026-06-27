@@ -141,6 +141,17 @@ const Radio = (() => {
     },
 
     // ════════════════════════════════════════════
+    // DUB / REGGAE
+    // ════════════════════════════════════════════
+    {
+      id: 'heavyweightreggae', cat: 'Dub / Reggae',
+      name: 'Heavyweight Reggae',
+      url:  'https://ice2.somafm.com/reggae-128-mp3',
+      emoji: '🎚️', color: '#16a34a',
+      desc: 'Reggae, ska & deep dub ✓',
+    },
+
+    // ════════════════════════════════════════════
     // PSYBIENT / PSYCHILL
     // ════════════════════════════════════════════
     {
