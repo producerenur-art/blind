@@ -819,15 +819,6 @@ const Radio = (() => {
     }
   }
 
-  // Start playback uten at brukeren har valgt kanal ennå (f.eks. fra den flytende
-  // DicePlayer-knappen). Velger hovedkanalen automatisk første gang; deretter
-  // toggler den den kanalen som allerede spiller.
-  function playDefault() {
-    if (currentStation) { togglePlay(); return; }
-    const featured = STATIONS.find(s => s.featured) || STATIONS[0];
-    if (featured) playStation(featured.id);
-  }
-
   // Called by Player when a music track loads, so radio yields control
   function stopForMusicPlayer() {
     if (isPlaying) {
@@ -1388,7 +1379,7 @@ const Radio = (() => {
   }
 
   return {
-    render, playStation, playCustom, togglePlay, playDefault, stopRadio, playUrl, fetchStations,
+    render, playStation, playCustom, togglePlay, stopRadio, playUrl, fetchStations,
     setVolume, toggleMute, setVisMode, addCustomStream, removeCustom,
     playSearchResult, saveSearchResult, onSearchInput,
     toggleAiChat, sendAiMessage, onAiKeydown,
