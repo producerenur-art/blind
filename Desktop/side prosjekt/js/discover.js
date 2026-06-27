@@ -95,9 +95,9 @@ const Discover = (() => {
   let droneZoneOpen = false;
 
   // ── Nedlastings-betalingssystem ───────────────────────────────────────
-  const FREE_SONG_LIMIT = 4;   // 4 av 10 sanger er gratis per uke
-  const FREE_MIX_LIMIT  = 6;   // 6 av 10 mikser er gratis per uke
-  const SONG_PRICE_NOK  = 7;
+  // Modell: musikk under 60 min er gratis for alle innloggede brukere.
+  // Innhold på 60 min eller mer (lange mikser / DJ-sett) koster MIX_PRICE_NOK.
+  const FREE_MAX_SECONDS = 60 * 60; // grense: under 60 min = gratis, 60 min+ = betalt
   const MIX_PRICE_NOK   = 150;
   let pendingDownloadId = null;
 
@@ -369,49 +369,18 @@ const Discover = (() => {
     return Radio.stations.filter(s => cats.includes(s.cat));
   }
 
-  // ── Nedlastingskvote ─────────────────────────────────────────────────
-  function dlQuotaKey() {
-    const u = Auth.current();
-    return `sr_dl_quota_${u ? u.username : 'guest'}`;
-  }
-
-  function getDownloadQuota() {
-    try {
-      const raw    = JSON.parse(localStorage.getItem(dlQuotaKey()) || '{}');
-      const now    = Date.now();
-      const weekMs = 7 * 24 * 60 * 60 * 1000;
-      if (!raw.weekStart || now - raw.weekStart > weekMs) {
-        return { songs: 0, mixes: 0, weekStart: now };
-      }
-      return raw;
-    } catch { return { songs: 0, mixes: 0, weekStart: Date.now() }; }
-  }
-
-  function saveDownloadQuota(q) {
-    localStorage.setItem(dlQuotaKey(), JSON.stringify(q));
-  }
-
   function isArtistUerfaren(track) {
     return track.artistSubscription !== 'pro';
   }
 
   function trackNeedsPayment(track) {
-    if (!isArtistUerfaren(track)) return false;
-    const q = getDownloadQuota();
-    return track.isMix ? q.mixes >= FREE_MIX_LIMIT : q.songs >= FREE_SONG_LIMIT;
+    if ((track.duration || 0) < FREE_MAX_SECONDS) return false; // under 60 min → gratis for alle
+    if (!isArtistUerfaren(track)) return false;                 // Pro-artist → alltid gratis
+    return true;                                                // 60 min+ → betalt
   }
 
-  function dlPrice(track) {
-    return track.isMix ? MIX_PRICE_NOK : SONG_PRICE_NOK;
-  }
-
-  function nextFreeReset() {
-    const q      = getDownloadQuota();
-    const resetAt = (q.weekStart || Date.now()) + 7 * 24 * 60 * 60 * 1000;
-    const diff    = Math.max(0, resetAt - Date.now());
-    const days    = Math.floor(diff / (24 * 60 * 60 * 1000));
-    const hours   = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
-    return days > 0 ? `${days}d ${hours}t` : `${hours}t`;
+  function dlPrice() {
+    return MIX_PRICE_NOK; // betaling gjelder kun innhold på 60 min+
   }
 
   function getPaidDownloads() {
@@ -559,7 +528,7 @@ const Discover = (() => {
             <label for="disc-up-ismix" class="disc-ismix-label">
               <span class="disc-ismix-icon">${Icon('sliders')}</span>
               Dette er en miks / DJ-sett
-              <span class="disc-ismix-hint">— nedlasting koster ${MIX_PRICE_NOK} kr (sang = ${SONG_PRICE_NOK} kr)</span>
+              <span class="disc-ismix-hint">— under 60 min er gratis å laste ned; 60 min eller mer koster ${MIX_PRICE_NOK} kr</span>
             </label>
           </div>
 
@@ -2882,11 +2851,6 @@ const Discover = (() => {
     }
 
     await doDownload(id, track);
-    if (isArtistUerfaren(track)) {
-      const q = getDownloadQuota();
-      if (track.isMix) q.mixes++; else q.songs++;
-      saveDownloadQuota(q);
-    }
     refreshTrackGrid();
   }
 
@@ -2912,10 +2876,7 @@ const Discover = (() => {
 
   function showDownloadModal(track) {
     const price = dlPrice(track);
-    const type  = track.isMix ? 'miks' : 'sang';
-    const limit = track.isMix ? FREE_MIX_LIMIT : FREE_SONG_LIMIT;
-    const q     = getDownloadQuota();
-    const used  = track.isMix ? q.mixes : q.songs;
+    const mins  = Math.round((track.duration || 0) / 60);
 
     const existing = document.getElementById('dl-payment-modal');
     if (existing) existing.remove();
@@ -2929,24 +2890,21 @@ const Discover = (() => {
         <button class="dl-modal-close" onclick="Discover.closeDownloadModal()">${Icon('x')}</button>
         <div class="dl-modal-header">
           <div class="dl-modal-icon">${Icon('lock')}</div>
-          <h3 class="dl-modal-title">Last ned ${type}</h3>
+          <h3 class="dl-modal-title">Last ned langt opptak</h3>
           <div class="dl-modal-track-info">
             <strong>${escHtml(track.title)}</strong>
             <span>av ${escHtml(track.artist)}</span>
           </div>
         </div>
         <div class="dl-modal-quota-box">
-          <div class="dl-modal-quota-bar">
-            <div class="dl-modal-quota-fill" style="width:${Math.min(100, (used / limit) * 100)}%"></div>
-          </div>
           <p class="dl-modal-quota-text">
-            Du har brukt <strong>${used} av ${limit}</strong> gratis ${type}-nedlastinger denne uken.
-            Nullstilles om <strong>${nextFreeReset()}</strong>.
+            Dette opptaket er <strong>${mins} min</strong> langt. Innhold på
+            <strong>60 minutter eller mer</strong> koster ${price} kr å laste ned.
           </p>
         </div>
         <div class="dl-modal-price-row">
           <div class="dl-modal-price">${price} <span class="dl-modal-currency">kr</span></div>
-          <div class="dl-modal-price-sub">per ${type}-nedlasting</div>
+          <div class="dl-modal-price-sub">engangsbeløp</div>
         </div>
         <div class="dl-modal-actions">
           <button class="btn btn-primary dl-pay-btn" onclick="Discover.confirmDownloadPayment()">
@@ -2955,7 +2913,7 @@ const Discover = (() => {
           <button class="btn btn-ghost" onclick="Discover.closeDownloadModal()">Avbryt</button>
         </div>
         <p class="dl-modal-note">
-          Gratis kvote: ${FREE_SONG_LIMIT} sanger + ${FREE_MIX_LIMIT} mikser per uke. Pro-artister er alltid gratis.
+          All musikk under 60 minutter er gratis for alle. Pro-artister er alltid gratis.
         </p>
       </div>`;
     document.body.appendChild(modal);
