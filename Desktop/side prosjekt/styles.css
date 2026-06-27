@@ -214,6 +214,10 @@ body[data-bg-effect="chill"] #bg-prism-1 { opacity: 0.5; }
 body[data-bg-effect="cosmos"] #bg-sun,
 body[data-bg-effect="cosmos"] #bg-ufo { display: block; }
 
+/* The UFO only flies on the front page. Open any tab and it leaves the scene —
+   the starfield (and the rest of the cosmos backdrop) stays. */
+body[data-bg-effect="cosmos"]:not(.route-home) #bg-ufo { display: none; }
+
 /* ── Sun: distant glowing star, upper-right ── */
 #bg-sun {
   position: absolute;

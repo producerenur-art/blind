@@ -31,6 +31,10 @@ const Router = (() => {
   async function dispatch() {
     const myId  = ++dispatchSeq;
     const hash  = window.location.hash;
+    const path  = (hash || '').replace(/^#/, '') || '/';
+    // Mark the front page so cosmos-only flourishes (the flying UFO) can stay on
+    // the home screen but leave when you open a tab. The starfield is unaffected.
+    document.body.classList.toggle('route-home', path === '/');
     const found = parse(hash);
     if (found) {
       currentRoute = hash;
