@@ -1,0 +1,19 @@
+# Hjemmemappe = git-repo-rot. Beskytt hemmeligheter mot utilsiktet `git add -A`.
+# (Påvirker kun USPORTE filer — sporede prosjektfiler er urørt.)
+
+# Stripe / recovery-koder og andre løse hemmelighet-filer
+*backup_code*
+stripe_backup_code.txt
+*secret*.txt
+*recovery*.txt
+
+# Miljøfiler og API-nøkler
+.env
+.env.*
+sk-ant-*
+*api03*
+
+# Sensitive hjemmekataloger (skal aldri inn i git)
+.ssh/
+.gnupg/
+.aws/
