@@ -49,6 +49,12 @@ const Payment = (() => {
         });
         Object.assign(current, { subscription: 'pro' });
         App.toast('⭐ Velkommen til Pro! Privat mixes er nå aktivert.', 'success', 6000);
+
+        // Send kjøpsbekreftelse på e-post (best effort — blokkerer ikke UI)
+        if (current.email && window.Email) {
+          Email.sendPurchaseConfirmation(current.email, current.displayName || current.username)
+            .catch(err => console.error('Kjøpsbekreftelse-e-post feilet:', err));
+        }
       }
     } catch (err) {
       App.toast('Kunne ikke bekrefte betaling: ' + err.message, 'error');

@@ -86,6 +86,14 @@ const Email = (() => {
     return { success: true, devMode: true, link };
   }
 
+  async function sendPurchaseConfirmation(toEmail, username) {
+    // Kun server-API (Resend) — ingen EmailJS-mal for kjøp. Stille fallback i dev.
+    const apiRes = await callApi('purchase', toEmail, username, null);
+    if (apiRes.success) return { success: true };
+    console.info(`[DEV] Kjøpsbekreftelse ville blitt sendt til ${username} <${toEmail}>`);
+    return { success: true, devMode: true };
+  }
+
   async function sendMessageNotification(toEmail, toName, fromName, fromUsername, previewText) {
     if (!isEmailJSConfigured() || !CONFIG.EMAILJS_TEMPLATE_MESSAGE) return { skip: true };
     if (!initEmailJS()) return { error: 'EmailJS ikke tilgjengelig' };
@@ -141,5 +149,5 @@ const Email = (() => {
     }
   }
 
-  return { sendActivation, sendPasswordReset, sendFriendRequest, sendTestEmail, sendMessageNotification, isConfigured: isEmailJSConfigured };
+  return { sendActivation, sendPasswordReset, sendPurchaseConfirmation, sendFriendRequest, sendTestEmail, sendMessageNotification, isConfigured: isEmailJSConfigured };
 })();

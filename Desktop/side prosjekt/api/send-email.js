@@ -81,6 +81,34 @@ function friendRequestHtml(toName, fromName, fromUsername, inboxUrl) {
 </html>`;
 }
 
+function purchaseHtml(name, siteUrl) {
+  return `<!DOCTYPE html>
+<html lang="no">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:'Inter',Arial,sans-serif">
+  <div style="max-width:560px;margin:2rem auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(124,58,237,0.3)">
+    <div style="background:linear-gradient(135deg,#7c3aed,#2563eb);padding:2rem;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:1.75rem;font-weight:800;letter-spacing:-0.5px">Sound<span style="color:#f59e0b">Core</span></h1>
+    </div>
+    <div style="padding:2rem;color:#e2e8f0">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#f472b6);display:inline-flex;align-items:center;justify-content:center;font-size:2rem">⭐</div>
+      </div>
+      <h2 style="color:#fff;margin:0 0 1rem;font-size:1.25rem;text-align:center">Velkommen til Sound Core Pro!</h2>
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1.5rem">Hei ${escHtml(name)}! Takk for kjøpet. Pro-abonnementet ditt er nå aktivt, og du har låst opp blant annet private mixes og alle Pro-funksjoner.</p>
+      <div style="text-align:center;margin:2rem 0">
+        <a href="${siteUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;text-decoration:none;padding:0.875rem 2rem;border-radius:8px;font-weight:700;font-size:1rem">Gå til Sound Core</a>
+      </div>
+      <p style="color:#64748b;font-size:0.85rem;line-height:1.5;margin:0">Dette er en bekreftelse på kjøpet ditt. Du kan administrere abonnementet i innstillingene. Spørsmål? Bare svar på denne e-posten.</p>
+    </div>
+    <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
+      <p style="color:#475569;font-size:0.75rem;margin:0">© ${new Date().getFullYear()} Sound Core</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -133,6 +161,13 @@ module.exports = async (req, res) => {
         to: toEmail,
         subject: `${fromName} ønsker å bli venn med deg på Sound Core`,
         html: friendRequestHtml(toName, fromName, fromUsername, inbox),
+      });
+    } else if (type === 'purchase') {
+      await resend.emails.send({
+        from: fromEmail,
+        to: toEmail,
+        subject: 'Kvittering — Sound Core Pro er aktivert ⭐',
+        html: purchaseHtml(toName, `${siteUrl}/`),
       });
     } else {
       return res.status(400).json({ error: 'Ukjent e-posttype' });

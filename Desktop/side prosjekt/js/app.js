@@ -721,6 +721,8 @@ const App = (() => {
                 <a href="#/inbox" class="btn btn-ghost">${Icon('mail')} Innboks</a>
                 <a href="#/settings" class="btn btn-ghost">${Icon('settings')} Innstillinger</a>
                 <a href="#/discover" class="btn btn-ghost">${Icon('music')} Discover</a>
+                <a href="#/forgot" class="btn btn-ghost">${Icon('key')} Tilbakestill passord</a>
+                <button class="btn btn-danger" onclick="App.logout()">${Icon('log-out')} Logg ut</button>
               </div>
             </div>
           </div>
