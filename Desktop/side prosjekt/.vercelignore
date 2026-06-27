@@ -17,4 +17,3 @@ api/my-purchases.js
 api/song-upload-url.js
 api/store-products.js
 api/stripe-webhook.js
-api/upload-url.js
