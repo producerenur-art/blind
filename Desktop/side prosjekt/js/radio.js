@@ -235,6 +235,13 @@ const Radio = (() => {
       emoji: '🛋️', color: '#0ea5e9',
       desc: '1.FM — electronic chill lounge 24/7',
     },
+    {
+      id: 'n5md', cat: 'Chill Out / Downtempo',
+      name: 'n5MD Radio',
+      url:  'https://ice2.somafm.com/n5md-128-mp3',
+      emoji: '🌌', color: '#6366f1',
+      desc: 'Emotional downtempo & ambient electronica ✓',
+    },
 
 
     // ════════════════════════════════════════════

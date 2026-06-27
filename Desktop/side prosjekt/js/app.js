@@ -438,7 +438,7 @@ const App = (() => {
     window.HomeRadio = (() => {
       const GENRE_IDS = {
         psytrance:   ['suburbsofgoa'],
-        downtempo:   ['groovesalad', 'lush', 'beatblender', 'gsclassic', '1fm-chillout'],
+        downtempo:   ['groovesalad', 'beatblender', 'fluid', 'n5md'],
         progressive: ['trancearound', 'atr', 'rr-progressive'],
         ambient:     ['spacestation', 'deepspaceone', 'missioncontrol', 'dronezone'],
         goa:         ['suburbsofgoa', 'dmtfm', 'psyndora', 'babaganousha', 'babaganousha-labs'],
