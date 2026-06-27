@@ -28,8 +28,8 @@ const Player = (() => {
     audio.addEventListener('timeupdate',     updateProgress);
     audio.addEventListener('loadedmetadata', updateDuration);
     audio.addEventListener('ended',          onEnded);
-    audio.addEventListener('play',  () => { isPlaying = true;  $('ctrl-play').textContent = '⏸'; });
-    audio.addEventListener('pause', () => { isPlaying = false; $('ctrl-play').textContent = '▶'; });
+    audio.addEventListener('play',  () => { isPlaying = true;  $('ctrl-play').innerHTML = Icon('pause'); $('player-bar').classList.add('playing'); });
+    audio.addEventListener('pause', () => { isPlaying = false; $('ctrl-play').innerHTML = Icon('play');  $('player-bar').classList.remove('playing'); });
 
     audio.volume = 0.8;
 
@@ -80,7 +80,8 @@ const Player = (() => {
       artEl.querySelector('.artwork-note').style.display = 'none';
     } else {
       artEl.style.backgroundImage = '';
-      artEl.querySelector('.artwork-note').style.display = '';
+      const note = artEl.querySelector('.artwork-note');
+      note.style.display = ''; note.innerHTML = Icon('music');
     }
 
     $('player-bar').classList.remove('hidden');
@@ -132,8 +133,7 @@ const Player = (() => {
   function cycleRepeat() {
     const modes = ['none', 'all', 'one'];
     repeat = modes[(modes.indexOf(repeat) + 1) % 3];
-    const labels = { none: '↻', all: '↻', one: '🔂' };
-    $('ctrl-repeat').textContent = labels[repeat];
+    $('ctrl-repeat').innerHTML = Icon(repeat === 'one' ? 'rotate-cw' : 'repeat');
     $('ctrl-repeat').classList.toggle('active', repeat !== 'none');
   }
 
@@ -147,7 +147,7 @@ const Player = (() => {
     if (!queue.length) { list.innerHTML = '<div class="empty-state" style="padding:1rem"><p>Ingen sanger i køen</p></div>'; return; }
     list.innerHTML = queue.map((id, i) => `
       <div class="queue-item ${i === currentIndex ? 'active' : ''}" onclick="Player.jumpTo(${i})">
-        <span class="queue-num">${i === currentIndex ? '▶' : i + 1}</span>
+        <span class="queue-num">${i === currentIndex ? Icon('play', { cls: 'icon-xs' }) : i + 1}</span>
         <span class="queue-label" id="ql-${id}">Laster…</span>
       </div>
     `).join('');
@@ -190,7 +190,7 @@ const Player = (() => {
     if (artEl) {
       artEl.style.backgroundImage = '';
       const note = artEl.querySelector('.artwork-note');
-      if (note) { note.style.display = ''; note.textContent = '🎛️'; }
+      if (note) { note.style.display = ''; note.innerHTML = Icon('sliders'); }
     }
     $('player-bar').classList.remove('hidden');
     audio.play().catch(() => {});

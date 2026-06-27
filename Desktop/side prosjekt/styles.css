@@ -42,13 +42,6 @@
   filter: brightness(0.55) saturate(2.2) hue-rotate(0deg);
 }
 
-/* Hue full cycle */
-@keyframes bgHue {
-  0%   { filter: brightness(0.55) saturate(2.2) hue-rotate(0deg); }
-  50%  { filter: brightness(0.65) saturate(2.8) hue-rotate(180deg); }
-  100% { filter: brightness(0.55) saturate(2.2) hue-rotate(360deg); }
-}
-
 /* Slow organic breathing / drift */
 @keyframes bgBreathe {
   0%   { transform: scale(1.0) translate(0%,0%)    rotate(0deg); }
@@ -65,10 +58,6 @@ body[data-bg-effect="acid"] #bg-img {
   animation: bgBreatheAcid 2.5s ease-in-out infinite;
   filter: brightness(0.65) saturate(4) hue-rotate(0deg);
 }
-@keyframes bgHueAcid {
-  0%   { filter: brightness(0.65) saturate(4) hue-rotate(0deg); }
-  100% { filter: brightness(0.65) saturate(4) hue-rotate(360deg); }
-}
 @keyframes bgBreatheAcid {
   0%,100% { transform: scale(1.05) translate(0,0) rotate(0deg); }
   25%     { transform: scale(1.12) translate(-3%,2%) rotate(2deg); }
@@ -80,10 +69,6 @@ body[data-bg-effect="space"] #bg-img {
   animation: bgBreatheSpace 40s ease-in-out infinite;
   filter: brightness(0.4) saturate(1.6) hue-rotate(200deg);
 }
-@keyframes bgHueSpace {
-  0%   { filter: brightness(0.4) saturate(1.6) hue-rotate(200deg); }
-  100% { filter: brightness(0.4) saturate(1.6) hue-rotate(560deg); }
-}
 @keyframes bgBreatheSpace {
   0%,100% { transform: scale(1.02) translate(0,0) rotate(0deg); }
   50%     { transform: scale(1.06) translate(-1%,1%) rotate(0.5deg); }
@@ -93,10 +78,6 @@ body[data-bg-effect="space"] #bg-img {
 body[data-bg-effect="chill"] #bg-img {
   animation: bgBreatheChill 32s ease-in-out infinite;
   filter: brightness(0.6) saturate(1.8) hue-rotate(0deg);
-}
-@keyframes bgHueChill {
-  0%   { filter: brightness(0.6) saturate(1.8) hue-rotate(0deg); }
-  100% { filter: brightness(0.6) saturate(1.8) hue-rotate(360deg); }
 }
 @keyframes bgBreatheChill {
   0%,100% { transform: scale(1.03) translate(0,0); }
@@ -368,6 +349,27 @@ body[data-bg-effect="chill"] #bg-prism-1 { opacity: 0.5; }
   --nav-h:     60px;
   --trans:     0.2s ease;
 }
+
+/* ════════════════════════════════════════════
+   ICON SYSTEM  (thin line icons — replaces emoji UI)
+   ════════════════════════════════════════════ */
+.icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.14em;
+  flex: 0 0 auto;
+  stroke-width: 1.6;
+  overflow: visible;
+}
+/* slightly larger optical size in dense text so 1em glyphs don't look thin */
+.section-title .icon,
+.btn .icon,
+.np-card-emoji .icon { font-size: 1.05em; }
+.icon-xs { width: 0.8em; height: 0.8em; }
+.icon-lg { width: 1.4em; height: 1.4em; }
+/* elements that are icon-only buttons keep the icon centred */
+[data-icon] { display: inline-flex; align-items: center; justify-content: center; }
 
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1837,11 +1839,9 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
 .hover-lift { transition: transform var(--trans), box-shadow var(--trans); }
 .hover-lift:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 
-/* Profile custom font apply */
+/* Profile custom font apply (legacy values fall back gracefully to base font) */
 [data-profile-font="Space Grotesk"] .profile-display-name { font-family: 'Space Grotesk', sans-serif; }
-[data-profile-font="Playfair Display"] .profile-display-name { font-family: 'Playfair Display', serif; }
-[data-profile-font="Rajdhani"] .profile-display-name { font-family: 'Rajdhani', sans-serif; }
-[data-profile-font="Nunito"] .profile-display-name { font-family: 'Nunito', sans-serif; }
+[data-profile-font="Inter"] .profile-display-name { font-family: 'Inter', sans-serif; }
 
 /* ════════════════════════════════════════════
    RESPONSIVE
@@ -2904,21 +2904,16 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
    ════════════════════════════════════════════ */
 /* Override the static border-bottom with an animated rainbow line */
 #main-nav { border-bottom: none !important; }
+/* Subtle static brand hairline — replaced the animated rainbow sweep for a
+   calmer, less "generated" feel while keeping a hint of the accent palette. */
 #main-nav::after {
   content: '';
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  height: 2px;
+  height: 1px;
   background: linear-gradient(90deg,
-    #7c3aed, #2563eb, #06b6d4, #22c55e,
-    #f59e0b, #ec4899, #7c3aed);
-  background-size: 200% 100%;
-  animation: navRainbow 5s linear infinite;
+    transparent, rgba(124,58,237,0.45), rgba(37,99,235,0.45), transparent);
   pointer-events: none;
-}
-@keyframes navRainbow {
-  0%   { background-position: 0% 0%; }
-  100% { background-position: 200% 0%; }
 }
 
 /* Radio nav link — purple glow */

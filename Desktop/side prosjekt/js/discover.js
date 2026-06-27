@@ -440,7 +440,7 @@ const Discover = (() => {
       ${tabs.map(t => `
         <button class="disc-sub-tab ${activeSubTab === t.id ? 'active' : ''}"
           onclick="Discover.switchSubTab('${t.id}')">
-          ${t.icon} ${t.label}
+          ${iconForEmoji(t.icon)} ${t.label}
         </button>`).join('')}
     </div>`;
   }
@@ -449,25 +449,25 @@ const Discover = (() => {
     const user = Auth.current();
     if (!user) return `
       <div class="disc-empty">
-        <div style="font-size:3rem;margin-bottom:0.75rem">🔐</div>
+        <div style="font-size:3rem;margin-bottom:0.75rem">${Icon('lock')}</div>
         <p>Du må <a href="#/login" style="color:var(--accent)">logge inn</a> for å laste opp musikk.</p>
       </div>`;
 
     const genreOptions = GENRES.filter(g => g.tag !== 'all').map(g =>
-      `<option value="${g.tag}" ${activeGenre !== 'all' && activeGenre === g.tag ? 'selected' : ''}>${g.emoji} ${g.label}</option>`
+      `<option value="${g.tag}" ${activeGenre !== 'all' && activeGenre === g.tag ? 'selected' : ''}>${iconForEmoji(g.emoji)} ${g.label}</option>`
     ).join('');
 
     return `
       <div class="disc-upload-panel">
         <div class="disc-upload-header">
-          <div style="font-size:2.5rem;margin-bottom:0.5rem">🎵</div>
+          <div style="font-size:2.5rem;margin-bottom:0.5rem">${Icon('music')}</div>
           <h3 style="margin:0 0 0.25rem;font-size:1.15rem;font-weight:700">Last opp musikk</h3>
           <p style="color:var(--text2);font-size:0.85rem;margin:0">Del musikken din med miljøet</p>
         </div>
         <div class="disc-upload-form" id="disc-upload-form">
           <div class="disc-upload-dropzone" id="disc-upload-dropzone"
                onclick="document.getElementById('disc-up-file').click()">
-            <div class="disc-upload-dropzone-icon" id="disc-up-drop-icon">🎵</div>
+            <div class="disc-upload-dropzone-icon" id="disc-up-drop-icon">${Icon('music')}</div>
             <div class="disc-upload-dropzone-text">Klikk for å velge lydfil</div>
             <div class="disc-upload-dropzone-sub">MP3 · WAV · FLAC · AAC · OGG · AIFF · M4A · WMA · OPUS · og alle andre lydformater</div>
             <span id="disc-up-filename" class="disc-upload-filename"></span>
@@ -498,7 +498,7 @@ const Discover = (() => {
             <div class="form-group">
               <label class="form-label">Hoved kategori <span style="color:var(--text3);font-weight:400;font-size:0.8rem">(for plateselskap-kontakt)</span></label>
               <select class="form-input" id="disc-up-category" onchange="Discover.onCategoryChange(this)">
-                ${MAIN_CATEGORIES.map(c => `<option value="${c.tag}">${c.emoji} ${c.label}</option>`).join('')}
+                ${MAIN_CATEGORIES.map(c => `<option value="${c.tag}">${iconForEmoji(c.emoji)} ${c.label}</option>`).join('')}
               </select>
               <div id="disc-up-cat-hint" style="font-size:0.78rem;color:var(--text2);margin-top:0.35rem;line-height:1.4">
                 Du kan alltid velge kategori seinere fra profilen din
@@ -509,7 +509,7 @@ const Discover = (() => {
           <div class="disc-upload-ismix-row">
             <input type="checkbox" id="disc-up-ismix" class="disc-ismix-check">
             <label for="disc-up-ismix" class="disc-ismix-label">
-              <span class="disc-ismix-icon">🎛️</span>
+              <span class="disc-ismix-icon">${Icon('sliders')}</span>
               Dette er en miks / DJ-sett
               <span class="disc-ismix-hint">— nedlasting koster ${MIX_PRICE_NOK} kr (sang = ${SONG_PRICE_NOK} kr)</span>
             </label>
@@ -517,7 +517,7 @@ const Discover = (() => {
 
           <button class="btn btn-primary disc-upload-submit" id="disc-up-btn"
             onclick="Discover.uploadDiscTrack()">
-            🔼 Last opp
+            ${Icon('chevron-up')} Last opp
           </button>
         </div>
       </div>`;
@@ -533,23 +533,23 @@ const Discover = (() => {
       <div class="disc-radio-fav-wrap">
         ${saved ? `
           <div class="disc-radio-fav-current">
-            <div class="disc-radio-fav-label">⭐ Din favorittkanal for ${escHtml(genreLabel)}</div>
+            <div class="disc-radio-fav-label">${Icon('star')} Din favorittkanal for ${escHtml(genreLabel)}</div>
             <div class="disc-radio-fav-card" style="--fav-color:${saved.color}">
-              <div class="disc-radio-fav-emoji">${saved.emoji}</div>
+              <div class="disc-radio-fav-emoji">${iconForEmoji(saved.emoji)}</div>
               <div class="disc-radio-fav-info">
                 <div class="disc-radio-fav-name">${escHtml(saved.name)}</div>
                 <div class="disc-radio-fav-desc">${escHtml(saved.desc)}</div>
               </div>
               <div class="disc-radio-fav-actions">
                 <button class="btn btn-primary btn-sm"
-                  onclick="Radio.playStation('${saved.id}')">▶ Spill</button>
+                  onclick="Radio.playStation('${saved.id}')">${Icon('play')} Spill</button>
                 <button class="btn btn-ghost btn-sm"
-                  onclick="Discover.clearGenreRadio('${activeGenre}')">✕</button>
+                  onclick="Discover.clearGenreRadio('${activeGenre}')">${Icon('x')}</button>
               </div>
             </div>
           </div>` : `
           <div class="disc-radio-fav-empty">
-            <div style="font-size:2rem;margin-bottom:0.4rem">📻</div>
+            <div style="font-size:2rem;margin-bottom:0.4rem">${Icon('radio')}</div>
             <p style="color:var(--text2);font-size:0.85rem;margin:0">
               Ingen favorittkanal valgt for <strong>${escHtml(genreLabel)}</strong> ennå.
             </p>
@@ -564,14 +564,14 @@ const Discover = (() => {
           ${stations.map(s => `
             <div class="disc-radio-pick-item ${savedId === s.id ? 'active' : ''}"
                  style="--pick-color:${s.color}">
-              <div class="disc-radio-pick-emoji">${s.emoji}</div>
+              <div class="disc-radio-pick-emoji">${iconForEmoji(s.emoji)}</div>
               <div class="disc-radio-pick-info">
                 <div class="disc-radio-pick-name">${escHtml(s.name)}</div>
                 <div class="disc-radio-pick-desc">${escHtml(s.desc)}</div>
               </div>
               <div class="disc-radio-pick-acts">
                 <button class="disc-radio-play-btn" title="Spill av"
-                  onclick="Radio.playStation('${s.id}');event.stopPropagation()">▶</button>
+                  onclick="Radio.playStation('${s.id}');event.stopPropagation()">${Icon('play')}</button>
                 <button class="disc-radio-star-btn ${savedId === s.id ? 'set' : ''}"
                   title="${savedId === s.id ? 'Din favoritt' : 'Sett som favoritt'}"
                   onclick="Discover.setDiscGenreRadio('${activeGenre}','${s.id}');event.stopPropagation()">
@@ -588,37 +588,37 @@ const Discover = (() => {
     return `
       <div class="disc-tab-bar">
         <button class="disc-tab-btn ${activeTab === 'music' ? 'active' : ''}"
-          onclick="Discover.switchTab('music')">🎵 Musikk</button>
+          onclick="Discover.switchTab('music')">${Icon('music')} Musikk</button>
         <button class="disc-tab-btn ${activeTab === 'people' ? 'active' : ''}"
-          onclick="Discover.switchTab('people')">👥 Finn folk</button>
+          onclick="Discover.switchTab('people')">${Icon('users')} Finn folk</button>
         <button class="disc-tab-btn ${activeTab === 'psy-tour' ? 'active' : ''}"
-          onclick="Discover.switchTab('psy-tour')">🌀 Psytrance Peak Tour</button>
+          onclick="Discover.switchTab('psy-tour')">${Icon('wind')} Psytrance Peak Tour</button>
         <button class="disc-tab-btn ${activeTab === 'ambient-mann' ? 'active' : ''}"
-          onclick="Discover.switchTab('ambient-mann')">🌊 Ambient Mann</button>
+          onclick="Discover.switchTab('ambient-mann')">${Icon('waves')} Ambient Mann</button>
         <button class="disc-tab-btn ${activeTab === 'psybient' ? 'active' : ''}"
-          onclick="Discover.switchTab('psybient')">🌿 Psybient Events</button>
+          onclick="Discover.switchTab('psybient')">${Icon('leaf')} Psybient Events</button>
         <button class="disc-tab-btn ${activeTab === 'altar-records' ? 'active' : ''}"
-          onclick="Discover.switchTab('altar-records')">🕍 Altar Records</button>
+          onclick="Discover.switchTab('altar-records')">${Icon('home')} Altar Records</button>
         <button class="disc-tab-btn ${activeTab === 'hadra' ? 'active' : ''}"
-          onclick="Discover.switchTab('hadra')">🎪 Hadra Festival</button>
+          onclick="Discover.switchTab('hadra')">${Icon('star')} Hadra Festival</button>
         <button class="disc-tab-btn ${activeTab === 'dacru' ? 'active' : ''}"
-          onclick="Discover.switchTab('dacru')">🌀 DaCru Records</button>
+          onclick="Discover.switchTab('dacru')">${Icon('wind')} DaCru Records</button>
         <button class="disc-tab-btn ${activeTab === 'tip-raja' ? 'active' : ''}"
-          onclick="Discover.switchTab('tip-raja')">🌀 Raja Ram / T.I.P.</button>
+          onclick="Discover.switchTab('tip-raja')">${Icon('wind')} Raja Ram / T.I.P.</button>
         <button class="disc-tab-btn ${activeTab === 'astral' ? 'active' : ''}"
-          onclick="Discover.switchTab('astral')">⭐ Astral Projection</button>
+          onclick="Discover.switchTab('astral')">${Icon('star')} Astral Projection</button>
         <button class="disc-tab-btn ${activeTab === 'shpongle' ? 'active' : ''}"
-          onclick="Discover.switchTab('shpongle')">🔮 Shpongle</button>
+          onclick="Discover.switchTab('shpongle')">${Icon('sparkles')} Shpongle</button>
         <button class="disc-tab-btn ${activeTab === 'younger-brother' ? 'active' : ''}"
-          onclick="Discover.switchTab('younger-brother')">🧬 Younger Brother</button>
+          onclick="Discover.switchTab('younger-brother')">${Icon('atom')} Younger Brother</button>
         <button class="disc-tab-btn ${activeTab === 'goa-gil' ? 'active' : ''}"
-          onclick="Discover.switchTab('goa-gil')">🕊 Goa Gil — R.I.P.</button>
+          onclick="Discover.switchTab('goa-gil')">${Icon('feather')} Goa Gil — R.I.P.</button>
         <button class="disc-tab-btn ${activeTab === 'shunyata' ? 'active' : ''}"
-          onclick="Discover.switchTab('shunyata')">🌌 Shunyata Records</button>
+          onclick="Discover.switchTab('shunyata')">${Icon('sparkles')} Shunyata Records</button>
         <button class="disc-tab-btn ${activeTab === 'kukan-dub' ? 'active' : ''}"
-          onclick="Discover.switchTab('kukan-dub')">🌫 Kukan Dub Lagan</button>
+          onclick="Discover.switchTab('kukan-dub')">${Icon('cloud')} Kukan Dub Lagan</button>
         <button class="disc-tab-btn ${activeTab === 'cosmic-leaf' ? 'active' : ''}"
-          onclick="Discover.switchTab('cosmic-leaf')">🌿 Cosmic Leaf</button>
+          onclick="Discover.switchTab('cosmic-leaf')">${Icon('leaf')} Cosmic Leaf</button>
       </div>`;
   }
 
@@ -638,7 +638,7 @@ const Discover = (() => {
       const isEmpty = count === 0 && g.tag !== 'all' && g.tag !== 'chill';
       return `
         <button class="disc-genre-btn ${activeGenre === g.tag ? 'active' : ''} ${isEmpty ? 'disc-genre-btn--empty' : ''}"
-          onclick="Discover.setGenre('${g.tag}')">${g.emoji} ${g.label}${count > 0 ? `<span class="disc-genre-count">${count}</span>` : ''}</button>
+          onclick="Discover.setGenre('${g.tag}')">${iconForEmoji(g.emoji)} ${g.label}${count > 0 ? `<span class="disc-genre-count">${count}</span>` : ''}</button>
       `;
     }).join('');
   }
@@ -651,25 +651,25 @@ const Discover = (() => {
     if (!stations.length) return '';
     const genreLabel = GENRES.find(g => g.tag === activeGenre)?.label || 'Alle sjangere';
     return `
-      <div class="disc-sidebar-title">📻 Radio — ${escHtml(genreLabel)}</div>
+      <div class="disc-sidebar-title">${Icon('radio')} Radio — ${escHtml(genreLabel)}</div>
       ${stations.map(s => `
         <div class="disc-radio-widget-item" onclick="Radio.playStation('${s.id}')">
-          <div class="disc-radio-widget-emoji">${s.emoji}</div>
+          <div class="disc-radio-widget-emoji">${iconForEmoji(s.emoji)}</div>
           <div class="disc-radio-widget-info">
             <div class="disc-radio-widget-name">${escHtml(s.name)}</div>
             <div class="disc-radio-widget-desc">${escHtml(s.desc)}</div>
           </div>
-          <button class="disc-radio-widget-play" title="Spill" onclick="Radio.playStation('${s.id}');event.stopPropagation()">▶</button>
+          <button class="disc-radio-widget-play" title="Spill" onclick="Radio.playStation('${s.id}');event.stopPropagation()">${Icon('play')}</button>
         </div>
       `).join('')}
-      <a class="disc-radio-more-link" onclick="Router.go('/radio');event.preventDefault()">Se alle kanaler →</a>
+      <a class="disc-radio-more-link" onclick="Router.go('/radio');event.preventDefault()">Se alle kanaler ${Icon('arrow-right')}</a>
     `;
   }
 
   function renderRoleTags() {
     return ROLES.map(r => `
       <button class="disc-genre-btn ${activeRole === r.tag ? 'active' : ''}"
-        onclick="Discover.setRole('${r.tag}')">${r.emoji} ${r.label}</button>
+        onclick="Discover.setRole('${r.tag}')">${iconForEmoji(r.emoji)} ${r.label}</button>
     `).join('');
   }
 
@@ -677,7 +677,7 @@ const Discover = (() => {
   function renderTrackGrid(tracks) {
     if (!tracks.length) {
       return `<div class="disc-empty">
-        <div style="font-size:3rem;margin-bottom:0.75rem">🎵</div>
+        <div style="font-size:3rem;margin-bottom:0.75rem">${Icon('music')}</div>
         <p>Ingen spor funnet i denne sjangeren ennå.<br>
         Gå til <strong>Last opp</strong>-fanen for å legge ut musikk.</p>
       </div>`;
@@ -688,14 +688,14 @@ const Discover = (() => {
       const needsPay  = !isPaid && trackNeedsPayment(t);
       const priceBadge = uerfaren && !isPaid
         ? `<span class="disc-price-badge ${needsPay ? 'disc-price-badge--locked' : 'disc-price-badge--free'}">
-             ${needsPay ? `🔒 ${dlPrice(t)} kr` : `✓ Gratis`}
+             ${needsPay ? `${Icon('lock')} ${dlPrice(t)} kr` : `${Icon('check')} Gratis`}
            </span>`
-        : `<span class="disc-price-badge disc-price-badge--pro">⭐ Pro</span>`;
+        : `<span class="disc-price-badge disc-price-badge--pro">${Icon('star')} Pro</span>`;
       return `
         <div class="disc-track-card" onclick="Discover.playTrack('${escHtml(t.id)}')">
           <div class="disc-track-art" style="${t.coverUrl ? `background-image:url(${t.coverUrl});background-size:cover;background-position:center` : 'background:linear-gradient(135deg,#7c3aed,#2563eb)'}">
             <button class="disc-play-btn"
-              onclick="Discover.playTrack('${escHtml(t.id)}');event.stopPropagation()">▶</button>
+              onclick="Discover.playTrack('${escHtml(t.id)}');event.stopPropagation()">${Icon('play')}</button>
             ${t.duration ? `<span class="disc-track-dur">${fmtDuration(t.duration)}</span>` : ''}
             ${t.isMix ? '<span class="disc-mix-badge">MIKS</span>' : ''}
           </div>
@@ -710,9 +710,9 @@ const Discover = (() => {
               </div>
               <div style="display:flex;gap:0.25rem;align-items:center">
                 <button class="disc-download-btn" title="Last ned"
-                  onclick="Discover.downloadTrack('${escHtml(t.id)}');event.stopPropagation()">⬇</button>
+                  onclick="Discover.downloadTrack('${escHtml(t.id)}');event.stopPropagation()">${Icon('download')}</button>
                 <button class="disc-wishlist-btn" title="Ønskeliste"
-                  onclick="Discover.wishlist('${escHtml(t.id)}');event.stopPropagation()">♡</button>
+                  onclick="Discover.wishlist('${escHtml(t.id)}');event.stopPropagation()">${Icon('heart')}</button>
               </div>
             </div>
           </div>
@@ -723,7 +723,7 @@ const Discover = (() => {
   function renderPeopleGrid(users) {
     if (!users.length) {
       return `<div class="disc-empty">
-        <div style="font-size:3rem;margin-bottom:0.75rem">👥</div>
+        <div style="font-size:3rem;margin-bottom:0.75rem">${Icon('users')}</div>
         <p>Ingen brukere i denne kategorien ennå.</p>
       </div>`;
     }
@@ -785,7 +785,7 @@ const Discover = (() => {
         <div class="disc-hero">
           <div class="disc-hero-glow"></div>
           <div class="disc-hero-content">
-            <div class="disc-hero-badge">🎵 Oppdagelse</div>
+            <div class="disc-hero-badge">${Icon('music')} Oppdagelse</div>
             <h1 class="disc-hero-title">Discover</h1>
             <p class="disc-hero-sub">Utforsk musikk og koble med DJer, produsenter og lyttere fra hele miljøet.</p>
             <div class="disc-stats-row">
@@ -857,19 +857,19 @@ const Discover = (() => {
               </div>
 
               <div class="disc-sidebar-card">
-                <div class="disc-sidebar-title">🏷 Sjangere</div>
+                <div class="disc-sidebar-title">${Icon('tag')} Sjangere</div>
                 <div class="disc-tag-cloud">
                   ${GENRES.filter(g => g.tag !== 'all').map(g => {
                     const counts = getGenreCounts();
                     const count = counts[g.tag] || 0;
                     return `<button class="disc-tag-pill ${activeGenre === g.tag ? 'active' : ''} ${count === 0 ? 'disc-genre-btn--empty' : ''}"
-                      onclick="Discover.setGenre('${g.tag}')">${g.emoji} ${g.label}${count > 0 ? `<span class="disc-genre-count">${count}</span>` : ''}</button>`;
+                      onclick="Discover.setGenre('${g.tag}')">${iconForEmoji(g.emoji)} ${g.label}${count > 0 ? `<span class="disc-genre-count">${count}</span>` : ''}</button>`;
                   }).join('')}
                 </div>
               </div>
 
               <div class="disc-sidebar-card">
-                <div class="disc-sidebar-title">🔗 Nyttige lenker</div>
+                <div class="disc-sidebar-title">${Icon('link')} Nyttige lenker</div>
                 <div class="disc-useful-links">
                   <a class="disc-useful-link" href="https://feedfreq.com/" target="_blank" rel="noopener noreferrer">feedfreq.com</a>
                   <a class="disc-useful-link" href="https://bigfreq.com/" target="_blank" rel="noopener noreferrer">bigfreq.com</a>
@@ -988,7 +988,7 @@ const Discover = (() => {
     ];
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0f2027,#203a43,#2c5364)">
-        <div class="disc-psy-banner-emoji">🌊</div>
+        <div class="disc-psy-banner-emoji">${Icon('waves')}</div>
         <div>
           <div class="disc-psy-banner-title">Ambient Mann</div>
           <div class="disc-psy-banner-sub">Psychill · Downtempo · Experimental — atmosfærisk elektronika frå undergrunnen</div>
@@ -997,14 +997,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎵</span>
+          <span class="disc-psy-section-icon">${Icon('music')}</span>
           <span class="disc-psy-section-title">Artisten</span>
           <span class="disc-psy-section-badge">radioq37.com</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <a class="disc-psy-label-card" href="https://radioq37.com/artist/ambient-mann/" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">🌊</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('waves')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Ambient Mann</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -1012,36 +1012,36 @@ const Discover = (() => {
                 downtempo og eksperimentell elektronika. Utforsk heile artisten på radioq37.com.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                ${TAGS.map(t => `<span class="disc-psy-section-badge">${t.emoji} ${t.label}</span>`).join('')}
+                ${TAGS.map(t => `<span class="disc-psy-section-badge">${iconForEmoji(t.emoji)} ${t.label}</span>`).join('')}
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🏷</span>
+          <span class="disc-psy-section-icon">${Icon('tag')}</span>
           <span class="disc-psy-section-title">Sjangere</span>
         </div>
         <div class="disc-psy-label-grid">
           <a class="disc-psy-label-card" href="https://bandcamp.com/tag/psychill" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">🧠</div>
+            <div class="disc-psy-label-icon">${Icon('lightbulb')}</div>
             <div>
               <div class="disc-psy-label-name">Psychill / Bandcamp</div>
               <div class="disc-psy-label-desc">Alle utgivingar tagget psychill</div>
             </div>
           </a>
           <a class="disc-psy-label-card" href="https://bandcamp.com/tag/downtempo" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">🌊</div>
+            <div class="disc-psy-label-icon">${Icon('waves')}</div>
             <div>
               <div class="disc-psy-label-name">Downtempo / Bandcamp</div>
               <div class="disc-psy-label-desc">Langsom, hypnotisk elektronika</div>
             </div>
           </a>
           <a class="disc-psy-label-card" href="https://bandcamp.com/tag/experimental" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">🧪</div>
+            <div class="disc-psy-label-icon">${Icon('flask')}</div>
             <div>
               <div class="disc-psy-label-name">Experimental / Bandcamp</div>
               <div class="disc-psy-label-desc">Grensesprengande eksperimentell elektronika</div>
@@ -1128,7 +1128,7 @@ const Discover = (() => {
 
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0a1628,#1a3a2a,#0d2b1e)">
-        <div class="disc-psy-banner-emoji">🌿</div>
+        <div class="disc-psy-banner-emoji">${Icon('leaf')}</div>
         <div>
           <div class="disc-psy-banner-title">Psybient.org Events</div>
           <div class="disc-psy-banner-sub">Festivalar og samlingar frå psybient, psytrance og transformasjonsscena — kuratert av <a href="https://www.psybient.org/" target="_blank" rel="noopener noreferrer" style="color:inherit;opacity:0.8">psybient.org</a></div>
@@ -1137,7 +1137,7 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎪</span>
+          <span class="disc-psy-section-icon">${Icon('star')}</span>
           <span class="disc-psy-section-title">Kommande festivalar 2025–2026</span>
           <span class="disc-psy-section-badge">psybient.org</span>
         </div>
@@ -1156,25 +1156,25 @@ const Discover = (() => {
                   ${f.tags.map(t => `<span class="disc-psy-festival-tag">${escHtml(t)}</span>`).join('')}
                 </div>
               </div>
-              <span class="disc-psy-festival-arrow">→</span>
+              <span class="disc-psy-festival-arrow">${Icon('arrow-right')}</span>
             </a>
           `).join('')}
         </div>
         <a class="disc-psy-cal-link" href="https://www.psybient.org/love/trance-festivals-list-calendar/" target="_blank" rel="noopener noreferrer">
-          Sjå full festivalkalender på psybient.org →
+          Sjå full festivalkalender på psybient.org ${Icon('arrow-right')}
         </a>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Ressursar frå psybient.org</span>
           <span class="disc-psy-section-badge">Kalender & meir</span>
         </div>
         <div class="disc-psy-label-grid">
           ${RESOURCES.map(r => `
             <a class="disc-psy-label-card" href="${escHtml(r.url)}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${r.emoji}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(r.emoji)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(r.name)}</div>
                 <div class="disc-psy-label-desc">${escHtml(r.desc)}</div>
@@ -1238,7 +1238,7 @@ const Discover = (() => {
 
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0d1f17,#1a3a2a,#102518)">
-        <div class="disc-psy-banner-emoji">🕍</div>
+        <div class="disc-psy-banner-emoji">${Icon('home')}</div>
         <div>
           <div class="disc-psy-banner-title">Altar Records</div>
           <div class="disc-psy-banner-sub">Psychill · Downtempo · Ambient — dei reinaste frekvensane av Zen, Trance og Spirit</div>
@@ -1247,14 +1247,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🏷</span>
+          <span class="disc-psy-section-icon">${Icon('tag')}</span>
           <span class="disc-psy-section-title">Om labelet</span>
           <span class="disc-psy-section-badge">altar-records.com</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <a class="disc-psy-label-card" href="https://www.altar-records.com/" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">🕍</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('home')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Altar Records</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -1264,28 +1264,28 @@ const Discover = (() => {
                 ankerpunkt i den globale psychill- og downtempo-undergrunnen.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">🌿 Psychill</span>
-                <span class="disc-psy-section-badge">🌊 Downtempo</span>
-                <span class="disc-psy-section-badge">🌌 Ambient</span>
-                <span class="disc-psy-section-badge">🧘 Meditative</span>
-                <span class="disc-psy-section-badge">🌀 Goatrance</span>
+                <span class="disc-psy-section-badge">${Icon('leaf')} Psychill</span>
+                <span class="disc-psy-section-badge">${Icon('waves')} Downtempo</span>
+                <span class="disc-psy-section-badge">${Icon('sparkles')} Ambient</span>
+                <span class="disc-psy-section-badge">${Icon('user')} Meditative</span>
+                <span class="disc-psy-section-badge">${Icon('wind')} Goatrance</span>
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎙</span>
+          <span class="disc-psy-section-icon">${Icon('mic')}</span>
           <span class="disc-psy-section-title">Artistar</span>
           <span class="disc-psy-section-badge">${ARTISTS.length} artistar</span>
         </div>
         <div class="disc-psy-label-grid">
           ${ARTISTS.map(a => `
             <div class="disc-psy-label-card">
-              <div class="disc-psy-label-icon">${a.icon}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(a.icon)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(a.name)}</div>
                 <div class="disc-psy-label-desc">${escHtml(a.genres)}</div>
@@ -1297,14 +1297,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🗂</span>
+          <span class="disc-psy-section-icon">${Icon('folder')}</span>
           <span class="disc-psy-section-title">Sub-selskap & Kategoriar</span>
           <span class="disc-psy-section-badge">${SUBLABELS.length} kategoriar</span>
         </div>
         <div class="disc-psy-label-grid">
           ${SUBLABELS.map(s => `
             <a class="disc-psy-label-card" href="https://www.altar-records.com/" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${s.emoji}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(s.emoji)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(s.name)}${s.comingSoon ? ' <span style="font-size:0.73rem;opacity:0.55">(kjem snart)</span>' : ''}</div>
                 <div class="disc-psy-label-desc">${escHtml(s.desc)}</div>
@@ -1316,13 +1316,13 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Finn Altar Records</span>
         </div>
         <div class="disc-psy-label-grid">
           ${LINKS.map(l => `
             <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${l.emoji}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(l.name)}</div>
                 <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
@@ -1369,7 +1369,7 @@ const Discover = (() => {
 
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#1a0a2e,#16213e,#0f3460)">
-        <div class="disc-psy-banner-emoji">🎪</div>
+        <div class="disc-psy-banner-emoji">${Icon('star')}</div>
         <div>
           <div class="disc-psy-banner-title">Hadra Trance Festival 2026</div>
           <div class="disc-psy-banner-sub">Solar Punk Chronicles: The Seed — 27–30 august 2026 · Vieure, Allier, Frankrike</div>
@@ -1378,14 +1378,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">📍</span>
+          <span class="disc-psy-section-icon">${Icon('map-pin')}</span>
           <span class="disc-psy-section-title">Festivalinfo</span>
           <span class="disc-psy-section-badge">hadratrancefestival.net</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <a class="disc-psy-label-card" href="https://hadratrancefestival.net/en/home/" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">🎪</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('star')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Hadra Trance Festival 2026</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -1395,20 +1395,20 @@ const Discover = (() => {
                 Med handverksmarknad, workshops, sirkuskunst og camping.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">📅 27–30 aug 2026</span>
-                <span class="disc-psy-section-badge">📍 Vieure, Frankrike 🇫🇷</span>
-                <span class="disc-psy-section-badge">🎪 4 scener</span>
-                <span class="disc-psy-section-badge">🎵 68 artistar</span>
+                <span class="disc-psy-section-badge">${Icon('calendar')} 27–30 aug 2026</span>
+                <span class="disc-psy-section-badge">${Icon('map-pin')} Vieure, Frankrike 🇫🇷</span>
+                <span class="disc-psy-section-badge">${Icon('star')} 4 scener</span>
+                <span class="disc-psy-section-badge">${Icon('music')} 68 artistar</span>
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🌀</span>
+          <span class="disc-psy-section-icon">${Icon('wind')}</span>
           <span class="disc-psy-section-title">La Main — Psytrance Hovudscene</span>
           <span class="disc-psy-section-badge">${MAIN_STAGE.length} artistar · Progressive · Dark-Prog · Full-On · Forest</span>
         </div>
@@ -1417,7 +1417,7 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">⚡</span>
+          <span class="disc-psy-section-icon">${Icon('zap')}</span>
           <span class="disc-psy-section-title">Paradoxe — Alternativ Scene</span>
           <span class="disc-psy-section-badge">${PARADOXE.length} artistar · Techno · DnB · Hi-Tech · Dub · Verdsmusikk</span>
         </div>
@@ -1426,7 +1426,7 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎼</span>
+          <span class="disc-psy-section-icon">${Icon('music')}</span>
           <span class="disc-psy-section-title">Le Cocon — Live & Eksperimentell Scene</span>
           <span class="disc-psy-section-badge">${LE_COCON.length} artistar · Elektroakustikk · Eksperimentell</span>
         </div>
@@ -1435,7 +1435,7 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🌿</span>
+          <span class="disc-psy-section-icon">${Icon('leaf')}</span>
           <span class="disc-psy-section-title">La Bulle — Chill-Out Sone</span>
           <span class="disc-psy-section-badge">${LA_BULLE.length} artistar · Downtempo · Ambient · Psybass · Psychill</span>
         </div>
@@ -1444,12 +1444,12 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Billettar & Sosiale medium</span>
         </div>
         <div class="disc-psy-label-grid">
           <a class="disc-psy-label-card" href="https://hadratrancefestival.net/en/tickets/" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">🎟</div>
+            <div class="disc-psy-label-icon">${Icon('ticket')}</div>
             <div>
               <div class="disc-psy-label-name">Kjøp billettar</div>
               <div class="disc-psy-label-desc">Offisiell billettside — 27–30 august 2026</div>
@@ -1463,14 +1463,14 @@ const Discover = (() => {
             </div>
           </a>
           <a class="disc-psy-label-card" href="https://www.instagram.com/hadratrancefestival/" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">📸</div>
+            <div class="disc-psy-label-icon">${Icon('camera')}</div>
             <div>
               <div class="disc-psy-label-name">Instagram</div>
               <div class="disc-psy-label-desc">Bilete og artwork frå festivalen</div>
             </div>
           </a>
           <a class="disc-psy-label-card" href="https://www.youtube.com/user/hadrarecords" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">▶</div>
+            <div class="disc-psy-label-icon">${Icon('play')}</div>
             <div>
               <div class="disc-psy-label-name">YouTube</div>
               <div class="disc-psy-label-desc">Sett og videoar frå tidlegare år</div>
@@ -1511,7 +1511,7 @@ const Discover = (() => {
     ];
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0e0d1f,#1b1040,#0d0a2e)">
-        <div class="disc-psy-banner-emoji">🌀</div>
+        <div class="disc-psy-banner-emoji">${Icon('wind')}</div>
         <div>
           <div class="disc-psy-banner-title">DaCru Records</div>
           <div class="disc-psy-banner-sub">Psychedelic Trance Label & Events — dacru.be</div>
@@ -1520,14 +1520,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🏷</span>
+          <span class="disc-psy-section-icon">${Icon('tag')}</span>
           <span class="disc-psy-section-title">Om labelet</span>
           <span class="disc-psy-section-badge">dacru.be</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <a class="disc-psy-label-card" href="https://www.dacru.be/" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">🌀</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('wind')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">DaCru Records</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -1537,27 +1537,27 @@ const Discover = (() => {
                 Kjend for høg kvalitet og sterk artistprofil.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">🌀 Psychedelic Trance</span>
-                <span class="disc-psy-section-badge">⚡ Full-On</span>
+                <span class="disc-psy-section-badge">${Icon('wind')} Psychedelic Trance</span>
+                <span class="disc-psy-section-badge">${Icon('zap')} Full-On</span>
                 <span class="disc-psy-section-badge">🇧🇪 Belgia</span>
-                <span class="disc-psy-section-badge">🎪 Events</span>
+                <span class="disc-psy-section-badge">${Icon('star')} Events</span>
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎙</span>
+          <span class="disc-psy-section-icon">${Icon('mic')}</span>
           <span class="disc-psy-section-title">Artistar</span>
           <span class="disc-psy-section-badge">${ARTISTS.length} artistar</span>
         </div>
         <div class="disc-psy-label-grid">
           ${ARTISTS.map(a => `
             <div class="disc-psy-label-card">
-              <div class="disc-psy-label-icon">${a.icon}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(a.icon)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(a.name)}</div>
                 <div class="disc-psy-label-desc">${escHtml(a.genres)}</div>
@@ -1569,14 +1569,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎵</span>
+          <span class="disc-psy-section-icon">${Icon('music')}</span>
           <span class="disc-psy-section-title">Utvalde spor</span>
           <span class="disc-psy-section-badge">Frå DaCru-katalogen</span>
         </div>
         <div class="disc-psy-mix-grid">
           ${TRACKS.map(t => `
             <div class="disc-psy-mix-card" style="cursor:default">
-              <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#1b1040,#0d0a2e);font-size:1.2rem">🌀</div>
+              <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#1b1040,#0d0a2e);font-size:1.2rem">${Icon('wind')}</div>
               <div class="disc-psy-mix-info">
                 <div class="disc-psy-mix-title">${escHtml(t.split(' – ')[1] || t)}</div>
                 <div class="disc-psy-mix-artist">${escHtml(t.split(' – ')[0] || '')}</div>
@@ -1588,14 +1588,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎪</span>
+          <span class="disc-psy-section-icon">${Icon('star')}</span>
           <span class="disc-psy-section-title">Solomonari Festival 2026</span>
           <span class="disc-psy-section-badge">Transylvania, Romania</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <a class="disc-psy-label-card" href="https://www.dacru.be/" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start">
-            <div class="disc-psy-label-icon" style="font-size:2.2rem">🏔</div>
+            <div class="disc-psy-label-icon" style="font-size:2.2rem">${Icon('mountain')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name">Solomonari Festival 2026</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -1604,19 +1604,19 @@ const Discover = (() => {
                 i hjartet av Romania. Arrangert av DaCru Records.
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Finn DaCru Records</span>
         </div>
         <div class="disc-psy-label-grid">
           <a class="disc-psy-label-card" href="https://www.dacru.be/" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">🌐</div>
+            <div class="disc-psy-label-icon">${Icon('globe')}</div>
             <div><div class="disc-psy-label-name">dacru.be</div><div class="disc-psy-label-desc">Offisiell nettstad — artistar, utgivingar og events</div></div>
           </a>
           <a class="disc-psy-label-card" href="https://www.facebook.com/dacrurecords" target="_blank" rel="noopener noreferrer">
@@ -1624,11 +1624,11 @@ const Discover = (() => {
             <div><div class="disc-psy-label-name">Facebook</div><div class="disc-psy-label-desc">Nyhende og utgivingar</div></div>
           </a>
           <a class="disc-psy-label-card" href="https://www.instagram.com/dacru_records" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">📸</div>
+            <div class="disc-psy-label-icon">${Icon('camera')}</div>
             <div><div class="disc-psy-label-name">Instagram</div><div class="disc-psy-label-desc">Artwork og oppdateringar</div></div>
           </a>
           <a class="disc-psy-label-card" href="https://www.youtube.com/user/dacru" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">▶</div>
+            <div class="disc-psy-label-icon">${Icon('play')}</div>
             <div><div class="disc-psy-label-name">YouTube</div><div class="disc-psy-label-desc">Sett, videoar og live-opptak</div></div>
           </a>
         </div>
@@ -1667,7 +1667,7 @@ const Discover = (() => {
     ];
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#1a0d2e,#2d1060,#1a0d2e)">
-        <div class="disc-psy-banner-emoji">👑</div>
+        <div class="disc-psy-banner-emoji">${Icon('crown')}</div>
         <div>
           <div class="disc-psy-banner-title">Raja Ram & T.I.P. Records</div>
           <div class="disc-psy-banner-sub">Godfather of the Psychedelic Global Underground — sidan 1994</div>
@@ -1676,14 +1676,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">👑</span>
+          <span class="disc-psy-section-icon">${Icon('crown')}</span>
           <span class="disc-psy-section-title">Raja Ram</span>
           <span class="disc-psy-section-badge">tiprecords.com</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <a class="disc-psy-label-card" href="https://www.tiprecords.com/artists/raja-ram/" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">👑</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('crown')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Raja Ram — The Godfather</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -1693,26 +1693,26 @@ const Discover = (() => {
                 The Zap!, Shpongle og 1200 Micrograms. Gründar av T.I.P. Records.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">🌀 Goa Trance</span>
-                <span class="disc-psy-section-badge">🔮 Shpongle</span>
-                <span class="disc-psy-section-badge">💊 1200 Mics</span>
+                <span class="disc-psy-section-badge">${Icon('wind')} Goa Trance</span>
+                <span class="disc-psy-section-badge">${Icon('sparkles')} Shpongle</span>
+                <span class="disc-psy-section-badge">${Icon('pill')} 1200 Mics</span>
                 <span class="disc-psy-section-badge">🇮🇱 Israel</span>
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎼</span>
+          <span class="disc-psy-section-icon">${Icon('music')}</span>
           <span class="disc-psy-section-title">Raja Rams prosjektar</span>
         </div>
         <div class="disc-psy-label-grid">
           ${RAJA_PROJECTS.map(p => `
             <div class="disc-psy-label-card">
-              <div class="disc-psy-label-icon">${p.icon}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(p.icon)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(p.name)}</div>
                 <div class="disc-psy-label-desc">${escHtml(p.desc)}</div>
@@ -1724,13 +1724,13 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎵</span>
+          <span class="disc-psy-section-icon">${Icon('music')}</span>
           <span class="disc-psy-section-title">Raja Ram — DJ-miksesett</span>
         </div>
         <div class="disc-psy-mix-grid">
           ${MIXES.map(m => `
             <div class="disc-psy-mix-card" style="cursor:default">
-              <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#2d1060,#1a0d2e);font-size:1.2rem">👑</div>
+              <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#2d1060,#1a0d2e);font-size:1.2rem">${Icon('crown')}</div>
               <div class="disc-psy-mix-info">
                 <div class="disc-psy-mix-title">${escHtml(m)}</div>
                 <div class="disc-psy-mix-artist">Raja Ram · T.I.P. Records</div>
@@ -1742,14 +1742,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🏷</span>
+          <span class="disc-psy-section-icon">${Icon('tag')}</span>
           <span class="disc-psy-section-title">T.I.P. Records — Artistar</span>
           <span class="disc-psy-section-badge">Sidan 1994</span>
         </div>
         <div class="disc-psy-label-grid">
           ${TIP_ARTISTS.map(a => `
             <div class="disc-psy-label-card">
-              <div class="disc-psy-label-icon">${a.icon}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(a.icon)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(a.name)}</div>
                 <div class="disc-psy-label-desc">${escHtml(a.genres)}</div>
@@ -1761,16 +1761,16 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Finn T.I.P. Records</span>
         </div>
         <div class="disc-psy-label-grid">
           <a class="disc-psy-label-card" href="https://www.tiprecords.com/" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">🌐</div>
+            <div class="disc-psy-label-icon">${Icon('globe')}</div>
             <div><div class="disc-psy-label-name">tiprecords.com</div><div class="disc-psy-label-desc">Offisiell nettstad — artistar og utgivingar</div></div>
           </a>
           <a class="disc-psy-label-card" href="https://www.instagram.com/raja_rams_tip_records/" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">📸</div>
+            <div class="disc-psy-label-icon">${Icon('camera')}</div>
             <div><div class="disc-psy-label-name">Instagram</div><div class="disc-psy-label-desc">@raja_rams_tip_records</div></div>
           </a>
           <a class="disc-psy-label-card" href="https://www.facebook.com/profile.php?id=100064907913247" target="_blank" rel="noopener noreferrer">
@@ -1778,11 +1778,11 @@ const Discover = (() => {
             <div><div class="disc-psy-label-name">Facebook</div><div class="disc-psy-label-desc">Nyhende og utgivingar</div></div>
           </a>
           <a class="disc-psy-label-card" href="https://soundcloud.com/tiprecords" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">☁️</div>
+            <div class="disc-psy-label-icon">${Icon('cloud')}</div>
             <div><div class="disc-psy-label-name">SoundCloud</div><div class="disc-psy-label-desc">Stream T.I.P.-musikk gratis</div></div>
           </a>
           <a class="disc-psy-label-card" href="https://www.youtube.com/user/TipWorldRecords" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">▶</div>
+            <div class="disc-psy-label-icon">${Icon('play')}</div>
             <div><div class="disc-psy-label-name">YouTube</div><div class="disc-psy-label-desc">Musikkvideor og live-sett</div></div>
           </a>
         </div>
@@ -1799,7 +1799,7 @@ const Discover = (() => {
     ];
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#041a08,#0a2e10,#041a08)">
-        <div class="disc-psy-banner-emoji">🌿</div>
+        <div class="disc-psy-banner-emoji">${Icon('leaf')}</div>
         <div>
           <div class="disc-psy-banner-title">Cosmic Leaf Records</div>
           <div class="disc-psy-banner-sub">Psybient · Psychill · Downtempo · Chill — frå Hellas til verda</div>
@@ -1808,14 +1808,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🌿</span>
+          <span class="disc-psy-section-icon">${Icon('leaf')}</span>
           <span class="disc-psy-section-title">Om Cosmic Leaf</span>
           <span class="disc-psy-section-badge">cosmicleaf.gr</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <a class="disc-psy-label-card" href="https://cosmicleaf.gr/" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start;border-color:rgba(60,160,80,0.35);background:rgba(4,20,8,0.5)">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">🌿</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('leaf')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Cosmic Leaf Records</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -1825,26 +1825,26 @@ const Discover = (() => {
                 kvalitet, natur og indre ro. Eit must for alle fans av roleg og atmosfærisk elektronika.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">🌿 Chill</span>
-                <span class="disc-psy-section-badge">🌌 Psybient</span>
-                <span class="disc-psy-section-badge">🌊 Psychill</span>
+                <span class="disc-psy-section-badge">${Icon('leaf')} Chill</span>
+                <span class="disc-psy-section-badge">${Icon('sparkles')} Psybient</span>
+                <span class="disc-psy-section-badge">${Icon('waves')} Psychill</span>
                 <span class="disc-psy-section-badge">🇬🇷 Hellas</span>
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Finn Cosmic Leaf</span>
         </div>
         <div class="disc-psy-label-grid">
           ${LINKS.map(l => `
             <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${l.emoji}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(l.name)}</div>
                 <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
@@ -1863,7 +1863,7 @@ const Discover = (() => {
     ];
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#071a0f,#0d2b1a,#071a0f)">
-        <div class="disc-psy-banner-emoji">🌫</div>
+        <div class="disc-psy-banner-emoji">${Icon('cloud')}</div>
         <div>
           <div class="disc-psy-banner-title">Kukan Dub Lagan</div>
           <div class="disc-psy-banner-sub">Atmosfærisk dub, chill og eksperimentell elektronika</div>
@@ -1872,7 +1872,7 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🌫</span>
+          <span class="disc-psy-section-icon">${Icon('cloud')}</span>
           <span class="disc-psy-section-title">Om Kukan Dub Lagan</span>
           <span class="disc-psy-section-badge">Bandcamp</span>
         </div>
@@ -1880,7 +1880,7 @@ const Discover = (() => {
           <a class="disc-psy-label-card" href="https://kukan-dub-lagan.bandcamp.com/album/searching-for-a-fogbow"
              target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start;border-color:rgba(60,160,80,0.3);background:rgba(5,20,10,0.5)">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">🌫</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('cloud')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Searching for a Fogbow</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -1890,26 +1890,26 @@ const Discover = (() => {
                 timane der musikken smeltar saman med tankane.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">🌿 Chill</span>
-                <span class="disc-psy-section-badge">🎚 Dub</span>
-                <span class="disc-psy-section-badge">🌫 Atmosfærisk</span>
-                <span class="disc-psy-section-badge">🧪 Eksperimentell</span>
+                <span class="disc-psy-section-badge">${Icon('leaf')} Chill</span>
+                <span class="disc-psy-section-badge">${Icon('sliders')} Dub</span>
+                <span class="disc-psy-section-badge">${Icon('cloud')} Atmosfærisk</span>
+                <span class="disc-psy-section-badge">${Icon('flask')} Eksperimentell</span>
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Finn Kukan Dub Lagan</span>
         </div>
         <div class="disc-psy-label-grid">
           ${LINKS.map(l => `
             <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${l.emoji}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(l.name)}</div>
                 <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
@@ -1928,7 +1928,7 @@ const Discover = (() => {
     ];
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#050510,#0d0d2e,#150d3a)">
-        <div class="disc-psy-banner-emoji">🌌</div>
+        <div class="disc-psy-banner-emoji">${Icon('sparkles')}</div>
         <div>
           <div class="disc-psy-banner-title">Shunyata Records</div>
           <div class="disc-psy-banner-sub">Djup, rituell og meditativ Goa Trance — frå undergrunnen til verda</div>
@@ -1937,14 +1937,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🌌</span>
+          <span class="disc-psy-section-icon">${Icon('sparkles')}</span>
           <span class="disc-psy-section-title">Om Shunyata Records</span>
           <span class="disc-psy-section-badge">shunyatarecords.bandcamp.com</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <a class="disc-psy-label-card" href="https://shunyatarecords.bandcamp.com/" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start;border-color:rgba(80,60,160,0.4);background:rgba(10,5,30,0.5)">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">🌌</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('sparkles')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Shunyata Records</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -1954,26 +1954,26 @@ const Discover = (() => {
                 Sjekk heile katalogen og dei nyaste utgivingane på Bandcamp.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">🌌 Goa Trance</span>
-                <span class="disc-psy-section-badge">🧘 Meditasjon</span>
-                <span class="disc-psy-section-badge">🥁 Rituell</span>
-                <span class="disc-psy-section-badge">🕊 Goa Gil</span>
+                <span class="disc-psy-section-badge">${Icon('sparkles')} Goa Trance</span>
+                <span class="disc-psy-section-badge">${Icon('user')} Meditasjon</span>
+                <span class="disc-psy-section-badge">${Icon('drum')} Rituell</span>
+                <span class="disc-psy-section-badge">${Icon('feather')} Goa Gil</span>
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">💿</span>
+          <span class="disc-psy-section-icon">${Icon('disc')}</span>
           <span class="disc-psy-section-title">Utgivingar</span>
         </div>
         <div class="disc-psy-label-grid">
           ${RELEASES.map(r => `
             <a class="disc-psy-label-card" href="${escHtml(r.url)}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${r.emoji}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(r.emoji)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(r.title)}</div>
                 <div class="disc-psy-label-desc">${escHtml(r.desc)}</div>
@@ -1985,12 +1985,12 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎪</span>
+          <span class="disc-psy-section-icon">${Icon('star')}</span>
           <span class="disc-psy-section-title">Kommande shows / events</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <div class="disc-psy-label-card" style="cursor:default;border-color:rgba(80,60,160,0.3)">
-            <div class="disc-psy-label-icon">🌐</div>
+            <div class="disc-psy-label-icon">${Icon('globe')}</div>
             <div>
               <div class="disc-psy-label-name">Følg Shunyata Records for kommande shows</div>
               <div class="disc-psy-label-desc">Sjekk Bandcamp for dei siste nyheitene om utgivingar og events</div>
@@ -1998,7 +1998,7 @@ const Discover = (() => {
           </div>
         </div>
         <a class="disc-psy-cal-link" href="https://shunyatarecords.bandcamp.com/" target="_blank" rel="noopener noreferrer">
-          Gå til Shunyata Records på Bandcamp →
+          Gå til Shunyata Records på Bandcamp ${Icon('arrow-right')}
         </a>
       </div>
     `;
@@ -2007,7 +2007,7 @@ const Discover = (() => {
   function renderGoaGilTab() {
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0a0a0a,#1a1010,#2a1a0a)">
-        <div class="disc-psy-banner-emoji">🕊</div>
+        <div class="disc-psy-banner-emoji">${Icon('feather')}</div>
         <div>
           <div class="disc-psy-banner-title">Goa Gil — Resting In Peace</div>
           <div class="disc-psy-banner-sub">1950 – 2025 · Han vil alltid bli hugsa · The Last Shaman of the Psychedelic Underground</div>
@@ -2016,12 +2016,12 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🕊</span>
+          <span class="disc-psy-section-icon">${Icon('feather')}</span>
           <span class="disc-psy-section-title">In Memoriam — Goa Gil</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <div class="disc-psy-label-card" style="gap:1.2rem;align-items:flex-start;cursor:default;border-color:rgba(180,140,80,0.3);background:rgba(40,25,10,0.5)">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">🕊</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('feather')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem;color:#c8a96e">Goa Gil — The Last Shaman</div>
               <div class="disc-psy-label-desc" style="line-height:1.8;font-size:0.95rem">
@@ -2040,10 +2040,10 @@ const Discover = (() => {
                 den psykedeliske undergrunnen held i live.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge" style="border-color:rgba(180,140,80,0.4);color:#c8a96e">🕊 R.I.P.</span>
-                <span class="disc-psy-section-badge">🌀 Goa Trance</span>
+                <span class="disc-psy-section-badge" style="border-color:rgba(180,140,80,0.4);color:#c8a96e">${Icon('feather')} R.I.P.</span>
+                <span class="disc-psy-section-badge">${Icon('wind')} Goa Trance</span>
                 <span class="disc-psy-section-badge">🇮🇳 Goa, India</span>
-                <span class="disc-psy-section-badge">🥁 Shaman</span>
+                <span class="disc-psy-section-badge">${Icon('drum')} Shaman</span>
               </div>
             </div>
           </div>
@@ -2052,7 +2052,7 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">💿</span>
+          <span class="disc-psy-section-icon">${Icon('disc')}</span>
           <span class="disc-psy-section-title">VA — Active Meditation in the Memory of Goa Gil</span>
           <span class="disc-psy-section-badge">Shunyata Records</span>
         </div>
@@ -2060,7 +2060,7 @@ const Discover = (() => {
           <a class="disc-psy-label-card" href="https://shunyatarecords.bandcamp.com/album/va-active-meditation-in-the-memory-of-goa-gil"
              target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start;border-color:rgba(100,60,160,0.4);background:rgba(20,10,40,0.5)">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">💿</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('disc')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Active Meditation in the Memory of Goa Gil</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -2069,25 +2069,25 @@ const Discover = (() => {
                 rituelle og meditativt psykedelisk musikk. Stream eller last ned på Bandcamp.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">💿 Shunyata Records</span>
-                <span class="disc-psy-section-badge">🕊 Tribute</span>
-                <span class="disc-psy-section-badge">🌀 Goa Trance</span>
-                <span class="disc-psy-section-badge">🧘 Active Meditation</span>
+                <span class="disc-psy-section-badge">${Icon('disc')} Shunyata Records</span>
+                <span class="disc-psy-section-badge">${Icon('feather')} Tribute</span>
+                <span class="disc-psy-section-badge">${Icon('wind')} Goa Trance</span>
+                <span class="disc-psy-section-badge">${Icon('user')} Active Meditation</span>
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Finn Shunyata Records</span>
         </div>
         <div class="disc-psy-label-grid">
           <a class="disc-psy-label-card" href="https://shunyatarecords.bandcamp.com/" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">🎵</div>
+            <div class="disc-psy-label-icon">${Icon('music')}</div>
             <div>
               <div class="disc-psy-label-name">Shunyata Records / Bandcamp</div>
               <div class="disc-psy-label-desc">Heile katalogen — Goa Trance og psykedelisk musikk</div>
@@ -2117,7 +2117,7 @@ const Discover = (() => {
     ];
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0a1a2e,#122840,#1a3a5c)">
-        <div class="disc-psy-banner-emoji">🧬</div>
+        <div class="disc-psy-banner-emoji">${Icon('atom')}</div>
         <div>
           <div class="disc-psy-banner-title">Younger Brother</div>
           <div class="disc-psy-banner-sub">Simon Posford + Benji Vaughan — psykedelisk elektronika og rave sidan 2001</div>
@@ -2126,14 +2126,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🧬</span>
+          <span class="disc-psy-section-icon">${Icon('atom')}</span>
           <span class="disc-psy-section-title">Om Younger Brother</span>
           <span class="disc-psy-section-badge">Bandcamp</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <a class="disc-psy-label-card" href="https://youngerbrothermusic.bandcamp.com/music" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">🧬</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('atom')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Younger Brother — A Flock of Bleeps</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -2143,27 +2143,27 @@ const Discover = (() => {
                 Utforsk heile diskografien på Bandcamp.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">🧬 Psykedelisk</span>
-                <span class="disc-psy-section-badge">🎛 Electronica</span>
-                <span class="disc-psy-section-badge">⚡ Rave</span>
-                <span class="disc-psy-section-badge">🎛 Simon Posford</span>
+                <span class="disc-psy-section-badge">${Icon('atom')} Psykedelisk</span>
+                <span class="disc-psy-section-badge">${Icon('sliders')} Electronica</span>
+                <span class="disc-psy-section-badge">${Icon('zap')} Rave</span>
+                <span class="disc-psy-section-badge">${Icon('sliders')} Simon Posford</span>
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">📀</span>
+          <span class="disc-psy-section-icon">${Icon('disc')}</span>
           <span class="disc-psy-section-title">Diskografi</span>
           <span class="disc-psy-section-badge">2003–2015</span>
         </div>
         <div class="disc-psy-mix-grid">
           ${ALBUMS.map(a => `
             <div class="disc-psy-mix-card" style="cursor:default">
-              <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#122840,#1a3a5c);font-size:1.2rem">🧬</div>
+              <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#122840,#1a3a5c);font-size:1.2rem">${Icon('atom')}</div>
               <div class="disc-psy-mix-info">
                 <div class="disc-psy-mix-title">${escHtml(a.title)} <span style="opacity:0.6;font-size:0.8em">(${escHtml(a.year)})</span></div>
                 <div class="disc-psy-mix-artist">${escHtml(a.desc)}</div>
@@ -2175,7 +2175,7 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎪</span>
+          <span class="disc-psy-section-icon">${Icon('star')}</span>
           <span class="disc-psy-section-title">Kommande shows 2026</span>
         </div>
         <div class="disc-psy-festival-list">
@@ -2190,10 +2190,10 @@ const Discover = (() => {
                 <div class="disc-psy-festival-loc">${s.loc}</div>
                 <div class="disc-psy-festival-tags">
                   <span class="disc-psy-festival-tag disc-psy-festival-upcoming">Kommande</span>
-                  <span class="disc-psy-festival-tag">🧬 Younger Brother</span>
+                  <span class="disc-psy-festival-tag">${Icon('atom')} Younger Brother</span>
                 </div>
               </div>
-              <span class="disc-psy-festival-arrow">→</span>
+              <span class="disc-psy-festival-arrow">${Icon('arrow-right')}</span>
             </a>
           `).join('')}
         </div>
@@ -2201,13 +2201,13 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Finn Younger Brother</span>
         </div>
         <div class="disc-psy-label-grid">
           ${LINKS.map(l => `
             <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${l.emoji}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(l.name)}</div>
                 <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
@@ -2236,7 +2236,7 @@ const Discover = (() => {
     ];
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0d0829,#1a0b3d,#2a0d5e,#0d0829)">
-        <div class="disc-psy-banner-emoji">🔮</div>
+        <div class="disc-psy-banner-emoji">${Icon('sparkles')}</div>
         <div>
           <div class="disc-psy-banner-title">Shpongle</div>
           <div class="disc-psy-banner-sub">Raja Ram + Simon Posford — verdas mest kjende psybient-prosjekt sidan 1998</div>
@@ -2245,14 +2245,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🔮</span>
+          <span class="disc-psy-section-icon">${Icon('sparkles')}</span>
           <span class="disc-psy-section-title">Om Shpongle</span>
           <span class="disc-psy-section-badge">shponglemusic.com</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <a class="disc-psy-label-card" href="https://www.shponglemusic.com/" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">🔮</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('sparkles')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Shpongle — Are You Shpongled?</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -2263,28 +2263,28 @@ const Discover = (() => {
                 ei reise gjennom bevisstheit og det umoglege å setje ord på.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">🔮 Psybient</span>
-                <span class="disc-psy-section-badge">🌊 Psychill</span>
-                <span class="disc-psy-section-badge">🌍 Verdsmusikk</span>
-                <span class="disc-psy-section-badge">👑 Raja Ram</span>
-                <span class="disc-psy-section-badge">🎛 Simon Posford</span>
+                <span class="disc-psy-section-badge">${Icon('sparkles')} Psybient</span>
+                <span class="disc-psy-section-badge">${Icon('waves')} Psychill</span>
+                <span class="disc-psy-section-badge">${Icon('globe')} Verdsmusikk</span>
+                <span class="disc-psy-section-badge">${Icon('crown')} Raja Ram</span>
+                <span class="disc-psy-section-badge">${Icon('sliders')} Simon Posford</span>
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">📀</span>
+          <span class="disc-psy-section-icon">${Icon('disc')}</span>
           <span class="disc-psy-section-title">Diskografi</span>
           <span class="disc-psy-section-badge">1998–2017</span>
         </div>
         <div class="disc-psy-mix-grid">
           ${ALBUMS.map(a => `
             <div class="disc-psy-mix-card" style="cursor:default">
-              <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#1a0b3d,#2a0d5e);font-size:1.2rem">🔮</div>
+              <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#1a0b3d,#2a0d5e);font-size:1.2rem">${Icon('sparkles')}</div>
               <div class="disc-psy-mix-info">
                 <div class="disc-psy-mix-title">${escHtml(a.title)} <span style="opacity:0.6;font-size:0.8em">(${escHtml(a.year)})</span></div>
                 <div class="disc-psy-mix-artist">${escHtml(a.desc)}</div>
@@ -2296,13 +2296,13 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Finn Shpongle</span>
         </div>
         <div class="disc-psy-label-grid">
           ${LINKS.map(l => `
             <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${l.emoji}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(l.name)}</div>
                 <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
@@ -2332,7 +2332,7 @@ const Discover = (() => {
     ];
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0a1628,#0e2244,#0a1628)">
-        <div class="disc-psy-banner-emoji">⭐</div>
+        <div class="disc-psy-banner-emoji">${Icon('star')}</div>
         <div>
           <div class="disc-psy-banner-title">Astral Projection</div>
           <div class="disc-psy-banner-sub">Goa Trance · Psytrance — Avi Nissim & Lior Perlmutter · Trust in Trance Records</div>
@@ -2341,14 +2341,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🌟</span>
+          <span class="disc-psy-section-icon">${Icon('star')}</span>
           <span class="disc-psy-section-title">Om Astral Projection</span>
           <span class="disc-psy-section-badge">astral-projection.com</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <a class="disc-psy-label-card" href="https://www.astral-projection.com/" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">⭐</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('star')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Astral Projection — Avi Nissim & Lior Perlmutter</div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
@@ -2358,20 +2358,20 @@ const Discover = (() => {
                 referansepunkt for heile psytrance-universet. Eige label: Trust in Trance Records.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">⭐ Goa Trance</span>
-                <span class="disc-psy-section-badge">🌀 Psytrance</span>
+                <span class="disc-psy-section-badge">${Icon('star')} Goa Trance</span>
+                <span class="disc-psy-section-badge">${Icon('wind')} Psytrance</span>
                 <span class="disc-psy-section-badge">🇮🇱 Israel</span>
-                <span class="disc-psy-section-badge">🎵 Sidan 1991</span>
+                <span class="disc-psy-section-badge">${Icon('music')} Sidan 1991</span>
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">💿</span>
+          <span class="disc-psy-section-icon">${Icon('disc')}</span>
           <span class="disc-psy-section-title">Diskografi</span>
           <span class="disc-psy-section-badge">${ALBUMS.length} studioalbum</span>
         </div>
@@ -2390,22 +2390,22 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎵</span>
+          <span class="disc-psy-section-icon">${Icon('music')}</span>
           <span class="disc-psy-section-title">Klassiske spor</span>
         </div>
         <div class="hadra-artist-grid">
-          ${CLASSICS.map(t => `<span class="hadra-artist-pill">⭐ ${escHtml(t)}</span>`).join('')}
+          ${CLASSICS.map(t => `<span class="hadra-artist-pill">${Icon('star')} ${escHtml(t)}</span>`).join('')}
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🔗</span>
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Finn Astral Projection</span>
         </div>
         <div class="disc-psy-label-grid">
           <a class="disc-psy-label-card" href="https://www.astral-projection.com/" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">🌐</div>
+            <div class="disc-psy-label-icon">${Icon('globe')}</div>
             <div><div class="disc-psy-label-name">astral-projection.com</div><div class="disc-psy-label-desc">Offisiell nettstad — media, events og musikk</div></div>
           </a>
           <a class="disc-psy-label-card" href="https://www.facebook.com/astralprojectionofficial" target="_blank" rel="noopener noreferrer">
@@ -2413,11 +2413,11 @@ const Discover = (() => {
             <div><div class="disc-psy-label-name">Facebook</div><div class="disc-psy-label-desc">Nyhende og live-oppdateringar</div></div>
           </a>
           <a class="disc-psy-label-card" href="https://www.instagram.com/astralprojection/" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">📸</div>
+            <div class="disc-psy-label-icon">${Icon('camera')}</div>
             <div><div class="disc-psy-label-name">Instagram</div><div class="disc-psy-label-desc">Bilete, artwork og oppdateringar</div></div>
           </a>
           <a class="disc-psy-label-card" href="https://www.youtube.com/user/astralprojection1" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">▶</div>
+            <div class="disc-psy-label-icon">${Icon('play')}</div>
             <div><div class="disc-psy-label-name">YouTube</div><div class="disc-psy-label-desc">Musikkvideor og live-sett</div></div>
           </a>
         </div>
@@ -2460,7 +2460,7 @@ const Discover = (() => {
 
     return `
       <div class="disc-psy-banner">
-        <div class="disc-psy-banner-emoji">🌀</div>
+        <div class="disc-psy-banner-emoji">${Icon('wind')}</div>
         <div>
           <div class="disc-psy-banner-title">Psytrance Peak Tour</div>
           <div class="disc-psy-banner-sub">Kuraterte miksesett, plateselskap og kommande festivalar frå det psykedeliske undergrunnsuniverset — SoundCloud, YouTube, Bandcamp og live events.</div>
@@ -2469,14 +2469,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎵</span>
+          <span class="disc-psy-section-icon">${Icon('music')}</span>
           <span class="disc-psy-section-title">Artisten</span>
           <span class="disc-psy-section-badge">u-recken.com</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
           <a class="disc-psy-label-card" href="https://u-recken.com/" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">🌀</div>
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('wind')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">
                 U-Recken <span style="font-size:0.85rem;opacity:0.7">🇮🇱 Israel</span>
@@ -2487,31 +2487,31 @@ const Discover = (() => {
                 Siste album: <em>Nothing is Sacred</em> (2017) — nytt album kjem 2026.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">🌀 Psytrance</span>
-                <span class="disc-psy-section-badge">⚡ Full-On</span>
-                <span class="disc-psy-section-badge">🏷 BigFreq Syndicate</span>
+                <span class="disc-psy-section-badge">${Icon('wind')} Psytrance</span>
+                <span class="disc-psy-section-badge">${Icon('zap')} Full-On</span>
+                <span class="disc-psy-section-badge">${Icon('tag')} BigFreq Syndicate</span>
               </div>
             </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">→</span>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
       </div>
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">☁️</span>
+          <span class="disc-psy-section-icon">${Icon('cloud')}</span>
           <span class="disc-psy-section-title">SoundCloud — Miksesett</span>
           <span class="disc-psy-section-badge">SoundCloud</span>
         </div>
         <div class="disc-psy-mix-grid">
           ${SC_MIXES.map(m => `
             <div class="disc-psy-mix-card" role="button" style="cursor:pointer" onclick="openMedia('${escHtml(m.url)}','${escHtml(m.title).replace(/'/g,'&#39;')}')">
-              <div class="disc-psy-mix-thumb disc-psy-mix-thumb--sc">☁</div>
+              <div class="disc-psy-mix-thumb disc-psy-mix-thumb--sc">${Icon('cloud')}</div>
               <div class="disc-psy-mix-info">
                 <div class="disc-psy-mix-title">${escHtml(m.title)}</div>
                 <div class="disc-psy-mix-artist">${escHtml(m.artist)}</div>
               </div>
-              <span class="disc-psy-mix-arrow">▶</span>
+              <span class="disc-psy-mix-arrow">${Icon('play')}</span>
             </div>
           `).join('')}
         </div>
@@ -2519,19 +2519,19 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">▶️</span>
+          <span class="disc-psy-section-icon">${Icon('play')}</span>
           <span class="disc-psy-section-title">YouTube — Fulle sett 2026</span>
           <span class="disc-psy-section-badge">YouTube</span>
         </div>
         <div class="disc-psy-mix-grid">
           ${YT_MIXES.map(m => `
             <div class="disc-psy-mix-card" role="button" style="cursor:pointer" onclick="openMedia('${escHtml(m.url)}','${escHtml(m.title).replace(/'/g,'&#39;')}')">
-              <div class="disc-psy-mix-thumb disc-psy-mix-thumb--yt">▶</div>
+              <div class="disc-psy-mix-thumb disc-psy-mix-thumb--yt">${Icon('play')}</div>
               <div class="disc-psy-mix-info">
                 <div class="disc-psy-mix-title">${escHtml(m.title)}</div>
                 <div class="disc-psy-mix-artist">${escHtml(m.artist)}</div>
               </div>
-              <span class="disc-psy-mix-arrow">▶</span>
+              <span class="disc-psy-mix-arrow">${Icon('play')}</span>
             </div>
           `).join('')}
         </div>
@@ -2539,14 +2539,14 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🏷</span>
+          <span class="disc-psy-section-icon">${Icon('tag')}</span>
           <span class="disc-psy-section-title">Bandcamp & Plateselskap</span>
           <span class="disc-psy-section-badge">Bandcamp</span>
         </div>
         <div class="disc-psy-label-grid">
           ${LABELS.map(l => `
             <a class="disc-psy-label-card" href="${l.url}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${l.emoji}</div>
+              <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
               <div>
                 <div class="disc-psy-label-name">${escHtml(l.name)}</div>
                 <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
@@ -2558,7 +2558,7 @@ const Discover = (() => {
 
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">🎪</span>
+          <span class="disc-psy-section-icon">${Icon('star')}</span>
           <span class="disc-psy-section-title">Kommande festivalar 2026</span>
           <span class="disc-psy-section-badge">Live events</span>
         </div>
@@ -2577,12 +2577,12 @@ const Discover = (() => {
                   ${f.tags.map(t => `<span class="disc-psy-festival-tag">${escHtml(t)}</span>`).join('')}
                 </div>
               </div>
-              <span class="disc-psy-festival-arrow">→</span>
+              <span class="disc-psy-festival-arrow">${Icon('arrow-right')}</span>
             </a>
           `).join('')}
         </div>
         <a class="disc-psy-cal-link" href="https://www.psycalendar.com/psyfestivals" target="_blank" rel="noopener noreferrer">
-          Sjå alle festivalar på PsyCalendar →
+          Sjå alle festivalar på PsyCalendar ${Icon('arrow-right')}
         </a>
       </div>
     `;
@@ -2597,10 +2597,10 @@ const Discover = (() => {
     ];
     return cards.map(c => `
       <div class="disc-editorial-card${c.highlight ? (c.droneStyle ? ' disc-editorial-card--drone' : c.psyStyle ? ' disc-editorial-card--psy' : ' disc-editorial-card--ug') : ''}" onclick="${c.action()}">
-        <div class="disc-editorial-art">${c.emoji}</div>
+        <div class="disc-editorial-art">${iconForEmoji(c.emoji)}</div>
         <div class="disc-editorial-title">${c.title}</div>
         <div class="disc-editorial-desc">${c.desc}</div>
-        ${c.highlight ? `<div class="disc-editorial-cta">Utforsk →</div>` : ''}
+        ${c.highlight ? `<div class="disc-editorial-cta">Utforsk ${Icon('arrow-right')}</div>` : ''}
       </div>
     `).join('');
   }
@@ -2623,10 +2623,10 @@ const Discover = (() => {
           ${a.albums.map(al => `<span class="dz-album-pill">${escHtml(al)}</span>`).join('')}
         </div>
         <div class="dz-artist-links">
-          ${a.bandcamp ? linkBtn(a.bandcamp, '🎵', 'Bandcamp', 'bc') : ''}
-          ${a.youtube  ? linkBtn(a.youtube,  '▶', 'YouTube',  'yt') : ''}
+          ${a.bandcamp ? linkBtn(a.bandcamp, Icon('music'), 'Bandcamp', 'bc') : ''}
+          ${a.youtube  ? linkBtn(a.youtube,  Icon('play'), 'YouTube',  'yt') : ''}
           ${a.facebook ? linkBtn(a.facebook, 'f', 'Facebook', 'fb') : ''}
-          ${a.website  ? linkBtn(a.website,  '🌐', 'Nettstad', 'web') : ''}
+          ${a.website  ? linkBtn(a.website,  Icon('globe'), 'Nettstad', 'web') : ''}
         </div>
       </div>
     `).join('');
@@ -2639,7 +2639,7 @@ const Discover = (() => {
           <span class="dz-label-meta">${escHtml(l.country)} · est. ${escHtml(l.founded)}</span>
         </div>
         <p class="dz-label-desc">${escHtml(l.desc)}</p>
-        <p class="dz-label-artists">🎤 ${escHtml(l.artists)}</p>
+        <p class="dz-label-artists">${Icon('mic')} ${escHtml(l.artists)}</p>
         <div class="dz-label-links">
           ${l.website  ? linkBtn(l.website,  '🌐', 'Nettstad', 'web') : ''}
           ${l.bandcamp ? linkBtn(l.bandcamp, '🎵', 'Bandcamp', 'bc') : ''}
@@ -2647,7 +2647,7 @@ const Discover = (() => {
           ${l.youtube  ? linkBtn(l.youtube,  '▶', 'YouTube',  'yt') : ''}
         </div>
         <div class="dz-demo-box">
-          <div class="dz-demo-title">📬 Send demo</div>
+          <div class="dz-demo-title">${Icon('mail')} Send demo</div>
           <div class="dz-demo-contact">${escHtml(l.demoContact)}</div>
           <div class="dz-demo-note">${escHtml(l.demoNote)}</div>
         </div>
@@ -2657,8 +2657,8 @@ const Discover = (() => {
     return `
       <div class="dz-wrap">
         <div class="dz-hero">
-          <button class="dz-back-btn" onclick="Discover.closeDroneZone()">← Tilbake</button>
-          <div class="dz-hero-title">🌌 Drone Zone Essentials</div>
+          <button class="dz-back-btn" onclick="Discover.closeDroneZone()">${Icon('arrow-left')} Tilbake</button>
+          <div class="dz-hero-title">${Icon('sparkles')} Drone Zone Essentials</div>
           <div class="dz-hero-sub">Dark Ambient · Ritual Drone · Atmosfærisk</div>
           <div class="dz-hero-tags">
             <span class="dz-hero-tag">Cryo Chamber</span>
@@ -2670,7 +2670,7 @@ const Discover = (() => {
 
         <div class="dz-section">
           <div class="dz-section-header">
-            <h2 class="dz-section-title">🎙 Artistar</h2>
+            <h2 class="dz-section-title">${Icon('mic')} Artistar</h2>
             <span class="dz-section-count">${DRONE_ARTISTS.length} artistar</span>
           </div>
           <div class="dz-artists-grid">${artistsHtml}</div>
@@ -2678,7 +2678,7 @@ const Discover = (() => {
 
         <div class="dz-section">
           <div class="dz-section-header">
-            <h2 class="dz-section-title">🏷 Plateselskap — Send Demo</h2>
+            <h2 class="dz-section-title">${Icon('tag')} Plateselskap — Send Demo</h2>
             <span class="dz-section-count">${DRONE_LABELS.length} selskap</span>
           </div>
           <div class="dz-labels-grid">${labelsHtml}</div>
@@ -2822,7 +2822,7 @@ const Discover = (() => {
       tagCloud.innerHTML = GENRES.filter(g => g.tag !== 'all').map(g => {
         const cnt = cnts[g.tag] || 0;
         return `<button class="disc-tag-pill ${activeGenre === g.tag ? 'active' : ''} ${cnt === 0 ? 'disc-genre-btn--empty' : ''}"
-          onclick="Discover.setGenre('${g.tag}')">${g.emoji} ${g.label}${cnt > 0 ? `<span class="disc-genre-count">${cnt}</span>` : ''}</button>`;
+          onclick="Discover.setGenre('${g.tag}')">${iconForEmoji(g.emoji)} ${g.label}${cnt > 0 ? `<span class="disc-genre-count">${cnt}</span>` : ''}</button>`;
       }).join('');
     }
   }
@@ -2853,7 +2853,7 @@ const Discover = (() => {
   function wishlist(id) {
     const track = allTracks.find(t => t.id === id);
     if (!track) return;
-    App.toast(`"${track.title}" lagt til ønskeliste ♡`, 'info');
+    App.toast(`"${track.title}" lagt til ønskeliste ${Icon('heart')}`, 'info');
     const btn = document.querySelector(`.disc-wishlist-btn[onclick*="${id}"]`);
     if (btn) { btn.textContent = '♥'; btn.style.color = '#ec4899'; }
   }
@@ -2897,7 +2897,7 @@ const Discover = (() => {
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-      App.toast(`"${track.title}" lastes ned ⬇️`, 'success');
+      App.toast(`"${track.title}" lastes ned ${Icon('download')}`, 'success');
     } catch {
       App.toast('Nedlasting feilet', 'error');
     }
@@ -2919,9 +2919,9 @@ const Discover = (() => {
     modal.onclick = e => { if (e.target === modal) closeDownloadModal(); };
     modal.innerHTML = `
       <div class="modal-box dl-payment-box">
-        <button class="dl-modal-close" onclick="Discover.closeDownloadModal()">✕</button>
+        <button class="dl-modal-close" onclick="Discover.closeDownloadModal()">${Icon('x')}</button>
         <div class="dl-modal-header">
-          <div class="dl-modal-icon">🔒</div>
+          <div class="dl-modal-icon">${Icon('lock')}</div>
           <h3 class="dl-modal-title">Last ned ${type}</h3>
           <div class="dl-modal-track-info">
             <strong>${escHtml(track.title)}</strong>
@@ -2943,7 +2943,7 @@ const Discover = (() => {
         </div>
         <div class="dl-modal-actions">
           <button class="btn btn-primary dl-pay-btn" onclick="Discover.confirmDownloadPayment()">
-            💳 Betal ${price} kr og last ned
+            ${Icon('credit-card')} Betal ${price} kr og last ned
           </button>
           <button class="btn btn-ghost" onclick="Discover.closeDownloadModal()">Avbryt</button>
         </div>
@@ -2998,13 +2998,13 @@ const Discover = (() => {
     const user   = Auth.current();
     return `
       <div class="disc-upload-success">
-        <div class="disc-up-success-icon">✅</div>
+        <div class="disc-up-success-icon">${Icon('check-circle')}</div>
         <h3 class="disc-up-success-title">"${escHtml(title)}" er lagt til på din profil!</h3>
         <p class="disc-up-success-sub">Sporet er nå synlig på din profil og i Discover.</p>
 
         ${hasCat ? `
         <div class="disc-up-labels-box">
-          <div class="disc-up-labels-heading">✉️ Send demo til plateselskap — ${escHtml(cat.emoji)} ${escHtml(cat.label)}</div>
+          <div class="disc-up-labels-heading">${Icon('mail')} Send demo til plateselskap — ${iconForEmoji(cat.emoji)} ${escHtml(cat.label)}</div>
           <div class="disc-up-labels-list">
             ${cat.labels.map(l => `
               <a class="disc-up-label-btn"
@@ -3017,13 +3017,13 @@ const Discover = (() => {
         </div>` : `
         <div class="disc-up-nocat-box">
           <p>Ingen hoved kategori valgt — gå til profilen din for å velge kategori og kontakte plateselskap.</p>
-          <a href="#/edit" class="btn btn-ghost btn-sm" style="margin-top:0.5rem">Gå til profileditor →</a>
+          <a href="#/edit" class="btn btn-ghost btn-sm" style="margin-top:0.5rem">Gå til profileditor ${Icon('arrow-right')}</a>
         </div>`}
 
         <div class="disc-up-success-actions">
-          <a href="#/u/${escHtml(user?.username || '')}" class="btn btn-primary btn-sm">👤 Min profil</a>
-          <button class="btn btn-ghost btn-sm" onclick="Discover.switchSubTab('upload')">🔼 Last opp mer</button>
-          <button class="btn btn-ghost btn-sm" onclick="Discover.switchSubTab('tracks')">🎵 Se alle spor</button>
+          <a href="#/u/${escHtml(user?.username || '')}" class="btn btn-primary btn-sm">${Icon('user')} Min profil</a>
+          <button class="btn btn-ghost btn-sm" onclick="Discover.switchSubTab('upload')">${Icon('chevron-up')} Last opp mer</button>
+          <button class="btn btn-ghost btn-sm" onclick="Discover.switchSubTab('tracks')">${Icon('music')} Se alle spor</button>
         </div>
       </div>`;
   }
@@ -3084,7 +3084,7 @@ const Discover = (() => {
       const musicIds = [...(user.musicIds || []), id];
       Auth.updateUser(user.username, { musicIds });
 
-      App.toast(`"${title}" er lastet opp! 🎵`, 'success');
+      App.toast(`"${title}" er lastet opp! ${Icon('music')}`, 'success');
       allTracks = await loadAllTracks();
 
       const uploadEl = document.getElementById('disc-upload-content');
@@ -3098,7 +3098,7 @@ const Discover = (() => {
     } catch (err) {
       console.error(err);
       App.toast('Feil ved opplasting', 'error');
-      if (btn) { btn.disabled = false; btn.textContent = '🔼 Last opp'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = Icon('arrow-up') + ' Last opp'; }
     }
   }
 
@@ -3109,7 +3109,7 @@ const Discover = (() => {
     if (radioEl) radioEl.innerHTML = renderRadioFavTab();
     const station = Radio.stations.find(s => s.id === stationId);
     const gLabel  = GENRES.find(g => g.tag === genre)?.label || genre;
-    if (station) App.toast(`"${station.name}" er din favoritt for ${gLabel} ⭐`, 'success');
+    if (station) App.toast(`"${station.name}" er din favoritt for ${gLabel} ${Icon('star')}`, 'success');
   }
 
   function clearGenreRadio(genre) {

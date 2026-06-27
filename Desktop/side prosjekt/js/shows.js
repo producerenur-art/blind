@@ -144,7 +144,7 @@ const Shows = (() => {
     return `
       <div class="show-card ${highlight ? 'show-card--live' : ''}" style="--show-color:${show.color}">
         <div class="show-card-left">
-          <div class="show-emoji">${show.emoji}</div>
+          <div class="show-emoji">${iconForEmoji(show.emoji)}</div>
         </div>
         <div class="show-card-body">
           ${highlight ? '<div class="show-on-air"><span class="show-on-air-dot"></span> ON AIR</div>' : ''}
@@ -158,7 +158,7 @@ const Shows = (() => {
           <button class="show-listen-btn" onclick="Shows.tuneIn('${show.stream}')">
             ${highlight ? '▶ Lyt nå' : '▶ Lytt'}
           </button>
-          <button class="show-share-btn" title="Del" onclick="Shows.shareShow('${show.id}')">↗</button>
+          <button class="show-share-btn" title="Del" onclick="Shows.shareShow('${show.id}')">${Icon('arrow-up-right')}</button>
         </div>
       </div>`;
   }
@@ -179,7 +179,7 @@ const Shows = (() => {
           <div class="sched-day-shows">
             ${dayShows.length ? dayShows.map(s => `
               <div class="sched-show-slot" style="--show-color:${s.color}" onclick="Shows.tuneIn('${s.stream}')">
-                <span class="sched-show-emoji">${s.emoji}</span>
+                <span class="sched-show-emoji">${iconForEmoji(s.emoji)}</span>
                 <div class="sched-show-info">
                   <div class="sched-show-name">${escHtml(s.name)}</div>
                   <div class="sched-show-time">${fmtHour(s.startHour)} – ${fmtHour(s.endHour)}</div>
@@ -201,13 +201,13 @@ const Shows = (() => {
     ];
     return archive.map(a => `
       <div class="archive-card">
-        <div class="archive-card-emoji">${a.emoji}</div>
+        <div class="archive-card-emoji">${iconForEmoji(a.emoji)}</div>
         <div class="archive-card-body">
           <div class="archive-card-name">${escHtml(a.name)}</div>
           <div class="archive-card-meta">${escHtml(a.host)} · ${a.date}</div>
-          <div class="archive-card-dur">⏱ ${a.duration}</div>
+          <div class="archive-card-dur">${Icon('clock')} ${a.duration}</div>
         </div>
-        <button class="archive-play-btn">▶</button>
+        <button class="archive-play-btn">${Icon('play')}</button>
       </div>
     `).join('');
   }
@@ -224,7 +224,7 @@ const Shows = (() => {
         <div class="shows-hero">
           <div class="shows-hero-glow"></div>
           <div class="shows-hero-inner">
-            <div class="shows-hero-badge">📻 Sendeskjema</div>
+            <div class="shows-hero-badge">${Icon('radio')} Sendeskjema</div>
             <h1 class="shows-hero-title">Radio Shows</h1>
             <p class="shows-hero-sub">Utforsk ukentlige livesendinger fra Sound Core — psytrance, ambient, techno, jazz og mer.</p>
           </div>
@@ -235,14 +235,14 @@ const Shows = (() => {
               </div>
               <div class="shows-live-name">${escHtml(live.name)}</div>
               <div class="shows-live-host">med ${escHtml(live.host)}</div>
-              <button class="shows-live-btn" onclick="Shows.tuneIn('${live.stream}')">▶ Lyt nå</button>
+              <button class="shows-live-btn" onclick="Shows.tuneIn('${live.stream}')">${Icon('play')} Lyt nå</button>
             ` : next ? `
               <div class="shows-live-pill shows-live-pill--soon">
                 Neste show
               </div>
               <div class="shows-live-name">${escHtml(next.show.name)}</div>
               <div class="shows-live-host">${DAYS_NO[next.show.day]} ${fmtHour(next.show.startHour)}</div>
-              <button class="shows-live-btn" onclick="Router.go('/radio')">📻 Radio</button>
+              <button class="shows-live-btn" onclick="Router.go('/radio')">${Icon('radio')} Radio</button>
             ` : ''}
           </div>
         </div>
@@ -259,7 +259,7 @@ const Shows = (() => {
         <!-- WEEKLY SCHEDULE -->
         <div class="section" style="max-width:1100px">
           <div class="section-header">
-            <div class="section-title">📅 Ukentlig sendeskjema</div>
+            <div class="section-title">${Icon('calendar')} Ukentlig sendeskjema</div>
           </div>
           <div class="sched-grid">
             ${scheduleGrid()}
@@ -269,7 +269,7 @@ const Shows = (() => {
         <!-- ALL SHOWS -->
         <div class="section" style="max-width:900px">
           <div class="section-header">
-            <div class="section-title">🎙 Alle programmer</div>
+            <div class="section-title">${Icon('mic')} Alle programmer</div>
           </div>
           <div class="shows-list">
             ${SHOWS.map(s => showCard(s, s === live)).join('')}
@@ -279,7 +279,7 @@ const Shows = (() => {
         <!-- ARCHIVE -->
         <div class="section" style="max-width:900px">
           <div class="section-header">
-            <div class="section-title">🗂 Arkiv</div>
+            <div class="section-title">${Icon('folder')} Arkiv</div>
             <span class="text-muted text-sm">Tidligere sendinger</span>
           </div>
           <div class="archive-list">
@@ -290,7 +290,7 @@ const Shows = (() => {
         <!-- GOA GIL MEMORIAL -->
         <div class="section" style="max-width:900px">
           <div style="background:linear-gradient(135deg,#0a0a0a,#1a1010,#2a1a0a);border:1px solid rgba(180,140,80,0.25);border-radius:1rem;padding:2rem;text-align:center">
-            <div style="font-size:2.5rem;margin-bottom:0.75rem">🕊</div>
+            <div style="font-size:2.5rem;margin-bottom:0.75rem">${Icon('feather')}</div>
             <div style="font-size:1.3rem;font-weight:700;color:#c8a96e;margin-bottom:0.5rem">Goa Gil — Resting In Peace</div>
             <div style="font-size:0.9rem;color:rgba(200,169,110,0.6);margin-bottom:1.25rem;letter-spacing:0.05em">1950 – 2025</div>
             <p style="color:rgba(255,255,255,0.75);line-height:1.8;max-width:600px;margin:0 auto 1.25rem">
@@ -308,121 +308,121 @@ const Shows = (() => {
         <!-- FESTIVALS -->
         <div class="section" style="max-width:900px">
           <div class="section-header">
-            <div class="section-title">🎪 Kommende festivalar</div>
+            <div class="section-title">${Icon('star')} Kommende festivalar</div>
           </div>
           <a class="shows-festival-card" href="https://www.astral-projection.com/events" target="_blank" rel="noopener noreferrer"
              style="margin-bottom:1rem">
             <div class="shows-festival-banner" style="background:linear-gradient(135deg,#0a1628,#0e2244,#0a1628)">
-              <div class="shows-festival-emoji">⭐</div>
+              <div class="shows-festival-emoji">${Icon('star')}</div>
               <div class="shows-festival-dates">Live 2026</div>
             </div>
             <div class="shows-festival-body">
               <div class="shows-festival-name">Astral Projection — Live Shows</div>
-              <div class="shows-festival-loc">🌍 Turné globalt · astral-projection.com/events</div>
+              <div class="shows-festival-loc">${Icon('globe')} Turné globalt · astral-projection.com/events</div>
               <div class="shows-festival-theme">Goa Trance · Psytrance — sidan 1991</div>
               <div class="shows-festival-tags">
-                <span class="shows-festival-tag">⭐ Goa Trance</span>
-                <span class="shows-festival-tag">🌀 Psytrance</span>
+                <span class="shows-festival-tag">${Icon('star')} Goa Trance</span>
+                <span class="shows-festival-tag">${Icon('wind')} Psytrance</span>
                 <span class="shows-festival-tag">🇮🇱 Israel</span>
                 <span class="shows-festival-tag">Dancing Galaxy</span>
                 <span class="shows-festival-tag">Another World</span>
               </div>
-              <div class="shows-festival-cta">Sjå kommende shows →</div>
+              <div class="shows-festival-cta">Sjå kommende shows ${Icon('arrow-right')}</div>
             </div>
           </a>
           <a class="shows-festival-card" href="https://www.dacru.be/" target="_blank" rel="noopener noreferrer"
              style="margin-bottom:1rem">
             <div class="shows-festival-banner" style="background:linear-gradient(135deg,#0e0d1f,#1b1040,#0d0a2e)">
-              <div class="shows-festival-emoji">🏔</div>
+              <div class="shows-festival-emoji">${Icon('mountain')}</div>
               <div class="shows-festival-dates">18–21 jun 2026</div>
             </div>
             <div class="shows-festival-body">
               <div class="shows-festival-name">Solomonari Festival 2026</div>
-              <div class="shows-festival-loc">📍 Transylvania, Romania 🇷🇴</div>
+              <div class="shows-festival-loc">${Icon('map-pin')} Transylvania, Romania 🇷🇴</div>
               <div class="shows-festival-theme">The Transylvanian Gathering — av DaCru Records</div>
               <div class="shows-festival-tags">
-                <span class="shows-festival-tag">🌀 Psychedelic Trance</span>
-                <span class="shows-festival-tag">⚡ Full-On</span>
+                <span class="shows-festival-tag">${Icon('wind')} Psychedelic Trance</span>
+                <span class="shows-festival-tag">${Icon('zap')} Full-On</span>
                 <span class="shows-festival-tag">🇧🇪 DaCru Records</span>
               </div>
-              <div class="shows-festival-cta">Meir info på dacru.be →</div>
+              <div class="shows-festival-cta">Meir info på dacru.be ${Icon('arrow-right')}</div>
             </div>
           </a>
           <a class="shows-festival-card" href="https://shunyatarecords.bandcamp.com/" target="_blank" rel="noopener noreferrer"
              style="margin-bottom:1rem">
             <div class="shows-festival-banner" style="background:linear-gradient(135deg,#050510,#0d0d2e,#150d3a)">
-              <div class="shows-festival-emoji">🌌</div>
+              <div class="shows-festival-emoji">${Icon('sparkles')}</div>
               <div class="shows-festival-dates">Bandcamp</div>
             </div>
             <div class="shows-festival-body">
               <div class="shows-festival-name">Shunyata Records</div>
-              <div class="shows-festival-loc">🌍 Djup, rituell og meditativ Goa Trance</div>
+              <div class="shows-festival-loc">${Icon('globe')} Djup, rituell og meditativ Goa Trance</div>
               <div class="shows-festival-theme">VA — Active Meditation in the Memory of Goa Gil</div>
               <div class="shows-festival-tags">
-                <span class="shows-festival-tag">🌌 Goa Trance</span>
-                <span class="shows-festival-tag">🧘 Meditasjon</span>
-                <span class="shows-festival-tag">🕊 Goa Gil Tribute</span>
+                <span class="shows-festival-tag">${Icon('sparkles')} Goa Trance</span>
+                <span class="shows-festival-tag">${Icon('user')} Meditasjon</span>
+                <span class="shows-festival-tag">${Icon('feather')} Goa Gil Tribute</span>
               </div>
-              <div class="shows-festival-cta">Utforsk på Bandcamp →</div>
+              <div class="shows-festival-cta">Utforsk på Bandcamp ${Icon('arrow-right')}</div>
             </div>
           </a>
           <a class="shows-festival-card" href="https://youngerbrothermusic.bandcamp.com/music" target="_blank" rel="noopener noreferrer"
              style="margin-bottom:1rem">
             <div class="shows-festival-banner" style="background:linear-gradient(135deg,#0a1a2e,#122840,#1a3a5c)">
-              <div class="shows-festival-emoji">🧬</div>
+              <div class="shows-festival-emoji">${Icon('atom')}</div>
               <div class="shows-festival-dates">Kommande 2026</div>
             </div>
             <div class="shows-festival-body">
               <div class="shows-festival-name">Younger Brother</div>
-              <div class="shows-festival-loc">🌍 Simon Posford + Benji Vaughan · Psykedelisk elektronika</div>
+              <div class="shows-festival-loc">${Icon('globe')} Simon Posford + Benji Vaughan · Psykedelisk elektronika</div>
               <div class="shows-festival-theme">A Flock of Bleeps · FFWD>> · Vaccine</div>
               <div class="shows-festival-tags">
-                <span class="shows-festival-tag">🧬 Electronica</span>
-                <span class="shows-festival-tag">⚡ Psykedelisk</span>
-                <span class="shows-festival-tag">🎛 Simon Posford</span>
+                <span class="shows-festival-tag">${Icon('atom')} Electronica</span>
+                <span class="shows-festival-tag">${Icon('zap')} Psykedelisk</span>
+                <span class="shows-festival-tag">${Icon('sliders')} Simon Posford</span>
                 <span class="shows-festival-tag">Bandcamp</span>
               </div>
-              <div class="shows-festival-cta">Utforsk musikken på Bandcamp →</div>
+              <div class="shows-festival-cta">Utforsk musikken på Bandcamp ${Icon('arrow-right')}</div>
             </div>
           </a>
           <a class="shows-festival-card" href="https://www.shponglemusic.com/" target="_blank" rel="noopener noreferrer"
              style="margin-bottom:1rem">
             <div class="shows-festival-banner" style="background:linear-gradient(135deg,#0d0829,#1a0b3d,#2a0d5e)">
-              <div class="shows-festival-emoji">🔮</div>
+              <div class="shows-festival-emoji">${Icon('sparkles')}</div>
               <div class="shows-festival-dates">shponglemusic.com</div>
             </div>
             <div class="shows-festival-body">
               <div class="shows-festival-name">Shpongle</div>
-              <div class="shows-festival-loc">🌍 Raja Ram + Simon Posford · Psybient sidan 1998</div>
+              <div class="shows-festival-loc">${Icon('globe')} Raja Ram + Simon Posford · Psybient sidan 1998</div>
               <div class="shows-festival-theme">Are You Shpongled? — Codex VI</div>
               <div class="shows-festival-tags">
-                <span class="shows-festival-tag">🔮 Psybient</span>
-                <span class="shows-festival-tag">🌊 Psychill</span>
-                <span class="shows-festival-tag">🌍 Verdsmusikk</span>
-                <span class="shows-festival-tag">👑 T.I.P. Records</span>
+                <span class="shows-festival-tag">${Icon('sparkles')} Psybient</span>
+                <span class="shows-festival-tag">${Icon('waves')} Psychill</span>
+                <span class="shows-festival-tag">${Icon('globe')} Verdsmusikk</span>
+                <span class="shows-festival-tag">${Icon('crown')} T.I.P. Records</span>
               </div>
-              <div class="shows-festival-cta">Offisiell nettstad →</div>
+              <div class="shows-festival-cta">Offisiell nettstad ${Icon('arrow-right')}</div>
             </div>
           </a>
           <a class="shows-festival-card" href="https://hadratrancefestival.net/en/home/" target="_blank" rel="noopener noreferrer">
             <div class="shows-festival-banner" style="background:linear-gradient(135deg,#1a0a2e,#16213e,#0f3460)">
-              <div class="shows-festival-emoji">🎪</div>
+              <div class="shows-festival-emoji">${Icon('star')}</div>
               <div class="shows-festival-dates">27–30 aug 2026</div>
             </div>
             <div class="shows-festival-body">
               <div class="shows-festival-name">Hadra Trance Festival 2026</div>
-              <div class="shows-festival-loc">📍 Vieure, Allier, Frankrike 🇫🇷</div>
+              <div class="shows-festival-loc">${Icon('map-pin')} Vieure, Allier, Frankrike 🇫🇷</div>
               <div class="shows-festival-theme">Solar Punk Chronicles: The Seed</div>
               <div class="shows-festival-tags">
-                <span class="shows-festival-tag">🌀 Psytrance</span>
-                <span class="shows-festival-tag">⚡ Techno</span>
-                <span class="shows-festival-tag">🌿 Downtempo</span>
-                <span class="shows-festival-tag">🎼 Live</span>
+                <span class="shows-festival-tag">${Icon('wind')} Psytrance</span>
+                <span class="shows-festival-tag">${Icon('zap')} Techno</span>
+                <span class="shows-festival-tag">${Icon('leaf')} Downtempo</span>
+                <span class="shows-festival-tag">${Icon('music')} Live</span>
                 <span class="shows-festival-tag">4 scener</span>
                 <span class="shows-festival-tag">68 artistar</span>
                 <span class="shows-festival-tag">90t musikk</span>
               </div>
-              <div class="shows-festival-cta">Sjå program & billettar →</div>
+              <div class="shows-festival-cta">Sjå program & billettar ${Icon('arrow-right')}</div>
             </div>
           </a>
         </div>
@@ -430,13 +430,13 @@ const Shows = (() => {
         <!-- SUBSCRIBE BANNER -->
         <div class="section" style="max-width:900px">
           <div class="shows-subscribe-banner">
-            <div class="shows-subscribe-icon">📬</div>
+            <div class="shows-subscribe-icon">${Icon('mail')}</div>
             <div class="shows-subscribe-text">
               <div class="shows-subscribe-title">Aldri gå glipp av et show</div>
               <p>Registrer deg for å få varsler om kommende programmer og nye utgivelser.</p>
             </div>
             ${Auth.current()
-              ? `<button class="btn btn-primary" onclick="App.toast('Du er allerede abonnert! ✓','success')">✓ Abonnert</button>`
+              ? `<button class="btn btn-primary" onclick="App.toast('Du er allerede abonnert!','success')">${Icon('check')} Abonnert</button>`
               : `<a href="#/register" class="btn btn-primary">Registrer deg gratis</a>`
             }
           </div>
@@ -456,7 +456,7 @@ const Shows = (() => {
   function shareShow(id) {
     const show = SHOWS.find(s => s.id === id);
     if (!show) return;
-    const text = `${show.emoji} ${show.name} på Sound Core — ${DAYS_NO[show.day]} ${fmtHour(show.startHour)}`;
+    const text = `${iconForEmoji(show.emoji)} ${show.name} på Sound Core — ${DAYS_NO[show.day]} ${fmtHour(show.startHour)}`;
     if (navigator.share) {
       navigator.share({ title: show.name, text, url: location.href });
     } else {

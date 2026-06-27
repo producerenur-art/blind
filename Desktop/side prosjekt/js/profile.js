@@ -103,16 +103,16 @@ const Profile = (() => {
     if (!picks.length) return '';
     return `
       <div class="profile-festivals">
-        <div class="profile-festivals-title">🎪 Festivaler</div>
+        <div class="profile-festivals-title">${Icon('star')} Festivaler</div>
         <div class="festival-cards">
           ${picks.map(f => `
             <a class="festival-card" href="${f.url}" target="_blank" rel="noopener noreferrer">
-              <span class="festival-card-emoji">${f.emoji}</span>
+              <span class="festival-card-emoji">${iconForEmoji(f.emoji)}</span>
               <div class="festival-card-info">
                 <div class="festival-card-name">${f.name}</div>
                 <div class="festival-card-country">${f.country}</div>
               </div>
-              <span class="festival-card-ticket">🎟 ${f.ticket}</span>
+              <span class="festival-card-ticket">${Icon('ticket')} ${f.ticket}</span>
             </a>`).join('')}
         </div>
       </div>`;
@@ -122,7 +122,7 @@ const Profile = (() => {
     const ids = user.festivalIds || [];
     return `
       <div style="max-width:680px">
-        <div class="editor-section-title" style="margin-bottom:0.5rem">🎪 Festivaler på profilen din</div>
+        <div class="editor-section-title" style="margin-bottom:0.5rem">${Icon('star')} Festivaler på profilen din</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1.25rem;line-height:1.6">
           Velg festivaler du drar på eller følger — de vises med billett-/påmeldingslenke på profilen din.
         </p>
@@ -132,7 +132,7 @@ const Profile = (() => {
             return `
               <label class="festival-selector-item${checked ? ' selected' : ''}" onclick="Profile.toggleFestivalItem(this)">
                 <input type="checkbox" value="${f.id}" ${checked ? 'checked' : ''} onchange="">
-                <span class="festival-sel-emoji">${f.emoji}</span>
+                <span class="festival-sel-emoji">${iconForEmoji(f.emoji)}</span>
                 <div class="festival-sel-info">
                   <div class="festival-sel-name">${f.name}</div>
                   <div class="festival-sel-meta">${f.country}</div>
@@ -140,7 +140,7 @@ const Profile = (() => {
               </label>`;
           }).join('')}
         </div>
-        <button class="btn btn-primary" style="margin-top:1.25rem" onclick="Profile.saveFestivals()">💾 Lagre festivaler</button>
+        <button class="btn btn-primary" style="margin-top:1.25rem" onclick="Profile.saveFestivals()">${Icon('save')} Lagre festivaler</button>
       </div>`;
   }
 
@@ -155,16 +155,16 @@ const Profile = (() => {
       <div class="profile-platforms">
         ${dawPicks.length ? `
           <div class="profile-platforms-group">
-            <div class="profile-platforms-title">🖥️ Musikk-program</div>
+            <div class="profile-platforms-title">${Icon('laptop')} Musikk-program</div>
             <div class="platforms-badges">
-              ${dawPicks.map(d => `<span class="platform-badge platform-badge--daw">${d.emoji} ${d.name}</span>`).join('')}
+              ${dawPicks.map(d => `<span class="platform-badge platform-badge--daw">${iconForEmoji(d.emoji)} ${d.name}</span>`).join('')}
             </div>
           </div>` : ''}
         ${platPicks.length ? `
           <div class="profile-platforms-group">
-            <div class="profile-platforms-title">🎵 Digitale plattformer</div>
+            <div class="profile-platforms-title">${Icon('music')} Digitale plattformer</div>
             <div class="platforms-badges">
-              ${platPicks.map(p => `<span class="platform-badge platform-badge--streaming">${p.emoji} ${p.name}</span>`).join('')}
+              ${platPicks.map(p => `<span class="platform-badge platform-badge--streaming">${iconForEmoji(p.emoji)} ${p.name}</span>`).join('')}
             </div>
           </div>` : ''}
       </div>`;
@@ -175,7 +175,7 @@ const Profile = (() => {
     const platforms = user.streamingPlatforms || [];
     return `
       <div style="max-width:680px">
-        <div class="editor-section-title" style="margin-bottom:0.25rem">🖥️ Musikk-program / DAW</div>
+        <div class="editor-section-title" style="margin-bottom:0.25rem">${Icon('laptop')} Musikk-program / DAW</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem;line-height:1.6">
           Velg hvilke musikk-program du bruker til produksjon eller miksing.
         </p>
@@ -185,12 +185,12 @@ const Profile = (() => {
             return `
               <label class="platform-selector-item${checked ? ' selected' : ''}" onclick="Profile.togglePlatformItem(this)">
                 <input type="checkbox" value="${d.id}" data-group="daw" ${checked ? 'checked' : ''}>
-                <span class="platform-sel-emoji">${d.emoji}</span>
+                <span class="platform-sel-emoji">${iconForEmoji(d.emoji)}</span>
                 <span class="platform-sel-name">${d.name}</span>
               </label>`;
           }).join('')}
         </div>
-        <div class="editor-section-title" style="margin-top:1.5rem;margin-bottom:0.25rem">🎵 Digitale plattformer</div>
+        <div class="editor-section-title" style="margin-top:1.5rem;margin-bottom:0.25rem">${Icon('music')} Digitale plattformer</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem;line-height:1.6">
           Hvilke strømmeplattformer eller musikk-butikker bruker du?
         </p>
@@ -200,12 +200,12 @@ const Profile = (() => {
             return `
               <label class="platform-selector-item${checked ? ' selected' : ''}" onclick="Profile.togglePlatformItem(this)">
                 <input type="checkbox" value="${p.id}" data-group="streaming" ${checked ? 'checked' : ''}>
-                <span class="platform-sel-emoji">${p.emoji}</span>
+                <span class="platform-sel-emoji">${iconForEmoji(p.emoji)}</span>
                 <span class="platform-sel-name">${p.name}</span>
               </label>`;
           }).join('')}
         </div>
-        <button class="btn btn-primary" style="margin-top:1.25rem" onclick="Profile.savePlatforms()">💾 Lagre plattformer</button>
+        <button class="btn btn-primary" style="margin-top:1.25rem" onclick="Profile.savePlatforms()">${Icon('save')} Lagre plattformer</button>
       </div>`;
   }
 
@@ -215,16 +215,16 @@ const Profile = (() => {
     if (!sites.length) return '';
     return `
       <div class="profile-my-sites">
-        <div class="profile-my-sites-title">🌐 Mine Sider</div>
+        <div class="profile-my-sites-title">${Icon('globe')} Mine Sider</div>
         <div class="my-sites-grid">
           ${sites.map(s => `
             <a class="my-site-card" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">
-              <span class="my-site-emoji">${esc(s.emoji || '🔗')}</span>
+              <span class="my-site-emoji">${iconForEmoji(s.emoji, 'link')}</span>
               <div class="my-site-info">
                 <div class="my-site-name">${esc(s.title)}</div>
                 ${s.description ? `<div class="my-site-desc">${esc(s.description)}</div>` : ''}
               </div>
-              <span class="my-site-arrow">→</span>
+              <span class="my-site-arrow">${Icon('arrow-right')}</span>
             </a>`).join('')}
         </div>
       </div>`;
@@ -234,7 +234,7 @@ const Profile = (() => {
     const sites = user.mySites || [];
     return `
       <div style="max-width:600px">
-        <div class="editor-section-title" style="margin-bottom:0.25rem">🌐 Mine egne sider</div>
+        <div class="editor-section-title" style="margin-bottom:0.25rem">${Icon('globe')} Mine egne sider</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1.25rem;line-height:1.6">
           Legg til lenker til dine egne hjemmelagde sider, portfolioer, blogger eller andre steder folk kan finne deg.
         </p>
@@ -257,7 +257,7 @@ const Profile = (() => {
             <label class="form-label">Beskrivelse (valgfri)</label>
             <input class="form-input" id="ms-desc" placeholder="Kort beskrivelse av siden">
           </div>
-          <button class="btn btn-primary" onclick="Profile.addMySite()">➕ Legg til side</button>
+          <button class="btn btn-primary" onclick="Profile.addMySite()">${Icon('plus')} Legg til side</button>
         </div>
         <div id="my-sites-list">
           ${sites.length ? sites.map(mySiteEditorItem).join('') : '<p style="font-size:0.82rem;color:var(--text2)">Ingen sider ennå.</p>'}
@@ -268,13 +268,13 @@ const Profile = (() => {
   function mySiteEditorItem(s) {
     return `
       <div class="my-site-editor-item" id="msitem-${s.id}">
-        <span style="font-size:1.4rem;flex-shrink:0">${esc(s.emoji || '🔗')}</span>
+        <span style="font-size:1.4rem;flex-shrink:0">${iconForEmoji(s.emoji, 'link')}</span>
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:0.88rem">${esc(s.title)}</div>
           <div style="font-size:0.75rem;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.url)}</div>
         </div>
-        <a class="btn btn-ghost btn-sm" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">↗</a>
-        <button class="btn-icon btn-danger btn-sm" onclick="Profile.deleteMySite('${s.id}')" title="Slett">🗑</button>
+        <a class="btn btn-ghost btn-sm" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${Icon('arrow-up-right')}</a>
+        <button class="btn-icon btn-danger btn-sm" onclick="Profile.deleteMySite('${s.id}')" title="Slett">${Icon('trash')}</button>
       </div>`;
   }
 
@@ -284,7 +284,7 @@ const Profile = (() => {
     app.innerHTML = '<div class="page-loading"><div class="spinner"></div></div>';
 
     const user = Auth.getUser(username);
-    if (!user) { app.innerHTML = `<div class="empty-state" style="padding:6rem"><div class="empty-icon">👤</div><p>Bruker ikke funnet</p></div>`; return; }
+    if (!user) { app.innerHTML = `<div class="empty-state" style="padding:6rem"><div class="empty-icon">${Icon('user')}</div><p>Bruker ikke funnet</p></div>`; return; }
 
     const current = Auth.current();
     const isOwner = current?.username === username;
@@ -293,10 +293,10 @@ const Profile = (() => {
     if (!isOwner && profileVisibility === 'private') {
       app.innerHTML = `
         <div class="empty-state" style="padding:8rem;text-align:center">
-          <div class="empty-icon">🔒</div>
+          <div class="empty-icon">${Icon('lock')}</div>
           <p style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem">Denne profilen er privat</p>
           <p style="color:var(--text2);margin-bottom:1.5rem">@${username} har valgt å holde profilen sin skjult.</p>
-          <a href="#/" class="btn btn-primary" style="display:inline-flex">← Tilbake til forsiden</a>
+          <a href="#/" class="btn btn-primary" style="display:inline-flex">${Icon('arrow-left')} Tilbake til forsiden</a>
         </div>`;
       return;
     }
@@ -336,15 +336,15 @@ const Profile = (() => {
     if (!isOwner && current) {
       const status = Auth.getFriendStatus(current.username, username);
       if (status === 'friends') {
-        friendBtn = `<button class="btn btn-ghost btn-sm" id="friend-btn" onclick="Profile.removeFriend('${username}')">✓ Venner</button>`;
+        friendBtn = `<button class="btn btn-ghost btn-sm" id="friend-btn" onclick="Profile.removeFriend('${username}')">${Icon('check')} Venner</button>`;
       } else if (status === 'pending_sent') {
-        friendBtn = `<button class="btn btn-ghost btn-sm" id="friend-btn" onclick="Profile.cancelFriendRequest('${username}')">⏳ Avbryt</button>`;
+        friendBtn = `<button class="btn btn-ghost btn-sm" id="friend-btn" onclick="Profile.cancelFriendRequest('${username}')">${Icon('hourglass')} Avbryt</button>`;
       } else if (status === 'pending_received') {
         friendBtn = `
-          <button class="btn btn-primary btn-sm" id="friend-btn-accept" onclick="Profile.acceptFriend('${username}')">✓ Aksepter</button>
-          <button class="btn btn-ghost btn-sm" id="friend-btn-reject" onclick="Profile.rejectFriend('${username}')">✕ Avslå</button>`;
+          <button class="btn btn-primary btn-sm" id="friend-btn-accept" onclick="Profile.acceptFriend('${username}')">${Icon('check')} Aksepter</button>
+          <button class="btn btn-ghost btn-sm" id="friend-btn-reject" onclick="Profile.rejectFriend('${username}')">${Icon('x')} Avslå</button>`;
       } else {
-        friendBtn = `<button class="btn btn-primary btn-sm" id="friend-btn" onclick="Profile.sendFriendRequest('${username}')">👥 Legg til venn</button>`;
+        friendBtn = `<button class="btn btn-primary btn-sm" id="friend-btn" onclick="Profile.sendFriendRequest('${username}')">${Icon('users')} Legg til venn</button>`;
       }
     }
 
@@ -352,7 +352,7 @@ const Profile = (() => {
     const pendingRequests = isOwner ? (user.friendRequests || []) : [];
     const pendingHtml = (isOwner && pendingRequests.length) ? `
       <div class="friend-requests-section">
-        <div class="friend-requests-title">👥 Venneforespørsler (${pendingRequests.length})</div>
+        <div class="friend-requests-title">${Icon('users')} Venneforespørsler (${pendingRequests.length})</div>
         ${pendingRequests.map(r => {
           const requester = Auth.getUser(r.from);
           if (!requester) return '';
@@ -360,8 +360,8 @@ const Profile = (() => {
             <div class="friend-request-row">
               <a href="#/u/${r.from}" class="friend-request-name">${requester.displayName} <span>@${r.from}</span></a>
               <div style="display:flex;gap:0.5rem">
-                <button class="btn btn-primary btn-sm" onclick="Profile.acceptFriend('${r.from}');Profile.renderView('${username}')">✓ Aksepter</button>
-                <button class="btn btn-ghost btn-sm" onclick="Profile.rejectFriend('${r.from}');Profile.renderView('${username}')">✕ Avslå</button>
+                <button class="btn btn-primary btn-sm" onclick="Profile.acceptFriend('${r.from}');Profile.renderView('${username}')">${Icon('check')} Aksepter</button>
+                <button class="btn btn-ghost btn-sm" onclick="Profile.rejectFriend('${r.from}');Profile.renderView('${username}')">${Icon('x')} Avslå</button>
               </div>
             </div>`;
         }).join('')}
@@ -371,7 +371,7 @@ const Profile = (() => {
     const friendsList = Auth.getFriends(username);
     const friendsHtml = friendsList.length ? `
       <div class="friends-section">
-        <div class="friends-title">👥 Venner (${friendsList.length})</div>
+        <div class="friends-title">${Icon('users')} Venner (${friendsList.length})</div>
         <div class="friends-list">
           ${friendsList.map(f => `
             <div class="friend-chip-wrap">
@@ -379,7 +379,7 @@ const Profile = (() => {
                 <div class="friend-chip-avatar">${f.displayName.charAt(0).toUpperCase()}</div>
                 <span>${f.displayName}</span>
               </a>
-              ${current ? `<button class="friend-chip-chat-btn" onclick="event.preventDefault();Router.go('/messages/${f.username}')" title="Send privat melding">💬</button>` : ''}
+              ${current ? `<button class="friend-chip-chat-btn" onclick="event.preventDefault();Router.go('/messages/${f.username}')" title="Send privat melding">${Icon('message')}</button>` : ''}
             </div>`).join('')}
         </div>
       </div>` : '';
@@ -387,9 +387,9 @@ const Profile = (() => {
     // ── Favorite radio ─────────────────────────────────────────────────────
     const favRadioHtml = user.favoriteRadio ? `
       <div class="profile-fav-radio">
-        <span>${user.favoriteRadio.emoji || '📻'}</span>
+        <span>${iconForEmoji(user.favoriteRadio.emoji, 'radio')}</span>
         <span>${user.favoriteRadio.name}</span>
-        <button class="btn btn-ghost btn-sm" onclick="Radio.playUrl('${user.favoriteRadio.url}','${(user.favoriteRadio.name||'Radio').replace(/'/g,"\\'")}','${user.favoriteRadio.emoji||'📻'}')">▶ Lytt</button>
+        <button class="btn btn-ghost btn-sm" onclick="Radio.playUrl('${user.favoriteRadio.url}','${(user.favoriteRadio.name||'Radio').replace(/'/g,"\\'")}','${user.favoriteRadio.emoji||'📻'}')">${Icon('play')} Lytt</button>
       </div>` : '';
 
     const wallCount = (JSON.parse(localStorage.getItem(`pv_wall_${username}`) || '[]')).length;
@@ -401,7 +401,7 @@ const Profile = (() => {
           <div class="profile-hero-bg" style="${heroBgStyle}">${heroBgExtra}</div>
           <div class="profile-hero-overlay"></div>
           ${isOwner ? `<div class="profile-hero-actions">
-            <button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">✏️ Rediger profil</button>
+            <button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('edit')} Rediger profil</button>
             <span style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(0,0,0,0.4);color:#fff;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.15)">${profileVisibility === 'private' ? '🔒 Privat' : '🌐 Offentlig'}</span>
           </div>` : ''}
         </div>
@@ -421,7 +421,7 @@ const Profile = (() => {
               ${friendBtn}
               ${isOwner ? `
                 <button class="btn btn-sm ${profileVisibility === 'private' ? 'btn-primary' : 'btn-ghost'}" onclick="Profile.toggleProfileVisibility('${username}')" title="${profileVisibility === 'private' ? 'Gjør profilen offentlig' : 'Gjør profilen privat'}">${profileVisibility === 'private' ? '🔒 Kun meg' : '🌐 Offentlig'}</button>
-                <button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">⚙️ Rediger</button>` : ''}
+                <button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('settings')} Rediger</button>` : ''}
             </div>
           </div>
 
@@ -435,15 +435,15 @@ const Profile = (() => {
           <!-- Tab bar -->
           <div class="profile-tabs" id="profile-tabs">
             <button class="tab-btn active" data-tab="om" onclick="Profile.switchTab('om')">Om</button>
-            <button class="tab-btn" data-tab="innhold" onclick="Profile.switchTab('innhold')">🎵 Innhold</button>
-            <button class="tab-btn" data-tab="vegg" onclick="Profile.switchTab('vegg')">💬 Vegg${wallCount ? ` (${wallCount})` : ''}</button>
+            <button class="tab-btn" data-tab="innhold" onclick="Profile.switchTab('innhold')">${Icon('music')} Innhold</button>
+            <button class="tab-btn" data-tab="vegg" onclick="Profile.switchTab('vegg')">${Icon('message')} Vegg${wallCount ? ` (${wallCount})` : ''}</button>
           </div>
 
           <!-- OM-fanen -->
           <div class="profile-tab-content" data-tab="om" id="tab-om">
             ${(()=>{const m={lytter:'🎧 Lytter',dj:'🎛️ DJ',produsent:'🎹 Produsent',plateselskap:'🏷️ Plateselskap'};const l=m[user.role||'lytter'];return l?`<div style="margin-bottom:0.75rem"><span class="profile-role-badge" style="background:${theme.primaryColor}33;border:1px solid ${theme.primaryColor}66;color:${theme.textColor}">${l}</span></div>`:'';})()}
             ${user.bio ? `<div class="profile-bio" style="color:${theme.textColor}cc">${user.bio}</div>` : isOwner ? `<div class="profile-bio-empty"><span style="color:${theme.textColor}55">Ingen bio ennå.</span> <a href="#/edit" style="color:${theme.primaryColor || 'var(--accent)'}">+ Legg til bio</a></div>` : ''}
-            ${user.links?.length ? `<div class="profile-links">${user.links.map(l => `<a class="profile-link" href="${l.url}" target="_blank" rel="noopener">🔗 ${l.label}</a>`).join('')}</div>` : ''}
+            ${user.links?.length ? `<div class="profile-links">${user.links.map(l => `<a class="profile-link" href="${l.url}" target="_blank" rel="noopener">${Icon('link')} ${l.label}</a>`).join('')}</div>` : ''}
             ${favRadioHtml}
             ${pendingHtml}
             ${friendsHtml}
@@ -575,7 +575,7 @@ const Profile = (() => {
 
     const ids = user.mediaIds || [];
     if (!ids.length) {
-      el.innerHTML = `<div class="empty-state"><div class="empty-icon">🖼️</div><p>${isOwner ? 'Last opp ditt første bilde eller video!' : 'Ingen medier ennå.'}</p>${isOwner ? `<button class="btn btn-primary mt-2" onclick="Router.go('/edit')">Last opp</button>` : ''}</div>`;
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">${Icon('image')}</div><p>${isOwner ? 'Last opp ditt første bilde eller video!' : 'Ingen medier ennå.'}</p>${isOwner ? `<button class="btn btn-primary mt-2" onclick="Router.go('/edit')">Last opp</button>` : ''}</div>`;
       return;
     }
 
@@ -604,8 +604,8 @@ const Profile = (() => {
         </div>
         ${isVideo ? '<span class="media-badge">VIDEO</span>' : ''}
         <div class="media-item-overlay">
-          <button class="btn-icon" onclick="openMediaModal('${r.id}')" title="Vis">👁</button>
-          ${isOwner ? `<button class="btn-icon btn-danger" onclick="deleteMedia('${r.id}')" title="Slett">🗑</button>` : ''}
+          <button class="btn-icon" onclick="openMediaModal('${r.id}')" title="Vis">${Icon('eye')}</button>
+          ${isOwner ? `<button class="btn-icon btn-danger" onclick="deleteMedia('${r.id}')" title="Slett">${Icon('trash')}</button>` : ''}
         </div>
       </div>`;
   }
@@ -652,20 +652,20 @@ const Profile = (() => {
     const title  = r.name || r.title || 'Untitled';
     return `
       <div class="music-item" id="mitem-${esc(r.id)}">
-        <div class="music-thumb" id="mthumb-${esc(r.id)}" onclick="Profile.playTrack('${esc(username)}', ${index})" style="cursor:pointer">♪</div>
+        <div class="music-thumb" id="mthumb-${esc(r.id)}" onclick="Profile.playTrack('${esc(username)}', ${index})" style="cursor:pointer">${Icon('music')}</div>
         <div class="music-meta" onclick="Profile.playTrack('${esc(username)}', ${index})" style="cursor:pointer;flex:1;min-width:0">
           <div class="music-name">${esc(title)}</div>
           <div class="music-artist">${esc(r.artist || 'Ukjent artist')}</div>
           ${r.description ? `<div class="music-desc">${esc(r.description)}</div>` : ''}
-          ${cat ? `<span class="music-cat-badge">${esc(cat.emoji)} ${esc(cat.label)}</span>` : ''}
+          ${cat ? `<span class="music-cat-badge">${iconForEmoji(cat.emoji)} ${esc(cat.label)}</span>` : ''}
         </div>
         <div class="music-item-right">
           <span class="music-dur">${dur}</span>
-          ${isOwner ? `<label class="music-cover-upload" title="Endre cover" onclick="event.stopPropagation()">📷<input type="file" accept="image/*" style="display:none" onchange="Profile.uploadMusicCover('${esc(r.id)}',this.files[0])"></label>` : ''}
+          ${isOwner ? `<label class="music-cover-upload" title="Endre cover" onclick="event.stopPropagation()">${Icon('camera')}<input type="file" accept="image/*" style="display:none" onchange="Profile.uploadMusicCover('${esc(r.id)}',this.files[0])"></label>` : ''}
           ${isOwner && cat ? `
           <div class="music-demo-wrap">
             <button class="music-demo-btn" title="Send demo til plateselskap"
-              onclick="event.stopPropagation();Profile.toggleDemoMenu('${esc(r.id)}')">✉️ Demo</button>
+              onclick="event.stopPropagation();Profile.toggleDemoMenu('${esc(r.id)}')">${Icon('mail')} Demo</button>
             <div class="music-demo-menu" id="demo-menu-${esc(r.id)}" style="display:none">
               ${cat.labels.map(l => `
                 <a class="music-demo-link"
@@ -703,13 +703,13 @@ const Profile = (() => {
     if (!el) return;
     const ids = user.musicIds || [];
     if (!ids.length) {
-      if (isOwner) el.innerHTML = `<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">🎵</div><p>Last opp musikk i profileditoren</p><button class="btn btn-primary btn-sm mt-2" onclick="Router.go('/edit')">Last opp</button></div>`;
+      if (isOwner) el.innerHTML = `<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">${Icon('music')}</div><p>Last opp musikk i profileditoren</p><button class="btn btn-primary btn-sm mt-2" onclick="Router.go('/edit')">Last opp</button></div>`;
       return;
     }
     const recs = await DB.getAllByIds('music', ids);
     el.innerHTML = `
       <div class="profile-music-section">
-        <div class="profile-music-title">🎵 Musikk</div>
+        <div class="profile-music-title">${Icon('music')} Musikk</div>
         <div class="music-list">${recs.map((r, i) => musicItem(r, i, user.username, isOwner)).join('')}</div>
       </div>`;
     loadMusicCoverArts(recs);
@@ -735,7 +735,7 @@ const Profile = (() => {
         .catch(() => {});
     }
 
-    App.toast(`Venneforespørsel sendt til @${targetUsername} 👥`, 'success');
+    App.toast(`Venneforespørsel sendt til @${targetUsername} ${Icon('users')}`, 'success');
     App.renderNav();
     renderView(targetUsername);
   }
@@ -745,7 +745,7 @@ const Profile = (() => {
     if (!current) return;
     const result = Auth.acceptFriendRequest(current.username, fromUsername);
     if (result.error) { App.toast(result.error, 'error'); return; }
-    App.toast(`Du er nå venner med @${fromUsername}! 🎉`, 'success');
+    App.toast(`Du er nå venner med @${fromUsername}! ${Icon('party')}`, 'success');
     App.renderNav();
     renderView(current.username);
   }
@@ -791,7 +791,7 @@ const Profile = (() => {
       <!-- SIDEBAR -->
       <div class="editor-sidebar">
         <div class="editor-panel" style="margin-bottom:1rem">
-          <div class="editor-panel-header">👤 Profil</div>
+          <div class="editor-panel-header">${Icon('user')} Profil</div>
           <div class="editor-panel-body">
             <div class="form-group">
               <label class="form-label">Visningsnavn</label>
@@ -808,20 +808,20 @@ const Profile = (() => {
                 <input class="chip-input" id="link-input" placeholder="https://…" title="Skriv URL og trykk Enter">
               </div>
             </div>
-            <button class="btn btn-primary w-full" onclick="Profile.saveProfile()">💾 Lagre profil</button>
+            <button class="btn btn-primary w-full" onclick="Profile.saveProfile()">${Icon('save')} Lagre profil</button>
           </div>
         </div>
 
         <!-- VISIBILITY PANEL -->
         <div class="editor-panel" style="margin-bottom:1rem">
-          <div class="editor-panel-header">🔒 Synlighet</div>
+          <div class="editor-panel-header">${Icon('lock')} Synlighet</div>
           <div class="editor-panel-body">
             <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.75rem;line-height:1.5">
               Velg hvem som kan se profilen din — uansett om du er DJ, artist, plateselskap eller bare her for å sosialisere.
             </p>
             <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
-              <button id="vis-public-btn" class="btn btn-sm ${(current.profileVisibility || 'public') === 'public' ? 'btn-primary' : 'btn-ghost'}" style="flex:1" onclick="Profile.setProfileVisibility('public')">🌐 Offentlig</button>
-              <button id="vis-private-btn" class="btn btn-sm ${(current.profileVisibility || 'public') === 'private' ? 'btn-primary' : 'btn-ghost'}" style="flex:1" onclick="Profile.setProfileVisibility('private')">🔒 Kun meg</button>
+              <button id="vis-public-btn" class="btn btn-sm ${(current.profileVisibility || 'public') === 'public' ? 'btn-primary' : 'btn-ghost'}" style="flex:1" onclick="Profile.setProfileVisibility('public')">${Icon('globe')} Offentlig</button>
+              <button id="vis-private-btn" class="btn btn-sm ${(current.profileVisibility || 'public') === 'private' ? 'btn-primary' : 'btn-ghost'}" style="flex:1" onclick="Profile.setProfileVisibility('private')">${Icon('lock')} Kun meg</button>
             </div>
             <p id="vis-desc" style="font-size:0.75rem;color:var(--text3);line-height:1.5;margin:0">
               ${(current.profileVisibility || 'public') === 'private'
@@ -833,33 +833,33 @@ const Profile = (() => {
 
         <!-- ROLES PANEL -->
         <div class="editor-panel" style="margin-bottom:1rem">
-          <div class="editor-panel-header">🎭 Din rolle</div>
+          <div class="editor-panel-header">${Icon('film')} Din rolle</div>
           <div class="editor-panel-body">
             <div class="role-selector" id="ed-role-selector">
-              ${[['lytter','🎧','Lytter'],['dj','🎛️','DJ'],['produsent','🎹','Produsent'],['plateselskap','🏷️','Plateselskap']].map(([val,emoji,label]) => `<label class="role-option" onclick="Profile.selectEditorRole('${val}',this)"><input type="radio" name="ed-role" value="${val}" ${(current.role||'lytter')===val?'checked':''} style="display:none"><div class="role-option-inner ${(current.role||'lytter')===val?'active':''}"><span class="role-option-emoji">${emoji}</span><span class="role-option-label">${label}</span></div></label>`).join('')}
+              ${[['lytter','🎧','Lytter'],['dj','🎛️','DJ'],['produsent','🎹','Produsent'],['plateselskap','🏷️','Plateselskap']].map(([val,emoji,label]) => `<label class="role-option" onclick="Profile.selectEditorRole('${val}',this)"><input type="radio" name="ed-role" value="${val}" ${(current.role||'lytter')===val?'checked':''} style="display:none"><div class="role-option-inner ${(current.role||'lytter')===val?'active':''}"><span class="role-option-emoji">${iconForEmoji(emoji)}</span><span class="role-option-label">${label}</span></div></label>`).join('')}
             </div>
-            <button class="btn btn-ghost btn-sm w-full" style="margin-top:0.75rem" onclick="Profile.saveProfile()">💾 Lagre rolle</button>
+            <button class="btn btn-ghost btn-sm w-full" style="margin-top:0.75rem" onclick="Profile.saveProfile()">${Icon('save')} Lagre rolle</button>
           </div>
         </div>
 
         <!-- AI CHAT PANEL -->
         <div class="editor-panel">
-          <div class="editor-panel-header">🤖 AI Design-assistent</div>
+          <div class="editor-panel-header">${Icon('bot')} AI Design-assistent</div>
           <div class="ai-chat-panel-body">
-            ${!AI.hasKey() ? `<div class="ai-no-key-banner">⚠️ <a href="#/settings" style="color:var(--accent)">Legg til Claude API-nøkkel</a> for å bruke AI-chatten.</div>` : ''}
+            ${!AI.hasKey() ? `<div class="ai-no-key-banner">${Icon('alert')} <a href="#/settings" style="color:var(--accent)">Legg til Claude API-nøkkel</a> for å bruke AI-chatten.</div>` : ''}
             <div class="ai-chat-window" id="ai-chat-window">
-              <div class="ai-chat-bubble ai-chat-bubble--bot">👋 Hei! Jeg er din AI design-assistent. Beskriv stilen du vil ha — f.eks. <em>"kosmisk og mørk"</em>, <em>"neon DJ-vibes"</em> — eller spør meg om farger, layout og bio!</div>
+              <div class="ai-chat-bubble ai-chat-bubble--bot">${Icon('smile')} Hei! Jeg er din AI design-assistent. Beskriv stilen du vil ha — f.eks. <em>"kosmisk og mørk"</em>, <em>"neon DJ-vibes"</em> — eller spør meg om farger, layout og bio!</div>
             </div>
             <div class="ai-chat-quick">
-              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Lag en fargepalett for en psykedelisk DJ-profil')">🎨 DJ farger</button>
-              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Skriv en bio basert på profilen min')">✍️ Bio</button>
-              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Foreslå beste layout og font for meg')">📐 Layout</button>
-              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Hvilke seksjoner bør jeg ha på profilen min?')">💡 Tips</button>
+              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Lag en fargepalett for en psykedelisk DJ-profil')">${Icon('palette')} DJ farger</button>
+              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Skriv en bio basert på profilen min')">${Icon('edit')} Bio</button>
+              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Foreslå beste layout og font for meg')">${Icon('edit')} Layout</button>
+              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Hvilke seksjoner bør jeg ha på profilen min?')">${Icon('lightbulb')} Tips</button>
             </div>
             <div class="ai-chat-input-row">
               <input class="form-input" id="ai-chat-input" placeholder="Spør AI-en om design…"
                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();Profile.sendAiChat()}">
-              <button class="btn btn-primary ai-chat-send-btn" id="ai-chat-send" onclick="Profile.sendAiChat()">↑</button>
+              <button class="btn btn-primary ai-chat-send-btn" id="ai-chat-send" onclick="Profile.sendAiChat()">${Icon('arrow-up')}</button>
             </div>
           </div>
         </div>
@@ -871,17 +871,17 @@ const Profile = (() => {
         <div class="editor-panel">
           <div class="editor-panel-header">
             <div class="profile-tabs" style="border:none;margin:0">
-              <button class="tab-btn active" onclick="switchEditorTab('theme',this)" data-tab="theme">🎨 Utseende</button>
-              <button class="tab-btn" onclick="switchEditorTab('media',this)" data-tab="media">📷 Medier</button>
-              <button class="tab-btn" onclick="switchEditorTab('music',this)" data-tab="music">🎵 Musikk</button>
-              <button class="tab-btn" onclick="switchEditorTab('avatar',this)" data-tab="avatar">👤 Avatar/Banner</button>
-              <button class="tab-btn" onclick="switchEditorTab('events',this)" data-tab="events">📅 Events</button>
-              <button class="tab-btn" onclick="switchEditorTab('festivals',this)" data-tab="festivals">🎪 Festivaler</button>
-              <button class="tab-btn" onclick="switchEditorTab('mixes',this)" data-tab="mixes">🎛️ DJ Mixes</button>
-              <button class="tab-btn" onclick="switchEditorTab('labels',this)" data-tab="labels">🏷️ Plateselskaper</button>
-              <button class="tab-btn" onclick="switchEditorTab('platforms',this)" data-tab="platforms">🖥️ Plattformer</button>
-              <button class="tab-btn" onclick="switchEditorTab('mysites',this)" data-tab="mysites">🌐 Mine Sider</button>
-              <button class="tab-btn" onclick="switchEditorTab('mypage',this)" data-tab="mypage">🌀 Min Side</button>
+              <button class="tab-btn active" onclick="switchEditorTab('theme',this)" data-tab="theme">${Icon('palette')} Utseende</button>
+              <button class="tab-btn" onclick="switchEditorTab('media',this)" data-tab="media">${Icon('camera')} Medier</button>
+              <button class="tab-btn" onclick="switchEditorTab('music',this)" data-tab="music">${Icon('music')} Musikk</button>
+              <button class="tab-btn" onclick="switchEditorTab('avatar',this)" data-tab="avatar">${Icon('user')} Avatar/Banner</button>
+              <button class="tab-btn" onclick="switchEditorTab('events',this)" data-tab="events">${Icon('calendar')} Events</button>
+              <button class="tab-btn" onclick="switchEditorTab('festivals',this)" data-tab="festivals">${Icon('star')} Festivaler</button>
+              <button class="tab-btn" onclick="switchEditorTab('mixes',this)" data-tab="mixes">${Icon('sliders')} DJ Mixes</button>
+              <button class="tab-btn" onclick="switchEditorTab('labels',this)" data-tab="labels">${Icon('tag')} Plateselskaper</button>
+              <button class="tab-btn" onclick="switchEditorTab('platforms',this)" data-tab="platforms">${Icon('laptop')} Plattformer</button>
+              <button class="tab-btn" onclick="switchEditorTab('mysites',this)" data-tab="mysites">${Icon('globe')} Mine Sider</button>
+              <button class="tab-btn" onclick="switchEditorTab('mypage',this)" data-tab="mypage">${Icon('wind')} Min Side</button>
             </div>
           </div>
           <div class="editor-panel-body">
@@ -934,7 +934,7 @@ const Profile = (() => {
 
         <!-- Live preview -->
         <div class="editor-panel" style="margin-top:1rem">
-          <div class="editor-panel-header">👁 Live forhåndsvisning</div>
+          <div class="editor-panel-header">${Icon('eye')} Live forhåndsvisning</div>
           <div class="editor-panel-body" id="theme-preview-wrap" style="padding:0;overflow:hidden;border-radius:0 0 20px 20px">
             <div id="theme-preview" style="padding:1.5rem;min-height:120px;transition:all 0.3s">
               <div style="display:flex;align-items:center;gap:1rem">
@@ -950,8 +950,8 @@ const Profile = (() => {
         </div>
 
         <div style="display:flex;gap:0.75rem;margin-top:1rem">
-          <button class="btn btn-primary" onclick="Profile.saveProfile()">💾 Lagre alle endringer</button>
-          <a href="#/u/${current.username}" class="btn btn-ghost">👁 Se profil</a>
+          <button class="btn btn-primary" onclick="Profile.saveProfile()">${Icon('save')} Lagre alle endringer</button>
+          <a href="#/u/${current.username}" class="btn btn-ghost">${Icon('eye')} Se profil</a>
         </div>
       </div>
     </div>`;
@@ -972,7 +972,7 @@ const Profile = (() => {
   }
 
   function themeEditorHtml(t) {
-    const fonts  = ['Inter','Space Grotesk','Playfair Display','Rajdhani','Nunito'];
+    const fonts  = ['Inter','Space Grotesk'];
     const bgTypes = ['color','gradient','image','video','music'];
     const userTracks = (Auth.current()?.musicIds || []);
     return `
@@ -1006,16 +1006,16 @@ const Profile = (() => {
           </div>
           <div id="bg-image-opt" class="${t.bgType !== 'image' ? 'hidden' : ''}">
             <div class="upload-zone" onclick="document.getElementById('bg-image-file').click()">
-              <div class="upload-icon">🖼️</div>
+              <div class="upload-icon">${Icon('image')}</div>
               <div>Klikk for å laste opp bakgrunnsbilde</div>
             </div>
             <input type="file" id="bg-image-file" accept="image/*" style="display:none" onchange="Profile.uploadBgImage(this)">
             ${t.bgImage ? `<img src="${t.bgImage}" style="width:100%;height:80px;object-fit:cover;border-radius:8px;margin-top:0.5rem" id="bg-preview">` : '<div id="bg-preview"></div>'}
-            <button class="paint-open-btn" id="open-paint-btn" onclick="Profile.openImagePaintEditor()" ${!t.bgImage ? 'style="display:none"' : ''}>🎨 Åpne i bilderedigerer</button>
+            <button class="paint-open-btn" id="open-paint-btn" onclick="Profile.openImagePaintEditor()" ${!t.bgImage ? 'style="display:none"' : ''}>${Icon('palette')} Åpne i bilderedigerer</button>
           </div>
           <div id="bg-video-opt" class="${t.bgType !== 'video' ? 'hidden' : ''}">
             <div class="upload-zone" onclick="document.getElementById('bg-video-file').click()">
-              <div class="upload-icon">🎬</div>
+              <div class="upload-icon">${Icon('film')}</div>
               <div>Klikk for å laste opp bakgrunnsvideo</div>
             </div>
             <input type="file" id="bg-video-file" accept="video/*" style="display:none" onchange="Profile.uploadBgVideo(this)">
@@ -1043,8 +1043,8 @@ const Profile = (() => {
             ${filterSlider('Svart/Hvitt','f-grayscale', t.bgImageFilters?.grayscale  ?? 0, 0, 100)}
           </div>
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
-            <button class="paint-open-btn" style="width:auto;padding:4px 10px;font-size:0.75rem" onclick="document.getElementById('f-grayscale').value=100;document.getElementById('f-grayscale-val').textContent=100;document.getElementById('f-saturation').value=0;document.getElementById('f-saturation-val').textContent=0;Profile.livePreview()">⬛ Svart/Hvitt</button>
-            <button class="paint-open-btn" style="width:auto;padding:4px 10px;font-size:0.75rem;background:#6d28d9" onclick="document.getElementById('f-brightness').value=100;document.getElementById('f-brightness-val').textContent=100;document.getElementById('f-contrast').value=100;document.getElementById('f-contrast-val').textContent=100;document.getElementById('f-saturation').value=100;document.getElementById('f-saturation-val').textContent=100;document.getElementById('f-hue').value=0;document.getElementById('f-hue-val').textContent=0;document.getElementById('f-grayscale').value=0;document.getElementById('f-grayscale-val').textContent=0;Profile.livePreview()">↺ Tilbakestill</button>
+            <button class="paint-open-btn" style="width:auto;padding:4px 10px;font-size:0.75rem" onclick="document.getElementById('f-grayscale').value=100;document.getElementById('f-grayscale-val').textContent=100;document.getElementById('f-saturation').value=0;document.getElementById('f-saturation-val').textContent=0;Profile.livePreview()">${Icon('square')} Svart/Hvitt</button>
+            <button class="paint-open-btn" style="width:auto;padding:4px 10px;font-size:0.75rem;background:#6d28d9" onclick="document.getElementById('f-brightness').value=100;document.getElementById('f-brightness-val').textContent=100;document.getElementById('f-contrast').value=100;document.getElementById('f-contrast-val').textContent=100;document.getElementById('f-saturation').value=100;document.getElementById('f-saturation-val').textContent=100;document.getElementById('f-hue').value=0;document.getElementById('f-hue-val').textContent=0;document.getElementById('f-grayscale').value=0;document.getElementById('f-grayscale-val').textContent=0;Profile.livePreview()">${Icon('rotate-ccw')} Tilbakestill</button>
           </div>
         </div>
 
@@ -1075,7 +1075,7 @@ const Profile = (() => {
   function mediaUploadHtml() {
     return `
       <div class="upload-zone" id="media-dropzone" onclick="document.getElementById('media-file-input').click()">
-        <div class="upload-icon">📷</div>
+        <div class="upload-icon">${Icon('camera')}</div>
         <div style="font-weight:600;margin-bottom:0.25rem">Klikk eller dra for å laste opp</div>
         <div style="font-size:0.8rem;color:var(--text3)">Bilder og videoer støttes</div>
       </div>
@@ -1088,7 +1088,7 @@ const Profile = (() => {
   function musicUploadHtml() {
     return `
       <div class="upload-zone" onclick="document.getElementById('music-file-input').click()">
-        <div class="upload-icon">🎵</div>
+        <div class="upload-icon">${Icon('music')}</div>
         <div style="font-weight:600;margin-bottom:0.25rem">Last opp musikk</div>
         <div style="font-size:0.8rem;color:var(--text3)">MP3, WAV, AAC, FLAC støttes</div>
       </div>
@@ -1104,7 +1104,7 @@ const Profile = (() => {
         <div>
           <div class="editor-section-title">Profilbilde (Avatar)</div>
           <div class="upload-zone" onclick="document.getElementById('avatar-input').click()">
-            <div class="upload-icon">👤</div>
+            <div class="upload-icon">${Icon('user')}</div>
             <div>Last opp profilbilde</div>
           </div>
           <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="Profile.uploadAvatar(this)">
@@ -1113,7 +1113,7 @@ const Profile = (() => {
         <div>
           <div class="editor-section-title">Banner</div>
           <div class="upload-zone" onclick="document.getElementById('banner-input').click()">
-            <div class="upload-icon">🖼️</div>
+            <div class="upload-icon">${Icon('image')}</div>
             <div>Last opp banner</div>
           </div>
           <input type="file" id="banner-input" accept="image/*" style="display:none" onchange="Profile.uploadBanner(this)">
@@ -1134,7 +1134,7 @@ const Profile = (() => {
     return `<div class="layout-option ${current===val?'active':''}" onclick="setLayout('${val}',this)"><span>${icon}</span>${label}</div>`;
   }
   function chipHtml(l) {
-    return `<span class="chip">${l.label || l.url}<button onclick="Profile.removeLink(this,'${l.url}')" title="Fjern">✕</button></span>`;
+    return `<span class="chip">${l.label || l.url}<button onclick="Profile.removeLink(this,'${l.url}')" title="Fjern">${Icon('x')}</button></span>`;
   }
 
   function bindEditorEvents(t) {
@@ -1147,7 +1147,7 @@ const Profile = (() => {
         const label = url.replace(/^https?:\/\//, '').split('/')[0];
         const chip = document.createElement('span');
         chip.className = 'chip';
-        chip.innerHTML = `${label}<button onclick="Profile.removeLink(this,'${url}')" title="Fjern">✕</button>`;
+        chip.innerHTML = `${label}<button onclick="Profile.removeLink(this,'${url}')" title="Fjern">${Icon('x')}</button>`;
         chip.dataset.url = url;
         li.parentNode.insertBefore(chip, li);
         li.value = '';
@@ -1247,20 +1247,20 @@ const Profile = (() => {
         <div class="mix-sub-banner">
           <div class="mix-sub-banner-inner">
             <div>
-              <div class="mix-sub-title">🎛️ DJ Mix Opplasting</div>
+              <div class="mix-sub-title">${Icon('sliders')} DJ Mix Opplasting</div>
               <div class="mix-sub-desc">Gratis: Opplasting med offentlig synlighet · <strong>Pro:</strong> Privat/offentlig valgfritt</div>
             </div>
-            <button class="btn btn-gold btn-sm" onclick="Profile.upgradeToPro()">⭐ Oppgrader til Pro</button>
+            <button class="btn btn-gold btn-sm" onclick="Profile.upgradeToPro()">${Icon('star')} Oppgrader til Pro</button>
           </div>
         </div>` : `
         <div class="mix-sub-banner mix-sub-banner--pro">
           <div class="mix-sub-banner-inner">
-            <span class="mix-pro-badge">⭐ Pro</span>
+            <span class="mix-pro-badge">${Icon('star')} Pro</span>
             <span style="font-size:0.85rem;color:var(--text2)">Privat mixes aktivert · ubegrenset lagring</span>
           </div>
         </div>`}
         <div class="upload-zone" id="mix-dropzone" onclick="document.getElementById('mix-file-input').click()">
-          <div class="upload-icon">🎛️</div>
+          <div class="upload-icon">${Icon('sliders')}</div>
           <div style="font-weight:600;margin-bottom:0.25rem">Last opp DJ Mix</div>
           <div style="font-size:0.8rem;color:var(--text3)">MP3, WAV, AAC, FLAC · 1 minutt – 20 timer per mix</div>
         </div>
@@ -1277,7 +1277,7 @@ const Profile = (() => {
     const allIds = user.mixIds || [];
     if (!allIds.length) {
       if (isOwner) {
-        el.innerHTML = `<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">🎛️</div><p>Last opp din første DJ mix i profileditoren</p><button class="btn btn-primary btn-sm mt-2" onclick="Router.go('/edit')">Last opp</button></div>`;
+        el.innerHTML = `<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">${Icon('sliders')}</div><p>Last opp din første DJ mix i profileditoren</p><button class="btn btn-primary btn-sm mt-2" onclick="Router.go('/edit')">Last opp</button></div>`;
       } else {
         el.innerHTML = '';
       }
@@ -1293,7 +1293,7 @@ const Profile = (() => {
     const labels = user.labels || [];
     el.innerHTML = `
       <div class="profile-mixes-section">
-        <div class="profile-mixes-title">🎛️ DJ Mixes</div>
+        <div class="profile-mixes-title">${Icon('sliders')} DJ Mixes</div>
         <div class="mixes-list" id="mixes-view-list">
           ${visible.map(r => mixViewCard(r, isOwner, user.username, labels)).join('')}
         </div>
@@ -1309,7 +1309,7 @@ const Profile = (() => {
     return `
       <div class="mix-card" id="mixcard-${r.id}">
         <div class="mix-card-body">
-          <div class="mix-card-cover" id="mixcover-${r.id}">🎛️</div>
+          <div class="mix-card-cover" id="mixcover-${r.id}">${Icon('sliders')}</div>
           <div class="mix-card-meta">
             <div class="mix-card-title">${r.title || r.name}</div>
             ${r.description ? `<div class="mix-card-desc">${r.description}</div>` : ''}
@@ -1319,16 +1319,16 @@ const Profile = (() => {
             </div>
           </div>
           <div class="mix-card-actions">
-            <button class="mix-play-btn" onclick="Profile.playMix('${r.id}','${(r.title||r.name).replace(/'/g,"\\'")}')">▶ Spill</button>
+            <button class="mix-play-btn" onclick="Profile.playMix('${r.id}','${(r.title||r.name).replace(/'/g,"\\'")}')">${Icon('play')} Spill</button>
             ${isOwner ? `
-              <button class="btn btn-ghost btn-sm" onclick="Profile.openMixEditModal('${r.id}','${username}')">✏️ Rediger</button>
+              <button class="btn btn-ghost btn-sm" onclick="Profile.openMixEditModal('${r.id}','${username}')">${Icon('edit')} Rediger</button>
               <button class="btn-icon" onclick="Profile.toggleMixVisibility('${r.id}','${username}')" title="${isPrivate ? 'Gjør offentlig' : 'Gjør privat'}">${isPrivate ? '🌐' : '🔒'}</button>
-              <button class="btn-icon btn-danger" onclick="Profile.deleteMix('${r.id}','${username}')" title="Slett">🗑</button>` : ''}
+              <button class="btn-icon btn-danger" onclick="Profile.deleteMix('${r.id}','${username}')" title="Slett">${Icon('trash')}</button>` : ''}
           </div>
         </div>
         ${(r.tracklist && r.tracklist.length) ? mixTracklistHtml(r.tracklist, labels) : ''}
         <div class="mix-comments-section">
-          <div class="mix-comments-title">💬 Kommentarer (${comments.length})</div>
+          <div class="mix-comments-title">${Icon('message')} Kommentarer (${comments.length})</div>
           <div class="mix-comments-list" id="mix-comments-${r.id}">
             ${comments.slice(-5).map(c => `
               <div class="mix-comment">
@@ -1372,7 +1372,7 @@ const Profile = (() => {
           ${t.artist ? `<span class="tl-artist">${t.artist}</span><span class="tl-sep">–</span>` : ''}
           <span class="tl-title">${t.title || 'Ukjent spor'}</span>
           ${label ? `<span class="tl-label-badge">${label.name}</span>` : ''}
-          ${t.purchaseUrl ? `<a class="tl-buy-link" href="${t.purchaseUrl}" target="_blank" rel="noopener noreferrer">🛒 Kjøp</a>` : ''}
+          ${t.purchaseUrl ? `<a class="tl-buy-link" href="${t.purchaseUrl}" target="_blank" rel="noopener noreferrer">${Icon('cart')} Kjøp</a>` : ''}
         </div>`;
     }).join('');
     return `
@@ -1413,15 +1413,15 @@ const Profile = (() => {
             <div class="name">${t.artist ? `${t.artist} – ` : ''}${t.title || 'Ukjent'}</div>
             <div class="sub">${label ? label.name : ''}${t.purchaseUrl ? ' · 🛒' : ''}</div>
           </div>
-          <button class="btn-icon btn-danger btn-sm" onclick="Profile.removeTrackFromModal('${t.id}')">🗑</button>
+          <button class="btn-icon btn-danger btn-sm" onclick="Profile.removeTrackFromModal('${t.id}')">${Icon('trash')}</button>
         </div>`;
     }).join('');
 
     const box = document.getElementById('modal-box');
     box.innerHTML = `
       <div class="modal-header">
-        <h2>✏️ Rediger mix</h2>
-        <button class="btn-icon" onclick="App.closeModal()">✕</button>
+        <h2>${Icon('edit')} Rediger mix</h2>
+        <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
       </div>
       <div class="mix-edit-modal" id="mix-edit-modal-body">
         <input type="hidden" id="mxed-mix-id" value="${mixId}">
@@ -1448,13 +1448,13 @@ const Profile = (() => {
           <input class="form-input" id="tled-artist" placeholder="Artist" style="min-width:100px;flex:2">
           <select class="form-input" id="tled-label" style="min-width:120px;flex:2">${labelOptions}</select>
           <input class="form-input" id="tled-url" placeholder="Kjøpslenke (URL)" style="min-width:130px;flex:3">
-          <button class="btn btn-ghost btn-sm" title="Søk på Google" onclick="Profile.searchTrackOnGoogle()" style="flex-shrink:0">🔍</button>
+          <button class="btn btn-ghost btn-sm" title="Søk på Google" onclick="Profile.searchTrackOnGoogle()" style="flex-shrink:0">${Icon('search')}</button>
           <button class="btn btn-primary btn-sm" onclick="Profile.addTrackToModal()">+ Legg til</button>
         </div>
         <div id="tled-track-list">${trackRows || '<p style="font-size:0.8rem;opacity:0.45;margin:0">Ingen spor lagt til ennå.</p>'}</div>
 
         <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
-          <button class="btn btn-primary" onclick="Profile.saveMixEdits()">💾 Lagre</button>
+          <button class="btn btn-primary" onclick="Profile.saveMixEdits()">${Icon('save')} Lagre</button>
           <button class="btn btn-ghost" onclick="App.closeModal()">Avbryt</button>
         </div>
       </div>`;
@@ -1528,7 +1528,7 @@ const Profile = (() => {
           <div class="name">${track.artist ? `${track.artist} – ` : ''}${track.title}</div>
           <div class="sub">${label ? label.name : ''}${track.purchaseUrl ? ' · 🛒' : ''}</div>
         </div>
-        <button class="btn-icon btn-danger btn-sm" onclick="Profile.removeTrackFromModal('${track.id}')">🗑</button>`;
+        <button class="btn-icon btn-danger btn-sm" onclick="Profile.removeTrackFromModal('${track.id}')">${Icon('trash')}</button>`;
       listEl.appendChild(row);
     }
     if (titleEl)  titleEl.value  = '';
@@ -1647,7 +1647,7 @@ const Profile = (() => {
       listEl.appendChild(div);
     }
     const titleEl = listEl?.closest('.mix-comments-section')?.querySelector('.mix-comments-title');
-    if (titleEl) titleEl.textContent = `💬 Kommentarer (${comments.length})`;
+    if (titleEl) titleEl.textContent = `${Icon('message')} Kommentarer (${comments.length})`;
   }
 
   // ── Profile tab switching ─────────────────────────────────────────────
@@ -1690,12 +1690,12 @@ const Profile = (() => {
               <a class="wall-post-name" href="#/u/${p.fromUsername}">${esc(p.fromDisplayName)}</a>
               <span class="wall-post-username">@${esc(p.fromUsername)}</span>
               <span class="wall-post-time">${timeAgo(p.ts)}</span>
-              ${canDelete ? `<button class="wall-post-delete" onclick="Profile.deleteWallComment('${username}','${p.id}')" title="Slett">✕</button>` : ''}
+              ${canDelete ? `<button class="wall-post-delete" onclick="Profile.deleteWallComment('${username}','${p.id}')" title="Slett">${Icon('x')}</button>` : ''}
             </div>
             <div class="wall-post-text">${esc(p.text)}</div>
           </div>
         </div>`;
-    }).join('') : `<div class="empty-state" style="padding:2.5rem 0"><div class="empty-icon">💬</div><p>Ingen innlegg ennå. Vær den første!</p></div>`;
+    }).join('') : `<div class="empty-state" style="padding:2.5rem 0"><div class="empty-icon">${Icon('message')}</div><p>Ingen innlegg ennå. Vær den første!</p></div>`;
 
     el.innerHTML = `<div class="wall-wrap">${inputHtml}${postsHtml}</div>`;
   }
@@ -1719,7 +1719,7 @@ const Profile = (() => {
     renderWallTab(username, Auth.getUser(username)?.username === current.username);
     // Update wall count in tab button
     const tabBtn = document.querySelector('#profile-tabs .tab-btn[data-tab="vegg"]');
-    if (tabBtn) tabBtn.textContent = `💬 Vegg (${wall.length})`;
+    if (tabBtn) tabBtn.textContent = `${Icon('message')} Vegg (${wall.length})`;
     const statEl = document.querySelector('.profile-stats .stat:last-child .stat-value');
     if (statEl) statEl.textContent = wall.length;
   }
@@ -1738,7 +1738,7 @@ const Profile = (() => {
     localStorage.setItem(key, JSON.stringify(wall));
     document.getElementById(`wallpost-${commentId}`)?.remove();
     const tabBtn = document.querySelector('#profile-tabs .tab-btn[data-tab="vegg"]');
-    if (tabBtn) tabBtn.textContent = wall.length ? `💬 Vegg (${wall.length})` : '💬 Vegg';
+    if (tabBtn) tabBtn.textContent = wall.length ? `${Icon('message')} Vegg (${wall.length})` : '💬 Vegg';
     const statEl = document.querySelector('.profile-stats .stat:last-child .stat-value');
     if (statEl) statEl.textContent = wall.length;
   }
@@ -1752,14 +1752,14 @@ const Profile = (() => {
     const isPro = user.subscription === 'pro';
     list.innerHTML = recs.map(r => `
       <div class="mix-editor-item" id="mixedit-${r.id}">
-        <div class="mix-card-cover" id="mixcover-edit-${r.id}" style="width:36px;height:36px;font-size:1.1rem;border-radius:7px;flex-shrink:0">🎛️</div>
+        <div class="mix-card-cover" id="mixcover-edit-${r.id}" style="width:36px;height:36px;font-size:1.1rem;border-radius:7px;flex-shrink:0">${Icon('sliders')}</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:0.88rem">${r.title || r.name}</div>
           <div style="font-size:0.75rem;color:var(--text2)">${formatDuration(r.duration || 0)} · ${r.visibility === 'private' ? '🔒 Privat' : '🌐 Offentlig'}${(r.tracklist && r.tracklist.length) ? ` · ${r.tracklist.length} spor` : ''}</div>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="Profile.openMixEditModal('${r.id}','${user.username}')">✏️</button>
+        <button class="btn btn-ghost btn-sm" onclick="Profile.openMixEditModal('${r.id}','${user.username}')">${Icon('edit')}</button>
         ${isPro ? `<button class="btn btn-ghost btn-sm" onclick="Profile.toggleMixVisibility('${r.id}','${user.username}')">${r.visibility === 'private' ? '🌐' : '🔒'}</button>` : ''}
-        <button class="btn-icon btn-danger" onclick="Profile.deleteMix('${r.id}','${user.username}')" title="Slett">🗑</button>
+        <button class="btn-icon btn-danger" onclick="Profile.deleteMix('${r.id}','${user.username}')" title="Slett">${Icon('trash')}</button>
       </div>`).join('');
     recs.forEach(r => {
       if (r.coverMediaId) {
@@ -1806,7 +1806,7 @@ const Profile = (() => {
       });
       current.mixIds = [...(current.mixIds || []), id];
       Auth.updateUser(current.username, { mixIds: current.mixIds });
-      if (progressEl) { row.innerHTML = `✅ ${file.name}`; setTimeout(() => row.remove(), 2000); }
+      if (progressEl) { row.innerHTML = `${Icon('check-circle')} ${file.name}`; setTimeout(() => row.remove(), 2000); }
     }
     loadEditorMixes(Auth.current());
     App.toast('Mix lastet opp! 🎛️', 'success');
@@ -1818,21 +1818,21 @@ const Profile = (() => {
     const box = document.getElementById('modal-box');
     box.innerHTML = `
       <div class="modal-header">
-        <h2>⭐ Oppgrader til Pro</h2>
-        <button class="btn-icon" onclick="App.closeModal()">✕</button>
+        <h2>${Icon('star')} Oppgrader til Pro</h2>
+        <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
       </div>
       <div style="padding:1.5rem 0">
         <div class="mix-pro-feature-list">
-          <div class="mix-pro-feature">🔒 Privat/offentlig synlighet på mixes</div>
-          <div class="mix-pro-feature">🎛️ Last opp mixes fra 1 minutt til 20 timer</div>
-          <div class="mix-pro-feature">⭐ Pro-badge på profil</div>
+          <div class="mix-pro-feature">${Icon('lock')} Privat/offentlig synlighet på mixes</div>
+          <div class="mix-pro-feature">${Icon('sliders')} Last opp mixes fra 1 minutt til 20 timer</div>
+          <div class="mix-pro-feature">${Icon('star')} Pro-badge på profil</div>
         </div>
         <div class="mix-pro-price">150 NOK / mnd</div>
         <p style="font-size:0.78rem;color:var(--text3);margin-bottom:1.25rem">
           Sikker betaling via Stripe. Avbryt når som helst.
         </p>
         <button class="btn btn-gold w-full" id="stripe-pay-btn" onclick="Profile.startStripeCheckout()">
-          💳 Betal med Stripe
+          ${Icon('credit-card')} Betal med Stripe
         </button>
         <div id="stripe-pay-error" style="display:none;margin-top:0.75rem;font-size:0.82rem;color:var(--red)"></div>
         <p style="font-size:0.72rem;color:var(--text3);margin-top:1rem;text-align:center">
@@ -1881,7 +1881,7 @@ const Profile = (() => {
       await DB.storeFile('media', id, file);
       current.mediaIds = [...(current.mediaIds || []), id];
       Auth.updateUser(current.username, { mediaIds: current.mediaIds });
-      if (listEl) { row.innerHTML = `✅ ${file.name}`; setTimeout(() => row.remove(), 2000); }
+      if (listEl) { row.innerHTML = `${Icon('check-circle')} ${file.name}`; setTimeout(() => row.remove(), 2000); }
     }
     loadEditorMedia(Auth.current());
     App.toast('Medier lastet opp!', 'success');
@@ -1910,7 +1910,7 @@ const Profile = (() => {
       await DB.storeFile('music', id, file, { name, artist: '', duration, coverMediaId: null });
       current.musicIds = [...(current.musicIds || []), id];
       Auth.updateUser(current.username, { musicIds: current.musicIds });
-      if (listEl) { row.innerHTML = `✅ ${file.name}`; setTimeout(() => row.remove(), 2000); }
+      if (listEl) { row.innerHTML = `${Icon('check-circle')} ${file.name}`; setTimeout(() => row.remove(), 2000); }
     }
     loadEditorMusic(Auth.current());
     App.toast('Musikk lastet opp!', 'success');
@@ -2089,7 +2089,7 @@ const Profile = (() => {
       resultEl.innerHTML = `<strong>Foreslått bio:</strong><br>${bio}<br><button class="btn btn-primary btn-sm" style="margin-top:0.5rem" onclick="document.getElementById('ed-bio').value=\`${bio.replace(/`/g, "'")}\`;Profile.livePreview()">Bruk denne</button>`;
     } catch (e) {
       const msg = e.message === 'no_key' ? 'Legg til Claude API-nøkkel i Innstillinger' : e.message;
-      resultEl.innerHTML = `<span style="color:var(--red)">⚠️ ${msg}</span>`;
+      resultEl.innerHTML = `<span style="color:var(--red)">${Icon('alert')} ${msg}</span>`;
     }
   }
 
@@ -2111,7 +2111,7 @@ const Profile = (() => {
         <button class="btn btn-primary btn-sm" onclick="Profile.applyAiColors(${JSON.stringify(colors).replace(/"/g,'&quot;')})">Bruk disse fargene</button>`;
     } catch (e) {
       const msg = e.message === 'no_key' ? 'Legg til Claude API-nøkkel i Innstillinger' : e.message;
-      resultEl.innerHTML = `<span style="color:var(--red)">⚠️ ${msg}</span>`;
+      resultEl.innerHTML = `<span style="color:var(--red)">${Icon('alert')} ${msg}</span>`;
     }
   }
 
@@ -2138,7 +2138,7 @@ const Profile = (() => {
         <br><button class="btn btn-primary btn-sm" style="margin-top:0.5rem" onclick="Profile.applyAiLayout(${JSON.stringify(layout).replace(/"/g,'&quot;')})">Bruk dette</button>`;
     } catch (e) {
       const msg = e.message === 'no_key' ? 'Legg til Claude API-nøkkel i Innstillinger' : e.message;
-      resultEl.innerHTML = `<span style="color:var(--red)">⚠️ ${msg}</span>`;
+      resultEl.innerHTML = `<span style="color:var(--red)">${Icon('alert')} ${msg}</span>`;
     }
   }
 
@@ -2250,7 +2250,7 @@ const Profile = (() => {
       document.getElementById(typingId)?.remove();
       const errMsg = e.message === 'no_key' ? 'Legg til Claude API-nøkkel i Innstillinger' : e.message;
       chatWindow.insertAdjacentHTML('beforeend',
-        `<div class="ai-chat-bubble ai-chat-bubble--bot" style="color:var(--red,#f87171)">⚠️ ${errMsg.replace(/</g,'&lt;')}</div>`);
+        `<div class="ai-chat-bubble ai-chat-bubble--bot" style="color:var(--red,#f87171)">${Icon('alert')} ${errMsg.replace(/</g,'&lt;')}</div>`);
     }
 
     chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -2283,7 +2283,7 @@ const Profile = (() => {
     const festivalIds = Array.from(checked).map(cb => cb.value);
     Auth.updateUser(current.username, { festivalIds });
     current.festivalIds = festivalIds;
-    App.toast(`${festivalIds.length} festival${festivalIds.length !== 1 ? 'er' : ''} lagret! 🎪`, 'success');
+    App.toast(`${festivalIds.length} festival${festivalIds.length !== 1 ? 'er' : ''} lagret! ${Icon('star')}`, 'success');
   }
 
   // ── Platform actions ──────────────────────────────────────────────────
@@ -2301,7 +2301,7 @@ const Profile = (() => {
     Auth.updateUser(current.username, { daws, streamingPlatforms });
     current.daws = daws;
     current.streamingPlatforms = streamingPlatforms;
-    App.toast(`Plattformer lagret! 🖥️`, 'success');
+    App.toast(`Plattformer lagret! ${Icon('laptop')}`, 'success');
   }
 
   // ── My Sites actions ──────────────────────────────────────────────────
@@ -2327,7 +2327,7 @@ const Profile = (() => {
       if (empty) empty.remove();
       list.insertAdjacentHTML('beforeend', mySiteEditorItem(site));
     }
-    App.toast(`"${title}" lagt til! 🌐`, 'success');
+    App.toast(`"${title}" lagt til! ${Icon('globe')}`, 'success');
   }
 
   function deleteMySite(id) {
@@ -2377,22 +2377,22 @@ const Profile = (() => {
           <div class="cp-palette-grid">
             ${Object.entries(CP_BLOCKS).map(([type, def]) => `
               <div class="cp-palette-item" onclick="Profile.addBlock('${type}')">
-                <span class="cp-palette-icon">${def.icon}</span>
+                <span class="cp-palette-icon">${iconForEmoji(def.icon)}</span>
                 <span>${def.label}</span>
               </div>`).join('')}
           </div>
-          <div class="cp-palette-tip">💡 Klikk for å legge til · Dra blokker for å flytte</div>
+          <div class="cp-palette-tip">${Icon('lightbulb')} Klikk for å legge til · Dra blokker for å flytte</div>
         </div>
         <div class="cp-canvas" id="cp-canvas"
              ondragover="event.preventDefault()" ondrop="Profile.cpDropCanvas(event)">
           ${_cpBlocks.length
             ? _cpBlocks.map((b, i) => cpBlockEditorHtml(b, i, _cpBlocks.length)).join('')
-            : `<div class="cp-empty"><div class="cp-empty-icon">🌀</div><p>Klikk på en blokk til venstre for å begynne</p></div>`}
+            : `<div class="cp-empty"><div class="cp-empty-icon">${Icon('wind')}</div><p>Klikk på en blokk til venstre for å begynne</p></div>`}
         </div>
       </div>
       <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button class="btn btn-primary" onclick="Profile.saveCustomPage()">💾 Lagre Min Side</button>
-        <a href="#/u/${user.username}" class="btn btn-ghost">👁 Se profil</a>
+        <button class="btn btn-primary" onclick="Profile.saveCustomPage()">${Icon('save')} Lagre Min Side</button>
+        <a href="#/u/${user.username}" class="btn btn-ghost">${Icon('eye')} Se profil</a>
       </div>`;
   }
 
@@ -2404,13 +2404,13 @@ const Profile = (() => {
            ondragover="Profile.cpDragOver(event,'${block.id}')"
            ondrop="Profile.cpDrop(event,'${block.id}')">
         <div class="cp-block-header" onclick="Profile.toggleBlock('${block.id}')">
-          <span class="cp-block-drag">⠿</span>
-          <span class="cp-block-icon">${def.icon}</span>
+          <span class="cp-block-drag">${Icon('grip')}</span>
+          <span class="cp-block-icon">${iconForEmoji(def.icon)}</span>
           <span class="cp-block-title">${def.label}</span>
           <div class="cp-block-actions" onclick="event.stopPropagation()">
-            ${index > 0 ? `<button class="cp-block-btn" onclick="Profile.moveBlock('${block.id}',-1)" title="Opp">↑</button>` : ''}
-            ${index < total - 1 ? `<button class="cp-block-btn" onclick="Profile.moveBlock('${block.id}',1)" title="Ned">↓</button>` : ''}
-            <button class="cp-block-btn del" onclick="Profile.deleteBlock('${block.id}')" title="Slett">🗑</button>
+            ${index > 0 ? `<button class="cp-block-btn" onclick="Profile.moveBlock('${block.id}',-1)" title="Opp">${Icon('arrow-up')}</button>` : ''}
+            ${index < total - 1 ? `<button class="cp-block-btn" onclick="Profile.moveBlock('${block.id}',1)" title="Ned">${Icon('arrow-down')}</button>` : ''}
+            <button class="cp-block-btn del" onclick="Profile.deleteBlock('${block.id}')" title="Slett">${Icon('trash')}</button>
           </div>
         </div>
         <div class="cp-block-settings" id="cpbs-${block.id}">
@@ -2430,9 +2430,9 @@ const Profile = (() => {
             <input class="form-input" value="${esc(d.subtitle)}" oninput="Profile.updateBlock('${bid}','subtitle',this.value)"></div>
           <div class="form-group"><label class="form-label">Animasjon</label>
             <select class="form-input" onchange="Profile.updateBlock('${bid}','animation',this.value)">
-              <option value="rainbow" ${d.animation==='rainbow'?'selected':''}>🌈 Regnbue</option>
-              <option value="glitch"  ${d.animation==='glitch' ?'selected':''}>⚡ Glitch</option>
-              <option value="pulse"   ${d.animation==='pulse'  ?'selected':''}>💜 Neon Puls</option>
+              <option value="rainbow" ${d.animation==='rainbow'?'selected':''}>${Icon('rainbow')} Regnbue</option>
+              <option value="glitch"  ${d.animation==='glitch' ?'selected':''}>${Icon('zap')} Glitch</option>
+              <option value="pulse"   ${d.animation==='pulse'  ?'selected':''}>${Icon('heart')} Neon Puls</option>
               <option value="none"    ${d.animation==='none'   ?'selected':''}>Ingen</option>
             </select></div>`;
       case 'text':
@@ -2453,9 +2453,9 @@ const Profile = (() => {
             <input class="form-input" value="${esc(d.author)}" oninput="Profile.updateBlock('${bid}','author',this.value)"></div>
           <div class="form-group"><label class="form-label">Stil</label>
             <select class="form-input" onchange="Profile.updateBlock('${bid}','style',this.value)">
-              <option value="neon-purple" ${d.style==='neon-purple'?'selected':''}>💜 Neon Lilla</option>
-              <option value="neon-cyan"   ${d.style==='neon-cyan'  ?'selected':''}>🩵 Neon Cyan</option>
-              <option value="neon-gold"   ${d.style==='neon-gold'  ?'selected':''}>💛 Neon Gull</option>
+              <option value="neon-purple" ${d.style==='neon-purple'?'selected':''}>${Icon('heart')} Neon Lilla</option>
+              <option value="neon-cyan"   ${d.style==='neon-cyan'  ?'selected':''}>${Icon('heart')} Neon Cyan</option>
+              <option value="neon-gold"   ${d.style==='neon-gold'  ?'selected':''}>${Icon('heart')} Neon Gull</option>
             </select></div>`;
       case 'image':
         return `
@@ -2467,8 +2467,8 @@ const Profile = (() => {
               oninput="Profile.updateBlock('${bid}','caption',this.value)"></div>
           <div class="form-group"><label class="form-label">Filter</label>
             <select class="form-input" onchange="Profile.updateBlock('${bid}','filter',this.value)">
-              <option value="psychedelic" ${d.filter==='psychedelic'?'selected':''}>🌀 Psykedelisk</option>
-              <option value="vhs"  ${d.filter==='vhs' ?'selected':''}>📼 VHS Glitch</option>
+              <option value="psychedelic" ${d.filter==='psychedelic'?'selected':''}>${Icon('wind')} Psykedelisk</option>
+              <option value="vhs"  ${d.filter==='vhs' ?'selected':''}>${Icon('tv')} VHS Glitch</option>
               <option value="none" ${d.filter==='none'?'selected':''}>Ingen</option>
             </select></div>`;
       case 'links': {
@@ -2484,7 +2484,7 @@ const Profile = (() => {
                 <input type="color" value="${btn.color||'#7c3aed'}"
                   style="width:36px;height:36px;border:none;background:none;cursor:pointer;flex-shrink:0"
                   oninput="Profile.updateLinkBtn('${bid}',${i},'color',this.value)">
-                <button class="cp-block-btn del" onclick="Profile.removeLinkBtn('${bid}',${i})">✕</button>
+                <button class="cp-block-btn del" onclick="Profile.removeLinkBtn('${bid}',${i})">${Icon('x')}</button>
               </div>`).join('')}
           </div>
           <button class="btn btn-ghost btn-sm" style="margin-top:0.25rem"
@@ -2494,9 +2494,9 @@ const Profile = (() => {
         return `
           <div class="form-group"><label class="form-label">Stil</label>
             <select class="form-input" onchange="Profile.updateBlock('${bid}','style',this.value)">
-              <option value="plasma" ${d.style==='plasma'?'selected':''}>⚡ Plasma</option>
-              <option value="wave"   ${d.style==='wave'  ?'selected':''}>🌊 Bølge</option>
-              <option value="stars"  ${d.style==='stars' ?'selected':''}>✦ Stjerner</option>
+              <option value="plasma" ${d.style==='plasma'?'selected':''}>${Icon('zap')} Plasma</option>
+              <option value="wave"   ${d.style==='wave'  ?'selected':''}>${Icon('waves')} Bølge</option>
+              <option value="stars"  ${d.style==='stars' ?'selected':''}>${Icon('sparkles')} Stjerner</option>
             </select></div>`;
       case 'countdown':
         return `
@@ -2509,20 +2509,20 @@ const Profile = (() => {
       case 'vibes':
         return `
           <div class="form-group"><label class="form-label">Tekst (valgfri)</label>
-            <input class="form-input" value="${esc(d.text)}" placeholder="✦ good vibes only ✦"
+            <input class="form-input" value="${esc(d.text)}" placeholder="good vibes only"
               oninput="Profile.updateBlock('${bid}','text',this.value)"></div>
           <div class="form-group"><label class="form-label">Stil</label>
             <select class="form-input" onchange="Profile.updateBlock('${bid}','style',this.value)">
-              <option value="aurora"  ${d.style==='aurora' ?'selected':''}>🌌 Aurora</option>
-              <option value="lava"    ${d.style==='lava'   ?'selected':''}>🌋 Lava</option>
-              <option value="galaxy"  ${d.style==='galaxy' ?'selected':''}>🔮 Galakse</option>
+              <option value="aurora"  ${d.style==='aurora' ?'selected':''}>${Icon('sparkles')} Aurora</option>
+              <option value="lava"    ${d.style==='lava'   ?'selected':''}>${Icon('mountain')} Lava</option>
+              <option value="galaxy"  ${d.style==='galaxy' ?'selected':''}>${Icon('sparkles')} Galakse</option>
             </select></div>`;
       case 'embed':
         return `
           <div class="form-group"><label class="form-label">Type</label>
             <select class="form-input" onchange="Profile.updateBlock('${bid}','type',this.value)">
-              <option value="youtube" ${d.type==='youtube'?'selected':''}>▶️ YouTube</option>
-              <option value="spotify" ${d.type==='spotify'?'selected':''}>🎵 Spotify</option>
+              <option value="youtube" ${d.type==='youtube'?'selected':''}>${Icon('play')} YouTube</option>
+              <option value="spotify" ${d.type==='spotify'?'selected':''}>${Icon('music')} Spotify</option>
             </select></div>
           <div class="form-group"><label class="form-label">URL</label>
             <input class="form-input" value="${esc(d.url)}"
@@ -2547,7 +2547,7 @@ const Profile = (() => {
     });
     return {
       html: `<div class="custom-page-section">
-        <div class="cp-page-divider"><span>✦ Min Side ✦</span></div>
+        <div class="cp-page-divider"><span>${Icon('sparkles')} Min Side ${Icon('sparkles')}</span></div>
         ${parts.join('')}
       </div>`,
       countdowns,
@@ -2584,7 +2584,7 @@ const Profile = (() => {
         </div>`;
       case 'divider':
         return d.style === 'stars'
-          ? `<div class="cp-divider" data-style="stars">✦ &nbsp; ✧ &nbsp; ✦ &nbsp; ✧ &nbsp; ✦</div>`
+          ? `<div class="cp-divider" data-style="stars">${Icon('sparkles')} &nbsp; ${Icon('sparkles')} &nbsp; ${Icon('sparkles')} &nbsp; ${Icon('sparkles')} &nbsp; ${Icon('sparkles')}</div>`
           : `<div class="cp-divider" data-style="${d.style||'plasma'}"></div>`;
       case 'countdown': {
         if (!d.date) return '';
@@ -2638,7 +2638,7 @@ const Profile = (() => {
       if (!el) return;
       const diff = new Date(dateStr).getTime() - Date.now();
       if (diff <= 0) {
-        el.innerHTML = `<div style="color:#f59e0b;font-weight:700;font-size:1.1rem">🎉 Det skjedde!</div>`;
+        el.innerHTML = `<div style="color:#f59e0b;font-weight:700;font-size:1.1rem">${Icon('party')} Det skjedde!</div>`;
         return;
       }
       const set = (sfx, val) => { const e = document.getElementById(`${id}-${sfx}`); if (e) e.textContent = String(val).padStart(2,'0'); };
@@ -2717,7 +2717,7 @@ const Profile = (() => {
     if (!canvas) return;
     const openIds = new Set([...document.querySelectorAll('.cp-block-settings.open')].map(el => el.id.replace('cpbs-','')));
     if (!_cpBlocks.length) {
-      canvas.innerHTML = `<div class="cp-empty"><div class="cp-empty-icon">🌀</div><p>Klikk på en blokk til venstre for å begynne</p></div>`;
+      canvas.innerHTML = `<div class="cp-empty"><div class="cp-empty-icon">${Icon('wind')}</div><p>Klikk på en blokk til venstre for å begynne</p></div>`;
       return;
     }
     canvas.innerHTML = _cpBlocks.map((b, i) => cpBlockEditorHtml(b, i, _cpBlocks.length)).join('');
@@ -2779,7 +2779,7 @@ const Profile = (() => {
     if (!events.length) return '';
     return `
       <div class="profile-events">
-        <div class="profile-events-title">📅 Events</div>
+        <div class="profile-events-title">${Icon('calendar')} Events</div>
         ${events.map(e => {
           const typeEmoji = EVENT_TYPES.find(t => t.id === e.type)?.emoji || '📅';
           const dt = new Date(`${e.date}T${e.time || '00:00'}`);
@@ -2794,9 +2794,9 @@ const Profile = (() => {
                 <span class="event-type-emoji">${typeEmoji}</span>
                 <div class="event-card-info">
                   <div class="event-title">${e.title}</div>
-                  ${!e.isLive ? `<div class="event-meta">${dateStr}${timeStr}${e.location ? ' · 📍 ' + e.location : ''}</div>` : (e.location ? `<div class="event-meta">📍 ${e.location}</div>` : '')}
+                  ${!e.isLive ? `<div class="event-meta">${dateStr}${timeStr}${e.location ? ' · 📍 ' + e.location : ''}</div>` : (e.location ? `<div class="event-meta">${Icon('map-pin')} ${e.location}</div>` : '')}
                 </div>
-                ${e.isLive && e.liveUrl ? `<button class="event-listen-btn" onclick="Radio.playUrl('${safeUrl}','${safeTitle}','🔴')">▶ Lytt live</button>` : ''}
+                ${e.isLive && e.liveUrl ? `<button class="event-listen-btn" onclick="Radio.playUrl('${safeUrl}','${safeTitle}','🔴')">${Icon('play')} Lytt live</button>` : ''}
               </div>
               ${e.description ? `<div class="event-desc">${e.description}</div>` : ''}
             </div>`;
@@ -2809,7 +2809,7 @@ const Profile = (() => {
       new Date(`${b.date}T${b.time||'00:00'}`) - new Date(`${a.date}T${a.time||'00:00'}`));
     return `
       <div style="max-width:580px">
-        <div class="editor-section-title" style="margin-bottom:0.5rem">📅 Legg til event</div>
+        <div class="editor-section-title" style="margin-bottom:0.5rem">${Icon('calendar')} Legg til event</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem;line-height:1.6">
           Publiser konserter, DJ-sett og shows på profilen din. Merk som live for å la andre lytte direkte herfra.
         </p>
@@ -2822,7 +2822,7 @@ const Profile = (() => {
             <div class="form-group">
               <label class="form-label">Type</label>
               <select class="form-input" id="ev-type">
-                ${EVENT_TYPES.map(t => `<option value="${t.id}">${t.emoji} ${t.label}</option>`).join('')}
+                ${EVENT_TYPES.map(t => `<option value="${t.id}">${iconForEmoji(t.emoji)} ${t.label}</option>`).join('')}
               </select>
             </div>
             <div class="form-group">
@@ -2854,7 +2854,7 @@ const Profile = (() => {
               <span class="form-hint">Besøkende kan lytte direkte fra profilen din</span>
             </div>
           </div>
-          <button class="btn btn-primary" style="margin-top:1rem" onclick="Profile.addEvent()">➕ Legg til event</button>
+          <button class="btn btn-primary" style="margin-top:1rem" onclick="Profile.addEvent()">${Icon('plus')} Legg til event</button>
         </div>
         <div class="editor-section-title" style="margin-bottom:0.75rem">Mine events (${events.length})</div>
         <div id="events-list">
@@ -2875,7 +2875,7 @@ const Profile = (() => {
           </div>
           <div style="font-size:0.75rem;color:var(--text2)">${e.date}${e.time ? ' ' + e.time : ''}${e.location ? ' · ' + e.location : ''}</div>
         </div>
-        <button class="btn-icon btn-danger" onclick="Profile.deleteEvent('${e.id}')" title="Slett">🗑</button>
+        <button class="btn-icon btn-danger" onclick="Profile.deleteEvent('${e.id}')" title="Slett">${Icon('trash')}</button>
       </div>`;
   }
 
@@ -2931,13 +2931,13 @@ const Profile = (() => {
     const labels = user.labels || [];
     return `
       <div style="max-width:520px">
-        <div class="editor-section-title">🏷️ Mine plateselskaper</div>
+        <div class="editor-section-title">${Icon('tag')} Mine plateselskaper</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem;line-height:1.6">
           Legg til plateselskaper du bruker. Du kan tilordne dem til enkeltspor i tracklisten på dine mixes.
         </p>
         <div style="display:flex;gap:0.5rem;margin-bottom:1rem">
           <input class="form-input" id="lbl-input" placeholder="f.eks. Acieeed Records" style="flex:1">
-          <button class="btn btn-primary" onclick="Profile.addLabel()">➕ Legg til</button>
+          <button class="btn btn-primary" onclick="Profile.addLabel()">${Icon('plus')} Legg til</button>
         </div>
         <div id="labels-list">
           ${labels.length ? labels.map(labelEditorItem).join('') : '<p style="font-size:0.82rem;color:var(--text2)">Ingen plateselskaper ennå.</p>'}
@@ -2948,9 +2948,9 @@ const Profile = (() => {
   function labelEditorItem(label) {
     return `
       <div class="label-editor-item" id="lblitem-${label.id}">
-        <span style="font-size:1.1rem">🏷️</span>
+        <span style="font-size:1.1rem">${Icon('tag')}</span>
         <span class="label-editor-name">${label.name}</span>
-        <button class="btn-icon btn-danger btn-sm" onclick="Profile.deleteLabel('${label.id}')" title="Slett">🗑</button>
+        <button class="btn-icon btn-danger btn-sm" onclick="Profile.deleteLabel('${label.id}')" title="Slett">${Icon('trash')}</button>
       </div>`;
   }
 
@@ -2971,7 +2971,7 @@ const Profile = (() => {
       if (emptyMsg) emptyMsg.remove();
       list.insertAdjacentHTML('beforeend', labelEditorItem(label));
     }
-    App.toast(`"${name}" lagt til 🏷️`, 'success');
+    App.toast(`"${name}" lagt til ${Icon('tag')}`, 'success');
   }
 
   function deleteLabel(id) {
@@ -3008,7 +3008,7 @@ const Profile = (() => {
     box.innerHTML = `
       <div class="modal-header">
         <h2>${rec?.name || 'Media'}</h2>
-        <button class="btn-icon" onclick="App.closeModal()">✕</button>
+        <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
       </div>
       ${rec?.type?.startsWith('video/') ? `<video src="${url}" controls autoplay style="width:100%;border-radius:8px;max-height:60vh"></video>` : `<img src="${url}" style="width:100%;border-radius:8px;max-height:70vh;object-fit:contain">`}
     `;
@@ -3055,10 +3055,10 @@ const Profile = (() => {
       <div class="paint-editor">
         <div class="paint-toolbar">
           <div class="paint-tools-group">
-            <button class="paint-tool active" id="ptool-pencil" onclick="window._setPaintTool('pencil',this)" title="Blyant">✏️</button>
+            <button class="paint-tool active" id="ptool-pencil" onclick="window._setPaintTool('pencil',this)" title="Blyant">${Icon('edit')}</button>
             <button class="paint-tool" id="ptool-line"   onclick="window._setPaintTool('line',this)"   title="Linje">╱</button>
             <button class="paint-tool" id="ptool-rect"   onclick="window._setPaintTool('rect',this)"   title="Rektangel">▭</button>
-            <button class="paint-tool" id="ptool-eraser" onclick="window._setPaintTool('eraser',this)" title="Viskelær">⬜</button>
+            <button class="paint-tool" id="ptool-eraser" onclick="window._setPaintTool('eraser',this)" title="Viskelær">${Icon('square')}</button>
             <button class="paint-tool" id="ptool-text"   onclick="window._setPaintTool('text',this)"   title="Tekst">T</button>
           </div>
           <div class="paint-divider"></div>
@@ -3078,9 +3078,9 @@ const Profile = (() => {
             <label class="paint-bold-check"><input type="checkbox" id="paint-text-bold" checked> <b>B</b></label>
           </div>
           <div class="paint-actions">
-            <button class="paint-action-btn" onclick="window._paintUndo()">↩ Angre</button>
-            <button class="paint-action-btn p-danger" onclick="window._closePaintEditor(false)">✕ Avbryt</button>
-            <button class="paint-action-btn p-primary" onclick="window._closePaintEditor(true)">✓ Bruk</button>
+            <button class="paint-action-btn" onclick="window._paintUndo()">${Icon('corner-down-left')} Angre</button>
+            <button class="paint-action-btn p-danger" onclick="window._closePaintEditor(false)">${Icon('x')} Avbryt</button>
+            <button class="paint-action-btn p-primary" onclick="window._closePaintEditor(true)">${Icon('check')} Bruk</button>
           </div>
         </div>
         <div class="paint-canvas-area">

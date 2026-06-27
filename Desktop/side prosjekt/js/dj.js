@@ -66,7 +66,7 @@ const DJ = (() => {
   function showPMNotification(fromName, text) {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     try {
-      new Notification(`📬 Ny melding fra ${fromName}`, {
+      new Notification(`${Icon('mail')} Ny melding fra ${fromName}`, {
         body: text.length > 100 ? text.substring(0, 97) + '…' : text,
         tag:  'stellar-pm',
       });
@@ -100,12 +100,12 @@ const DJ = (() => {
         <div class="dj-hero">
           <div class="dj-hero-glow"></div>
           <div class="dj-hero-content">
-            <div class="dj-hero-badge">🎛️ DJ Hub</div>
+            <div class="dj-hero-badge">${Icon('sliders')} DJ Hub</div>
             <h1 class="dj-hero-title">DJ<span>Network</span></h1>
             <p class="dj-hero-sub">Finn en jobb, finn en DJ, eller stream ditt eget sett live via YouTube.</p>
             ${current ? `
               <div class="dj-hero-actions">
-                <button class="btn btn-primary" onclick="DJ.openPostGig()">📢 Legg ut annonse</button>
+                <button class="btn btn-primary" onclick="DJ.openPostGig()">${Icon('bell')} Legg ut annonse</button>
                 <button class="btn ${Auth.getUser(current.username)?.isDJ ? 'btn-ghost' : 'btn-ghost'}" onclick="DJ.toggleDJStatus()">
                   ${Auth.getUser(current.username)?.isDJ ? '✅ Du er registrert som DJ' : '🎛️ Registrer deg som DJ'}
                 </button>
@@ -123,14 +123,14 @@ const DJ = (() => {
             <!-- Live Stream Section -->
             <div class="dj-section">
               <div class="dj-section-header">
-                <div class="dj-section-title">🔴 Live DJ Session</div>
+                <div class="dj-section-title">${Icon('circle')} Live DJ Session</div>
                 <div class="dj-section-sub">Lim inn YouTube-lenke for å strømme ditt sett live</div>
               </div>
               <div class="dj-live-wrap">
                 <div class="dj-live-input-row">
                   <input class="form-input" id="dj-yt-url" placeholder="https://youtube.com/watch?v=... eller https://youtu.be/...">
-                  <button class="btn btn-primary" onclick="DJ.loadLiveStream()">▶ Start stream</button>
-                  <button class="btn btn-ghost" onclick="DJ.stopLiveStream()" id="dj-stop-btn" style="display:none">⏹ Stopp</button>
+                  <button class="btn btn-primary" onclick="DJ.loadLiveStream()">${Icon('play')} Start stream</button>
+                  <button class="btn btn-ghost" onclick="DJ.stopLiveStream()" id="dj-stop-btn" style="display:none">${Icon('square')} Stopp</button>
                 </div>
                 <div id="dj-live-player" class="dj-live-player hidden">
                   <div class="dj-live-badge-wrap">
@@ -139,7 +139,7 @@ const DJ = (() => {
                   <div id="dj-yt-frame-wrap"></div>
                 </div>
                 <div class="dj-live-hint">
-                  💡 Du kan også hoste via webcam — start en YouTube Live stream og lim inn lenken her.
+                  ${Icon('lightbulb')} Du kan også hoste via webcam — start en YouTube Live stream og lim inn lenken her.
                 </div>
               </div>
             </div>
@@ -147,13 +147,13 @@ const DJ = (() => {
             <!-- Gig board -->
             <div class="dj-section">
               <div class="dj-section-header">
-                <div class="dj-section-title">📋 Oppdrag & Tilbud</div>
+                <div class="dj-section-title">${Icon('clipboard')} Oppdrag & Tilbud</div>
                 <div class="dj-section-sub">Arrangører søker DJ · DJer søker jobb</div>
               </div>
               <div id="dj-gig-list">
                 ${gigs.length ? gigs.map(gigCard).join('') : `
                   <div class="dj-empty">
-                    <div style="font-size:3rem">🎛️</div>
+                    <div style="font-size:3rem">${Icon('sliders')}</div>
                     <p>Ingen annonser ennå. Vær den første!</p>
                     ${current ? `<button class="btn btn-primary" style="margin-top:1rem" onclick="DJ.openPostGig()">Legg ut annonse</button>` : ''}
                   </div>`}
@@ -164,7 +164,7 @@ const DJ = (() => {
           <!-- Right sidebar: DJ profiles -->
           <div class="dj-sidebar">
             <div class="dj-sidebar-card">
-              <div class="dj-sidebar-title">🎛️ DJer på Stellar</div>
+              <div class="dj-sidebar-title">${Icon('sliders')} DJer på Stellar</div>
               ${djUsers.length ? djUsers.map(u => `
                 <div class="dj-profile-item">
                   <a class="dj-profile-link" href="#/u/${u.username}">
@@ -175,14 +175,14 @@ const DJ = (() => {
                     </div>
                   </a>
                   ${current && current.username !== u.username ? `
-                    <button class="btn btn-ghost btn-sm" onclick="Router.go('/messages/${u.username}')">💬</button>
+                    <button class="btn btn-ghost btn-sm" onclick="Router.go('/messages/${u.username}')">${Icon('message')}</button>
                   ` : ''}
                 </div>`).join('') : `<p style="font-size:0.82rem;color:var(--text2)">Ingen registrerte DJer ennå.</p>`}
             </div>
 
             ${current ? `
             <div class="dj-sidebar-card">
-              <div class="dj-sidebar-title">💬 Meldinger</div>
+              <div class="dj-sidebar-title">${Icon('message')} Meldinger</div>
               <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.75rem">Send privat melding til andre brukere</p>
               <div class="dj-msg-search">
                 <input class="form-input" id="dj-msg-user" placeholder="Søk brukernavn…" oninput="DJ.searchMsgUsers(this.value)">
@@ -196,15 +196,15 @@ const DJ = (() => {
       <!-- Post gig modal content (hidden) -->
       <div id="dj-post-gig-content" style="display:none">
         <div class="modal-header">
-          <h2>📢 Legg ut annonse</h2>
-          <button class="btn-icon" onclick="App.closeModal()">✕</button>
+          <h2>${Icon('bell')} Legg ut annonse</h2>
+          <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
         </div>
         <div style="padding:0 0 1rem">
           <div class="form-group">
             <label class="form-label">Type annonse</label>
             <select class="form-input" id="gig-type">
-              <option value="dj-available">🎛️ DJ tilgjengelig for jobb</option>
-              <option value="dj-wanted">📢 Søker DJ til arrangement</option>
+              <option value="dj-available">${Icon('sliders')} DJ tilgjengelig for jobb</option>
+              <option value="dj-wanted">${Icon('bell')} Søker DJ til arrangement</option>
             </select>
           </div>
           <div class="form-group">
@@ -240,8 +240,8 @@ const DJ = (() => {
             · ${timeAgo(g.createdAt)}
           </span>
           <div style="display:flex;gap:0.4rem;align-items:center">
-            ${g.contact ? `<a class="btn btn-ghost btn-sm" href="mailto:${g.contact}" style="font-size:0.72rem">📧 Kontakt</a>` : ''}
-            ${Auth.current()?.username === g.username ? `<button class="btn-icon btn-danger" onclick="DJ.deleteGig('${g.id}')" title="Slett">🗑</button>` : ''}
+            ${g.contact ? `<a class="btn btn-ghost btn-sm" href="mailto:${g.contact}" style="font-size:0.72rem">${Icon('mail')} Kontakt</a>` : ''}
+            ${Auth.current()?.username === g.username ? `<button class="btn-icon btn-danger" onclick="DJ.deleteGig('${g.id}')" title="Slett">${Icon('trash')}</button>` : ''}
           </div>
         </div>
       </div>`;
@@ -360,7 +360,7 @@ const DJ = (() => {
     app.innerHTML = `
       <div class="dj-chat-page">
         <div class="dj-chat-header">
-          <a href="#/dj" class="btn btn-ghost btn-sm">← Tilbake</a>
+          <a href="#/dj" class="btn btn-ghost btn-sm">${Icon('arrow-left')} Tilbake</a>
           <a href="#/u/${target.username}" style="display:flex;align-items:center;gap:0.6rem;text-decoration:none;color:inherit">
             <div class="dj-profile-av">${target.displayName.charAt(0).toUpperCase()}</div>
             <div>

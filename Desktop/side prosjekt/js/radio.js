@@ -561,13 +561,13 @@ const Radio = (() => {
         <!-- SIDEBAR -->
         <div class="radio-sidebar">
           <div class="radio-sidebar-header">
-            📻 Radiokanaler
+            ${Icon('radio')} Radiokanaler
           </div>
 
           <!-- Search -->
           <div class="radio-search-wrap">
             <div class="radio-search-box">
-              <span class="radio-search-icon">⌕</span>
+              <span class="radio-search-icon">${Icon('search')}</span>
               <input
                 type="text"
                 id="radio-search-input"
@@ -585,9 +585,9 @@ const Radio = (() => {
               <div class="stellar-featured-card" id="rbtn-${featured.id}" onclick="Radio.playStation('${featured.id}')">
                 <div class="stellar-featured-glow" style="background:${featured.color}"></div>
                 <div class="stellar-featured-inner">
-                  <div class="stellar-featured-emoji">${featured.emoji}</div>
+                  <div class="stellar-featured-emoji">${iconForEmoji(featured.emoji)}</div>
                   <div class="stellar-featured-info">
-                    <div class="stellar-featured-label">⭐ Sound Core Hovedkanal</div>
+                    <div class="stellar-featured-label">${Icon('star')} Sound Core Hovedkanal</div>
                     <div class="stellar-featured-name">${featured.name}</div>
                     <div class="stellar-featured-desc">${featured.desc}</div>
                   </div>
@@ -606,7 +606,7 @@ const Radio = (() => {
                   style="--station-color:${s.color}"
                   onclick="Radio.playStation('${s.id}')"
                 >
-                  <span class="station-emoji">${s.emoji}</span>
+                  <span class="station-emoji">${iconForEmoji(s.emoji)}</span>
                   <span class="station-info">
                     <span class="station-name">${s.name}</span>
                     <span class="station-desc">${s.desc}</span>
@@ -628,7 +628,7 @@ const Radio = (() => {
             <div class="radio-category">Egne strømmer</div>
             ${customStreams.map((s, i) => `
               <div class="radio-station-btn ${currentStation?.id === 'custom_'+i ? 'active' : ''}" id="rbtn-custom_${i}" style="--station-color:#7c3aed" onclick="Radio.playCustom(${i})">
-                <span class="station-emoji">📡</span>
+                <span class="station-emoji">${Icon('rss')}</span>
                 <span class="station-info">
                   <span class="station-name">${s.name || 'Egendefinert'}</span>
                   <span class="station-desc">${s.url.slice(0,40)}…</span>
@@ -638,7 +638,7 @@ const Radio = (() => {
                     ${currentStation?.id === 'custom_'+i && isPlaying ? '⏸' : '▶'}
                   </button>
                   <button class="station-vol-btn" title="Lyd av/på" onclick="event.stopPropagation();Radio.toggleMute()">${muted ? '🔇' : '🔊'}</button>
-                  <button class="station-vol-btn" title="Fjern" onclick="Radio.removeCustom(${i},event)" style="color:var(--text3)">✕</button>
+                  <button class="station-vol-btn" title="Fjern" onclick="Radio.removeCustom(${i},event)" style="color:var(--text3)">${Icon('x')}</button>
                 </div>
               </div>
             `).join('')}
@@ -651,7 +651,7 @@ const Radio = (() => {
           </div>
 
           <!-- External embedded players -->
-          <div class="radio-category">🌍 Eksterne spillere</div>
+          <div class="radio-category">${Icon('globe')} Eksterne spillere</div>
           ${EXTERNAL_PLAYERS.map(p => `
             <div
               class="radio-station-btn ext-player-btn"
@@ -659,7 +659,7 @@ const Radio = (() => {
               style="--station-color:${p.color}"
               onclick="Radio.openEmbed('${p.id}')"
             >
-              <span class="station-emoji">${p.emoji}</span>
+              <span class="station-emoji">${iconForEmoji(p.emoji)}</span>
               <span class="station-info">
                 <span class="station-name">${p.name}</span>
                 <span class="station-desc">${p.desc}</span>
@@ -674,11 +674,11 @@ const Radio = (() => {
           <!-- AI Assistant -->
           <div class="radio-ai-wrap">
             <button class="radio-ai-toggle" onclick="Radio.toggleAiChat()">
-              🤖 AI-assistent <span id="radio-ai-chevron">▼</span>
+              ${Icon('bot')} AI-assistent <span id="radio-ai-chevron">${Icon('chevron-down')}</span>
             </button>
             <div class="radio-ai-chat" id="radio-ai-chat" style="display:none">
               <div class="radio-ai-messages" id="radio-ai-messages">
-                <div class="radio-ai-welcome">Hei! 👋 Spør meg om radiokanaler — på hvilket som helst språk.</div>
+                <div class="radio-ai-welcome">Hei! ${Icon('smile')} Spør meg om radiokanaler — på hvilket som helst språk.</div>
                 <div class="radio-ai-suggestions">
                   <button onclick="document.getElementById('radio-ai-input').value='Finn noe rolig og atmosfærisk';Radio.sendAiMessage()">Rolig & atmosfærisk</button>
                   <button onclick="document.getElementById('radio-ai-input').value='I need something energetic';Radio.sendAiMessage()">Something energetic</button>
@@ -692,7 +692,7 @@ const Radio = (() => {
                   onkeydown="Radio.onAiKeydown(event)"
                   autocomplete="off"
                 >
-                <button class="radio-ai-send" onclick="Radio.sendAiMessage()">↑</button>
+                <button class="radio-ai-send" onclick="Radio.sendAiMessage()">${Icon('arrow-up')}</button>
               </div>
             </div>
           </div>
@@ -708,14 +708,14 @@ const Radio = (() => {
           <!-- Now playing -->
           <div class="radio-now-playing" id="radio-np">
             <div class="radio-station-art" id="np-art" style="background:linear-gradient(135deg,var(--accent),var(--accent2))">
-              <span id="np-emoji">📻</span>
+              <span id="np-emoji">${Icon('radio')}</span>
             </div>
             <div class="radio-np-info">
               <div class="radio-np-badge"><span class="dot"></span> <span id="np-status">Stoppet</span></div>
               <div class="radio-np-name" id="np-name">Velg en kanal til venstre</div>
               <div class="radio-np-desc" id="np-desc">Elektronisk musikk fra psychedelic trance til chill out</div>
               <button class="radio-set-fav-btn" id="radio-set-fav-btn" onclick="Radio.setAsFavorite()" style="display:none">
-                ⭐ Sett som min favoritt
+                ${Icon('star')} Sett som min favoritt
               </button>
             </div>
             <div class="radio-np-controls">
@@ -724,7 +724,7 @@ const Radio = (() => {
                 <input type="range" id="radio-vol" min="0" max="100" value="${Math.round(volume*100)}" oninput="Radio.setVolume(this.value/100)">
               </div>
               <div class="radio-main-btns">
-                <button class="radio-stop-btn" id="radio-stop-btn" onclick="Radio.stopRadio()" title="Stop">⏹</button>
+                <button class="radio-stop-btn" id="radio-stop-btn" onclick="Radio.stopRadio()" title="Stop">${Icon('square')}</button>
                 <button class="radio-play-btn" id="radio-play-btn" onclick="Radio.togglePlay()">${isPlaying ? '⏸' : '▶'}</button>
               </div>
             </div>
@@ -735,8 +735,8 @@ const Radio = (() => {
             <canvas id="radio-canvas"></canvas>
             <div class="radio-vis-overlay" id="radio-idle">
               <div class="radio-idle-text">
-                <div style="font-size:3rem;margin-bottom:0.5rem">📻</div>
-                <div>Velg en radiokanal og klikk ▶ for å starte</div>
+                <div style="font-size:3rem;margin-bottom:0.5rem">${Icon('radio')}</div>
+                <div>Velg en radiokanal og klikk ${Icon('play')} for å starte</div>
               </div>
             </div>
             <div class="vis-style-row">
@@ -751,13 +751,13 @@ const Radio = (() => {
           <div class="radio-embed-wrap hidden" id="radio-embed-wrap">
             <div class="radio-embed-header">
               <div class="radio-embed-info">
-                <span id="embed-emoji">📡</span>
+                <span id="embed-emoji">${Icon('rss')}</span>
                 <div>
                   <div id="embed-name" style="font-weight:700"></div>
                   <div id="embed-desc" style="font-size:0.75rem;color:var(--text3)"></div>
                 </div>
               </div>
-              <button class="btn btn-ghost btn-sm" onclick="Radio.closeEmbed()">✕ Lukk</button>
+              <button class="btn btn-ghost btn-sm" onclick="Radio.closeEmbed()">${Icon('x')} Lukk</button>
             </div>
             <iframe
               id="radio-embed-frame"
@@ -848,7 +848,7 @@ const Radio = (() => {
     const art    = document.getElementById('player-artwork');
     if (title)  title.textContent  = info.name || 'Radio';
     if (artist) artist.innerHTML   = `<span class="radio-live-badge"><span class="live-dot-sm"></span> LIVE</span> ${escHtml(info.desc || 'Live stream')}`;
-    if (art)    { art.style.backgroundImage = ''; art.querySelector('.artwork-note').textContent = info.emoji || '📻'; art.querySelector('.artwork-note').style.display = ''; }
+    if (art)    { art.style.backgroundImage = ''; art.querySelector('.artwork-note').innerHTML = iconForEmoji(info.emoji, 'radio'); art.querySelector('.artwork-note').style.display = ''; }
 
     const bar = document.getElementById('player-bar');
     if (bar) bar.classList.add('radio-mode');
@@ -1001,7 +1001,7 @@ const Radio = (() => {
     const emoji= document.getElementById('np-emoji');
     if (name)  name.textContent  = station.name;
     if (desc)  desc.textContent  = station.desc;
-    if (emoji) emoji.textContent = station.emoji;
+    if (emoji) emoji.innerHTML = iconForEmoji(station.emoji);
     if (art)   art.style.background = `linear-gradient(135deg,${station.color},${station.color}88)`;
 
     // Show "set as favorite" button if logged in
@@ -1035,7 +1035,7 @@ const Radio = (() => {
     const frame  = document.getElementById('radio-embed-frame');
     if (nameEl)  nameEl.textContent  = p.name;
     if (descEl)  descEl.textContent  = p.desc;
-    if (emojEl)  emojEl.textContent  = p.emoji;
+    if (emojEl)  emojEl.innerHTML  = iconForEmoji(p.emoji);
     if (frame)   frame.src           = p.url;
 
     // Show embed, hide visualizer
@@ -1069,7 +1069,7 @@ const Radio = (() => {
     };
     Auth.updateUser(user.username, { favoriteRadio });
     user.favoriteRadio = favoriteRadio;
-    App.toast(`"${favoriteRadio.name}" lagret som din favorittkanal! Den vises nå på profilen din. ⭐`, 'success');
+    App.toast(`"${favoriteRadio.name}" lagret som din favorittkanal! Den vises nå på profilen din. ${Icon('star')}`, 'success');
     updateNowPlaying(currentStation);
   }
 

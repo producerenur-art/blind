@@ -82,31 +82,31 @@ const App = (() => {
       const totalBadge = pending + unreadPMs;
       const inboxBadge = totalBadge > 0 ? `<span class="nav-badge">${totalBadge}</span>` : '';
       nav.innerHTML = `
-        <a href="#/minside"     class="btn btn-ghost btn-sm">🏠 Min side</a>
-        <a href="#/radio"       class="btn btn-ghost btn-sm">📻 Radio</a>
-        <a href="#/chat"        class="btn btn-ghost btn-sm">💬 Chat</a>
-        <a href="#/discover"    class="btn btn-ghost btn-sm">🎵 Discover</a>
-        <a href="#/underground" class="btn btn-ghost btn-sm">🌑 Underground</a>
-        <a href="#/shows"       class="btn btn-ghost btn-sm">📅 Shows</a>
-        <a href="#/dj"          class="btn btn-ghost btn-sm">🎛️ DJ</a>
-        <a href="#/studio"      class="btn btn-ghost btn-sm" title="Blend Studio">🎨 Studio</a>
-        <a href="#/inbox"       class="btn btn-ghost btn-sm" style="position:relative">📬 Innboks${inboxBadge}</a>
-        <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">👤 ${user.displayName}</a>
-        <a href="#/edit"        class="btn btn-ghost btn-sm" title="Rediger profil">✏️</a>
-        <a href="#/settings"    class="btn btn-ghost btn-sm" title="Innstillinger">⚙️</a>
-        <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne flytende chat">💬 Float</button>
+        <a href="#/minside"     class="btn btn-ghost btn-sm">${Icon('home')} Min side</a>
+        <a href="#/radio"       class="btn btn-ghost btn-sm">${Icon('radio')} Radio</a>
+        <a href="#/chat"        class="btn btn-ghost btn-sm">${Icon('message')} Chat</a>
+        <a href="#/discover"    class="btn btn-ghost btn-sm">${Icon('music')} Discover</a>
+        <a href="#/underground" class="btn btn-ghost btn-sm">${Icon('moon')} Underground</a>
+        <a href="#/shows"       class="btn btn-ghost btn-sm">${Icon('calendar')} Shows</a>
+        <a href="#/dj"          class="btn btn-ghost btn-sm">${Icon('sliders')} DJ</a>
+        <a href="#/studio"      class="btn btn-ghost btn-sm" title="Blend Studio">${Icon('palette')} Studio</a>
+        <a href="#/inbox"       class="btn btn-ghost btn-sm" style="position:relative">${Icon('mail')} Innboks${inboxBadge}</a>
+        <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">${Icon('user')} ${user.displayName}</a>
+        <a href="#/edit"        class="btn btn-ghost btn-sm" title="Rediger profil">${Icon('edit')}</a>
+        <a href="#/settings"    class="btn btn-ghost btn-sm" title="Innstillinger">${Icon('settings')}</a>
+        <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne/lukk flytende chat-vindu">${Icon('message')} Chat-vindu</button>
         <button class="btn btn-ghost btn-sm" onclick="App.logout()">Logg ut</button>
       `;
     } else {
       nav.innerHTML = `
-        <a href="#/radio"       class="btn btn-ghost btn-sm">📻 Radio</a>
-        <a href="#/chat"        class="btn btn-ghost btn-sm">💬 Chat</a>
-        <a href="#/discover"    class="btn btn-ghost btn-sm">🎵 Discover</a>
-        <a href="#/underground" class="btn btn-ghost btn-sm">🌑 Underground</a>
-        <a href="#/shows"       class="btn btn-ghost btn-sm">📅 Shows</a>
+        <a href="#/radio"       class="btn btn-ghost btn-sm">${Icon('radio')} Radio</a>
+        <a href="#/chat"        class="btn btn-ghost btn-sm">${Icon('message')} Chat</a>
+        <a href="#/discover"    class="btn btn-ghost btn-sm">${Icon('music')} Discover</a>
+        <a href="#/underground" class="btn btn-ghost btn-sm">${Icon('moon')} Underground</a>
+        <a href="#/shows"       class="btn btn-ghost btn-sm">${Icon('calendar')} Shows</a>
         <a href="#/login"       class="btn btn-ghost btn-sm">Logg inn</a>
         <a href="#/register"    class="btn btn-primary btn-sm">Registrer</a>
-        <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne flytende chat">💬 Float</button>
+        <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne/lukk flytende chat-vindu">${Icon('message')} Chat-vindu</button>
       `;
     }
   }
@@ -160,16 +160,16 @@ const App = (() => {
     const pendingCount = user ? Auth.getPendingRequestsCount(user.username) : 0;
     const pendingBanner = (user && pendingCount > 0) ? `
       <div class="friend-req-banner" onclick="Router.go('/u/${user.username}')">
-        <span>👥</span>
+        <span>${Icon('users')}</span>
         <span>Du har <strong>${pendingCount}</strong> venneforespørsel${pendingCount !== 1 ? 'er' : ''} — klikk for å se dem</span>
-        <span>→</span>
+        <span>${Icon('arrow-right')}</span>
       </div>` : '';
 
     const heroHtml = !user ? `
       <div class="stellar-hero">
         <div class="stellar-hero-glow"></div>
         <div class="stellar-hero-content">
-          <div class="stellar-hero-badge">🌌 Psychedelic · Ambient · Dub</div>
+          <div class="stellar-hero-badge">${Icon('sparkles')} Psychedelic · Ambient · Dub</div>
           <h1 class="stellar-hero-title">Sound Core<span> Development</span></h1>
           <div class="stellar-hero-for">
             <span>Friends</span>
@@ -183,9 +183,9 @@ const App = (() => {
           <p class="stellar-hero-sub">Musikk Er Sosialt — Musikk Connects With People. From Friends To Developers and Producers To DJs, eller Bare Vær her Og Lytt.</p>
           <p class="stellar-hero-welcome">Lag en bruker · Velkommen å dele din kunst og opplevelser</p>
           <div class="stellar-hero-actions">
-            <a href="#/radio" class="btn btn-primary landing-btn-big stellar-cta">📻 Lytt nå</a>
+            <a href="#/radio" class="btn btn-primary landing-btn-big stellar-cta">${Icon('radio')} Lytt nå</a>
             <a href="#/register" class="btn btn-ghost landing-btn-big">Lag profil gratis</a>
-            <a href="#/chat" class="btn btn-ghost landing-btn-big">💬 Chat</a>
+            <a href="#/chat" class="btn btn-ghost landing-btn-big">${Icon('message')} Chat</a>
             <a href="#/login" class="btn btn-ghost landing-btn-big">Logg inn</a>
           </div>
         </div>
@@ -193,12 +193,12 @@ const App = (() => {
       <div class="stellar-hero stellar-hero-compact">
         <div class="stellar-hero-glow"></div>
         <div class="stellar-hero-content">
-          <h2 class="stellar-hero-greeting">Hei, ${user.displayName} 👋</h2>
+          <h2 class="stellar-hero-greeting">Hei, ${user.displayName} ${Icon('smile')}</h2>
           <div class="stellar-hero-actions">
-            <a href="#/radio" class="btn btn-primary">📻 Radio</a>
-            <a href="#/u/${user.username}" class="btn btn-ghost">👤 Min profil</a>
-            <a href="#/edit" class="btn btn-ghost">✏️ Rediger</a>
-            <a href="#/chat" class="btn btn-ghost">💬 Chat</a>
+            <a href="#/radio" class="btn btn-primary">${Icon('radio')} Radio</a>
+            <a href="#/u/${user.username}" class="btn btn-ghost">${Icon('user')} Min profil</a>
+            <a href="#/edit" class="btn btn-ghost">${Icon('edit')} Rediger</a>
+            <a href="#/chat" class="btn btn-ghost">${Icon('message')} Chat</a>
           </div>
         </div>
       </div>`;
@@ -210,7 +210,7 @@ const App = (() => {
       <div class="section np-section">
         <div class="section-header">
           <div class="section-title" style="display:flex;align-items:center;gap:0.5rem"><span class="event-live-dot" style="width:8px;height:8px"></span> Live Events <span>${liveEventUsers.length} live nå</span></div>
-          <div class="section-sub">Klikk ▶ for å lytte direkte</div>
+          <div class="section-sub">Klikk ${Icon('play')} for å lytte direkte</div>
         </div>
         <div class="np-grid">
           ${liveEventUsers.map(u => {
@@ -236,7 +236,7 @@ const App = (() => {
                   <span class="event-live-dot" style="width:7px;height:7px;margin-right:0.25rem"></span>
                   <div class="np-card-station-name">${ev.title}</div>
                 </div>
-                ${ev.liveUrl ? `<button class="np-play-btn" style="background:#ef4444" onclick="Radio.playUrl('${safeUrl}','${safeTitle}','🔴');event.preventDefault()">▶ Lytt live</button>` : `<a class="np-play-btn" href="#/u/${u.username}" style="background:#ef4444;text-decoration:none">Se profil</a>`}
+                ${ev.liveUrl ? `<button class="np-play-btn" style="background:#ef4444" onclick="Radio.playUrl('${safeUrl}','${safeTitle}','🔴');event.preventDefault()">${Icon('play')} Lytt live</button>` : `<a class="np-play-btn" href="#/u/${u.username}" style="background:#ef4444;text-decoration:none">Se profil</a>`}
               </div>`;
           }).join('')}
         </div>
@@ -245,11 +245,11 @@ const App = (() => {
     const nowPlayingSection = radioUsers.length ? `
       <div class="section np-section">
         <div class="section-header">
-          <div class="section-title">📻 Now Playing <span>${radioUsers.length} kanaler</span></div>
+          <div class="section-title">${Icon('radio')} Now Playing <span>${radioUsers.length} kanaler</span></div>
           <div class="np-mini-player" id="np-mini-player">
-            <button class="np-mini-btn" id="np-mini-btn" onclick="NpMiniPlayer.toggle()" title="Spill av / Pause">▶</button>
+            <button class="np-mini-btn" id="np-mini-btn" onclick="NpMiniPlayer.toggle()" title="Spill av / Pause">${Icon('play')}</button>
             <div class="np-mini-meta">
-              <div class="np-mini-name" id="np-mini-name">${radioUsers[0]?.favoriteRadio?.emoji || '📻'} ${radioUsers[0]?.favoriteRadio?.name || 'Radio'}</div>
+              <div class="np-mini-name" id="np-mini-name">${iconForEmoji(radioUsers[0]?.favoriteRadio?.emoji, 'radio')} ${radioUsers[0]?.favoriteRadio?.name || 'Radio'}</div>
               <div class="np-mini-live">
                 <span class="np-mini-dot" id="np-mini-dot"></span>
                 <span id="np-mini-status">Live</span>
@@ -277,11 +277,11 @@ const App = (() => {
                   </div>
                 </a>
                 <div class="np-card-station">
-                  <span class="np-card-emoji">${r.emoji || '📻'}</span>
+                  <span class="np-card-emoji">${iconForEmoji(r.emoji, 'radio')}</span>
                   <div class="np-card-station-name">${r.name || 'Radio'}</div>
                 </div>
                 <button class="np-play-btn" onclick="Radio.playUrl('${r.url}','${(r.name||'Radio').replace(/'/g,"\\'")}','${r.emoji||'📻'}');event.preventDefault()">
-                  ▶ Lytt
+                  ${Icon('play')} Lytt
                 </button>
               </div>`;
           }).join('')}
@@ -299,18 +299,18 @@ const App = (() => {
     const publicMixesSection = allMixEntries.length ? `
       <div class="section">
         <div class="section-header">
-          <div class="section-title">🎛️ DJ Mixes <span>${allMixEntries.length} mixes</span></div>
+          <div class="section-title">${Icon('sliders')} DJ Mixes <span>${allMixEntries.length} mixes</span></div>
           <div class="section-sub">Last opp din egen mix fra profileditoren · privat/offentlig med Pro</div>
         </div>
         <div class="pub-mixes-grid" id="pub-mixes-grid">
           ${allMixEntries.map(e => `
             <div class="pub-mix-row" id="pubmix-${e.mixId}">
-              <div class="pub-mix-icon" id="pubmix-icon-${e.mixId}">🎛️</div>
+              <div class="pub-mix-icon" id="pubmix-icon-${e.mixId}">${Icon('sliders')}</div>
               <div class="pub-mix-meta">
                 <div class="pub-mix-title" id="pubmix-title-${e.mixId}">Laster…</div>
                 <div class="pub-mix-sub" id="pubmix-sub-${e.mixId}"><a href="#/u/${e.username}" style="color:var(--accent);text-decoration:none">@${e.username}</a></div>
               </div>
-              <button class="pub-mix-play" onclick="Profile.playMix('${e.mixId}','')">▶ Spill</button>
+              <button class="pub-mix-play" onclick="Profile.playMix('${e.mixId}','')">${Icon('play')} Spill</button>
             </div>`).join('')}
         </div>
       </div>` : '';
@@ -318,24 +318,24 @@ const App = (() => {
     const comingSoonHtml = `
       <div class="section coming-soon-section">
         <div class="section-header">
-          <div class="section-title">🚀 Kommer snart</div>
+          <div class="section-title">${Icon('rocket')} Kommer snart</div>
           <div class="section-sub">Funksjoner under utvikling</div>
         </div>
         <div class="coming-soon-grid">
           <div class="cs-card">
-            <div class="cs-icon">💬</div>
+            <div class="cs-icon">${Icon('message')}</div>
             <div class="cs-label">Kommentarer</div>
             <div class="cs-desc">Kommenter på profiler og musikk</div>
             <div class="cs-badge">Snart</div>
           </div>
           <div class="cs-card">
-            <div class="cs-icon">🔗</div>
+            <div class="cs-icon">${Icon('link')}</div>
             <div class="cs-label">Del musikk</div>
             <div class="cs-desc">Del sanger og spillelister med venner</div>
             <div class="cs-badge">Snart</div>
           </div>
           <div class="cs-card cs-card-premium">
-            <div class="cs-icon">⏱️</div>
+            <div class="cs-icon">${Icon('clock')}</div>
             <div class="cs-label">Live Mix Tid</div>
             <div class="cs-desc cs-price">
               <div>1 time &nbsp;<strong>150 NOK</strong></div>
@@ -350,11 +350,11 @@ const App = (() => {
     const homeRadioHtml = `
       <div class="home-radio-section" id="home-radio-section">
 <div class="hr-tab-strip" id="hr-tab-strip">
-          <button class="hr-tab hr-tab-active" onclick="HomeRadio.setGenre('psytrance',this)">🌀 Psytrance</button>
-          <button class="hr-tab" onclick="HomeRadio.setGenre('downtempo',this)">🌊 Downtempo</button>
-          <button class="hr-tab" onclick="HomeRadio.setGenre('progressive',this)">🌐 Progressive</button>
-          <button class="hr-tab" onclick="HomeRadio.setGenre('ambient',this)">🌌 Ambient</button>
-          <button class="hr-tab" onclick="HomeRadio.setGenre('goa',this)">🕉️ Goa</button>
+          <button class="hr-tab hr-tab-active" onclick="HomeRadio.setGenre('psytrance',this)">${Icon('wind')} Psytrance</button>
+          <button class="hr-tab" onclick="HomeRadio.setGenre('downtempo',this)">${Icon('waves')} Downtempo</button>
+          <button class="hr-tab" onclick="HomeRadio.setGenre('progressive',this)">${Icon('globe')} Progressive</button>
+          <button class="hr-tab" onclick="HomeRadio.setGenre('ambient',this)">${Icon('sparkles')} Ambient</button>
+          <button class="hr-tab" onclick="HomeRadio.setGenre('goa',this)">${Icon('sparkles')} Goa</button>
         </div>
         <div class="hr-channel-grid" id="hr-channel-grid"></div>
       </div>`;
@@ -371,7 +371,7 @@ const App = (() => {
       </div>
       <footer class="site-footer">
         <div class="site-footer-inner">
-          <div class="site-footer-logo">🌌 Sound Core</div>
+          <div class="site-footer-logo">${Icon('sparkles')} Sound Core</div>
           <div class="site-footer-contact">
             <div class="site-footer-label">Kontakt</div>
             <a class="site-footer-email" href="mailto:producerenur@gmail.com">producerenur@gmail.com</a>
@@ -398,7 +398,7 @@ const App = (() => {
         const el = id => document.getElementById(id);
         if (el('hr-np-name'))   el('hr-np-name').textContent = s.name;
         if (el('hr-np-desc'))   el('hr-np-desc').textContent = s.desc;
-        if (el('hr-np-emoji'))  el('hr-np-emoji').textContent = s.emoji || '📻';
+        if (el('hr-np-emoji'))  el('hr-np-emoji').innerHTML = iconForEmoji(s.emoji, 'radio');
         if (el('hr-live-dot'))  el('hr-live-dot').classList.add('hr-dot-live');
         if (el('hr-np-status')) el('hr-np-status').textContent = 'LIVE';
         if (el('hr-np-play'))   { el('hr-np-play').textContent = '⏹ Stopp'; el('hr-np-play').classList.add('hr-stop-active'); }
@@ -436,9 +436,9 @@ const App = (() => {
           : '';
         grid.innerHTML = stations.map(s => `
           <div class="hr-channel-card" data-id="${s.id}" style="--hc:${s.color}" onclick="HomeRadio.play('${s.id}')">
-            <span class="hr-channel-emoji">${s.emoji || '📻'}</span>
+            <span class="hr-channel-emoji">${iconForEmoji(s.emoji, 'radio')}</span>
 
-            <button class="hr-channel-play" onclick="event.stopPropagation();HomeRadio.play('${s.id}')">▶</button>
+            <button class="hr-channel-play" onclick="event.stopPropagation();HomeRadio.play('${s.id}')">${Icon('play')}</button>
           </div>`).join('') + extraHtml;
       }
 
@@ -492,7 +492,7 @@ const App = (() => {
     // Render user cards
     const grid = document.getElementById('users-grid');
     if (!users.length) {
-      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><p>Ingen brukere ennå. Vær den første!</p></div>`;
+      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">${Icon('users')}</div><p>Ingen brukere ennå. Vær den første!</p></div>`;
       return;
     }
     const currentUser = Auth.current();
@@ -505,11 +505,11 @@ const App = (() => {
       if (currentUser && currentUser.username !== u.username) {
         const fs = Auth.getFriendStatus(currentUser.username, u.username);
         if (fs === 'friends') {
-          friendBtn = `<div class="user-card-friend-status">✓ Venner</div>`;
+          friendBtn = `<div class="user-card-friend-status">${Icon('check')} Venner</div>`;
         } else if (fs === 'pending_sent') {
-          friendBtn = `<div class="user-card-friend-status user-card-friend-status--pending">⏳ Forespørsel sendt</div>`;
+          friendBtn = `<div class="user-card-friend-status user-card-friend-status--pending">${Icon('hourglass')} Forespørsel sendt</div>`;
         } else if (fs === 'pending_received') {
-          friendBtn = `<button class="user-card-friend-btn user-card-friend-btn--accept" onclick="event.stopPropagation();event.preventDefault();App.quickAcceptFriend('${u.username}',this)">✓ Aksepter</button>`;
+          friendBtn = `<button class="user-card-friend-btn user-card-friend-btn--accept" onclick="event.stopPropagation();event.preventDefault();App.quickAcceptFriend('${u.username}',this)">${Icon('check')} Aksepter</button>`;
         } else {
           friendBtn = `<button class="user-card-friend-btn" onclick="event.stopPropagation();event.preventDefault();App.quickAddFriend('${u.username}',this)">+ Legg til venn</button>`;
         }
@@ -600,9 +600,9 @@ const App = (() => {
     const mixRows = (user.mixIds || []).length
       ? (user.mixIds).map(id => `
           <div class="ms-item" id="ms-mix-${id}">
-            <span class="ms-item-icon">🎛️</span>
+            <span class="ms-item-icon">${Icon('sliders')}</span>
             <span class="ms-item-label" id="ms-mix-label-${id}">Laster…</span>
-            <button class="btn btn-ghost btn-sm" onclick="Profile.playMix('${id}','')">▶ Spill</button>
+            <button class="btn btn-ghost btn-sm" onclick="Profile.playMix('${id}','')">${Icon('play')} Spill</button>
           </div>`).join('')
       : '<p class="ms-empty">Ingen mixes lastet opp ennå. <a href="#/dj">Gå til DJ</a></p>';
 
@@ -610,9 +610,9 @@ const App = (() => {
     const musicRows = tracks.length
       ? tracks.map((t, i) => `
           <div class="ms-item">
-            <span class="ms-item-icon">🎵</span>
+            <span class="ms-item-icon">${Icon('music')}</span>
             <span class="ms-item-label">${t.name || 'Sang ' + (i + 1)}</span>
-            <button class="btn btn-ghost btn-sm" onclick="Player.loadTrack('${t.id}', true)">▶ Spill</button>
+            <button class="btn btn-ghost btn-sm" onclick="Player.loadTrack('${t.id}', true)">${Icon('play')} Spill</button>
           </div>`).join('')
       : '<p class="ms-empty">Ingen musikk lastet opp ennå. <a href="#/edit">Rediger profil</a></p>';
 
@@ -620,7 +620,7 @@ const App = (() => {
     const eventRows = (user.events || []).length
       ? user.events.map(ev => `
           <div class="ms-item">
-            <span class="ms-item-icon">📅</span>
+            <span class="ms-item-icon">${Icon('calendar')}</span>
             <span class="ms-item-label">${ev.title || 'Arrangement'} — ${ev.date ? new Date(ev.date).toLocaleDateString('no-NO') : ''}</span>
             ${ev.isLive ? '<span class="event-live-dot" style="width:8px;height:8px;margin-left:0.5rem"></span>' : ''}
           </div>`).join('')
@@ -631,14 +631,14 @@ const App = (() => {
     const friendRows = friends.length
       ? friends.map(f => `
           <div class="ms-item" onclick="Router.go('/u/${f.username}')" style="cursor:pointer">
-            <span class="ms-item-icon">👤</span>
+            <span class="ms-item-icon">${Icon('user')}</span>
             <span class="ms-item-label">${f.displayName} <span style="color:var(--text3)">@${f.username}</span></span>
           </div>`).join('')
       : '<p class="ms-empty">Ingen venner ennå. <a href="#/discover">Finn folk</a></p>';
 
     document.getElementById('app').innerHTML = `
       <div class="settings-page-v2">
-        <h1>🏠 Min side</h1>
+        <h1>${Icon('home')} Min side</h1>
         <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
           <div class="ms-stat-card">
             <div class="ms-stat-num">${(user.musicIds || []).length}</div>
@@ -663,54 +663,54 @@ const App = (() => {
         </div>
 
         <div class="settings-tabs">
-          <button class="settings-tab-btn active" onclick="App.settingsTab('ms-musikk',this)">🎵 Musikk</button>
-          <button class="settings-tab-btn" onclick="App.settingsTab('ms-mixes',this)">🎛️ Mixes</button>
-          <button class="settings-tab-btn" onclick="App.settingsTab('ms-events',this)">📅 Events</button>
-          <button class="settings-tab-btn" onclick="App.settingsTab('ms-venner',this)">👥 Venner</button>
-          <button class="settings-tab-btn" onclick="App.settingsTab('ms-hurtig',this)">⚡ Hurtiglenker</button>
+          <button class="settings-tab-btn active" onclick="App.settingsTab('ms-musikk',this)">${Icon('music')} Musikk</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('ms-mixes',this)">${Icon('sliders')} Mixes</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('ms-events',this)">${Icon('calendar')} Events</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('ms-venner',this)">${Icon('users')} Venner</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('ms-hurtig',this)">${Icon('zap')} Hurtiglenker</button>
         </div>
 
         <div id="set-tab-ms-musikk" class="settings-tab-panel active">
           <div class="settings-section">
-            <div class="settings-section-header">🎵 Din musikk</div>
+            <div class="settings-section-header">${Icon('music')} Din musikk</div>
             <div class="settings-section-body ms-list">${musicRows}</div>
           </div>
         </div>
 
         <div id="set-tab-ms-mixes" class="settings-tab-panel">
           <div class="settings-section">
-            <div class="settings-section-header">🎛️ Dine DJ-mixes</div>
+            <div class="settings-section-header">${Icon('sliders')} Dine DJ-mixes</div>
             <div class="settings-section-body ms-list">${mixRows}</div>
           </div>
         </div>
 
         <div id="set-tab-ms-events" class="settings-tab-panel">
           <div class="settings-section">
-            <div class="settings-section-header">📅 Dine arrangementer</div>
+            <div class="settings-section-header">${Icon('calendar')} Dine arrangementer</div>
             <div class="settings-section-body ms-list">${eventRows}</div>
           </div>
         </div>
 
         <div id="set-tab-ms-venner" class="settings-tab-panel">
           <div class="settings-section">
-            <div class="settings-section-header">👥 Venner</div>
+            <div class="settings-section-header">${Icon('users')} Venner</div>
             <div class="settings-section-body ms-list">${friendRows}</div>
           </div>
         </div>
 
         <div id="set-tab-ms-hurtig" class="settings-tab-panel">
           <div class="settings-section">
-            <div class="settings-section-header">⚡ Hurtiglenker</div>
+            <div class="settings-section-header">${Icon('zap')} Hurtiglenker</div>
             <div class="settings-section-body">
               <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.25rem">
-                <a href="#/u/${user.username}" class="btn btn-ghost">👤 Min profil</a>
-                <a href="#/edit" class="btn btn-ghost">✏️ Rediger profil</a>
-                <a href="#/radio" class="btn btn-ghost">📻 Radio</a>
-                <a href="#/dj" class="btn btn-ghost">🎛️ DJ Studio</a>
-                <a href="#/studio" class="btn btn-ghost">🎨 Blend Studio</a>
-                <a href="#/inbox" class="btn btn-ghost">📬 Innboks</a>
-                <a href="#/settings" class="btn btn-ghost">⚙️ Innstillinger</a>
-                <a href="#/discover" class="btn btn-ghost">🎵 Discover</a>
+                <a href="#/u/${user.username}" class="btn btn-ghost">${Icon('user')} Min profil</a>
+                <a href="#/edit" class="btn btn-ghost">${Icon('edit')} Rediger profil</a>
+                <a href="#/radio" class="btn btn-ghost">${Icon('radio')} Radio</a>
+                <a href="#/dj" class="btn btn-ghost">${Icon('sliders')} DJ Studio</a>
+                <a href="#/studio" class="btn btn-ghost">${Icon('palette')} Blend Studio</a>
+                <a href="#/inbox" class="btn btn-ghost">${Icon('mail')} Innboks</a>
+                <a href="#/settings" class="btn btn-ghost">${Icon('settings')} Innstillinger</a>
+                <a href="#/discover" class="btn btn-ghost">${Icon('music')} Discover</a>
               </div>
             </div>
           </div>
@@ -750,7 +750,7 @@ const App = (() => {
             <label class="form-label">Passord</label>
             <div class="input-group">
               <input class="form-input" id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password">
-              <button class="input-group-icon" onclick="togglePassword('login-pass',this)">👁</button>
+              <button class="input-group-icon" onclick="togglePassword('login-pass',this)">${Icon('eye')}</button>
             </div>
           </div>
           <div id="login-error" class="form-error" style="margin-bottom:0.75rem;display:none"></div>
@@ -786,7 +786,7 @@ const App = (() => {
       return;
     }
     renderNav();
-    toast(`Velkommen tilbake til Sound Core, ${result.user.displayName}! 👋`, 'success');
+    toast(`Velkommen tilbake til Sound Core, ${result.user.displayName}! ${Icon('smile')}`, 'success');
     Router.go('/');
   }
 
@@ -833,7 +833,7 @@ const App = (() => {
             <label class="form-label">Passord</label>
             <div class="input-group">
               <input class="form-input" id="reg-pass" type="password" placeholder="Minst 6 tegn" autocomplete="new-password">
-              <button class="input-group-icon" onclick="togglePassword('reg-pass',this)">👁</button>
+              <button class="input-group-icon" onclick="togglePassword('reg-pass',this)">${Icon('eye')}</button>
             </div>
             <span class="form-hint">Minst 6 tegn og ett spesialtegn (f.eks. !@#$%)</span>
           </div>
@@ -846,19 +846,19 @@ const App = (() => {
             <div class="role-selector" id="reg-role-selector">
               <label class="role-option" onclick="App.selectRole('lytter',this)">
                 <input type="radio" name="reg-role" value="lytter" checked style="display:none">
-                <div class="role-option-inner active"><span class="role-option-emoji">🎧</span><span class="role-option-label">Lytter</span></div>
+                <div class="role-option-inner active"><span class="role-option-emoji">${Icon('headphones')}</span><span class="role-option-label">Lytter</span></div>
               </label>
               <label class="role-option" onclick="App.selectRole('dj',this)">
                 <input type="radio" name="reg-role" value="dj" style="display:none">
-                <div class="role-option-inner"><span class="role-option-emoji">🎛️</span><span class="role-option-label">DJ</span></div>
+                <div class="role-option-inner"><span class="role-option-emoji">${Icon('sliders')}</span><span class="role-option-label">DJ</span></div>
               </label>
               <label class="role-option" onclick="App.selectRole('produsent',this)">
                 <input type="radio" name="reg-role" value="produsent" style="display:none">
-                <div class="role-option-inner"><span class="role-option-emoji">🎹</span><span class="role-option-label">Produsent</span></div>
+                <div class="role-option-inner"><span class="role-option-emoji">${Icon('music')}</span><span class="role-option-label">Produsent</span></div>
               </label>
               <label class="role-option" onclick="App.selectRole('plateselskap',this)">
                 <input type="radio" name="reg-role" value="plateselskap" style="display:none">
-                <div class="role-option-inner"><span class="role-option-emoji">🏷️</span><span class="role-option-label">Plateselskap</span></div>
+                <div class="role-option-inner"><span class="role-option-emoji">${Icon('tag')}</span><span class="role-option-label">Plateselskap</span></div>
               </label>
             </div>
           </div>
@@ -908,14 +908,14 @@ const App = (() => {
       // Auto-activated in dev mode — log the user in immediately
       localStorage.setItem('pv_session', JSON.stringify({ username, ts: Date.now() }));
       renderNav();
-      toast(`Konto opprettet! Velkommen, ${displayName || username}! 🎉`, 'success');
+      toast(`Konto opprettet! Velkommen, ${displayName || username}! ${Icon('party')}`, 'success');
       Router.go(`/u/${username}`);
     } else {
       // Show confirmation page
       document.getElementById('app').innerHTML = `
         <div class="auth-page">
           <div class="auth-card" style="text-align:center">
-            <div style="font-size:4rem;margin-bottom:1rem">📧</div>
+            <div style="font-size:4rem;margin-bottom:1rem">${Icon('mail')}</div>
             <h2 style="font-weight:800;margin-bottom:0.5rem">Sjekk e-posten din!</h2>
             <p style="color:var(--text2);margin-bottom:1.5rem">
               Vi har sendt en aktiveringslenke til <strong>${email}</strong>.<br>
@@ -924,7 +924,7 @@ const App = (() => {
             ${emailRes.error ? `<div class="badge badge-red" style="margin-bottom:1rem">${emailRes.error}</div>` : ''}
             <a href="#/login" class="btn btn-primary" style="margin-bottom:0.75rem;display:inline-flex">Gå til innlogging</a>
             <div style="margin-top:0.75rem">
-              <button class="btn btn-ghost btn-sm" id="resend-confirm-btn" onclick="App.resendActivationByEmail('${username}')">📧 Send aktiveringslenke på nytt</button>
+              <button class="btn btn-ghost btn-sm" id="resend-confirm-btn" onclick="App.resendActivationByEmail('${username}')">${Icon('mail')} Send aktiveringslenke på nytt</button>
             </div>
             <p style="color:var(--text2);font-size:0.8rem;margin-top:1rem">Fant du ikke e-posten? Sjekk søppelpost-mappen.</p>
           </div>
@@ -947,7 +947,7 @@ const App = (() => {
           <div id="forgot-error" class="form-error" style="margin-bottom:0.75rem;display:none"></div>
           <div id="forgot-success" style="display:none;margin-bottom:0.75rem;color:var(--green);font-size:0.875rem"></div>
           <button class="btn btn-primary w-full" id="forgot-btn" onclick="App.doForgotPassword()">Send tilbakestillingslenke</button>
-          <div class="auth-footer"><a href="#/login">← Tilbake til innlogging</a></div>
+          <div class="auth-footer"><a href="#/login">${Icon('arrow-left')} Tilbake til innlogging</a></div>
         </div>
       </div>`;
     document.getElementById('forgot-email').addEventListener('keydown', e => { if (e.key === 'Enter') App.doForgotPassword(); });
@@ -976,8 +976,8 @@ const App = (() => {
     if (sucEl) {
       sucEl.style.display = 'block';
       sucEl.innerHTML = emailRes.devMode
-        ? `✅ (Dev-modus) Lenke: <a href="${emailRes.link}" style="color:var(--accent)">${emailRes.link}</a>`
-        : `✅ Tilbakestillingslenke sendt til ${email}`;
+        ? `${Icon('check-circle')} (Dev-modus) Lenke: <a href="${emailRes.link}" style="color:var(--accent)">${emailRes.link}</a>`
+        : `${Icon('check-circle')} Tilbakestillingslenke sendt til ${email}`;
     }
   }
 
@@ -993,7 +993,7 @@ const App = (() => {
             <label class="form-label">Nytt passord</label>
             <div class="input-group">
               <input class="form-input" id="reset-pass" type="password" placeholder="Minst 6 tegn">
-              <button class="input-group-icon" onclick="togglePassword('reset-pass',this)">👁</button>
+              <button class="input-group-icon" onclick="togglePassword('reset-pass',this)">${Icon('eye')}</button>
             </div>
             <span class="form-hint">Minst 6 tegn og ett spesialtegn (f.eks. !@#$%)</span>
           </div>
@@ -1029,14 +1029,14 @@ const App = (() => {
     if (result.error) {
       document.getElementById('app').innerHTML = `
         <div class="auth-page"><div class="auth-card" style="text-align:center">
-          <div style="font-size:3rem">⚠️</div>
+          <div style="font-size:3rem">${Icon('alert')}</div>
           <h2>Ugyldig lenke</h2>
           <p style="color:var(--text2);margin-top:0.5rem">${result.error}</p>
           <a href="#/register" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">Prøv igjen</a>
         </div></div>`;
       return;
     }
-    toast(`Konto aktivert! Velkommen, ${result.user.displayName}! 🎉`, 'success');
+    toast(`Konto aktivert! Velkommen, ${result.user.displayName}! ${Icon('party')}`, 'success');
     // Auto-login after activation
     localStorage.setItem('pv_session', JSON.stringify({ username: result.user.username, ts: Date.now() }));
     renderNav();
@@ -1117,7 +1117,7 @@ const App = (() => {
             maxlength="60"
             style="width:100%;background:var(--surface,#1a1a2e);border:1px solid var(--border,rgba(255,255,255,0.12));border-radius:8px;padding:0.6rem 0.75rem;color:var(--text,#fff);font-size:0.9rem;box-sizing:border-box">
         </div>
-        <button class="btn btn-primary" style="align-self:flex-start" onclick="App.startNewChat()">💬 Start chat</button>
+        <button class="btn btn-primary" style="align-self:flex-start" onclick="App.startNewChat()">${Icon('message')} Start chat</button>
       </div>`;
 
     // ── Tab: Brukere ─────────────────────────────────────────────────────
@@ -1129,13 +1129,13 @@ const App = (() => {
           const isIncoming = (user.friendRequests||[]).some(r => r.from === u.username);
           let friendBtn = '';
           if (isFriend) {
-            friendBtn = `<span style="font-size:0.78rem;color:#4ade80">✓ Venner</span>`;
+            friendBtn = `<span style="font-size:0.78rem;color:#4ade80">${Icon('check')} Venner</span>`;
           } else if (isPending) {
-            friendBtn = `<span style="font-size:0.78rem;color:var(--text3)">⏳ Sendt</span>`;
+            friendBtn = `<span style="font-size:0.78rem;color:var(--text3)">${Icon('hourglass')} Sendt</span>`;
           } else if (isIncoming) {
-            friendBtn = `<button class="btn btn-primary btn-sm" onclick="App.inboxAccept('${u.username}')">✓ Aksepter</button>`;
+            friendBtn = `<button class="btn btn-primary btn-sm" onclick="App.inboxAccept('${u.username}')">${Icon('check')} Aksepter</button>`;
           } else {
-            friendBtn = `<button class="btn btn-ghost btn-sm" onclick="Profile.sendFriendRequest('${u.username}');App.renderInbox('brukere')">👥 Legg til</button>`;
+            friendBtn = `<button class="btn btn-ghost btn-sm" onclick="Profile.sendFriendRequest('${u.username}');App.renderInbox('brukere')">${Icon('users')} Legg til</button>`;
           }
           return `
             <div class="settings-row">
@@ -1147,7 +1147,7 @@ const App = (() => {
                 </div>
               </a>
               <div style="display:flex;align-items:center;gap:0.5rem">
-                <button class="btn btn-primary btn-sm" onclick="App.inviteToChat('${u.username}')">📨 Inviter til chat</button>
+                <button class="btn btn-primary btn-sm" onclick="App.inviteToChat('${u.username}')">${Icon('mail')} Inviter til chat</button>
                 ${friendBtn}
               </div>
             </div>`;
@@ -1168,30 +1168,30 @@ const App = (() => {
                 </div>
               </a>
               <div style="display:flex;gap:0.5rem">
-                <button class="btn btn-primary btn-sm" onclick="App.inboxAccept('${r.from}')">✓ Aksepter</button>
-                <button class="btn btn-ghost btn-sm" onclick="App.inboxReject('${r.from}')">✕ Avslå</button>
+                <button class="btn btn-primary btn-sm" onclick="App.inboxAccept('${r.from}')">${Icon('check')} Aksepter</button>
+                <button class="btn btn-ghost btn-sm" onclick="App.inboxReject('${r.from}')">${Icon('x')} Avslå</button>
               </div>
             </div>`;
         }).join('')
       : '<p style="color:var(--text3);font-size:0.85rem;padding:1rem 0">Ingen venneforespørsler.</p>';
 
     const tabs = [
-      { id: 'samtaler',    label: `💬 Samtaler${convs.length ? ` (${convs.length})` : ''}` },
+      { id: 'samtaler',    label: `${Icon('message')} Samtaler${convs.length ? ` (${convs.length})` : ''}` },
       { id: 'nychat',      label: '➕ Ny chat' },
-      { id: 'brukere',     label: `🌐 Brukere${allOtherUsers.length ? ` (${allOtherUsers.length})` : ''}` },
-      { id: 'forsporsler', label: `👥 Forespørsler${pendingRequests.length ? ` (${pendingRequests.length})` : ''}` },
+      { id: 'brukere',     label: `${Icon('globe')} Brukere${allOtherUsers.length ? ` (${allOtherUsers.length})` : ''}` },
+      { id: 'forsporsler', label: `${Icon('users')} Forespørsler${pendingRequests.length ? ` (${pendingRequests.length})` : ''}` },
     ];
 
     const tabContentMap = {
-      samtaler:    `<div class="settings-section"><div class="settings-section-header">💬 Samtaler</div><div class="settings-section-body">${samtaleRows}</div></div>`,
-      nychat:      `<div class="settings-section"><div class="settings-section-header">➕ Ny chat</div><div class="settings-section-body">${nychatContent}</div></div>`,
-      brukere:     `<div class="settings-section"><div class="settings-section-header">🌐 Alle brukere</div><div class="settings-section-body">${brukereRows}</div></div>`,
-      forsporsler: `<div class="settings-section"><div class="settings-section-header">👥 Venneforespørsler</div><div class="settings-section-body">${forsporslerRows}</div></div>`,
+      samtaler:    `<div class="settings-section"><div class="settings-section-header">${Icon('message')} Samtaler</div><div class="settings-section-body">${samtaleRows}</div></div>`,
+      nychat:      `<div class="settings-section"><div class="settings-section-header">${Icon('plus')} Ny chat</div><div class="settings-section-body">${nychatContent}</div></div>`,
+      brukere:     `<div class="settings-section"><div class="settings-section-header">${Icon('globe')} Alle brukere</div><div class="settings-section-body">${brukereRows}</div></div>`,
+      forsporsler: `<div class="settings-section"><div class="settings-section-header">${Icon('users')} Venneforespørsler</div><div class="settings-section-body">${forsporslerRows}</div></div>`,
     };
 
     document.getElementById('app').innerHTML = `
       <div class="settings-page">
-        <h1>📬 Innboks</h1>
+        <h1>${Icon('mail')} Innboks</h1>
         <div class="inbox-tabs">
           ${tabs.map(t => `<button class="inbox-tab-btn${activeTab === t.id ? ' active' : ''}" onclick="App.renderInbox('${t.id}')">${t.label}</button>`).join('')}
         </div>
@@ -1243,7 +1243,7 @@ const App = (() => {
     statusDiv.className = 'user-card-friend-status';
     statusDiv.textContent = '✓ Venner';
     btn.replaceWith(statusDiv);
-    toast(`Du er nå venner med @${fromUsername}! 🎉`, 'success');
+    toast(`Du er nå venner med @${fromUsername}! ${Icon('party')}`, 'success');
     renderNav();
   }
 
@@ -1252,7 +1252,7 @@ const App = (() => {
     if (!u) return;
     Auth.acceptFriendRequest(u.username, fromUsername);
     renderNav();
-    toast(`Du er nå venner med @${fromUsername}! 🎉`, 'success');
+    toast(`Du er nå venner med @${fromUsername}! ${Icon('party')}`, 'success');
     renderInbox('forsporsler');
   }
 
@@ -1273,22 +1273,22 @@ const App = (() => {
 
     document.getElementById('app').innerHTML = `
       <div class="settings-page-v2">
-        <h1>⚙️ Innstillinger</h1>
+        <h1>${Icon('settings')} Innstillinger</h1>
 
         <div class="settings-tabs">
-          <button class="settings-tab-btn active" onclick="App.settingsTab('abonnement',this)">🌟 Abonnement</button>
-          <button class="settings-tab-btn" onclick="App.settingsTab('konto',this)">👤 Konto</button>
-          <button class="settings-tab-btn" onclick="App.settingsTab('betaling',this)">💳 Betaling</button>
-          <button class="settings-tab-btn" onclick="App.settingsTab('minside',this)">🎨 Min Side</button>
-          <button class="settings-tab-btn" onclick="App.settingsTab('ai',this)">🤖 AI-assistent</button>
-          <button class="settings-tab-btn" onclick="App.settingsTab('konfig',this)">🔧 Konfigurasjon</button>
+          <button class="settings-tab-btn active" onclick="App.settingsTab('abonnement',this)">${Icon('star')} Abonnement</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('konto',this)">${Icon('user')} Konto</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('betaling',this)">${Icon('credit-card')} Betaling</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('minside',this)">${Icon('palette')} Min Side</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('ai',this)">${Icon('bot')} AI-assistent</button>
+          <button class="settings-tab-btn" onclick="App.settingsTab('konfig',this)">${Icon('wrench')} Konfigurasjon</button>
         </div>
 
         <!-- ══ ABONNEMENT ══ -->
         <div id="set-tab-abonnement" class="settings-tab-panel active">
           <div class="plan-cards">
             <div class="plan-card ${!isPro ? 'current-plan' : ''}">
-              <div class="plan-card-name">🎧 Gratis</div>
+              <div class="plan-card-name">${Icon('headphones')} Gratis</div>
               <div class="plan-card-price">0 kr / måned</div>
               <ul class="plan-card-features">
                 <li>Profil og avatar</li>
@@ -1298,7 +1298,7 @@ const App = (() => {
               </ul>
             </div>
             <div class="plan-card ${isPro ? 'current-plan' : ''}">
-              <div class="plan-card-name">⭐ Pro</div>
+              <div class="plan-card-name">${Icon('star')} Pro</div>
               <div class="plan-card-price">149 kr / måned</div>
               <ul class="plan-card-features">
                 <li>Alt i Gratis</li>
@@ -1308,12 +1308,12 @@ const App = (() => {
               </ul>
               ${!isPro
                 ? `<button class="btn btn-primary w-full" onclick="Payment.startCheckout('${user.username}')">Oppgrader til Pro</button>`
-                : `<div style="text-align:center;color:#4ade80;font-weight:700;margin-top:0.5rem">✓ Aktivt abonnement</div>`}
+                : `<div style="text-align:center;color:#4ade80;font-weight:700;margin-top:0.5rem">${Icon('check')} Aktivt abonnement</div>`}
             </div>
           </div>
 
           <div class="admin-contact-box">
-            <div class="admin-icon">💬</div>
+            <div class="admin-icon">${Icon('message')}</div>
             <div>
               <div style="font-weight:700;margin-bottom:0.2rem">Kontakt admin</div>
               <div style="font-size:0.85rem;color:var(--text2)">Spørsmål om abonnement eller betaling? Ta kontakt: <a href="mailto:producerenur@gmail.com">producerenur@gmail.com</a></div>
@@ -1324,7 +1324,7 @@ const App = (() => {
         <!-- ══ KONTO ══ -->
         <div id="set-tab-konto" class="settings-tab-panel">
           <div class="settings-section">
-            <div class="settings-section-header">👤 Kontoinformasjon</div>
+            <div class="settings-section-header">${Icon('user')} Kontoinformasjon</div>
             <div class="settings-section-body">
               <div class="settings-row">
                 <div>
@@ -1339,41 +1339,41 @@ const App = (() => {
                   <div class="settings-row-hint">${user.activated ? '✅ Kontoen er aktivert' : '⚠️ Ikke aktivert'}</div>
                 </div>
                 ${!user.activated
-                  ? `<button class="btn btn-ghost btn-sm" id="resend-act-btn" onclick="App.resendActivation()">📧 Send på nytt</button>`
+                  ? `<button class="btn btn-ghost btn-sm" id="resend-act-btn" onclick="App.resendActivation()">${Icon('mail')} Send på nytt</button>`
                   : ''}
               </div>
             </div>
           </div>
 
           <div class="settings-section">
-            <div class="settings-section-header">🛠️ Admin — aktivering</div>
+            <div class="settings-section-header">${Icon('wrench')} Admin — aktivering</div>
             <div class="settings-section-body">
               <p style="font-size:0.875rem;color:var(--text2);margin-bottom:1rem">
                 Send aktiveringslenke til alle brukere som ikke er aktivert ennå.<br>
                 <span style="font-size:0.8rem;color:var(--text3)">Uaktiverte brukere: ${Object.values(Auth.getUsers()).filter(u => !u.activated).length}</span>
               </p>
-              <button class="btn btn-ghost btn-sm" id="activate-all-btn" onclick="App.sendActivationToAll()">📧 Send til alle uaktiverte</button>
+              <button class="btn btn-ghost btn-sm" id="activate-all-btn" onclick="App.sendActivationToAll()">${Icon('mail')} Send til alle uaktiverte</button>
               <span id="activate-all-result" style="font-size:0.8rem;margin-left:0.75rem;color:var(--text2)"></span>
             </div>
           </div>
 
           <div class="settings-section">
-            <div class="settings-section-header">🔐 Passord</div>
+            <div class="settings-section-header">${Icon('lock')} Passord</div>
             <div class="settings-section-body">
               <p style="font-size:0.875rem;color:var(--text2);margin-bottom:1rem">Send en tilbakestillingslenke til <strong>${user.email}</strong></p>
-              <button class="btn btn-ghost btn-sm" id="send-reset-btn" onclick="App.sendPasswordResetFromSettings()">🔑 Send tilbakestillingslenke</button>
+              <button class="btn btn-ghost btn-sm" id="send-reset-btn" onclick="App.sendPasswordResetFromSettings()">${Icon('key')} Send tilbakestillingslenke</button>
               <span id="reset-result" style="font-size:0.8rem;margin-left:0.75rem"></span>
             </div>
           </div>
 
           <div class="settings-section">
-            <div class="settings-section-header">📱 QR-kode innlogging</div>
+            <div class="settings-section-header">${Icon('smartphone')} QR-kode innlogging</div>
             <div class="settings-section-body">
               <p style="font-size:0.875rem;color:var(--text2);margin-bottom:1rem">
                 Scan QR-koden med mobil eller nettbrett for å logge inn automatisk som <strong>@${user.username}</strong>.
                 <br><span style="font-size:0.8rem;color:var(--text3)">Koden er gyldig i 15 minutter.</span>
               </p>
-              <button class="btn btn-primary btn-sm" onclick="App.generateQRLogin()">📲 Generer QR-kode</button>
+              <button class="btn btn-primary btn-sm" onclick="App.generateQRLogin()">${Icon('share')} Generer QR-kode</button>
               <div id="qr-login-box" style="display:none;margin-top:1.25rem">
                 <div style="background:#fff;display:inline-block;padding:1rem;border-radius:12px">
                   <canvas id="qr-login-canvas"></canvas>
@@ -1384,12 +1384,12 @@ const App = (() => {
           </div>
 
           <div class="settings-section">
-            <div class="settings-section-header" style="color:var(--red)">⚠️ Faresone</div>
+            <div class="settings-section-header" style="color:var(--red)">${Icon('alert')} Faresone</div>
             <div class="settings-section-body">
               <div class="danger-zone">
                 <div class="danger-zone-title">Slett profil</div>
                 <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.75rem">Dette sletter kontoen din permanent. Handlingen kan ikke angres.</p>
-                <button class="btn btn-danger btn-sm" onclick="App.confirmDeleteAccount()">🗑️ Slett min profil</button>
+                <button class="btn btn-danger btn-sm" onclick="App.confirmDeleteAccount()">${Icon('trash')} Slett min profil</button>
               </div>
             </div>
           </div>
@@ -1398,16 +1398,16 @@ const App = (() => {
         <!-- ══ BETALING ══ -->
         <div id="set-tab-betaling" class="settings-tab-panel">
           <div class="settings-section">
-            <div class="settings-section-header">💳 Betalingsmetode</div>
+            <div class="settings-section-header">${Icon('credit-card')} Betalingsmetode</div>
             <div class="settings-section-body">
               <p style="font-size:0.875rem;color:var(--text2);margin-bottom:1rem">Velg foretrukket betalingsmetode for abonnement. Faktisk betaling behandles sikkert via Stripe.</p>
               <div class="payment-methods">
                 <div class="payment-method-btn ${(user.paymentMethod || 'card') === 'card' ? 'selected' : ''}" onclick="App.selectPaymentMethod('card',this)">
-                  <div class="pm-icon">💳</div>
+                  <div class="pm-icon">${Icon('credit-card')}</div>
                   <div class="pm-label">Bankkort</div>
                 </div>
                 <div class="payment-method-btn ${user.paymentMethod === 'paypal' ? 'selected' : ''}" onclick="App.selectPaymentMethod('paypal',this)">
-                  <div class="pm-icon">🅿️</div>
+                  <div class="pm-icon">${Icon('map-pin')}</div>
                   <div class="pm-label">PayPal</div>
                 </div>
               </div>
@@ -1427,17 +1427,17 @@ const App = (() => {
                   <input class="form-input" id="set-paypal-email" type="email" placeholder="din@paypal.no" value="${user.paypalEmail || ''}">
                 </div>
               </div>
-              <button class="btn btn-primary btn-sm" style="margin-top:0.5rem" onclick="App.savePaymentMethod()">💾 Lagre betalingsinfo</button>
+              <button class="btn btn-primary btn-sm" style="margin-top:0.5rem" onclick="App.savePaymentMethod()">${Icon('save')} Lagre betalingsinfo</button>
             </div>
           </div>
 
           ${isPro ? `
           <div class="settings-section">
-            <div class="settings-section-header">📋 Abonnementsstatus</div>
+            <div class="settings-section-header">${Icon('clipboard')} Abonnementsstatus</div>
             <div class="settings-section-body">
               <div class="settings-row">
                 <div><div class="settings-row-label">Plan</div><div class="settings-row-hint">Pro</div></div>
-                <span style="color:#4ade80;font-weight:700">✓ Aktiv</span>
+                <span style="color:#4ade80;font-weight:700">${Icon('check')} Aktiv</span>
               </div>
               <div class="settings-row">
                 <div><div class="settings-row-label">Spørsmål om faktura?</div></div>
@@ -1450,34 +1450,34 @@ const App = (() => {
         <!-- ══ MIN SIDE ══ -->
         <div id="set-tab-minside" class="settings-tab-panel">
           <div class="settings-section">
-            <div class="settings-section-header">🖼️ Bakgrunnsbilde</div>
+            <div class="settings-section-header">${Icon('image')} Bakgrunnsbilde</div>
             <div class="settings-section-body">
               <p style="font-size:0.85rem;color:var(--text2);margin-bottom:1rem">Last opp et bilde som vises i bakgrunnen på hele siden.</p>
-              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bg-file-input').click()">📷 Last opp bakgrunnsbilde</button>
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bg-file-input').click()">${Icon('camera')} Last opp bakgrunnsbilde</button>
               <div style="margin-top:1.25rem">
                 <div style="font-size:0.82rem;font-weight:700;color:var(--text2);margin-bottom:0.5rem">Psykedelisk effekt</div>
                 <div class="effect-grid">
-                  <button class="effect-btn" data-effect="psychedelic" onclick="BgManager.setEffect('psychedelic')">🌀 Psykedelisk</button>
-                  <button class="effect-btn" data-effect="acid" onclick="BgManager.setEffect('acid')">⚡ Acid</button>
-                  <button class="effect-btn" data-effect="space" onclick="BgManager.setEffect('space')">🚀 Space</button>
-                  <button class="effect-btn" data-effect="chill" onclick="BgManager.setEffect('chill')">🌿 Chill</button>
+                  <button class="effect-btn" data-effect="psychedelic" onclick="BgManager.setEffect('psychedelic')">${Icon('wind')} Psykedelisk</button>
+                  <button class="effect-btn" data-effect="acid" onclick="BgManager.setEffect('acid')">${Icon('zap')} Acid</button>
+                  <button class="effect-btn" data-effect="space" onclick="BgManager.setEffect('space')">${Icon('rocket')} Space</button>
+                  <button class="effect-btn" data-effect="chill" onclick="BgManager.setEffect('chill')">${Icon('leaf')} Chill</button>
                 </div>
               </div>
               <div style="margin-top:1.25rem">
                 <div style="font-size:0.82rem;font-weight:700;color:var(--text2);margin-bottom:0.5rem">Partikler</div>
                 <div class="particle-grid">
-                  <button class="particle-btn" data-pstyle="stars" onclick="BgManager.setParticleStyle('stars')">✨ Stjerner</button>
-                  <button class="particle-btn" data-pstyle="bubbles" onclick="BgManager.setParticleStyle('bubbles')">🫧 Bobler</button>
-                  <button class="particle-btn" data-pstyle="sparks" onclick="BgManager.setParticleStyle('sparks')">⚡ Gnister</button>
-                  <button class="particle-btn" data-pstyle="aurora" onclick="BgManager.setParticleStyle('aurora')">🌌 Aurora</button>
-                  <button class="particle-btn" data-pstyle="none" onclick="BgManager.setParticleStyle('none')">✕ Ingen</button>
+                  <button class="particle-btn" data-pstyle="stars" onclick="BgManager.setParticleStyle('stars')">${Icon('sparkles')} Stjerner</button>
+                  <button class="particle-btn" data-pstyle="bubbles" onclick="BgManager.setParticleStyle('bubbles')">${Icon('droplet')} Bobler</button>
+                  <button class="particle-btn" data-pstyle="sparks" onclick="BgManager.setParticleStyle('sparks')">${Icon('zap')} Gnister</button>
+                  <button class="particle-btn" data-pstyle="aurora" onclick="BgManager.setParticleStyle('aurora')">${Icon('sparkles')} Aurora</button>
+                  <button class="particle-btn" data-pstyle="none" onclick="BgManager.setParticleStyle('none')">${Icon('x')} Ingen</button>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="settings-section">
-            <div class="settings-section-header">🎚️ Bildejusteringer</div>
+            <div class="settings-section-header">${Icon('sliders')} Bildejusteringer</div>
             <div class="settings-section-body">
               <div class="filter-sliders">
                 <div class="filter-row">
@@ -1504,21 +1504,21 @@ const App = (() => {
               <div style="margin-top:1.25rem">
                 <div style="font-size:0.82rem;font-weight:700;color:var(--text2);margin-bottom:0.5rem">Hurtigforvalg</div>
                 <div class="preset-grid">
-                  <button class="preset-btn" onclick="App.applyFilterPreset('normal')">🎨 Normal</button>
-                  <button class="preset-btn" onclick="App.applyFilterPreset('bw')">⬛ Svart/hvitt</button>
-                  <button class="preset-btn" onclick="App.applyFilterPreset('lys')">☀️ Lys</button>
-                  <button class="preset-btn" onclick="App.applyFilterPreset('mork')">🌑 Mørk</button>
-                  <button class="preset-btn" onclick="App.applyFilterPreset('vibrant')">🌈 Vibrant</button>
-                  <button class="preset-btn" onclick="App.applyFilterPreset('cool')">❄️ Kald</button>
-                  <button class="preset-btn" onclick="App.applyFilterPreset('warm')">🔥 Varm</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('normal')">${Icon('palette')} Normal</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('bw')">${Icon('square')} Svart/hvitt</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('lys')">${Icon('sun')} Lys</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('mork')">${Icon('moon')} Mørk</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('vibrant')">${Icon('rainbow')} Vibrant</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('cool')">${Icon('snowflake')} Kald</button>
+                  <button class="preset-btn" onclick="App.applyFilterPreset('warm')">${Icon('flame')} Varm</button>
                 </div>
               </div>
-              <button class="btn btn-primary btn-sm" style="margin-top:1rem" onclick="App.saveFilterSettings()">💾 Lagre justeringer</button>
+              <button class="btn btn-primary btn-sm" style="margin-top:1rem" onclick="App.saveFilterSettings()">${Icon('save')} Lagre justeringer</button>
             </div>
           </div>
 
           <div class="settings-section">
-            <div class="settings-section-header">✍️ Tekster på siden</div>
+            <div class="settings-section-header">${Icon('edit')} Tekster på siden</div>
             <div class="settings-section-body">
               <div class="form-group">
                 <label class="form-label">Bio / Beskrivelse</label>
@@ -1528,7 +1528,7 @@ const App = (() => {
                 <label class="form-label">Profillenker (én per linje, format: Tekst|URL)</label>
                 <textarea class="form-input" id="set-links" rows="3" placeholder="SoundCloud|https://soundcloud.com/deg">${(user.links || []).map(l => l.label + '|' + l.url).join('\n')}</textarea>
               </div>
-              <button class="btn btn-primary btn-sm" onclick="App.savePageTexts()">💾 Lagre tekster</button>
+              <button class="btn btn-primary btn-sm" onclick="App.savePageTexts()">${Icon('save')} Lagre tekster</button>
             </div>
           </div>
         </div>
@@ -1536,46 +1536,46 @@ const App = (() => {
         <!-- ══ AI ASSISTENT ══ -->
         <div id="set-tab-ai" class="settings-tab-panel">
           <div class="settings-section">
-            <div class="settings-section-header">🤖 Core — AI-assistent</div>
+            <div class="settings-section-header">${Icon('bot')} Core — AI-assistent</div>
             <div class="set-ai-chat">
               <div class="set-ai-messages" id="set-ai-msgs">
-                <div class="set-ai-msg bot">Hei! Jeg heter Core og er din AI-assistent på Sound Core. Jeg kan hjelpe deg med å finne radiokanaler, tilpasse profilen din, svare på spørsmål om siden — eller bare slå av en prat om musikk. Hva lurer du på? 🎵</div>
+                <div class="set-ai-msg bot">Hei! Jeg heter Core og er din AI-assistent på Sound Core. Jeg kan hjelpe deg med å finne radiokanaler, tilpasse profilen din, svare på spørsmål om siden — eller bare slå av en prat om musikk. Hva lurer du på? ${Icon('music')}</div>
               </div>
               <div class="set-ai-input-row">
                 <input class="form-input" id="set-ai-input" placeholder="Skriv en melding…" onkeydown="if(event.key==='Enter')App.sendAiMessage()">
                 <button class="btn btn-primary btn-sm" onclick="App.sendAiMessage()">Send</button>
               </div>
             </div>
-            ${!AI.hasKey() ? `<p style="font-size:0.8rem;color:var(--text3);padding:0.75rem 1rem">ℹ️ Legg inn Claude API-nøkkel i Konfigurasjon-fanen for å aktivere AI-assistenten.</p>` : ''}
+            ${!AI.hasKey() ? `<p style="font-size:0.8rem;color:var(--text3);padding:0.75rem 1rem">${Icon('info')} Legg inn Claude API-nøkkel i Konfigurasjon-fanen for å aktivere AI-assistenten.</p>` : ''}
           </div>
         </div>
 
         <!-- ══ KONFIGURASJON ══ -->
         <div id="set-tab-konfig" class="settings-tab-panel">
           <div class="settings-section">
-            <div class="settings-section-header">🤖 AI-integrasjon (Claude API)</div>
+            <div class="settings-section-header">${Icon('bot')} AI-integrasjon (Claude API)</div>
             <div class="settings-section-body">
               <p class="text-muted text-sm" style="margin-bottom:1rem">
                 Legg inn din Claude API-nøkkel for AI bio-generator, fargeforslag og AI-assistent.
-                <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">Få nøkkel →</a>
+                <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">Få nøkkel ${Icon('arrow-right')}</a>
               </p>
               <div class="form-group">
                 <label class="form-label">Claude (Anthropic) API-nøkkel</label>
                 <div class="api-key-field input-group">
                   <input class="form-input" id="set-anthropic-key" type="password" placeholder="sk-ant-…" value="${CONFIG.ANTHROPIC_API_KEY}">
-                  <button class="api-key-toggle" onclick="togglePassword('set-anthropic-key',this)">👁</button>
+                  <button class="api-key-toggle" onclick="togglePassword('set-anthropic-key',this)">${Icon('eye')}</button>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="settings-section">
-            <div class="settings-section-header">📧 E-post (EmailJS)</div>
+            <div class="settings-section-header">${Icon('mail')} E-post (EmailJS)</div>
             <div class="settings-section-body">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
                 <p class="text-muted text-sm" style="margin:0">
                   Konfigurer EmailJS for aktiverings- og tilbakestillingslenker.
-                  <a href="https://www.emailjs.com" target="_blank" style="color:var(--accent)">Opprett konto →</a>
+                  <a href="https://www.emailjs.com" target="_blank" style="color:var(--accent)">Opprett konto ${Icon('arrow-right')}</a>
                 </p>
                 <span id="ejs-status-badge" style="font-size:0.78rem;font-weight:600;padding:0.25rem 0.65rem;border-radius:999px;background:${Email.isConfigured() ? 'rgba(34,197,94,0.15)' : 'rgba(251,191,36,0.15)'};color:${Email.isConfigured() ? '#4ade80' : '#fbbf24'}">
                   ${Email.isConfigured() ? '✅ Konfigurert' : '⚠️ Ikke konfigurert'}
@@ -1604,13 +1604,13 @@ const App = (() => {
                 <label class="form-label">Public Key</label>
                 <div class="api-key-field input-group">
                   <input class="form-input" id="set-ejs-pubkey" type="password" placeholder="xxxxxxxxxxxxxxx" value="${CONFIG.EMAILJS_PUBLIC_KEY}">
-                  <button class="api-key-toggle" onclick="togglePassword('set-ejs-pubkey',this)">👁</button>
+                  <button class="api-key-toggle" onclick="togglePassword('set-ejs-pubkey',this)">${Icon('eye')}</button>
                 </div>
               </div>
               ${Auth.current() ? `
               <div style="margin-top:0.75rem">
                 <button class="btn btn-ghost btn-sm" id="ejs-test-btn" onclick="App.testEmailJS()">
-                  📨 Send test-e-post til ${Auth.current().email}
+                  ${Icon('mail')} Send test-e-post til ${Auth.current().email}
                 </button>
                 <span id="ejs-test-result" style="font-size:0.8rem;margin-left:0.75rem"></span>
               </div>` : ''}
@@ -1618,8 +1618,8 @@ const App = (() => {
           </div>
 
           <div style="display:flex;gap:0.75rem;margin-top:1.5rem">
-            <button class="btn btn-primary" onclick="App.saveSettings()">💾 Lagre konfigurasjon</button>
-            <a href="#/" class="btn btn-ghost">← Hjem</a>
+            <button class="btn btn-primary" onclick="App.saveSettings()">${Icon('save')} Lagre konfigurasjon</button>
+            <a href="#/" class="btn btn-ghost">${Icon('arrow-left')} Hjem</a>
           </div>
         </div>
       </div>`;
@@ -1714,7 +1714,7 @@ const App = (() => {
     const box = document.getElementById('modal-box');
     if (!box) return;
     box.innerHTML = `
-      <div class="modal-header"><h2>🗑️ Slett profil</h2></div>
+      <div class="modal-header"><h2>${Icon('trash')} Slett profil</h2></div>
       <div style="padding:1.25rem">
         <p style="margin-bottom:1rem;color:var(--text2)">Er du sikker på at du vil slette kontoen <strong>@${user.username}</strong>? Dette kan ikke angres.</p>
         <div style="display:flex;gap:0.75rem">
@@ -1901,9 +1901,9 @@ const App = (() => {
 
     const res = await Email.sendTestEmail(user.email, user.username);
 
-    if (btn) { btn.disabled = false; btn.textContent = `📨 Send test-e-post til ${user.email}`; }
+    if (btn) { btn.disabled = false; btn.textContent = `${Icon('mail')} Send test-e-post til ${user.email}`; }
     if (result) {
-      result.textContent = res.success ? '✅ Sendt!' : `❌ ${res.error}`;
+      result.textContent = res.success ? '✅ Sendt!' : `${Icon('x')} ${res.error}`;
       result.style.color = res.success ? '#4ade80' : '#f87171';
     }
   }
@@ -2007,7 +2007,7 @@ const App = (() => {
     overlay.id = 'bg-profile-notice-overlay';
     overlay.innerHTML = `
       <div class="bg-notice-box">
-        <div class="bg-notice-icon">🌈</div>
+        <div class="bg-notice-icon">${Icon('rainbow')}</div>
         <h2 class="bg-notice-title">Visste du at du kan tilpasse profilen din?</h2>
         <p class="bg-notice-body">
           Dette er hva besøkende ser på <strong>din fremsidevisning</strong>.<br>
@@ -2018,7 +2018,7 @@ const App = (() => {
           <canvas id="bg-notice-canvas" width="320" height="80"></canvas>
         </div>
         <div class="bg-notice-actions">
-          <button class="btn btn-primary" onclick="Router.go('/edit');document.getElementById('bg-profile-notice-overlay')?.remove()">✏️ Tilpass bakgrunn nå</button>
+          <button class="btn btn-primary" onclick="Router.go('/edit');document.getElementById('bg-profile-notice-overlay')?.remove()">${Icon('edit')} Tilpass bakgrunn nå</button>
           <button class="btn btn-ghost" onclick="document.getElementById('bg-profile-notice-overlay')?.remove()">Kanskje senere</button>
         </div>
       </div>`;
@@ -2117,9 +2117,9 @@ const App = (() => {
     } catch {
       document.getElementById('app').innerHTML = `
         <div class="empty-state" style="padding:8rem">
-          <div class="empty-icon">❌</div>
+          <div class="empty-icon">${Icon('x')}</div>
           <p style="font-size:1.1rem;font-weight:600">Ugyldig QR-kode</p>
-          <a href="#/" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">← Hjem</a>
+          <a href="#/" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">${Icon('arrow-left')} Hjem</a>
         </div>`;
       return;
     }
@@ -2127,7 +2127,7 @@ const App = (() => {
     if (Date.now() > payload.exp) {
       document.getElementById('app').innerHTML = `
         <div class="empty-state" style="padding:8rem">
-          <div class="empty-icon">⏳</div>
+          <div class="empty-icon">${Icon('hourglass')}</div>
           <p style="font-size:1.1rem;font-weight:600">QR-koden har utløpt</p>
           <p style="color:var(--text2)">Logg inn på en annen enhet og generer en ny kode.</p>
           <a href="#/login" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">Logg inn manuelt</a>
@@ -2147,7 +2147,7 @@ const App = (() => {
     if (result.error) {
       document.getElementById('app').innerHTML = `
         <div class="empty-state" style="padding:8rem">
-          <div class="empty-icon">⚠️</div>
+          <div class="empty-icon">${Icon('alert')}</div>
           <p style="font-size:1.1rem;font-weight:600">${result.error}</p>
           <a href="#/login" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">Logg inn manuelt</a>
         </div>`;
@@ -2155,7 +2155,7 @@ const App = (() => {
     }
 
     renderNav();
-    toast(`Velkommen tilbake, ${result.user.displayName}! 🎉`, 'success', 4000);
+    toast(`Velkommen tilbake, ${result.user.displayName}! ${Icon('party')}`, 'success', 4000);
     Router.go('/');
   }
 
@@ -2191,7 +2191,7 @@ window.NpMiniPlayer = (() => {
     const playing = !!window._radioMode && typeof Radio !== 'undefined' && Radio.isPlaying;
     const station = typeof Radio !== 'undefined' ? Radio.currentStation : null;
     btn.textContent = playing ? '⏸' : '▶';
-    if (station && name) name.textContent = (station.emoji || '📻') + ' ' + (station.name || 'Radio');
+    if (station && name) name.innerHTML = iconForEmoji(station.emoji, 'radio') + ' ' + (station.name || 'Radio');
     if (dot)    dot.classList.toggle('active', playing);
     if (eq)     eq.classList.toggle('active', playing);
     if (status) status.textContent = playing ? 'Live nå' : 'Klar';

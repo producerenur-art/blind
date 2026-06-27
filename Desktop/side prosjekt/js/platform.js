@@ -30,14 +30,14 @@
   function openPanel() {
     open = true;
     panel.classList.add('open');
-    chevron.textContent = '▼';
+    chevron.innerHTML = Icon('chevron-down');
     applyUrls();
   }
 
   function closePanel() {
     open = false;
     panel.classList.remove('open');
-    chevron.textContent = '▲';
+    chevron.innerHTML = Icon('chevron-up');
   }
 
   toggle.addEventListener('click', () => open ? closePanel() : openPanel());

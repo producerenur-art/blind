@@ -6,8 +6,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0a0a0f">
   <title>Sound Core</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0f'/%3E%3Cg fill='none' stroke='%23a78bfa' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M16 8v16'/%3E%3Cpath d='M11 12v8'/%3E%3Cpath d='M21 12v8'/%3E%3Cpath d='M6.5 14.5v3'/%3E%3Cpath d='M25.5 14.5v3'/%3E%3C/g%3E%3C/svg%3E">
+  <meta name="description" content="SoundCore — desentralisert sosial plattform for elektronisk musikk, radio og DJ-miks.">
+  <meta property="og:title" content="SoundCore">
+  <meta property="og:description" content="Desentralisert sosial plattform for elektronisk musikk, radio og DJ-miks.">
+  <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&family=Playfair+Display:wght@400;700&family=Rajdhani:wght@400;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <!-- Gun.js — decentralized real-time chat (no server needed) -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
@@ -37,7 +42,7 @@
   </div>
 
   <!-- Background change button (always visible) -->
-  <button id="bg-change-btn" title="Bytt bakgrunn" onclick="BgManager.openPicker()">🖼️</button>
+  <button id="bg-change-btn" title="Bytt bakgrunn" onclick="BgManager.openPicker()" data-icon="image"></button>
   <input type="file" id="bg-file-input" accept="image/*" style="display:none" onchange="BgManager.uploadImage(this)">
 
   <!-- ═══ PERSISTENT NAV ═══ -->
@@ -45,7 +50,7 @@
     <a class="nav-logo" id="nav-logo-link" href="#/">Sound<span>Core</span></a>
     <div class="nav-center" id="nav-search-wrap">
       <div class="search-box">
-        <span class="search-icon">⌕</span>
+        <span class="search-icon" data-icon="search"></span>
         <input type="text" id="nav-search" placeholder="Søk brukere…" autocomplete="off">
         <div id="search-results" class="search-dropdown hidden"></div>
       </div>
@@ -58,7 +63,7 @@
 
   <!-- ═══ SOCIAL FOOTER ═══ -->
   <footer id="site-footer">
-    <div class="footer-drag-handle" id="footer-drag-handle" title="Dra for å flytte">⠿</div>
+    <div class="footer-drag-handle" id="footer-drag-handle" title="Dra for å flytte" data-icon="grip"></div>
     <div id="footer-links" class="footer-links">
     <a class="social-link" href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" title="Facebook">
       <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -99,10 +104,10 @@
       <img src="https://www.google.com/s2/favicons?domain=stepstoknowledge.com&sz=128" alt="Steps to Knowledge" class="social-logo-img social-logo-img--round">
     </a>
     </div><!-- /footer-links -->
-    <button class="footer-toggle-btn" id="footer-toggle-btn" onclick="FooterWidget.toggle()" title="Skjul">−</button>
+    <button class="footer-toggle-btn" id="footer-toggle-btn" onclick="FooterWidget.toggle()" title="Skjul" data-icon="minus"></button>
   </footer>
   <!-- Floating restore bubble shown when footer is minimized -->
-  <button id="footer-restore-btn" class="footer-restore-btn" onclick="FooterWidget.show()" title="Vis lenker" style="display:none">🔗</button>
+  <button id="footer-restore-btn" class="footer-restore-btn" onclick="FooterWidget.show()" title="Vis lenker" style="display:none" data-icon="link"></button>
 
   <!-- ═══ TOAST NOTIFICATIONS ═══ -->
   <div id="toast-container"></div>
@@ -117,10 +122,10 @@
 
     <!-- Drag handle + minimize strip -->
     <div class="player-bar-header" id="player-drag-handle">
-      <span class="player-drag-dots">⠿</span>
+      <span class="player-drag-dots" data-icon="grip"></span>
       <div class="player-bar-hdr-btns">
-        <button class="pbar-hdr-btn" id="player-dock-btn" onclick="PlayerDrag.dock()" title="Fest til bunnen">⊞</button>
-        <button class="pbar-hdr-btn" id="player-minimize-btn" onclick="PlayerDrag.toggleMinimize()" title="Minimer">—</button>
+        <button class="pbar-hdr-btn" id="player-dock-btn" onclick="PlayerDrag.dock()" title="Fest til bunnen" data-icon="panel-bottom"></button>
+        <button class="pbar-hdr-btn" id="player-minimize-btn" onclick="PlayerDrag.toggleMinimize()" title="Minimer" data-icon="minus"></button>
       </div>
     </div>
 
@@ -128,7 +133,7 @@
     <div class="player-bar-body">
       <div class="player-left" id="player-left">
         <div class="player-artwork" id="player-artwork">
-          <span class="artwork-note">♪</span>
+          <span class="artwork-note" data-icon="music"></span>
         </div>
         <div class="player-meta">
           <div class="player-title" id="player-title">Ingen sang valgt</div>
@@ -138,11 +143,11 @@
 
       <div class="player-center">
         <div class="player-controls">
-          <button class="ctrl-btn" id="ctrl-shuffle" title="Bland">⇄</button>
-          <button class="ctrl-btn" id="ctrl-prev" title="Forrige">⏮</button>
-          <button class="ctrl-btn ctrl-play" id="ctrl-play" title="Spill av">▶</button>
-          <button class="ctrl-btn" id="ctrl-next" title="Neste">⏭</button>
-          <button class="ctrl-btn" id="ctrl-repeat" title="Repeter">↻</button>
+          <button class="ctrl-btn" id="ctrl-shuffle" title="Bland" data-icon="shuffle"></button>
+          <button class="ctrl-btn" id="ctrl-prev" title="Forrige" data-icon="skip-back"></button>
+          <button class="ctrl-btn ctrl-play" id="ctrl-play" title="Spill av" data-icon="play"></button>
+          <button class="ctrl-btn" id="ctrl-next" title="Neste" data-icon="skip-fwd"></button>
+          <button class="ctrl-btn" id="ctrl-repeat" title="Repeter" data-icon="repeat"></button>
         </div>
         <div class="player-progress-row">
           <span id="time-current">0:00</span>
@@ -155,8 +160,8 @@
       </div>
 
       <div class="player-right">
-        <button class="ctrl-btn" id="ctrl-queue" title="Køen">☰</button>
-        <span class="vol-icon">🔊</span>
+        <button class="ctrl-btn" id="ctrl-queue" title="Køen" data-icon="list"></button>
+        <span class="vol-icon" data-icon="volume"></span>
         <div class="progress-track vol-track">
           <div class="progress-fill" id="vol-fill" style="width:80%"></div>
           <input type="range" id="volume-bar" value="80" min="0" max="100">
@@ -167,7 +172,7 @@
       <div id="queue-panel" class="queue-panel hidden">
         <div class="queue-header">
           <h3>Spilleliste</h3>
-          <button onclick="document.getElementById('queue-panel').classList.add('hidden')" class="btn-icon">✕</button>
+          <button onclick="document.getElementById('queue-panel').classList.add('hidden')" class="btn-icon" data-icon="x"></button>
         </div>
         <div id="queue-list"></div>
       </div>
@@ -181,7 +186,7 @@
   <div id="embed-panel" class="embed-panel hidden">
     <div class="embed-panel-hdr">
       <span id="embed-panel-title"></span>
-      <button class="embed-panel-close" onclick="closeEmbedPanel()">✕</button>
+      <button class="embed-panel-close" onclick="closeEmbedPanel()" data-icon="x"></button>
     </div>
     <iframe id="embed-panel-frame" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
   </div>
@@ -189,35 +194,35 @@
   <!-- ═══ PLATFORM SWITCHER ═══ -->
   <div id="platform-widget">
     <button id="platform-toggle" title="Open on another platform">
-      <span id="platform-icon">📲</span>
+      <span id="platform-icon" data-icon="share"></span>
       <span id="platform-label">Platform</span>
-      <span id="platform-chevron">▲</span>
+      <span id="platform-chevron" data-icon="chevron-up"></span>
     </button>
     <div id="platform-panel">
       <div class="platform-title">Open on</div>
       <a class="platform-item" id="platform-mobile" href="#" target="_blank" rel="noopener">
-        <span class="platform-emoji">📱</span>
+        <span class="platform-emoji" data-icon="smartphone"></span>
         <div class="platform-info">
           <span class="platform-name">Smartphone</span>
           <span class="platform-desc">Mobile version</span>
         </div>
-        <span class="platform-arrow">↗</span>
+        <span class="platform-arrow" data-icon="arrow-up-right"></span>
       </a>
       <a class="platform-item" id="platform-desktop" href="#" target="_blank" rel="noopener">
-        <span class="platform-emoji">💻</span>
+        <span class="platform-emoji" data-icon="laptop"></span>
         <div class="platform-info">
           <span class="platform-name">Mac / Laptop</span>
           <span class="platform-desc">Desktop version</span>
         </div>
-        <span class="platform-arrow">↗</span>
+        <span class="platform-arrow" data-icon="arrow-up-right"></span>
       </a>
       <a class="platform-item" id="platform-appstore" href="#" target="_blank" rel="noopener">
-        <span class="platform-emoji">🏪</span>
+        <span class="platform-emoji" data-icon="store"></span>
         <div class="platform-info">
           <span class="platform-name">App Store</span>
           <span class="platform-desc">iOS & Mac App</span>
         </div>
-        <span class="platform-arrow">↗</span>
+        <span class="platform-arrow" data-icon="arrow-up-right"></span>
       </a>
     </div>
   </div>
@@ -225,9 +230,9 @@
   <!-- ═══ LANGUAGE PICKER ═══ -->
   <div id="lang-widget">
     <button id="lang-toggle" title="Choose language">
-      <span id="lang-globe">🌐</span>
+      <span id="lang-globe" data-icon="globe"></span>
       <span id="lang-current-label">Language</span>
-      <span id="lang-chevron">▲</span>
+      <span id="lang-chevron" data-icon="chevron-up"></span>
     </button>
     <div id="lang-panel">
       <div id="lang-search-wrap">
@@ -241,6 +246,7 @@
   <div id="google_translate_element" style="display:none"></div>
 
   <!-- ═══ SCRIPTS ═══ -->
+  <script src="js/icons.js"></script>
   <script src="js/config.js"></script>
   <script src="js/payment.js"></script>
   <script src="js/background.js"></script>

@@ -21,11 +21,11 @@ const Studio = (() => {
       <div class="studio-page">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
           <div>
-            <h1 style="font-size:1.5rem;font-weight:800">🎨 Blend Studio</h1>
+            <h1 style="font-size:1.5rem;font-weight:800">${Icon('palette')} Blend Studio</h1>
             <p class="text-muted text-sm">Kombiner bilder og videoer med blandemoduser</p>
           </div>
           <div style="display:flex;gap:0.5rem">
-            <button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">← Tilbake</button>
+            <button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('arrow-left')} Tilbake</button>
           </div>
         </div>
 
@@ -34,9 +34,9 @@ const Studio = (() => {
           <div>
             <div class="studio-canvas-wrap">
               <div class="studio-canvas-header">
-                <button class="btn btn-ghost btn-sm" onclick="Studio.addImageLayer()">🖼️ Legg til bilde</button>
-                <button class="btn btn-ghost btn-sm" onclick="Studio.addVideoLayer()">🎬 Legg til video</button>
-                <button class="btn btn-ghost btn-sm" onclick="Studio.clearCanvas()">🗑 Tøm</button>
+                <button class="btn btn-ghost btn-sm" onclick="Studio.addImageLayer()">${Icon('image')} Legg til bilde</button>
+                <button class="btn btn-ghost btn-sm" onclick="Studio.addVideoLayer()">${Icon('film')} Legg til video</button>
+                <button class="btn btn-ghost btn-sm" onclick="Studio.clearCanvas()">${Icon('trash')} Tøm</button>
                 <input type="file" id="studio-img-input" accept="image/*" style="display:none" multiple onchange="Studio.handleImageFiles(this.files)">
                 <input type="file" id="studio-vid-input" accept="video/*" style="display:none" onchange="Studio.handleVideoFile(this.files[0])">
               </div>
@@ -52,7 +52,7 @@ const Studio = (() => {
           <!-- Right panel -->
           <div class="studio-panel">
             <!-- Layer controls -->
-            <div class="editor-panel-header">⚙️ Aktive lag-innstillinger</div>
+            <div class="editor-panel-header">${Icon('settings')} Aktive lag-innstillinger</div>
             <div class="editor-panel-body" id="layer-controls-panel">
               <p class="text-muted text-sm">Velg et lag for å redigere.</p>
             </div>
@@ -60,7 +60,7 @@ const Studio = (() => {
             <div class="divider" style="margin:0"></div>
 
             <!-- Blend modes -->
-            <div class="editor-panel-header">🎭 Blandemodus</div>
+            <div class="editor-panel-header">${Icon('film')} Blandemodus</div>
             <div class="editor-panel-body">
               <div class="blend-modes-grid" id="blend-grid">
                 ${BLEND_MODES.map(m => `<button class="blend-mode-btn ${m==='source-over'?'active':''}" onclick="Studio.setBlendMode('${m}',this)">${BLEND_LABELS[m]}</button>`).join('')}
@@ -70,7 +70,7 @@ const Studio = (() => {
             <div class="divider" style="margin:0"></div>
 
             <!-- Canvas size -->
-            <div class="editor-panel-header">📐 Lerretstørrelse</div>
+            <div class="editor-panel-header">${Icon('edit')} Lerretstørrelse</div>
             <div class="editor-panel-body">
               <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
                 <div class="form-group" style="margin:0;flex:1">
@@ -91,17 +91,17 @@ const Studio = (() => {
             <div class="divider" style="margin:0"></div>
 
             <!-- Export -->
-            <div class="editor-panel-header">💾 Eksporter</div>
+            <div class="editor-panel-header">${Icon('save')} Eksporter</div>
             <div class="editor-panel-body">
               <div class="export-options">
-                <button class="export-btn btn btn-primary" onclick="Studio.exportImage()">📷 Eksporter som PNG</button>
-                <button class="export-btn btn btn-ghost" onclick="Studio.exportJPEG()">🖼️ Eksporter som JPEG</button>
-                <button class="export-btn btn btn-ghost" id="record-btn" onclick="Studio.toggleRecording()">🔴 Ta opp video</button>
+                <button class="export-btn btn btn-primary" onclick="Studio.exportImage()">${Icon('camera')} Eksporter som PNG</button>
+                <button class="export-btn btn btn-ghost" onclick="Studio.exportJPEG()">${Icon('image')} Eksporter som JPEG</button>
+                <button class="export-btn btn btn-ghost" id="record-btn" onclick="Studio.toggleRecording()">${Icon('circle')} Ta opp video</button>
               </div>
               <div id="rec-status" class="text-muted text-sm mt-1" style="display:none"></div>
               <div style="margin-top:0.75rem">
                 <label class="form-label">Lagre til profil</label>
-                <button class="btn btn-ghost btn-sm w-full mt-1" onclick="Studio.saveToProfile()">💾 Lagre blend til profil</button>
+                <button class="btn btn-ghost btn-sm w-full mt-1" onclick="Studio.saveToProfile()">${Icon('save')} Lagre blend til profil</button>
               </div>
             </div>
           </div>
@@ -211,9 +211,9 @@ const Studio = (() => {
           </div>
           <div class="layer-controls">
             <button class="btn-icon" title="${l.visible ? 'Skjul' : 'Vis'}" onclick="Studio.toggleLayerVisibility(${idx},event)">${l.visible ? '👁' : '🚫'}</button>
-            <button class="btn-icon" title="Flytt opp" onclick="Studio.moveLayer(${idx},-1,event)">↑</button>
-            <button class="btn-icon" title="Flytt ned" onclick="Studio.moveLayer(${idx},1,event)">↓</button>
-            <button class="btn-icon" title="Slett" onclick="Studio.deleteLayer(${idx},event)">🗑</button>
+            <button class="btn-icon" title="Flytt opp" onclick="Studio.moveLayer(${idx},-1,event)">${Icon('arrow-up')}</button>
+            <button class="btn-icon" title="Flytt ned" onclick="Studio.moveLayer(${idx},1,event)">${Icon('arrow-down')}</button>
+            <button class="btn-icon" title="Slett" onclick="Studio.deleteLayer(${idx},event)">${Icon('trash')}</button>
           </div>
         </div>`;
     }).join('');

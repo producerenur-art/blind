@@ -193,7 +193,7 @@ const Underground = (() => {
         <div class="ug-artist-avatar">${escHtml(initials)}</div>
         <div class="ug-artist-body">
           <div class="ug-artist-name">${escHtml(a.name)}</div>
-          <div class="ug-artist-city">📍 ${escHtml(a.city)}</div>
+          <div class="ug-artist-city">${Icon('map-pin')} ${escHtml(a.city)}</div>
           <span class="ug-artist-tag">${escHtml(a.tag)}</span>
           <p class="ug-artist-desc">${escHtml(a.desc)}</p>
           <div class="ug-artist-links">
@@ -211,10 +211,10 @@ const Underground = (() => {
           <span class="ug-venue-name">${escHtml(v.name)}</span>
           <span class="ug-venue-badge">${escHtml(v.tag)}</span>
         </div>
-        <div class="ug-venue-city">📍 ${escHtml(v.city)}</div>
+        <div class="ug-venue-city">${Icon('map-pin')} ${escHtml(v.city)}</div>
         <p class="ug-venue-desc">${escHtml(v.desc)}</p>
         <div class="ug-venue-actions">
-          <a href="${escHtml(v.url)}" target="_blank" rel="noopener" class="ug-link-btn ug-link-web">Nettside →</a>
+          <a href="${escHtml(v.url)}" target="_blank" rel="noopener" class="ug-link-btn ug-link-web">Nettside ${Icon('arrow-right')}</a>
           <a href="${escHtml(v.events)}" target="_blank" rel="noopener" class="ug-link-btn ug-link-ra">Arrangementer</a>
         </div>
       </div>`;
@@ -225,14 +225,14 @@ const Underground = (() => {
     if (embeddable) {
       return `
         <div class="ug-music-card" role="button" style="cursor:pointer" onclick="openMedia('${escHtml(m.url)}','${escHtml(m.name).replace(/'/g,'&#39;')}')">
-          <div class="ug-music-icon" style="background:${escHtml(m.color)}">${m.icon}</div>
+          <div class="ug-music-icon" style="background:${escHtml(m.color)}">${iconForEmoji(m.icon)}</div>
           <div class="ug-music-name">${escHtml(m.name)}</div>
           <div class="ug-music-desc">${escHtml(m.desc)}</div>
         </div>`;
     }
     return `
       <a class="ug-music-card" href="${escHtml(m.url)}" target="_blank" rel="noopener">
-        <div class="ug-music-icon" style="background:${escHtml(m.color)}">${m.icon}</div>
+        <div class="ug-music-icon" style="background:${escHtml(m.color)}">${iconForEmoji(m.icon)}</div>
         <div class="ug-music-name">${escHtml(m.name)}</div>
         <div class="ug-music-desc">${escHtml(m.desc)}</div>
       </a>`;
@@ -246,8 +246,8 @@ const Underground = (() => {
         <!-- HERO -->
         <div class="ug-hero">
           <div class="ug-hero-glow"></div>
-          <button class="ug-back-btn" onclick="Router.go('/discover')">← Tilbake til Discover</button>
-          <div class="ug-hero-badge">⚡ Underground</div>
+          <button class="ug-back-btn" onclick="Router.go('/discover')">${Icon('arrow-left')} Tilbake til Discover</button>
+          <div class="ug-hero-badge">${Icon('zap')} Underground</div>
           <h1 class="ug-hero-title">Tekno Undergrunden</h1>
           <p class="ug-hero-sub">De hypnotiske groovsene, de mørkeste beatene — fra Englands fabrikkloft til Ibizas natthimmel.</p>
         </div>
@@ -285,7 +285,7 @@ const Underground = (() => {
           <!-- UK EVENTS -->
           <section class="ug-section">
             <div class="ug-section-header">
-              <div class="ug-section-flag">🎟</div>
+              <div class="ug-section-flag">${Icon('ticket')}</div>
               <div>
                 <h2 class="ug-section-title">Arrangementer — England</h2>
                 <p class="ug-section-sub">Finn billetter og events direkte fra klubbene og via Resident Advisor</p>
@@ -295,14 +295,14 @@ const Underground = (() => {
               ${VENUES_UK.map(v => venueCard(v)).join('')}
             </div>
             <a class="ug-ra-banner" href="https://ra.co/events/uk" target="_blank" rel="noopener">
-              🔍 Se alle UK-arrangementer på <strong>Resident Advisor</strong> →
+              ${Icon('search')} Se alle UK-arrangementer på <strong>Resident Advisor</strong> ${Icon('arrow-right')}
             </a>
           </section>
 
           <!-- IBIZA EVENTS -->
           <section class="ug-section">
             <div class="ug-section-header">
-              <div class="ug-section-flag">🌅</div>
+              <div class="ug-section-flag">${Icon('sun')}</div>
               <div>
                 <h2 class="ug-section-title">Arrangementer — Ibiza</h2>
                 <p class="ug-section-sub">Sesongens beste venues og parties på øya</p>
@@ -312,14 +312,14 @@ const Underground = (() => {
               ${VENUES_IBIZA.map(v => venueCard(v)).join('')}
             </div>
             <a class="ug-ra-banner" href="https://ra.co/events/es/ibiza" target="_blank" rel="noopener">
-              🔍 Se alle Ibiza-arrangementer på <strong>Resident Advisor</strong> →
+              ${Icon('search')} Se alle Ibiza-arrangementer på <strong>Resident Advisor</strong> ${Icon('arrow-right')}
             </a>
           </section>
 
           <!-- MUSIC LINKS -->
           <section class="ug-section">
             <div class="ug-section-header">
-              <div class="ug-section-flag">🎧</div>
+              <div class="ug-section-flag">${Icon('headphones')}</div>
               <div>
                 <h2 class="ug-section-title">Musikk — Lytt nå</h2>
                 <p class="ug-section-sub">Strøm og last ned fra de beste kanalene på nettet</p>
@@ -333,7 +333,7 @@ const Underground = (() => {
           <!-- DEMO CONTACT -->
           <section class="ug-section">
             <div class="ug-demo-card">
-              <div class="ug-demo-icon">📬</div>
+              <div class="ug-demo-icon">${Icon('mail')}</div>
               <div class="ug-demo-body">
                 <h2 class="ug-demo-title">Send Demo</h2>
                 <p class="ug-demo-desc">
@@ -341,7 +341,7 @@ const Underground = (() => {
                   Send din demo til redaksjonen på Sound Core — vi lytter til alt vi mottar.
                 </p>
                 <a href="mailto:demos@soundcore.no" class="ug-demo-email">
-                  ✉️ demos@soundcore.no
+                  ${Icon('mail')} demos@soundcore.no
                 </a>
                 <div class="ug-demo-tips">
                   <p class="ug-demo-tips-title">Tips for innsending:</p>

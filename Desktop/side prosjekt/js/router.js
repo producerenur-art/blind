@@ -2,6 +2,7 @@
 const Router = (() => {
   const routes = {};
   let currentRoute = null;
+  let dispatchSeq  = 0;   // guards against stale async renders overwriting newer ones
 
   function define(path, handler) {
     routes[path] = handler;
@@ -28,19 +29,24 @@ const Router = (() => {
   }
 
   async function dispatch() {
+    const myId  = ++dispatchSeq;
     const hash  = window.location.hash;
     const found = parse(hash);
     if (found) {
       currentRoute = hash;
       await found.handler(found.params);
+      // A faster, newer navigation may have started while this async handler was
+      // awaiting and left stale content in #app — re-render the current route so
+      // the latest page always wins (prevents pages stacking/overwriting).
+      if (myId !== dispatchSeq) dispatch();
     } else {
       // 404
       document.getElementById('app').innerHTML = `
         <div class="empty-state" style="padding:8rem">
-          <div class="empty-icon">🔍</div>
+          <div class="empty-icon">${Icon('search')}</div>
           <p style="font-size:1.1rem;font-weight:600;margin-bottom:0.5rem">Side ikke funnet</p>
           <p>Sjekk nettadressen og prøv igjen.</p>
-          <a href="#/" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">← Hjem</a>
+          <a href="#/" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">${Icon('arrow-left')} Hjem</a>
         </div>`;
     }
   }

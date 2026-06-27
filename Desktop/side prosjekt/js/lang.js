@@ -151,7 +151,7 @@ const LANGUAGES = [
   function openPanel() {
     open = true;
     panel.classList.add('open');
-    chevron.textContent = '▼';
+    chevron.innerHTML = Icon('chevron-down');
     search.value = '';
     renderList();
     setTimeout(() => search.focus(), 80);
@@ -160,7 +160,7 @@ const LANGUAGES = [
   function closePanel() {
     open = false;
     panel.classList.remove('open');
-    chevron.textContent = '▲';
+    chevron.innerHTML = Icon('chevron-up');
   }
 
   toggle.addEventListener('click', () => open ? closePanel() : openPanel());

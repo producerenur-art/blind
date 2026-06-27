@@ -289,7 +289,7 @@ const BgManager = (() => {
     panel.innerHTML = `
       <div class="picker-section-label">Ditt bakgrunnsbilde</div>
       <button class="picker-upload-btn" onclick="document.getElementById('bg-file-input').click()">
-        📷 Last opp bilde
+        ${Icon('camera')} Last opp bilde
       </button>
 
       <div class="picker-section-label">Psykedelisk effekt</div>

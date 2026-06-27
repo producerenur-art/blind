@@ -136,20 +136,20 @@ const Chat = (() => {
     const tmp = document.createElement('div');
     tmp.innerHTML = `<div id="chat-float-window" class="chat-float-window">
       <div id="chat-float-drag-bar" class="chat-float-drag-bar">
-        <span class="chat-float-grip" aria-hidden="true">⠿</span>
-        <span class="chat-float-title">📻 Sound Core — Live Chat</span>
+        <span class="chat-float-grip" aria-hidden="true">${Icon('grip')}</span>
+        <span class="chat-float-title">${Icon('radio')} Sound Core — Live Chat</span>
         <button class="chat-float-btn" id="chat-minimize-btn" onclick="Chat.toggleMinimize()" title="Minimer">—</button>
       </div>
       <div class="chat-page">
         <div class="chat-stream-panel">
           <div class="chat-panel-tabs">
-            <button class="chat-panel-tab ${activeTab === 'radio' ? 'active' : ''}" id="tab-radio" onclick="Chat.showTab('radio')">📻 Radio</button>
-            <button class="chat-panel-tab ${activeTab === 'youtube' ? 'active' : ''}" id="tab-youtube" onclick="Chat.showTab('youtube')">📺 YouTube</button>
+            <button class="chat-panel-tab ${activeTab === 'radio' ? 'active' : ''}" id="tab-radio" onclick="Chat.showTab('radio')">${Icon('radio')} Radio</button>
+            <button class="chat-panel-tab ${activeTab === 'youtube' ? 'active' : ''}" id="tab-youtube" onclick="Chat.showTab('youtube')">${Icon('tv')} YouTube</button>
           </div>
           <div class="chat-radio-tab" id="chat-radio-tab" style="${activeTab !== 'radio' ? 'display:none' : ''}">
             <div class="chat-radio-search-wrap">
               <input class="chat-radio-search-input" id="chat-radio-search"
-                     placeholder="🔍 Søk etter radiokanal…" autocomplete="off"
+                     placeholder="Søk etter radiokanal…" autocomplete="off"
                      oninput="Chat.onRadioSearch(this.value)">
               <div class="chat-radio-search-results hidden" id="chat-radio-search-results"></div>
             </div>
@@ -158,7 +158,7 @@ const Chat = (() => {
                 <button class="chat-radio-station ${currentSt?.id === s.id ? 'active' : ''}"
                         id="crbtn-${s.id}" style="--scolor:${s.color}"
                         onclick="Chat.playRadioStation('${s.id}')">
-                  <span class="crs-emoji">${s.emoji}</span>
+                  <span class="crs-emoji">${iconForEmoji(s.emoji)}</span>
                   <span class="crs-info">
                     <span class="crs-name">${s.name}</span>
                     <span class="crs-desc">${s.desc}</span>
@@ -167,7 +167,7 @@ const Chat = (() => {
                 </button>`).join('') : '<div class="crs-empty-hint">Søk etter en kanal ↑</div>'}
             </div>
             <div class="chat-radio-now-playing" id="chat-radio-np">
-              <span id="chat-rnp-emoji">${currentSt ? (currentSt.emoji || '📻') : '📻'}</span>
+              <span id="chat-rnp-emoji">${iconForEmoji(currentSt && currentSt.emoji, 'radio')}</span>
               <span id="chat-rnp-name">${currentSt ? currentSt.name : 'Velg en stasjon ▲'}</span>
               <button class="chat-rnp-play-btn" id="chat-rnp-play" onclick="Chat.toggleRadioPlay()">
                 ${currentSt && radioPlaying ? '⏸' : '▶'}
@@ -182,27 +182,27 @@ const Chat = (() => {
                 value="${ytVideoId ? 'https://www.youtube.com/watch?v=' + ytVideoId : ''}"
                 style="font-size:0.82rem">
               <button class="btn btn-primary btn-sm" onclick="Chat.loadYoutube()">Last inn</button>
-              <button class="btn btn-ghost btn-sm" onclick="Chat.clearYoutube()" title="Fjern">✕</button>
+              <button class="btn btn-ghost btn-sm" onclick="Chat.clearYoutube()" title="Fjern">${Icon('x')}</button>
             </div>
             <div id="yt-iframe-wrap">
               ${ytVideoId
                 ? `<iframe src="${buildEmbedUrl(ytVideoId)}" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"></iframe>`
-                : `<div class="yt-placeholder"><div class="yt-icon">▶️</div><p>Lim inn en YouTube Live-lenke ovenfor.</p></div>`}
+                : `<div class="yt-placeholder"><div class="yt-icon">${Icon('play')}</div><p>Lim inn en YouTube Live-lenke ovenfor.</p></div>`}
             </div>
           </div>
         </div>
         <div class="chat-panel">
           <div class="chat-header">
-            <h2>💬 Chat</h2>
+            <h2>${Icon('message')} Chat</h2>
             <div class="online-count"><span class="online-dot"></span><span id="online-count">Live</span></div>
-            <button class="btn-icon" title="Tøm chat" onclick="Chat.clearMessages()">🗑</button>
+            <button class="btn-icon" title="Tøm chat" onclick="Chat.clearMessages()">${Icon('trash')}</button>
           </div>
           <div class="nick-bar" id="nick-bar">
             <label>Nick:</label>
             <div class="nick-display ${nickChosen ? '' : 'hidden'}" id="nick-display" onclick="Chat.showNickEdit()">
               <span style="color:${myColor}">●</span>
               <span>${myNick}</span>
-              <span style="font-size:0.75rem;color:var(--text3)">✏️</span>
+              <span style="font-size:0.75rem;color:var(--text3)">${Icon('edit')}</span>
             </div>
             <div class="nick-edit-form ${!nickChosen ? '' : 'hidden'}" id="nick-edit-form">
               <input class="form-input" id="nick-input" value="${myNick}" maxlength="24" placeholder="Ditt nick" style="font-size:0.82rem">
@@ -212,7 +212,7 @@ const Chat = (() => {
               <button class="btn btn-primary btn-sm" onclick="Chat.saveNick()">OK</button>
             </div>
           </div>
-          <div id="chat-messages"><div class="chat-system-msg">Kobler til chat… 🔗</div></div>
+          <div id="chat-messages"><div class="chat-system-msg">Kobler til chat… ${Icon('link')}</div></div>
           <div class="chat-input-area">
             <div class="emoji-bar">
               ${EMOJIS.map(e => `<button class="emoji-pill" onclick="Chat.insertEmoji('${e}')">${e}</button>`).join('')}
@@ -223,7 +223,7 @@ const Chat = (() => {
                        oninput="Chat.quickColor(this.value)" onchange="Chat.quickColor(this.value)">
               </label>
               <input id="chat-text" placeholder="Skriv en melding… (Enter)" maxlength="400" autocomplete="off">
-              <button id="chat-send" onclick="Chat.sendMessage()">➤</button>
+              <button id="chat-send" onclick="Chat.sendMessage()">${Icon('send')}</button>
             </div>
             <div class="chat-status" id="chat-status">${connected ? '🟢 Tilkoblet' : '🟡 Kobler til…'}</div>
           </div>
@@ -281,8 +281,8 @@ const Chat = (() => {
     app.innerHTML = `
       <div id="chat-float-window" class="chat-float-window">
         <div id="chat-float-drag-bar" class="chat-float-drag-bar">
-          <span class="chat-float-grip" aria-hidden="true">⠿</span>
-          <span class="chat-float-title">📻 Sound Core — Live Chat</span>
+          <span class="chat-float-grip" aria-hidden="true">${Icon('grip')}</span>
+          <span class="chat-float-title">${Icon('radio')} Sound Core — Live Chat</span>
           <button class="chat-float-btn" id="chat-minimize-btn" onclick="Chat.toggleMinimize()" title="Minimer">—</button>
         </div>
 
@@ -293,15 +293,15 @@ const Chat = (() => {
 
           <!-- Tab switcher -->
           <div class="chat-panel-tabs">
-            <button class="chat-panel-tab ${activeTab === 'radio' ? 'active' : ''}" id="tab-radio" onclick="Chat.showTab('radio')">📻 Radio</button>
-            <button class="chat-panel-tab ${activeTab === 'youtube' ? 'active' : ''}" id="tab-youtube" onclick="Chat.showTab('youtube')">📺 YouTube</button>
+            <button class="chat-panel-tab ${activeTab === 'radio' ? 'active' : ''}" id="tab-radio" onclick="Chat.showTab('radio')">${Icon('radio')} Radio</button>
+            <button class="chat-panel-tab ${activeTab === 'youtube' ? 'active' : ''}" id="tab-youtube" onclick="Chat.showTab('youtube')">${Icon('tv')} YouTube</button>
           </div>
 
           <!-- RADIO TAB -->
           <div class="chat-radio-tab" id="chat-radio-tab" style="${activeTab !== 'radio' ? 'display:none' : ''}">
             <div class="chat-radio-search-wrap">
               <input class="chat-radio-search-input" id="chat-radio-search"
-                     placeholder="🔍 Søk etter radiokanal…" autocomplete="off"
+                     placeholder="Søk etter radiokanal…" autocomplete="off"
                      oninput="Chat.onRadioSearch(this.value)">
               <div class="chat-radio-search-results hidden" id="chat-radio-search-results"></div>
             </div>
@@ -312,7 +312,7 @@ const Chat = (() => {
                         id="crbtn-${s.id}"
                         style="--scolor:${s.color}"
                         onclick="Chat.playRadioStation('${s.id}')">
-                  <span class="crs-emoji">${s.emoji}</span>
+                  <span class="crs-emoji">${iconForEmoji(s.emoji)}</span>
                   <span class="crs-info">
                     <span class="crs-name">${s.name}</span>
                     <span class="crs-desc">${s.desc}</span>
@@ -324,7 +324,7 @@ const Chat = (() => {
 
             <!-- Now-playing footer -->
             <div class="chat-radio-now-playing" id="chat-radio-np">
-              <span id="chat-rnp-emoji">${currentSt ? (currentSt.emoji || '📻') : '📻'}</span>
+              <span id="chat-rnp-emoji">${iconForEmoji(currentSt && currentSt.emoji, 'radio')}</span>
               <span id="chat-rnp-name">${currentSt ? currentSt.name : 'Velg en stasjon ▲'}</span>
               <button class="chat-rnp-play-btn" id="chat-rnp-play" onclick="Chat.toggleRadioPlay()">
                 ${currentSt && radioPlaying ? '⏸' : '▶'}
@@ -341,13 +341,13 @@ const Chat = (() => {
                 value="${ytVideoId ? 'https://www.youtube.com/watch?v=' + ytVideoId : ''}"
                 style="font-size:0.82rem">
               <button class="btn btn-primary btn-sm" onclick="Chat.loadYoutube()">Last inn</button>
-              <button class="btn btn-ghost btn-sm" onclick="Chat.clearYoutube()" title="Fjern">✕</button>
+              <button class="btn btn-ghost btn-sm" onclick="Chat.clearYoutube()" title="Fjern">${Icon('x')}</button>
             </div>
             <div id="yt-iframe-wrap">
               ${ytVideoId
                 ? `<iframe src="${buildEmbedUrl(ytVideoId)}" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"></iframe>`
                 : `<div class="yt-placeholder">
-                    <div class="yt-icon">▶️</div>
+                    <div class="yt-icon">${Icon('play')}</div>
                     <p>Lim inn en YouTube Live-lenke ovenfor og klikk <strong>Last inn</strong>.</p>
                     <div class="text-muted text-xs" style="margin-top:0.5rem">Eks: https://www.youtube.com/watch?v=XXXXXXXXXX</div>
                   </div>`}
@@ -358,12 +358,12 @@ const Chat = (() => {
         <!-- ── RIGHT: Chat ── -->
         <div class="chat-panel">
           <div class="chat-header">
-            <h2>💬 Chat</h2>
+            <h2>${Icon('message')} Chat</h2>
             <div class="online-count">
               <span class="online-dot"></span>
               <span id="online-count">Live</span>
             </div>
-            <button class="btn-icon" title="Tøm chat" onclick="Chat.clearMessages()">🗑</button>
+            <button class="btn-icon" title="Tøm chat" onclick="Chat.clearMessages()">${Icon('trash')}</button>
           </div>
 
           <!-- Nick + color bar -->
@@ -372,7 +372,7 @@ const Chat = (() => {
             <div class="nick-display ${nickChosen ? '' : 'hidden'}" id="nick-display" onclick="Chat.showNickEdit()">
               <span style="color:${myColor}">●</span>
               <span>${myNick}</span>
-              <span style="font-size:0.75rem;color:var(--text3)">✏️</span>
+              <span style="font-size:0.75rem;color:var(--text3)">${Icon('edit')}</span>
             </div>
             <div class="nick-edit-form ${!nickChosen ? '' : 'hidden'}" id="nick-edit-form">
               <input class="form-input" id="nick-input" value="${myNick}" maxlength="24" placeholder="Ditt nick" style="font-size:0.82rem">
@@ -386,7 +386,7 @@ const Chat = (() => {
 
           <!-- Messages -->
           <div id="chat-messages">
-            <div class="chat-system-msg">Kobler til chat… 🔗</div>
+            <div class="chat-system-msg">Kobler til chat… ${Icon('link')}</div>
           </div>
 
           <!-- Input -->
@@ -400,7 +400,7 @@ const Chat = (() => {
                        oninput="Chat.quickColor(this.value)" onchange="Chat.quickColor(this.value)">
               </label>
               <input id="chat-text" placeholder="Skriv en melding… (Enter for å sende)" maxlength="400" autocomplete="off">
-              <button id="chat-send" onclick="Chat.sendMessage()">➤</button>
+              <button id="chat-send" onclick="Chat.sendMessage()">${Icon('send')}</button>
             </div>
             <div class="chat-status" id="chat-status">
               ${connected ? '🟢 Tilkoblet' : '🟡 Kobler til…'}
@@ -510,22 +510,25 @@ const Chat = (() => {
       document.body.style.userSelect = '';
     }
 
-    dragBar.addEventListener('mousedown', e => {
+    // Pointer Events unify mouse + touch + pen so drag/resize works on mobile too
+    // (the drag bar and .cfr handles get touch-action:none in CSS to avoid scroll).
+    dragBar.addEventListener('pointerdown', e => {
       if (e.button !== 0 || e.target.closest('button')) return;
       e.preventDefault();
       beginDrag(e.clientX, e.clientY);
     }, { signal: sig });
 
     win.querySelectorAll('.cfr').forEach(handle => {
-      handle.addEventListener('mousedown', e => {
+      handle.addEventListener('pointerdown', e => {
         if (e.button !== 0) return;
         e.preventDefault(); e.stopPropagation();
         beginResize(e.clientX, e.clientY, handle.dataset.resize);
       }, { signal: sig });
     });
 
-    document.addEventListener('mousemove', e => applyMove(e.clientX, e.clientY), { signal: sig });
-    document.addEventListener('mouseup', endAction, { signal: sig });
+    document.addEventListener('pointermove', e => applyMove(e.clientX, e.clientY), { signal: sig });
+    document.addEventListener('pointerup', endAction, { signal: sig });
+    document.addEventListener('pointercancel', endAction, { signal: sig });
   }
 
   // ── Tab switching ─────────────────────────────────────────────────────
@@ -575,7 +578,7 @@ const Chat = (() => {
     const nameEl  = document.getElementById('chat-rnp-name');
     const playEl  = document.getElementById('chat-rnp-play');
     if (st) {
-      if (emojiEl) emojiEl.textContent = st.emoji || '📻';
+      if (emojiEl) emojiEl.innerHTML = iconForEmoji(st.emoji, 'radio');
       if (nameEl)  nameEl.textContent  = st.name  || 'Radio';
     }
     if (playEl) playEl.textContent = Radio.isPlaying ? '⏸' : '▶';
@@ -745,7 +748,7 @@ const Chat = (() => {
 
     const display = document.getElementById('nick-display');
     if (display) {
-      display.innerHTML = `<span style="color:${myColor}">●</span><span>${myNick}</span><span style="font-size:0.75rem;color:var(--text3)">✏️</span>`;
+      display.innerHTML = `<span style="color:${myColor}">●</span><span>${myNick}</span><span style="font-size:0.75rem;color:var(--text3)">${Icon('edit')}</span>`;
       display.classList.remove('hidden');
     }
     document.getElementById('nick-edit-form')?.classList.add('hidden');
@@ -761,7 +764,7 @@ const Chat = (() => {
       if (gun && messagesRef) messagesRef.set(sysMsg);
       else appendMessage(sysMsg);
     }
-    App.toast(`Nick satt til ${myNick} 🎨`, 'success');
+    App.toast(`Nick satt til ${myNick} ${Icon('palette')}`, 'success');
   }
 
   function clearMessages() {
@@ -785,7 +788,7 @@ const Chat = (() => {
     ytVideoId = '';
     localStorage.removeItem('pv_yt_stream');
     const wrap = document.getElementById('yt-iframe-wrap');
-    if (wrap) wrap.innerHTML = `<div class="yt-placeholder"><div class="yt-icon">▶️</div><p>Lim inn en YouTube Live-lenke ovenfor.</p></div>`;
+    if (wrap) wrap.innerHTML = `<div class="yt-placeholder"><div class="yt-icon">${Icon('play')}</div><p>Lim inn en YouTube Live-lenke ovenfor.</p></div>`;
     const urlInput = document.getElementById('yt-url-input');
     if (urlInput) urlInput.value = '';
   }
