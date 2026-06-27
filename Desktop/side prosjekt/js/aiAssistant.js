@@ -147,9 +147,16 @@ const Assistant = (() => {
       addMsg('assistant', reply || '…');
     } catch (e) {
       typing.remove();
-      const msg = /not configured|konfigurert|503/i.test(String(e && e.message))
-        ? 'AI er ikke koblet til ennå (serveren mangler API-nøkkel).'
-        : 'Beklager, noe gikk galt. Prøv igjen om litt.';
+      const code = currentLangCode();
+      const comingSoon = /not configured|konfigurert|503/i.test(String(e && e.message));
+      let msg;
+      if (comingSoon) {
+        msg = code === 'en'
+          ? "✨ Core is almost ready — the chat goes live the moment the AI key is connected. Everything else on the site works as normal in the meantime!"
+          : '✨ Core er straks klar — chatten kobles på i det øyeblikket AI-nøkkelen er på plass. Alt annet på siden virker som normalt i mellomtiden!';
+      } else {
+        msg = code === 'en' ? 'Sorry, something went wrong. Try again shortly.' : 'Beklager, noe gikk galt. Prøv igjen om litt.';
+      }
       addMsg('assistant', msg, false);
     } finally {
       busy = false;
