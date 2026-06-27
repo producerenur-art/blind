@@ -40,41 +40,94 @@
     <div id="bg-prism-2"></div>
     <div id="bg-prism-3"></div>
     <canvas id="bg-particles-canvas"></canvas>
-    <!-- Cosmos UFO — vector saucer flying across (only shown for data-bg-effect="cosmos") -->
+    <!-- Cosmos UFO — realistic metallic flying saucer (only shown for data-bg-effect="cosmos") -->
     <div id="bg-ufo" aria-hidden="true">
       <svg viewBox="0 0 220 300" width="220" height="300" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <radialGradient id="ufoBeamGrad" cx="50%" cy="0%" r="100%">
-            <stop offset="0%"   stop-color="#7ffcff" stop-opacity="0.55"/>
-            <stop offset="55%"  stop-color="#48d0ff" stop-opacity="0.18"/>
-            <stop offset="100%" stop-color="#48d0ff" stop-opacity="0"/>
-          </radialGradient>
-          <linearGradient id="ufoBodyGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#d7ddff"/>
-            <stop offset="46%"  stop-color="#8390de"/>
-            <stop offset="54%"  stop-color="#3a3f6b"/>
-            <stop offset="100%" stop-color="#1a1e38"/>
+          <linearGradient id="ufoHullTop" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#eef1ff"/>
+            <stop offset="34%"  stop-color="#b9c0ee"/>
+            <stop offset="64%"  stop-color="#7780b8"/>
+            <stop offset="100%" stop-color="#454d80"/>
           </linearGradient>
-          <radialGradient id="ufoDomeGrad" cx="40%" cy="28%" r="85%">
-            <stop offset="0%"   stop-color="#eafdff"/>
-            <stop offset="45%"  stop-color="#7be0ff"/>
-            <stop offset="100%" stop-color="#2a6bd6"/>
+          <linearGradient id="ufoHullBot" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#5a6296"/>
+            <stop offset="42%"  stop-color="#2c3158"/>
+            <stop offset="100%" stop-color="#10132a"/>
+          </linearGradient>
+          <linearGradient id="ufoRim" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stop-color="#2b3056"/>
+            <stop offset="12%"  stop-color="#c9d0ff"/>
+            <stop offset="26%"  stop-color="#7e87c4"/>
+            <stop offset="50%"  stop-color="#f4f6ff"/>
+            <stop offset="74%"  stop-color="#7e87c4"/>
+            <stop offset="88%"  stop-color="#c9d0ff"/>
+            <stop offset="100%" stop-color="#2b3056"/>
+          </linearGradient>
+          <radialGradient id="ufoDome" cx="38%" cy="26%" r="80%">
+            <stop offset="0%"   stop-color="#ffffff"/>
+            <stop offset="26%"  stop-color="#bdf1ff"/>
+            <stop offset="62%"  stop-color="#49b3e8"/>
+            <stop offset="100%" stop-color="#1a5fa6"/>
           </radialGradient>
+          <radialGradient id="ufoThruster" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#eaffff"/>
+            <stop offset="45%"  stop-color="#69d6ff"/>
+            <stop offset="100%" stop-color="#69d6ff" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="ufoBeamGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#cdfbff" stop-opacity="0.85"/>
+            <stop offset="30%"  stop-color="#74dcff" stop-opacity="0.34"/>
+            <stop offset="100%" stop-color="#74dcff" stop-opacity="0"/>
+          </linearGradient>
+          <filter id="ufoBlur" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2.2"/>
+          </filter>
         </defs>
-        <!-- Tractor beam -->
-        <polygon class="ufo-beam" points="82,118 138,118 198,292 22,292" fill="url(#ufoBeamGrad)"/>
-        <!-- Saucer body -->
-        <ellipse cx="110" cy="106" rx="98" ry="26" fill="url(#ufoBodyGrad)"/>
-        <ellipse cx="110" cy="99"  rx="70" ry="15" fill="#aab6ff" opacity="0.45"/>
-        <!-- Dome -->
-        <path d="M62 98 A48 46 0 0 1 158 98 Z" fill="url(#ufoDomeGrad)"/>
-        <ellipse cx="94" cy="74" rx="15" ry="9" fill="#ffffff" opacity="0.6"/>
-        <!-- Rim lights -->
-        <circle class="ufo-light" cx="40"  cy="113" r="7" fill="#ff4dd2"/>
-        <circle class="ufo-light" cx="75"  cy="121" r="7" fill="#6fffb0"/>
-        <circle class="ufo-light" cx="110" cy="124" r="7" fill="#ffe14d"/>
-        <circle class="ufo-light" cx="145" cy="121" r="7" fill="#6fe0ff"/>
-        <circle class="ufo-light" cx="180" cy="113" r="7" fill="#ff4dd2"/>
+
+        <!-- ambient depth shadow beneath the craft -->
+        <ellipse cx="110" cy="124" rx="86" ry="12" fill="#05060f" opacity="0.5" filter="url(#ufoBlur)"/>
+
+        <!-- Abduction beam (behind hull) -->
+        <g class="ufo-beam">
+          <polygon points="96,150 124,150 186,296 34,296" fill="url(#ufoBeamGrad)" opacity="0.55"/>
+          <polygon points="103,150 117,150 150,296 70,296" fill="url(#ufoBeamGrad)" opacity="0.5"/>
+          <ellipse cx="110" cy="151" rx="20" ry="6" fill="url(#ufoThruster)"/>
+        </g>
+
+        <!-- Lower hull (underside, in shadow) -->
+        <path d="M16,108 Q44,150 110,153 Q176,150 204,108 Z" fill="url(#ufoHullBot)"/>
+        <path d="M40,112 Q110,138 180,112" fill="none" stroke="#11142b" stroke-width="1.4" opacity="0.6"/>
+        <path d="M58,114 Q110,132 162,114" fill="none" stroke="#11142b" stroke-width="1.2" opacity="0.5"/>
+        <!-- central thruster ring + core -->
+        <ellipse cx="110" cy="146" rx="15" ry="5.5" fill="#0c1026"/>
+        <ellipse cx="110" cy="146" rx="9"  ry="3.4" fill="url(#ufoThruster)"/>
+
+        <!-- Upper hull (lit dome) -->
+        <path d="M18,107 Q18,86 46,78 Q76,69 110,69 Q144,69 174,78 Q202,86 202,107 Z" fill="url(#ufoHullTop)"/>
+        <ellipse cx="86" cy="88" rx="34" ry="7" fill="#ffffff" opacity="0.16"/>
+        <path d="M40,92 Q110,78 180,92" fill="none" stroke="#3a4170" stroke-width="1" opacity="0.45"/>
+
+        <!-- Chrome rim band at the equator -->
+        <ellipse cx="110" cy="107" rx="96" ry="11" fill="url(#ufoRim)"/>
+        <ellipse cx="110" cy="104" rx="92" ry="5"  fill="#ffffff" opacity="0.22"/>
+
+        <!-- Running lights (warm white, sequential chase) -->
+        <circle class="ufo-light" cx="110" cy="116" r="3.1" fill="#fff4d8" style="animation-delay:0s"/>
+        <circle class="ufo-light" cx="84"  cy="114" r="3"   fill="#fff4d8" style="animation-delay:.16s"/>
+        <circle class="ufo-light" cx="136" cy="114" r="3"   fill="#fff4d8" style="animation-delay:.16s"/>
+        <circle class="ufo-light" cx="60"  cy="110" r="2.8" fill="#ffe8bf" style="animation-delay:.34s"/>
+        <circle class="ufo-light" cx="160" cy="110" r="2.8" fill="#ffe8bf" style="animation-delay:.34s"/>
+        <circle class="ufo-light" cx="38"  cy="106" r="2.5" fill="#ffe8bf" style="animation-delay:.52s"/>
+        <circle class="ufo-light" cx="182" cy="106" r="2.5" fill="#ffe8bf" style="animation-delay:.52s"/>
+
+        <!-- Cockpit glass dome -->
+        <ellipse cx="110" cy="90" rx="40" ry="8" fill="#243056" opacity="0.8"/>
+        <path d="M71,90 Q71,57 110,55 Q149,57 149,90 Z" fill="url(#ufoDome)"/>
+        <path d="M71,90 Q71,57 110,55 Q149,57 149,90" fill="none" stroke="#bff0ff" stroke-width="1" opacity="0.5"/>
+        <!-- dome reflections -->
+        <ellipse cx="96" cy="74" rx="11" ry="6.5" fill="#ffffff" opacity="0.55" transform="rotate(-24 96 74)"/>
+        <path d="M88,84 Q98,72 114,71" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
       </svg>
     </div>
     <div id="bg-vignette"></div>
@@ -222,6 +275,12 @@
     <button id="dock-ai-btn" class="dock-btn dock-btn-ai" title="AI-assistent — spør om hjelp"
             aria-label="Åpne AI-assistent" onclick="Assistant.toggle()">
       <span data-icon="message"></span>
+    </button>
+
+    <!-- Info — «Hva er Sound Core?» -->
+    <button id="dock-info-btn" class="dock-btn" title="Hva er Sound Core?"
+            aria-label="Om Sound Core" onclick="App.showInfo()">
+      <span data-icon="info"></span>
     </button>
 
     <!-- Language picker -->

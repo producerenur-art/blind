@@ -264,30 +264,25 @@ body[data-bg-effect="cosmos"] #bg-ufo { display: block; }
 }
 #bg-ufo svg { display: block; width: 100%; height: auto; overflow: visible; }
 
-/* Drift left → right across viewport with a gentle bob + tilt */
+/* Drift left → right across viewport with a gentle bob + subtle piloted tilt */
 @keyframes ufoFlight {
-  0%   { transform: translate(-26vw, 0)   rotate(-4deg); }
-  25%  { transform: translate(12vw, -3vh) rotate(3deg);  }
-  50%  { transform: translate(45vw, 2vh)  rotate(-3deg); }
-  75%  { transform: translate(78vw, -2vh) rotate(4deg);  }
-  100% { transform: translate(120vw, 0)   rotate(-4deg); }
+  0%   { transform: translate(-26vw, 0)     rotate(-2deg);   }
+  25%  { transform: translate(12vw, -2.5vh) rotate(1.5deg);  }
+  50%  { transform: translate(45vw, 1.5vh)  rotate(-1.5deg); }
+  75%  { transform: translate(78vw, -2vh)   rotate(2deg);    }
+  100% { transform: translate(120vw, 0)     rotate(-2deg);   }
 }
 
-/* Blinking rim lights — colored glow via currentColor */
+/* Running lights — warm-white, recessed; sequential chase via inline animation-delay */
 .ufo-light {
   transform-box: fill-box;
   transform-origin: center;
-  filter: drop-shadow(0 0 5px currentColor);
-  animation: ufoBlink 1.4s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px #ffdca6) drop-shadow(0 0 7px #ffae5c);
+  animation: ufoBlink 1.6s ease-in-out infinite;
 }
-.ufo-light:nth-of-type(1) { animation-delay: 0s;    color: #ff4dd2; }
-.ufo-light:nth-of-type(2) { animation-delay: 0.28s; color: #6fffb0; }
-.ufo-light:nth-of-type(3) { animation-delay: 0.56s; color: #ffe14d; }
-.ufo-light:nth-of-type(4) { animation-delay: 0.84s; color: #6fe0ff; }
-.ufo-light:nth-of-type(5) { animation-delay: 1.12s; color: #ff4dd2; }
 @keyframes ufoBlink {
-  0%,100% { opacity: 0.35; transform: scale(0.85); }
-  50%     { opacity: 1;    transform: scale(1.15); }
+  0%,100% { opacity: 0.4; transform: scale(0.78); }
+  50%     { opacity: 1;   transform: scale(1.28); }
 }
 
 /* Pulsing tractor beam */
@@ -707,6 +702,36 @@ img, video { display: block; max-width: 100%; }
   margin-bottom: 1.5rem;
 }
 .modal-header h2 { font-size: 1.25rem; font-weight: 700; }
+.modal-header h2 .icon { width: 1.1em; height: 1.1em; color: var(--accent); vertical-align: -0.15em; margin-right: 0.35rem; }
+
+/* ── Info modal — «Hva er Sound Core?» ── */
+.info-body { display: flex; flex-direction: column; gap: 0.85rem; }
+.info-intro { font-size: 0.92rem; line-height: 1.55; color: var(--text2); margin-bottom: 0.3rem; }
+.info-intro strong { color: var(--text); }
+.info-feat { display: flex; gap: 0.75rem; align-items: flex-start; }
+.info-feat-icon {
+  flex: 0 0 auto;
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  background: rgba(124,58,237,0.14);
+  border: 1px solid var(--border2);
+  color: var(--accent);
+}
+.info-feat-icon .icon { width: 1.15em; height: 1.15em; }
+.info-feat-name { font-weight: 700; font-size: 0.95rem; color: var(--text); margin-bottom: 0.1rem; }
+.info-feat-desc { font-size: 0.85rem; line-height: 1.5; color: var(--text2); margin: 0; }
+.info-welcome {
+  margin-top: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.7;
+}
+.info-sign { font-weight: 500; font-size: 0.9rem; color: var(--accent); }
 
 /* ════════════════════════════════════════════
    FORMS
@@ -2112,6 +2137,7 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative; /* anchor for the resizable embed pane */
 }
 .radio-welcome-hero {
   padding: 2.5rem 2rem 1.5rem;
@@ -2961,8 +2987,45 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
   background: var(--surface);
   overflow: hidden;
   min-height: 300px;
+  position: relative; /* positioning context for the .rer resize handles */
 }
 .radio-embed-wrap.hidden { display: none; }
+
+/* When the user has dragged a handle, the pane becomes an explicitly-sized,
+   absolutely-positioned box anchored inside .radio-main (sidebar stays put). */
+.radio-embed-wrap.resized {
+  position: absolute;
+  flex: none;
+  z-index: 5;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+}
+
+/* Resize handles — edges (5px) + corners (14px), mirrors chat's .cfr */
+.rer {
+  position: absolute;
+  z-index: 6;
+  touch-action: none;
+}
+.rer.n  { top: 0;    left: 10px; right: 10px; height: 5px; cursor: n-resize; }
+.rer.s  { bottom: 0; left: 10px; right: 10px; height: 5px; cursor: s-resize; }
+.rer.e  { right: 0;  top: 10px; bottom: 10px; width: 5px;  cursor: e-resize; }
+.rer.w  { left: 0;   top: 10px; bottom: 10px; width: 5px;  cursor: w-resize; }
+.rer.ne { top: 0;    right: 0;  width: 14px; height: 14px; cursor: ne-resize; }
+.rer.nw { top: 0;    left: 0;   width: 14px; height: 14px; cursor: nw-resize; }
+.rer.se { bottom: 0; right: 0;  width: 14px; height: 14px; cursor: se-resize; }
+.rer.sw { bottom: 0; left: 0;   width: 14px; height: 14px; cursor: sw-resize; }
+/* Subtle visible grip on the bottom-right corner */
+.rer.se::after {
+  content: "";
+  position: absolute;
+  right: 3px; bottom: 3px;
+  width: 7px; height: 7px;
+  border-right: 2px solid var(--text3);
+  border-bottom: 2px solid var(--text3);
+  opacity: 0.6;
+}
 
 .radio-embed-header {
   display: flex;
