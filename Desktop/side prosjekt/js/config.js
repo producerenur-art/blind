@@ -21,6 +21,14 @@ const CONFIG = {
   PLATFORM_DESKTOP_URL:  '',   // e.g. 'https://soundcore.app'
   PLATFORM_APPSTORE_URL: '',   // e.g. 'https://apps.apple.com/app/soundcore/id...'
 
+  // Supabase Storage — deler store filer (60-min lyd, video) på tvers av ALLE brukere.
+  // URL + anon-nøkkel er offentlige og trygge i frontend (beskyttes av bucket-regler).
+  // service_role-nøkkelen ligger KUN i .env (brukes av api/upload-url.js), aldri her.
+  // Lim inn dine verdier fra Supabase → Settings → API:
+  SUPABASE_URL:      localStorage.getItem('sc_supabase_url')    || 'https://qefdyxpyjwpohsmmmksf.supabase.co',
+  SUPABASE_ANON_KEY: localStorage.getItem('sc_supabase_anon')   || 'sb_publishable_JEV-NS9FGZ_KpSvQTPwlZg_LlyVy_eS',  // offentlig publishable key (trygg i frontend)
+  SUPABASE_BUCKET:   localStorage.getItem('sc_supabase_bucket') || 'soundcore-media',
+
   save(anthropicKey, ejsService, ejsTmplAct, ejsTmplRst, ejsTmplMsg, ejsPubKey) {
     localStorage.setItem('pv_anthropic_key',   anthropicKey);
     localStorage.setItem('pv_ejs_service',     ejsService);
@@ -36,3 +44,7 @@ const CONFIG = {
     this.EMAILJS_PUBLIC_KEY = ejsPubKey;
   }
 };
+
+// Top-level `const` does NOT attach to window in classic scripts — expose it
+// explicitly so modules like js/storage.js can read CONFIG via window.CONFIG.
+window.CONFIG = CONFIG;

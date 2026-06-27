@@ -1964,6 +1964,7 @@ const App = (() => {
 
     // Handle Stripe payment success redirect
     await Payment.handleSuccessRedirect();
+    if (window.Marketplace) Marketplace.handlePurchaseRedirect();
 
     // Init psychedelic background
     await BgManager.init();

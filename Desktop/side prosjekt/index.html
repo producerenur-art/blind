@@ -18,7 +18,9 @@
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
   <!-- QR Code generator -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20260627-dub">
+  <!-- Supabase JS — shared media storage (60-min audio, video) across all users -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="styles.css?v=20260627-store">
 </head>
 <body>
 
@@ -223,33 +225,6 @@
     </div>
   </div>
 
-  <!-- ═══ DICE PLAYER (flyttbar + skalerbar widget) ═══ -->
-  <div id="diceplayer_container" title="Dra for å flytte · dra hjørnet for å endre størrelse">
-    <div id="diceplayerHtml" class="cp-container">
-      <div class="cp-buffer-holder">
-        <div class="cp-buffer-1"></div>
-        <div class="cp-buffer-2"></div>
-      </div>
-      <div class="cp-progress-holder cp-gt50">
-        <div class="cp-progress-1"></div>
-        <div class="cp-progress-2"></div>
-      </div>
-      <div class="cp-circle-control"></div>
-      <ul class="cp-controls">
-        <li><a class="cp-play" tabindex="1">play</a></li>
-        <li><a class="cp-pause" style="display:none;" tabindex="1">pause</a></li>
-      </ul>
-    </div>
-    <div id="nowplaying">
-      <div id="nowplaying_state">NOW <span class="live">LIVE </span>ON AIR:</div>
-      <div id="nowplaying_title_container">
-        <div class="dp-marquee"><span>@115 ANTEPRIMA H.D.D.C. IN DOWNTEMPO WITH AUTOMATA BY HANUMAN GOA BY KALKI KRISHNAN PSYCHEDEVOLUTION</span></div>
-      </div>
-    </div>
-    <!-- Hjørnehåndtak for å endre størrelse -->
-    <div class="dp-resize" title="Endre størrelse"></div>
-  </div>
-
   <!-- Hidden audio engine -->
   <audio id="audio-engine" preload="metadata" crossorigin="anonymous"></audio>
 
@@ -450,6 +425,7 @@
   <!-- ═══ SCRIPTS ═══ -->
   <script src="js/icons.js?v=20260627-scsearch"></script>
   <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
   <script src="js/payment.js"></script>
   <script src="js/background.js"></script>
   <script src="js/db.js"></script>
@@ -457,7 +433,9 @@
   <script src="js/email.js"></script>
   <script src="js/ai.js"></script>
   <script src="js/player.js"></script>
-  <script src="js/profile.js"></script>
+  <script src="js/profile.js?v=20260627-store"></script>
+  <script src="js/videoEditor.js?v=20260627-media"></script>
+  <script src="js/marketplace.js?v=20260627-store"></script>
   <script src="js/radio.js?v=20260627-dpplay"></script>
   <script src="js/chat.js"></script>
   <script src="js/discover.js?v=20260627-freedl"></script>
@@ -468,7 +446,7 @@
   <script src="js/audioEngine.js"></script>
   <script src="js/daw.js"></script>
   <script src="js/router.js"></script>
-  <script src="js/app.js?v=20260627-downtempo"></script>
+  <script src="js/app.js?v=20260627-store"></script>
   <script src="js/platform.js"></script>
   <script src="js/platformDrag.js"></script>
   <script src="js/lang.js"></script>

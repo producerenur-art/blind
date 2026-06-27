@@ -316,7 +316,8 @@ const Profile = (() => {
     } else if (theme.bgType === 'music') {
       heroBgStyle = `background:${theme.bgColor || '#0a0010'};`;
       const trackId = theme.bgMusicTrackId || (user.musicIds || [])[0] || null;
-      const trackUrl = trackId ? await DB.getBlobUrl('music', trackId).catch(() => null) : null;
+      const trackRec = trackId ? await DB.get('music', trackId).catch(() => null) : null;
+      const trackUrl = trackRec ? (trackRec.audioUrl || await DB.getBlobUrl('music', trackId).catch(() => null)) : null;
       heroBgExtra = `<canvas id="profile-vis-canvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>${trackUrl ? `<audio id="profile-vis-audio" src="${trackUrl}" autoplay loop preload="auto" style="display:none"></audio>` : ''}`;
     } else if (theme.bgType === 'gradient') {
       heroBgStyle = `background:${theme.bgGradient || 'linear-gradient(135deg,#7c3aed,#2563eb)'};`;
@@ -463,6 +464,7 @@ const Profile = (() => {
           <!-- INNHOLD-fanen -->
           <div class="profile-tab-content hidden" data-tab="innhold" id="tab-innhold">
             <div id="tab-music-player"></div>
+            <div id="tab-store"></div>
             <div id="tab-mixes"><div class="page-loading"><div class="spinner"></div></div></div>
             <div id="tab-media"><div class="page-loading"><div class="spinner"></div></div></div>
           </div>
@@ -484,6 +486,7 @@ const Profile = (() => {
     cpResult.countdowns.forEach(cd => startCountdown(cd.id, cd.date));
 
     renderMusicPlayer(user, isOwner);
+    renderStoreSection(user, isOwner);
     renderMixesSection(user, isOwner);
     renderMediaTab(user, isOwner);
     renderWallTab(username, isOwner);
@@ -586,31 +589,54 @@ const Profile = (() => {
     }
 
     const recs = await DB.getAllByIds('media', ids);
-    el.innerHTML = `<div class="media-grid">${recs.map(r => mediaCard(r, isOwner)).join('')}</div>`;
+    // Hide private items from everyone but the owner.
+    const visibleRecs = isOwner ? recs : recs.filter(r => r.visibility !== 'private');
+    el.innerHTML = `<div class="media-grid">${visibleRecs.map(r => mediaCard(r, isOwner)).join('')}</div>`;
+    await Promise.all(visibleRecs.map(r => fillMediaContainer(r, document.getElementById(`media-${r.id}`))));
+  }
 
-    // Lazy-load images/videos in parallel
-    await Promise.all(recs.map(async r => {
-      const url = await DB.getBlobUrl('media', r.id).catch(() => null);
-      const container = document.getElementById(`media-${r.id}`);
-      if (!container || !url) return;
-      if (r.type.startsWith('video/')) {
-        container.innerHTML = `<video src="${url}" muted loop preload="metadata" onclick="this.paused?this.play():this.pause()" style="width:100%;height:100%;object-fit:cover"></video>`;
-      } else {
-        container.innerHTML = `<img src="${url}" alt="${r.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`;
-      }
-    }));
+  // ── Media helpers (shared by profile + editor grids) ──────────────────
+  // Pull the 11-char video id out of any common YouTube URL form.
+  function parseYouTubeId(url) {
+    const m = String(url || '').match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+  // Prefer the shared Supabase URL; fall back to a local IndexedDB blob.
+  async function mediaSrc(r) {
+    if (r.mediaUrl) return r.mediaUrl;
+    return await DB.getBlobUrl('media', r.id).catch(() => null);
+  }
+  // Fill a grid placeholder with the right element (image / video / YouTube thumb).
+  async function fillMediaContainer(r, container) {
+    if (!container) return;
+    if (r.kind === 'youtube' && r.youtubeId) {
+      container.innerHTML = `<img src="https://i.ytimg.com/vi/${r.youtubeId}/hqdefault.jpg" alt="${esc(r.name || 'YouTube')}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`;
+      return;
+    }
+    const url = await mediaSrc(r);
+    if (!url) return;
+    if ((r.type || '').startsWith('video/')) {
+      container.innerHTML = `<video src="${url}" muted loop preload="metadata" onclick="this.paused?this.play():this.pause()" style="width:100%;height:100%;object-fit:cover"></video>`;
+    } else {
+      container.innerHTML = `<img src="${url}" alt="${esc(r.name || '')}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`;
+    }
   }
 
   function mediaCard(r, isOwner) {
-    const isVideo = r.type?.startsWith('video/');
+    const isVideo = (r.type || '').startsWith('video/');
+    const isYt    = r.kind === 'youtube';
+    const isPriv  = r.visibility === 'private';
+    const badge   = isYt ? '<span class="media-badge">▶ YOUTUBE</span>' : (isVideo ? '<span class="media-badge">VIDEO</span>' : '');
+    const placeholderIcon = isYt ? '▶️' : (isVideo ? '🎬' : '🖼️');
     return `
       <div class="media-item" id="media-wrap-${r.id}">
         <div id="media-${r.id}" style="width:100%;height:100%;background:var(--surface)">
-          <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3)">${isVideo ? '🎬' : '🖼️'}</div>
+          <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3)">${placeholderIcon}</div>
         </div>
-        ${isVideo ? '<span class="media-badge">VIDEO</span>' : ''}
+        ${badge}
         <div class="media-item-overlay">
           <button class="btn-icon" onclick="openMediaModal('${r.id}')" title="Vis">${Icon('eye')}</button>
+          ${isOwner ? `<button class="btn-icon" onclick="Profile.toggleMediaVisibility('${r.id}')" title="${isPriv ? 'Privat — kun du. Klikk for å dele med alle' : 'Offentlig — alle ser den. Klikk for å gjøre privat'}">${isPriv ? '🔒' : '🌐'}</button>` : ''}
           ${isOwner ? `<button class="btn-icon btn-danger" onclick="deleteMedia('${r.id}')" title="Slett">${Icon('trash')}</button>` : ''}
         </div>
       </div>`;
@@ -652,6 +678,33 @@ const Profile = (() => {
 
   function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+  // Faste salgs-/strømmetjenester for kjøpslenker på egne sanger
+  const BUY_SERVICES = [
+    { key: 'bandcamp',   name: 'Bandcamp'    },
+    { key: 'beatport',   name: 'Beatport'    },
+    { key: 'spotify',    name: 'Spotify'     },
+    { key: 'apple',      name: 'Apple Music' },
+    { key: 'soundcloud', name: 'SoundCloud'  },
+  ];
+
+  function songCreditsLineHtml(c) {
+    if (!c) return '';
+    const parts = [];
+    if (c.label)     parts.push(`Label: ${esc(c.label)}`);
+    if (c.producer)  parts.push(`Prod: ${esc(c.producer)}`);
+    if (c.mixing)    parts.push(`Mix: ${esc(c.mixing)}`);
+    if (c.mastering) parts.push(`Master: ${esc(c.mastering)}`);
+    return parts.length ? `<div class="music-credits">${parts.join(' · ')}</div>` : '';
+  }
+
+  function songBuyLinksHtml(links) {
+    if (!links) return '';
+    const chips = BUY_SERVICES.filter(s => links[s.key]).map(s =>
+      `<a class="song-buy-chip" href="${esc(links[s.key])}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🛒 ${s.name}</a>`
+    ).join('');
+    return chips ? `<div class="song-buy-links">${chips}</div>` : '';
+  }
+
   function musicItem(r, index, username, isOwner) {
     const dur    = r.duration ? `${Math.floor(r.duration / 60)}:${String(Math.floor(r.duration % 60)).padStart(2,'0')}` : '--:--';
     const cat    = r.mainCategory ? PROFILE_MAIN_CATS[r.mainCategory] : null;
@@ -664,9 +717,13 @@ const Profile = (() => {
           <div class="music-artist">${esc(r.artist || 'Ukjent artist')}</div>
           ${r.description ? `<div class="music-desc">${esc(r.description)}</div>` : ''}
           ${cat ? `<span class="music-cat-badge">${iconForEmoji(cat.emoji)} ${esc(cat.label)}</span>` : ''}
+          ${songCreditsLineHtml(r.credits)}
+          ${songBuyLinksHtml(r.buyLinks)}
         </div>
         <div class="music-item-right">
           <span class="music-dur">${dur}</span>
+          ${isOwner ? `<button class="btn-icon" title="${r.visibility === 'private' ? 'Privat — kun du ser den. Klikk for å dele med alle' : 'Offentlig — alle ser den. Klikk for å gjøre privat'}" onclick="event.stopPropagation();Profile.toggleTrackVisibility('${esc(r.id)}','${esc(username)}')">${r.visibility === 'private' ? '🔒' : '🌐'}</button>` : ''}
+          ${isOwner ? `<button class="btn-icon music-credits-btn" title="Kreditering & kjøpslenker" onclick="event.stopPropagation();Profile.openSongCreditsModal('${esc(r.id)}')">${Icon('edit')}</button>` : ''}
           ${isOwner ? `<label class="music-cover-upload" title="Endre cover" onclick="event.stopPropagation()">${Icon('camera')}<input type="file" accept="image/*" style="display:none" onchange="Profile.uploadMusicCover('${esc(r.id)}',this.files[0])"></label>` : ''}
           ${isOwner && cat ? `
           <div class="music-demo-wrap">
@@ -713,10 +770,15 @@ const Profile = (() => {
       return;
     }
     const recs = await DB.getAllByIds('music', ids);
+    // index stays aligned with user.musicIds (playTrack uses that array + index);
+    // private tracks are simply not rendered for non-owners.
+    const itemsHtml = recs.map((r, i) =>
+      (!isOwner && r.visibility === 'private') ? '' : musicItem(r, i, user.username, isOwner)
+    ).join('');
     el.innerHTML = `
       <div class="profile-music-section">
         <div class="profile-music-title">${Icon('music')} Musikk</div>
-        <div class="music-list">${recs.map((r, i) => musicItem(r, i, user.username, isOwner)).join('')}</div>
+        <div class="music-list">${itemsHtml}</div>
       </div>`;
     loadMusicCoverArts(recs);
   }
@@ -726,6 +788,44 @@ const Profile = (() => {
     if (!user?.musicIds?.length) return;
     await Player.setQueue(user.musicIds, index);
     document.querySelectorAll('.music-item').forEach((el, i) => el.classList.toggle('playing', i === index));
+  }
+
+  // ── Butikk (sanger til salgs / gratis nedlasting) ──────────────────────
+  async function renderStoreSection(user, isOwner) {
+    const el = document.getElementById('tab-store');
+    if (!el || typeof Marketplace === 'undefined' || !Marketplace.isConfigured()) return;
+    const products = await Marketplace.listSellerProducts(user.username).catch(() => []);
+    if (!products.length) {
+      el.innerHTML = isOwner
+        ? `<div class="profile-store-section"><div class="profile-store-title">🛒 Butikk</div>
+             <p style="font-size:0.82rem;color:var(--text2)">Du har ingen sanger til salgs ennå. Åpne en sang i editoren (✎) → «Selg denne sangen».</p></div>`
+        : '';
+      return;
+    }
+    el.innerHTML = `
+      <div class="profile-store-section">
+        <div class="profile-store-title">🛒 Butikk · ${products.length} ${products.length === 1 ? 'sang' : 'sanger'}</div>
+        <div class="store-list">${products.map(p => storeCard(p, isOwner)).join('')}</div>
+      </div>`;
+  }
+
+  function storeCard(p, isOwner) {
+    const dur   = p.duration_sec ? `${Math.floor(p.duration_sec / 60)}:${String(Math.floor(p.duration_sec % 60)).padStart(2,'0')}` : '';
+    const price = p.is_free ? 'Gratis' : `${(p.price_ore / 100).toFixed(0)} kr`;
+    const btn   = p.is_free
+      ? `<button class="btn btn-primary btn-sm" onclick="Marketplace.buySong('${esc(p.id)}')">⬇ Gratis nedlasting</button>`
+      : `<button class="btn btn-gold btn-sm" onclick="Marketplace.buySong('${esc(p.id)}')">🛒 Kjøp · ${price}</button>`;
+    return `
+      <div class="store-card">
+        <div class="store-card-meta">
+          <div class="store-card-title">${esc(p.title)}</div>
+          <div class="store-card-sub">${esc(p.artist || '')}${dur ? ' · ' + dur : ''}</div>
+        </div>
+        <div class="store-card-right">
+          <span class="store-card-price">${price}</span>
+          ${isOwner ? `<span class="store-card-owner">Din</span>` : btn}
+        </div>
+      </div>`;
   }
 
   // ── Friend request actions ────────────────────────────────────────────
@@ -965,6 +1065,7 @@ const Profile = (() => {
     bindEditorEvents(t);
     loadEditorMedia(current);
     loadEditorMusic(current);
+    loadMyPurchases(current);
     loadEditorMixes(current);
     _loadBgMusicSelector(current, t);
   }
@@ -1083,9 +1184,14 @@ const Profile = (() => {
       <div class="upload-zone" id="media-dropzone" onclick="document.getElementById('media-file-input').click()">
         <div class="upload-icon">${Icon('camera')}</div>
         <div style="font-weight:600;margin-bottom:0.25rem">Klikk eller dra for å laste opp</div>
-        <div style="font-size:0.8rem;color:var(--text3)">Bilder og videoer støttes</div>
+        <div style="font-size:0.8rem;color:var(--text3)">Bilder og videoer fra fester &amp; events</div>
       </div>
       <input type="file" id="media-file-input" accept="image/*,video/*" multiple style="display:none" onchange="Profile.uploadMedia(this.files)">
+      <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
+        <input class="form-input" id="media-url-input" placeholder="… eller lim inn en YouTube-lenke" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();Profile.addMediaLink();}">
+        <button class="btn btn-secondary btn-sm" onclick="Profile.addMediaLink()">${Icon('plus')} Legg til</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:0.75rem;width:100%" onclick="VideoEditor.open()">${Icon('film')} 🎬 Bytt lyd på en video (sett din egen sang/mix)</button>
       <div id="media-upload-list" style="margin-top:1rem"></div>
       <div id="editor-media-grid" style="margin-top:1rem"></div>
     `;
@@ -1101,7 +1207,27 @@ const Profile = (() => {
       <input type="file" id="music-file-input" accept="audio/*" multiple style="display:none" onchange="Profile.uploadMusic(this.files)">
       <div id="music-upload-list" style="margin-top:1rem"></div>
       <div id="editor-music-list" style="margin-top:1rem"></div>
+      <div id="editor-purchases" style="margin-top:1.5rem"></div>
     `;
+  }
+
+  async function loadMyPurchases(user) {
+    const el = document.getElementById('editor-purchases');
+    if (!el || typeof Marketplace === 'undefined' || !Marketplace.isConfigured()) return;
+    const purchases = await Marketplace.myPurchases(user.username).catch(() => []);
+    if (!purchases.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <div class="profile-store-title">⬇ Mine kjøp</div>
+      <div class="store-list">${purchases.map(p => `
+        <div class="store-card">
+          <div class="store-card-meta">
+            <div class="store-card-title">${esc(p.title)}</div>
+            <div class="store-card-sub">${esc(p.artist || '')}${p.seller ? ' · @' + esc(p.seller) : ''}</div>
+          </div>
+          <div class="store-card-right">
+            <button class="btn btn-ghost btn-sm" onclick="Marketplace.download('${esc(p.productId)}')">⬇ Last ned</button>
+          </div>
+        </div>`).join('')}</div>`;
   }
 
   function avatarBannerHtml() {
@@ -1221,16 +1347,7 @@ const Profile = (() => {
     if (!ids.length) { grid.innerHTML = '<p class="text-muted text-sm">Ingen medier ennå.</p>'; return; }
     const recs = await DB.getAllByIds('media', ids);
     grid.innerHTML = `<div class="media-grid">${recs.map(r => mediaCard(r, true)).join('')}</div>`;
-    await Promise.all(recs.map(async r => {
-      const url = await DB.getBlobUrl('media', r.id).catch(() => null);
-      const el = document.getElementById(`media-${r.id}`);
-      if (!el || !url) return;
-      if (r.type.startsWith('video/')) {
-        el.innerHTML = `<video src="${url}" muted loop preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>`;
-      } else {
-        el.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover">`;
-      }
-    }));
+    await Promise.all(recs.map(r => fillMediaContainer(r, document.getElementById(`media-${r.id}`))));
   }
 
   async function loadEditorMusic(user) {
@@ -1241,6 +1358,110 @@ const Profile = (() => {
     const recs = await DB.getAllByIds('music', ids);
     list.innerHTML = `<div class="music-list">${recs.map((r, i) => musicItem(r, i, user.username, true)).join('')}</div>`;
     loadMusicCoverArts(recs);
+  }
+
+  // ── Sang-kreditering & kjøpslenker ────────────────────────────────────
+  async function openSongCreditsModal(trackId) {
+    const current = Auth.current();
+    if (!current) return;
+    const rec = await DB.get('music', trackId);
+    if (!rec) { App.toast('Fant ikke sporet', 'error'); return; }
+    const c = rec.credits  || {};
+    const b = rec.buyLinks || {};
+    const box = document.getElementById('modal-box');
+    if (!box) return;
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2>${Icon('edit')} Kreditering & kjøpslenker</h2>
+        <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
+      </div>
+      <div class="mix-edit-modal">
+        <input type="hidden" id="sc-track-id" value="${esc(trackId)}">
+
+        <div class="mix-edit-section-title">Spor</div>
+        <div class="form-group">
+          <label class="form-label">Tittel</label>
+          <input class="form-input" id="sc-title" value="${esc(rec.name || rec.title || '')}" placeholder="Sangtittel">
+        </div>
+
+        <div class="mix-edit-section-title">Kreditering</div>
+        <div class="form-group">
+          <label class="form-label">Artistnavn</label>
+          <input class="form-input" id="sc-artist" value="${esc(rec.artist || '')}" placeholder="Artistnavn">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Label (plateselskap)</label>
+          <input class="form-input" id="sc-label" value="${esc(c.label || '')}" placeholder="Plateselskap">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Produsent</label>
+          <input class="form-input" id="sc-producer" value="${esc(c.producer || '')}" placeholder="Produsent">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mixing</label>
+          <input class="form-input" id="sc-mixing" value="${esc(c.mixing || '')}" placeholder="Mixing-ingeniør">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mastering</label>
+          <input class="form-input" id="sc-mastering" value="${esc(c.mastering || '')}" placeholder="Mastering-ingeniør">
+        </div>
+
+        <div class="mix-edit-section-title">Kjøpslenker</div>
+        <p style="font-size:0.75rem;color:var(--text3);margin:-0.25rem 0 0.5rem">Lim inn lenke til hovedsiden der sangen kan kjøpes/strømmes (valgfritt).</p>
+        ${BUY_SERVICES.map(s => `
+          <div class="form-group">
+            <label class="form-label">${s.name}</label>
+            <input class="form-input" id="sc-buy-${s.key}" value="${esc(b[s.key] || '')}" placeholder="https://… (valgfritt)">
+          </div>`).join('')}
+
+        <div class="mix-edit-section-title">Selg denne sangen</div>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;margin-bottom:0.5rem">
+          <input type="checkbox" id="sc-sale-free" ${rec.saleFree ? 'checked' : ''}
+            onchange="document.getElementById('sc-price-wrap').style.display=this.checked?'none':'block'">
+          Gratis nedlasting
+        </label>
+        <div class="form-group" id="sc-price-wrap" style="display:${rec.saleFree ? 'none' : 'block'}">
+          <label class="form-label">Pris (NOK)</label>
+          <input class="form-input" id="sc-price" type="number" min="0" step="1" value="${rec.salePriceNok || ''}" placeholder="f.eks. 49">
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button class="btn btn-gold btn-sm" onclick="Marketplace.listSongFromModal('${esc(trackId)}')">🛒 ${rec.forSale ? 'Oppdater i butikk' : 'Legg ut for salg'}</button>
+          <button class="btn btn-ghost btn-sm" onclick="Marketplace.becomeSeller()">🏦 Bli selger (Stripe)</button>
+        </div>
+        <p style="font-size:0.72rem;color:var(--text3);margin-top:0.4rem">Betalt salg krever fullført Stripe-onboarding («Bli selger»). Gratis nedlasting krever det ikke. Lagre kreditering først.</p>
+
+        <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+          <button class="btn btn-primary" onclick="Profile.saveSongCredits()">${Icon('save')} Lagre</button>
+          <button class="btn btn-ghost" onclick="App.closeModal()">Avbryt</button>
+        </div>
+      </div>`;
+    App.openModal();
+  }
+
+  async function saveSongCredits() {
+    const trackId = document.getElementById('sc-track-id')?.value;
+    if (!trackId) return;
+    const rec = await DB.get('music', trackId);
+    if (!rec) { App.toast('Fant ikke sporet', 'error'); return; }
+    const val = id => document.getElementById(id)?.value?.trim() || '';
+    rec.name    = val('sc-title') || rec.name;
+    rec.artist  = val('sc-artist');
+    rec.credits = {
+      label:     val('sc-label'),
+      producer:  val('sc-producer'),
+      mixing:    val('sc-mixing'),
+      mastering: val('sc-mastering'),
+    };
+    const buyLinks = {};
+    BUY_SERVICES.forEach(s => {
+      const v = val(`sc-buy-${s.key}`);
+      if (v) buyLinks[s.key] = v;
+    });
+    rec.buyLinks = buyLinks;
+    await DB.put('music', rec);
+    App.closeModal();
+    App.toast('Kreditering lagret! 🎶', 'success');
+    loadEditorMusic(Auth.current());
   }
 
   // ── DJ Mixes ──────────────────────────────────────────────────────────
@@ -1620,6 +1841,20 @@ const Profile = (() => {
     loadEditorMixes(current);
   }
 
+  // Per-track visibility (free for everyone — unlike mixes, which Pro-gate private).
+  // 🌐 public = alle ser/hører den · 🔒 private = kun eier.
+  async function toggleTrackVisibility(id, username) {
+    const current = Auth.current();
+    if (!current || current.username !== username) return;
+    const rec = await DB.get('music', id);
+    if (!rec) return;
+    rec.visibility = rec.visibility === 'private' ? 'public' : 'private';
+    await DB.put('music', rec);
+    App.toast(rec.visibility === 'private' ? '🔒 Sang satt til privat (kun deg)' : '🌐 Sang gjort offentlig (alle)', 'success');
+    renderMusicPlayer(current, true);
+    loadEditorMusic(current);
+  }
+
   async function deleteMix(id, username) {
     const current = Auth.current();
     if (!current || current.username !== username) return;
@@ -1878,25 +2113,78 @@ const Profile = (() => {
     const current = Auth.current();
     if (!current) return;
     const listEl = document.getElementById('media-upload-list');
+    // Big videos (party/event footage) go to shared Supabase storage when configured.
+    const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
     for (const file of files) {
       const id = `m_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;font-size:0.82rem';
       row.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> ${file.name}`;
       if (listEl) listEl.appendChild(row);
-      await DB.storeFile('media', id, file);
+      const meta = {
+        kind: 'file', type: file.type, name: file.name,
+        visibility: 'public', mediaUrl: null, storagePath: null,
+        fileSize: file.size, createdAt: Date.now(),
+      };
+      let shared = false;
+      if (useCloud) {
+        try {
+          const res = await SC_Storage.upload(file, { prefix: (file.type || '').startsWith('video/') ? 'video' : 'image' });
+          meta.mediaUrl = res.url; meta.storagePath = res.path;
+          await DB.put('media', { id, ...meta });   // metadata only — file lives in Supabase
+          shared = true;
+        } catch (e) {
+          if (e && e.message !== 'not-configured') console.warn('Skylagring feilet, lagrer lokalt:', e.message);
+        }
+      }
+      if (!shared) await DB.storeFile('media', id, file, meta);
       current.mediaIds = [...(current.mediaIds || []), id];
       Auth.updateUser(current.username, { mediaIds: current.mediaIds });
-      if (listEl) { row.innerHTML = `${Icon('check-circle')} ${file.name}`; setTimeout(() => row.remove(), 2000); }
+      if (listEl) { row.innerHTML = `${Icon('check-circle')} ${file.name}${shared ? ' · 🌐 delt' : ''}`; setTimeout(() => row.remove(), 2500); }
     }
     loadEditorMedia(Auth.current());
-    App.toast('Medier lastet opp!', 'success');
+    App.toast(useCloud ? 'Medier lastet opp og delt! 🌐' : 'Medier lastet opp (lokalt)!', 'success');
+  }
+
+  // Add a YouTube (or other) video link as a visual — embedded, no file upload.
+  async function addMediaLink() {
+    const current = Auth.current();
+    if (!current) return;
+    const input = document.getElementById('media-url-input');
+    const url = (input?.value || '').trim();
+    if (!url) { App.toast('Lim inn en YouTube-lenke først', 'error'); return; }
+    const ytId = parseYouTubeId(url);
+    const id = `m_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const rec = ytId
+      ? { id, kind: 'youtube', youtubeId: ytId, url, name: 'YouTube-video', type: 'youtube', visibility: 'public', createdAt: Date.now() }
+      : { id, kind: 'link', url, name: url.replace(/^https?:\/\//, '').slice(0, 60), type: 'link', visibility: 'public', createdAt: Date.now() };
+    await DB.put('media', rec);
+    current.mediaIds = [...(current.mediaIds || []), id];
+    Auth.updateUser(current.username, { mediaIds: current.mediaIds });
+    if (input) input.value = '';
+    loadEditorMedia(Auth.current());
+    App.toast(ytId ? '▶ YouTube-video lagt til!' : 'Lenke lagt til!', 'success');
+  }
+
+  // Per-media visibility (free for everyone). 🌐 public · 🔒 private.
+  async function toggleMediaVisibility(id) {
+    const current = Auth.current();
+    if (!current) return;
+    const rec = await DB.get('media', id);
+    if (!rec) return;
+    rec.visibility = rec.visibility === 'private' ? 'public' : 'private';
+    await DB.put('media', rec);
+    App.toast(rec.visibility === 'private' ? '🔒 Satt til privat (kun deg)' : '🌐 Gjort offentlig (alle)', 'success');
+    loadEditorMedia(current);
   }
 
   async function uploadMusic(files) {
     const current = Auth.current();
     if (!current) return;
     const listEl = document.getElementById('music-upload-list');
+    // When Supabase is configured, big files (up to ~60 min) go to shared cloud
+    // storage so all users can hear them. Otherwise we fall back to local IndexedDB.
+    const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
     for (const file of files) {
       const id = `mus_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const row = document.createElement('div');
@@ -1913,13 +2201,33 @@ const Profile = (() => {
       } catch {}
       // Clean name
       const name = file.name.replace(/\.[^.]+$/, '');
-      await DB.storeFile('music', id, file, { name, artist: '', duration, coverMediaId: null });
+      const meta = {
+        name, artist: '', duration, coverMediaId: null,
+        visibility: 'public',           // 🌐 alle ser den · 🔒 kun meg
+        mime: file.type, fileSize: file.size, createdAt: Date.now(),
+        audioUrl: null, storagePath: null,
+      };
+      // Upload to shared Supabase storage when configured; fall back to local IndexedDB.
+      let shared = false;
+      if (useCloud) {
+        try {
+          const res = await SC_Storage.upload(file, { prefix: 'audio' });
+          meta.audioUrl = res.url; meta.storagePath = res.path;
+          await DB.put('music', { id, ...meta });   // metadata only — the file lives in Supabase
+          shared = true;
+        } catch (e) {
+          if (e && e.message !== 'not-configured') console.warn('Skylagring feilet, lagrer lokalt:', e.message);
+        }
+      }
+      if (!shared) {
+        await DB.storeFile('music', id, file, meta);   // local fallback (blob in IndexedDB)
+      }
       current.musicIds = [...(current.musicIds || []), id];
       Auth.updateUser(current.username, { musicIds: current.musicIds });
-      if (listEl) { row.innerHTML = `${Icon('check-circle')} ${file.name}`; setTimeout(() => row.remove(), 2000); }
+      if (listEl) { row.innerHTML = `${Icon('check-circle')} ${file.name}${shared ? ' · 🌐 delt' : ''}`; setTimeout(() => row.remove(), 2500); }
     }
     loadEditorMusic(Auth.current());
-    App.toast('Musikk lastet opp!', 'success');
+    App.toast(useCloud ? 'Musikk lastet opp og delt! 🌐' : 'Musikk lastet opp (lokalt)!', 'success');
   }
 
   async function uploadAvatar(input) {
@@ -3007,16 +3315,27 @@ const Profile = (() => {
 
   // Open media in modal
   window.openMediaModal = async (id) => {
-    const url = await DB.getBlobUrl('media', id);
     const rec = await DB.get('media', id);
-    if (!url) return;
+    if (!rec) return;
     const box = document.getElementById('modal-box');
+    let body;
+    if (rec.kind === 'youtube' && rec.youtubeId) {
+      body = `<div style="position:relative;width:100%;padding-top:56.25%;border-radius:8px;overflow:hidden"><iframe src="https://www.youtube.com/embed/${rec.youtubeId}?autoplay=1" title="YouTube" allow="autoplay; encrypted-media; fullscreen" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>`;
+    } else if (rec.kind === 'link') {
+      body = `<a href="${esc(rec.url)}" target="_blank" rel="noopener" class="btn btn-primary">${Icon('external-link')} Åpne lenke</a>`;
+    } else {
+      const url = await mediaSrc(rec);
+      if (!url) return;
+      body = (rec.type || '').startsWith('video/')
+        ? `<video src="${url}" controls autoplay style="width:100%;border-radius:8px;max-height:60vh"></video>`
+        : `<img src="${url}" style="width:100%;border-radius:8px;max-height:70vh;object-fit:contain">`;
+    }
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${rec?.name || 'Media'}</h2>
+        <h2>${esc(rec.name || 'Media')}</h2>
         <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
       </div>
-      ${rec?.type?.startsWith('video/') ? `<video src="${url}" controls autoplay style="width:100%;border-radius:8px;max-height:60vh"></video>` : `<img src="${url}" style="width:100%;border-radius:8px;max-height:70vh;object-fit:contain">`}
+      ${body}
     `;
     App.openModal();
   };
@@ -3357,6 +3676,9 @@ const Profile = (() => {
     toggleProfileVisibility, setProfileVisibility,
     saveProfile, livePreview, collectTheme,
     uploadMedia, uploadMusic, uploadMusicCover, uploadAvatar, uploadBanner,
+    addMediaLink, toggleMediaVisibility,
+    toggleTrackVisibility,
+    openSongCreditsModal, saveSongCredits,
     uploadBgImage, uploadBgVideo, openImagePaintEditor,
     aiBio, aiColors, aiLayout, applyAiColors, applyAiLayout,
     updateRoleLabel, saveRoles, selectEditorRole,

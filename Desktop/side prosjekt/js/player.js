@@ -68,6 +68,10 @@ const Player = (() => {
 
   async function getBlobUrl(id) {
     if (blobUrls[id]) return blobUrls[id];
+    // Prefer the shared Supabase URL (file uploaded to cloud); fall back to the
+    // local IndexedDB blob for tracks stored only on this device.
+    const rec = await DB.get('music', id).catch(() => null);
+    if (rec && rec.audioUrl) { blobUrls[id] = rec.audioUrl; return rec.audioUrl; }
     const url = await DB.getBlobUrl('music', id);
     if (url) blobUrls[id] = url;
     return url;
