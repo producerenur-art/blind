@@ -21,9 +21,17 @@ const DicePlayerDrag = (() => {
     if (saved.left != null && saved.top != null) { left = saved.left; top = saved.top; }
     apply();
 
-    // Play/pause-knappene veksler bare visuelt her (lyd styres av audio-engine).
-    panel.querySelector('.cp-play') ?.addEventListener('click', () => togglePlay(true));
-    panel.querySelector('.cp-pause')?.addEventListener('click', () => togglePlay(false));
+    // Play/pause styrer den faktiske lyden (#audio-engine via Player) og holder
+    // ikonet i synk med ekte avspillingstilstand — ikke bare et visuelt bytte.
+    const audio = document.getElementById('audio-engine');
+    panel.querySelector('.cp-play') ?.addEventListener('click', requestToggle);
+    panel.querySelector('.cp-pause')?.addEventListener('click', requestToggle);
+    if (audio) {
+      audio.addEventListener('play',  () => setPlayingUI(true));
+      audio.addEventListener('pause', () => setPlayingUI(false));
+      audio.addEventListener('ended', () => setPlayingUI(false));
+      setPlayingUI(!audio.paused && !!audio.currentSrc);   // riktig tilstand ved last
+    }
 
     panel.addEventListener('pointerdown', onDown);
     document.addEventListener('pointermove', onMove);
@@ -109,7 +117,19 @@ const DicePlayerDrag = (() => {
     }
   }
 
-  function togglePlay(playing) {
+  // Klikk → toggle ekte avspilling. Player.togglePlay() ruter til radio når vi
+  // er i radiomodus, ellers til musikkspilleren; faller tilbake til å styre
+  // <audio> direkte dersom Player ikke er lastet.
+  function requestToggle() {
+    if (window.Player?.togglePlay) { Player.togglePlay(); return; }
+    const audio = document.getElementById('audio-engine');
+    if (!audio) return;
+    if (audio.paused) audio.play().catch(() => {});
+    else audio.pause();
+  }
+
+  // Speiler play/pause-ikonet etter faktisk avspillingstilstand.
+  function setPlayingUI(playing) {
     const play  = panel.querySelector('.cp-play');
     const pause = panel.querySelector('.cp-pause');
     if (!play || !pause) return;
