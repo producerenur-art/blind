@@ -226,25 +226,45 @@
     var size = opts.size || 40;
     var h  = psyHash(seed);
     var h1 = h % 360;
-    var h2 = (h1 + 70 + (h >>> 3) % 90) % 360;
-    var h3 = (h1 + 180 + (h >>> 7) % 90) % 360;
+    var h2 = (h1 + 60 + (h >>> 3) % 80) % 360;
+    var h3 = (h1 + 150 + (h >>> 7) % 90) % 360;
+    var h4 = (h1 + 240 + (h >>> 13) % 70) % 360;
     var ang = (h >>> 5) % 360;          // swirl rotation
     var px  = 28 + (h >>> 9)  % 44;     // highlight x %
     var py  = 28 + (h >>> 11) % 44;     // highlight y %
+    var bx  = 20 + (h >>> 15) % 60;     // colour-blob x %
+    var by  = 20 + (h >>> 17) % 60;     // colour-blob y %
     var conic = 'conic-gradient(from ' + ang + 'deg at ' + px + '% ' + py + '%,'
       + 'hsl(' + h1 + ',92%,62%),'
       + 'hsl(' + h2 + ',88%,56%),'
       + 'hsl(' + h3 + ',94%,64%),'
+      + 'hsl(' + h4 + ',90%,58%),'
       + 'hsl(' + h2 + ',88%,52%),'
       + 'hsl(' + h1 + ',92%,62%))';
     var glow = 'radial-gradient(circle at ' + px + '% ' + py + '%,'
       + 'rgba(255,255,255,0.6),rgba(255,255,255,0) 58%)';
+    var blob = 'radial-gradient(circle at ' + bx + '% ' + by + '%,'
+      + 'hsla(' + h3 + ',95%,70%,0.85),transparent 45%)';
     var cls = 'psy-cover' + (opts.cls ? ' ' + opts.cls : '');
     var style = 'width:' + size + 'px;height:' + size + 'px;'
       + '--psy-accent:hsl(' + h1 + ',90%,60%);'
-      + 'background:' + glow + ',' + conic + ';';
+      + 'background:' + glow + ',' + blob + ',' + conic + ';';
     return '<span class="' + cls + '" style="' + style + '" aria-hidden="true"></span>';
   }
+
+  // Inject the (tiny, self-contained) hover-spin styles once. Kept out of
+  // styles.css on purpose so it can't collide with concurrent edits there.
+  function ensurePsyStyles() {
+    if (typeof document === 'undefined' || document.getElementById('psy-cover-styles')) return;
+    var s = document.createElement('style');
+    s.id = 'psy-cover-styles';
+    s.textContent =
+      '@keyframes psy-spin{to{transform:rotate(1turn)}}'
+      + '.profile-fav-radio .psy-cover{animation:psy-spin 9s linear infinite;animation-play-state:paused}'
+      + '.profile-fav-radio:hover .psy-cover{animation-play-state:running}';
+    (document.head || document.documentElement).appendChild(s);
+  }
+  ensurePsyStyles();
 
   window.psychedelicCover = psychedelicCover;
   window.Icon = svg;
