@@ -49,23 +49,23 @@ const App = (() => {
       <div class="info-body">
         <p class="info-intro">
           <strong>Sound&nbsp;Core</strong> er en desentralisert sosial plattform for musikk og lyd —
-          en samlingsplass for elektronisk musikk, radio, DJ-miks og felleskap. Alt skjer i nettleseren,
-          uten en sentral server som eier dataene dine. Her er funksjonene du finner:
+          en samlingsplass for elektronisk musikk, radio, DJ-miks og fellesskap. Alt kjører rett i
+          nettleseren, og dataene dine eies ikke av noen sentral server. Her er alt du kan gjøre:
         </p>
-        ${feat('radio',    'Radio',       'Lytt til kuraterte radiostasjoner og live-strømmer — ambient, psytrance, downtempo og mer. Spilleren følger deg på tvers av sidene mens du surfer.')}
-        ${feat('music',    'Discover',    'Oppdag ny musikk og finn andre brukere. Bla gjennom utgivelser, legg til venner og bygg ditt eget nettverk av lyttere og artister.')}
-        ${feat('moon',     'Underground', 'Den mørkere, eksperimentelle undergrunnsscenen — for deg som vil grave dypere enn det vanlige og finne de skjulte perlene.')}
-        ${feat('calendar', 'Shows',       'Hold oversikt over kommende arrangementer, konserter og live-sett. Se hvem som spiller live akkurat nå.')}
-        ${feat('message',  'Chat',        'Sanntidsprat med andre brukere, bygget desentralisert med Gun.js — meldingene flyter direkte mellom dere, uten en mellommann.')}
-        ${feat('sliders',  'DJ',          'Last opp dine egne DJ-miks, spill dem av for andre, og oppdag sett fra DJ-er over hele plattformen.')}
-        ${feat('waveform', 'Studio Pro',  'Et fullverdig musikkstudio rett i nettleseren (Web Audio) — lag, lagre og mikse egne spor uten å installere noe.')}
-        ${feat('palette',  'Blend',       'Et visuelt blend-studio for å lage og leke med bilder og grafikk som matcher lyden din.')}
-        ${feat('user',     'Min side',    'Din egen profil med musikken din, miksene dine, arrangementer og venner samlet på ett sted.')}
-        ${feat('mail',     'Innboks',     'Private meldinger og venneforespørsler — hold kontakten med folk du møter på plattformen.')}
-        ${feat('message',  'AI-assistent','En innebygd hjelper du kan spørre om hva som helst på plattformen, døgnet rundt.')}
-        ${feat('image',    'Tilpasning',  'Bytt bakgrunn, velg språk og åpne Sound Core på mobil, Mac eller App Store — gjør opplevelsen til din egen.')}
+        ${feat('radio',    'Radio',       'Strøm kuraterte radiokanaler og live-sendinger døgnet rundt — fra ambient og psytrance til downtempo og dub. Musikkspilleren blir liggende nederst på siden og spiller videre mens du utforsker resten.')}
+        ${feat('music',    'Discover',    'Oppdag ny musikk og nye mennesker. Bla gjennom utgivelser og artister, følg dem du liker, og bygg ditt eget nettverk av lyttere og skapere.')}
+        ${feat('moon',     'Underground', 'Den rå, eksperimentelle undergrunnsscenen — for deg som vil grave dypere enn topplistene og finne de skjulte perlene.')}
+        ${feat('calendar', 'Shows',       'Hold styr på kommende arrangementer, konserter og live-sett — og se hvem som spiller live akkurat nå.')}
+        ${feat('message',  'Chat',        'Sanntidsprat med andre brukere, bygget desentralisert med Gun.js. Meldingene flyter direkte mellom dere, uten en sentral mellommann.')}
+        ${feat('sliders',  'DJ',          'Last opp dine egne DJ-miks, del dem med fellesskapet, og oppdag sett fra DJ-er over hele plattformen.')}
+        ${feat('waveform', 'Studio Pro',  'Et fullverdig musikkstudio rett i nettleseren, drevet av Web Audio. Lag, lagre og mikse egne spor — uten å installere noe som helst.')}
+        ${feat('palette',  'Blend',       'Et visuelt studio for å lage og leke med bilder og grafikk som matcher lyden og stemningen din.')}
+        ${feat('user',     'Min side',    'Din egen profil — musikken din, miksene dine, arrangementer og venner, samlet på ett sted.')}
+        ${feat('mail',     'Innboks',     'Private meldinger og venneforespørsler, så du holder kontakten med folkene du møter underveis.')}
+        ${feat('message',  'AI-assistent','En innebygd hjelper du kan spørre om hva som helst — fra hvordan ting fungerer til tips om hvor du bør begynne.')}
+        ${feat('image',    'Tilpasning',  'Bytt bakgrunn, velg blant 100+ språk, og åpne Sound Core på mobil, Mac eller i App Store. Gjør opplevelsen helt til din egen.')}
         <p class="info-welcome">
-          Velkommen til alle!<br>
+          Vi er glade for å ha deg her. Velkommen til alle!<br>
           <span class="info-sign">Vennlig hilsen<br>Sound&nbsp;Core Team</span>
         </p>
       </div>`;
@@ -408,6 +408,7 @@ const App = (() => {
           <button class="hr-tab" onclick="HomeRadio.setGenre('progressive',this)">${Icon('globe')} Progressive</button>
           <button class="hr-tab" onclick="HomeRadio.setGenre('ambient',this)">${Icon('sparkles')} Ambient</button>
           <button class="hr-tab" onclick="HomeRadio.setGenre('goa',this)">${Icon('sparkles')} Goa</button>
+          <button class="hr-tab" onclick="HomeRadio.setGenre('dub',this)">${Icon('disc')} Dub</button>
         </div>
         <div class="hr-channel-grid" id="hr-channel-grid"></div>
       </div>`;
@@ -436,11 +437,12 @@ const App = (() => {
     // Home radio widget controller
     window.HomeRadio = (() => {
       const GENRE_IDS = {
-        psytrance:   ['stellar-psy', 'suburbsofgoa', 'thetrip'],
+        psytrance:   ['suburbsofgoa'],
         downtempo:   ['groovesalad', 'lush', 'beatblender', 'gsclassic', '1fm-chillout'],
-        progressive: ['trancearound', 'digitalis', 'defcon'],
-        ambient:     ['dronezone', 'darkzone', 'doomed', 'spacestation', 'deepspaceone', 'missioncontrol'],
+        progressive: ['trancearound', 'atr', 'rr-progressive'],
+        ambient:     ['spacestation', 'deepspaceone', 'missioncontrol', 'dronezone'],
         goa:         ['suburbsofgoa', 'stellar-psy'],
+        dub:         ['stellar-psy', 'heavyweightreggae'],
       };
       let _currentId = null;
       let _playing = false;
@@ -468,24 +470,12 @@ const App = (() => {
         const ids = GENRE_IDS[genre] || [];
         const stations = ids.map(id => (Radio.stations || []).find(s => s.id === id)).filter(Boolean);
         const extraHtml = genre === 'psytrance'
-          ? `<canvas aria-hidden="true" class="g-box-full sceneLayer" width="1008" height="200" style="cursor: pointer;"></canvas>`
+          ? `<iframe class="hr-radio-embed" src="https://www.diceradio.gr/" loading="lazy" allow="autoplay; encrypted-media"></iframe>
+             <iframe class="hr-radio-embed" src="https://radiozora.fm/" loading="lazy" allow="autoplay; encrypted-media"></iframe>`
           : genre === 'goa'
           ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/ZimhFgAlzOU?list=RDZimhFgAlzOU" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
-          : genre === 'progressive'
-          ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/Y91C2yTq8BQ?list=RDY91C2yTq8BQ" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-             <iframe class="hr-yt-embed" src="https://www.youtube.com/embed/XFsZg4YrFZg?list=RDATfycHJvZ3Jlc3NpdmUgcHN5dHJhbmNl" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
-          : genre === 'ambient'
-          ? `<div class="track_info">
-                <span class="title-section hiddenelem">
-                    <a class="title_link primaryText" href="/track/the-end-of-creation"><span class="title"></span></a>
-                </span>
-                <span class="time secondaryText">
-                    <span class="time_elapsed">00:33</span>
-                    /
-                    <span class="time_total">05:22</span>
-                </span>
-                <span class="message hiddenelem"></span>
-            </div>`
+          : genre === 'dub'
+          ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/videoseries?list=PLv1XAUg92fX9rVnD0r0ek-7monLM4JINL" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
           : '';
         grid.innerHTML = stations.map(s => `
           <div class="hr-channel-card" data-id="${s.id}" style="--hc:${s.color}" onclick="HomeRadio.play('${s.id}')">

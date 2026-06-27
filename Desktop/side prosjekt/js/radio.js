@@ -81,6 +81,20 @@ const Radio = (() => {
       emoji: '🌀', color: '#9333ea',
       desc: '1.FM — trance around the clock',
     },
+    {
+      id: 'atr', cat: 'Progressive Psy / Trance',
+      name: 'Amsterdam Trance Radio',
+      url:  'https://strm112.1.fm/atr_mobile_mp3',
+      emoji: '🎚️', color: '#7c3aed',
+      desc: '1.FM — uplifting & progressive trance',
+    },
+    {
+      id: 'rr-progressive', cat: 'Progressive Psy / Trance',
+      name: 'Radio Record — Progressive House',
+      url:  'https://radiorecord.hostingradio.ru/progr96.aacp',
+      emoji: '🎛️', color: '#2563eb',
+      desc: 'Progressive house, non-stop',
+    },
 
     // ════════════════════════════════════════════
     // EDM / HOUSE / TECHNO
