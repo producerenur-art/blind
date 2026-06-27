@@ -270,15 +270,31 @@ const AudioEngine = (() => {
     const shaperTrim = ctx.createGain();
     const dry = ctx.createGain(), delay = ctx.createDelay(2.0), fb = ctx.createGain(), wet = ctx.createGain(), fxBus = ctx.createGain();
     delay.delayTime.value = 0.35; fb.gain.value = 0.4; wet.gain.value = 0.5;
+    // reverb (real convolution)
+    const conv = ctx.createConvolver(); conv.buffer = buildImpulse(2.2, 2.6);
+    const revDry = ctx.createGain(), revWet = ctx.createGain(), revBus = ctx.createGain();
+    revWet.gain.value = 0.35;
     const compressor = comp();
     const volume = ctx.createGain(); volume.gain.value = 0.9;
     const pan = ctx.createStereoPanner();
     input.connect(shaper); shaper.connect(shaperTrim);
     shaperTrim.connect(dry); dry.connect(fxBus);
     shaperTrim.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(fxBus);
-    fxBus.connect(compressor); compressor.connect(volume); volume.connect(pan); pan.connect(master.in);
-    buses[id] = { id, input, shaper, shaperTrim, delay, fb, wet, dry, compressor, volume, pan, vol: 0.9, muted: false, isBus: true };
+    fxBus.connect(revDry); revDry.connect(revBus);
+    fxBus.connect(conv); conv.connect(revWet); revWet.connect(revBus);
+    revBus.connect(compressor); compressor.connect(volume); volume.connect(pan); pan.connect(master.in);
+    buses[id] = { id, input, shaper, shaperTrim, delay, fb, wet, dry, conv, revWet, revDry, compressor, volume, pan, vol: 0.9, muted: false, isBus: true, revSize: 2.2 };
     return buses[id];
+  }
+
+  function buildImpulse(seconds, decay) {
+    const rate = ctx.sampleRate, len = Math.max(1, Math.floor(rate * seconds));
+    const buf = ctx.createBuffer(2, len, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
   }
   function removeBus(id) {
     const b = buses[id]; if (!b) return;
@@ -298,6 +314,8 @@ const AudioEngine = (() => {
     if (p.delayTime != null) b.delay.delayTime.value = Math.max(0.001, p.delayTime);
     if (p.delayFb != null)   b.fb.gain.value = Math.max(0, Math.min(0.95, p.delayFb));
     if (p.delayMix != null)  b.wet.gain.value = Math.max(0, Math.min(1, p.delayMix));
+    if (p.reverbMix != null) b.revWet.gain.value = Math.max(0, Math.min(1, p.reverbMix));
+    if (p.reverbSize != null) { b.revSize = p.reverbSize; b.conv.buffer = buildImpulse(Math.max(0.2, p.reverbSize), 2.6); }
     if (p.volume != null)    { b.vol = p.volume; if (!b.muted) b.volume.gain.value = p.volume; }
     if (p.pan != null)       b.pan.pan.value = Math.max(-1, Math.min(1, p.pan));
   }
@@ -357,15 +375,17 @@ const AudioEngine = (() => {
       trigger(dest, when, freq, dur, vel, p) {
         p = p || {}; const wave = p.wave || 'sawtooth', base = p.cutoff || 1200, res = p.res != null ? p.res : 8;
         const a = p.attack != null ? p.attack : 0.012, rel = p.release != null ? p.release : 0.18;
+        const det = p.detune != null ? p.detune : 6;
         const g = ctx.createGain(), lp = filt('lowpass', base, res);
-        const o1 = mkOsc(wave, freq, -6), o2 = mkOsc(wave, freq, +6);
-        const v = (vel || 100) / 127;
+        const o1 = mkOsc(wave, freq, -det), o2 = mkOsc(wave, freq, +det);
+        const v = (vel || 100) / 127, stopAt = when + dur + rel + 0.2;
         o1.connect(g); o2.connect(g); g.connect(lp); lp.connect(dest);
+        addSubAndLfo(p, dest, g, lp, freq, when, base, stopAt);
         lp.frequency.setValueAtTime(base * 0.4, when);
         lp.frequency.exponentialRampToValueAtTime(base * 3.6, when + 0.05);
         lp.frequency.exponentialRampToValueAtTime(base * 0.75, when + dur);
         adsr(g.gain, when, 0.32 * v, a, 0.12, 0.7, dur, rel);
-        o1.start(when); o2.start(when); o1.stop(when + dur + rel + 0.2); o2.stop(when + dur + rel + 0.2);
+        o1.start(when); o2.start(when); o1.stop(stopAt); o2.stop(stopAt);
       },
     },
     synthBass: {
@@ -373,14 +393,16 @@ const AudioEngine = (() => {
       trigger(dest, when, freq, dur, vel, p) {
         p = p || {}; const wave = p.wave || 'sawtooth', base = p.cutoff || 600, res = p.res != null ? p.res : 6;
         const a = p.attack != null ? p.attack : 0.006, rel = p.release != null ? p.release : 0.1;
+        const det = p.detune != null ? p.detune : 0;
         const g = ctx.createGain(), lp = filt('lowpass', base, res);
-        const o1 = mkOsc(wave, freq), o2 = mkOsc('square', freq / 2);
-        const v = (vel || 100) / 127;
+        const o1 = mkOsc(wave, freq, det), o2 = mkOsc('square', freq / 2);
+        const v = (vel || 100) / 127, stopAt = when + dur + rel + 0.2;
         o1.connect(g); o2.connect(g); g.connect(lp); lp.connect(dest);
+        addSubAndLfo(p, dest, g, lp, freq, when, base, stopAt);
         lp.frequency.setValueAtTime(base * 2, when);
         lp.frequency.exponentialRampToValueAtTime(base * 0.5, when + 0.12);
         adsr(g.gain, when, 0.5 * v, a, 0.08, 0.8, dur, rel);
-        o1.start(when); o2.start(when); o1.stop(when + dur + rel + 0.2); o2.stop(when + dur + rel + 0.2);
+        o1.start(when); o2.start(when); o1.stop(stopAt); o2.stop(stopAt);
       },
     },
     pad: {
@@ -388,14 +410,16 @@ const AudioEngine = (() => {
       trigger(dest, when, freq, dur, vel, p) {
         p = p || {}; const wave = p.wave || 'sawtooth', base = p.cutoff || 900, res = p.res != null ? p.res : 2;
         const a = p.attack != null ? p.attack : 0.6, rel = p.release != null ? p.release : 1.2;
+        const det = p.detune != null ? p.detune : 6;
+        const lr = p.lfoRate != null ? p.lfoRate : 0.15, ld = p.lfoDepth != null ? p.lfoDepth : 0.4;
         const g = ctx.createGain(), lp = filt('lowpass', base, res);
-        const lfo = mkOsc('sine', 0.15), lfoG = ctx.createGain(); lfoG.gain.value = base * 0.4;
+        const lfo = mkOsc('sine', lr), lfoG = ctx.createGain(); lfoG.gain.value = ld * base;
         lfo.connect(lfoG); lfoG.connect(lp.frequency);
-        const v = (vel || 90) / 127, d = Math.max(dur, 0.8);
-        [-9, -4, 0, 4, 7].forEach(c => { const o = mkOsc(wave, freq, c * 1.5); o.connect(g); o.start(when); o.stop(when + d + rel + 0.3); });
+        const v = (vel || 90) / 127, d = Math.max(dur, 0.8), stopAt = when + d + rel + 0.3;
+        [-9, -4, 0, 4, 7].forEach(c => { const o = mkOsc(wave, freq, c * det * 0.25); o.connect(g); o.start(when); o.stop(stopAt); });
         g.connect(lp); lp.connect(dest);
         adsr(g.gain, when, 0.14 * v, a, 0.4, 0.85, d, rel);
-        lfo.start(when); lfo.stop(when + d + rel + 0.3);
+        lfo.start(when); lfo.stop(stopAt);
       },
     },
     // ── Drums ──
@@ -524,10 +548,17 @@ const AudioEngine = (() => {
   }
 
   const SYNTH_DEFAULTS = {
-    synthLead: { wave: 'sawtooth', cutoff: 1200, res: 8, attack: 0.012, release: 0.18 },
-    synthBass: { wave: 'sawtooth', cutoff: 600, res: 6, attack: 0.006, release: 0.1 },
-    pad:       { wave: 'sawtooth', cutoff: 900, res: 2, attack: 0.6, release: 1.2 },
+    synthLead: { wave: 'sawtooth', cutoff: 1200, res: 8, attack: 0.012, release: 0.18, detune: 6, subLevel: 0, lfoRate: 0, lfoDepth: 0 },
+    synthBass: { wave: 'sawtooth', cutoff: 600, res: 6, attack: 0.006, release: 0.1, detune: 0, subLevel: 0.3, lfoRate: 0, lfoDepth: 0 },
+    pad:       { wave: 'sawtooth', cutoff: 900, res: 2, attack: 0.6, release: 1.2, detune: 6, subLevel: 0, lfoRate: 0.15, lfoDepth: 0.4 },
   };
+  // shared: sub-osc + filter LFO for melodic voices
+  function addSubAndLfo(p, dest, g, lp, freq, when, base, stopAt) {
+    const subLevel = p.subLevel != null ? p.subLevel : 0;
+    if (subLevel > 0) { const sub = mkOsc('sine', freq / 2), sg = ctx.createGain(); sg.gain.value = subLevel * 0.5; sub.connect(sg); sg.connect(g); sub.start(when); sub.stop(stopAt); }
+    const lr = p.lfoRate != null ? p.lfoRate : 0, ld = p.lfoDepth != null ? p.lfoDepth : 0;
+    if (lr > 0 && ld > 0) { const lfo = mkOsc('sine', lr), lg = ctx.createGain(); lg.gain.value = ld * base; lfo.connect(lg); lg.connect(lp.frequency); lfo.start(when); lfo.stop(stopAt); }
+  }
   function defaultSynth(instId) { const d = SYNTH_DEFAULTS[instId] || SYNTH_DEFAULTS.synthLead; return { ...d }; }
   function setSynthParam(trackId, key, val) { const t = tracks[trackId]; if (t) { t.synth = t.synth || {}; t.synth[key] = val; } }
 

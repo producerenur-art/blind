@@ -7874,3 +7874,12 @@ body { top: 0 !important; }
 @media (max-width: 480px) {
   .ai-asst { width: calc(100vw - 24px); height: 70vh; }
 }
+
+/* ── DAW: note drag/resize affordance + device sub-label ── */
+.daw-pr-note { cursor: move; }
+.daw-pr-note::after {
+  content: ''; position: absolute; right: 0; top: 0; width: 7px; height: 100%;
+  cursor: ew-resize; border-radius: 0 3px 3px 0;
+}
+.daw-pr-note:hover::after { background: rgba(255,255,255,0.35); }
+.daw-dev-sub { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text3); margin: 0.5rem 0 0.4rem; border-top: 1px solid var(--border); padding-top: 0.5rem; }

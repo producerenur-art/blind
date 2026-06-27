@@ -43,7 +43,7 @@ const DAW = (() => {
       delay: { time: 0.3, fb: 0.3, mix: 0 },
       sidechain: { source: 'none', amount: 0.7 },
       sends: {},                 // busId → amount
-      busFx: { distDrive: 0, delayTime: 0.35, delayFb: 0.4, delayMix: 0.5 },
+      busFx: { distDrive: 0, delayTime: 0.35, delayFb: 0.4, delayMix: 0.5, reverbMix: 0.35, reverbSize: 2.2 },
       automation: {},            // paramKey → [vals]
       autoLane: null,            // currently shown automation param or null
     };
@@ -613,6 +613,11 @@ const DAW = (() => {
       ${devSlider('Resonans', s.res, 0.1, 24, 0.1, t.id, 'res', '')}
       ${devSlider('Attack', s.attack, 0, 2, 0.005, t.id, 'attack', ' s')}
       ${devSlider('Release', s.release, 0.02, 3, 0.01, t.id, 'release', ' s')}
+      <div class="daw-dev-sub">2. oscillator · LFO</div>
+      ${devSlider('Detune (osc-spredning)', s.detune != null ? s.detune : 6, 0, 30, 0.5, t.id, 'detune', ' c')}
+      ${devSlider('Sub-oscillator', s.subLevel != null ? s.subLevel : 0, 0, 1, 0.01, t.id, 'subLevel', '')}
+      ${devSlider('LFO-rate', s.lfoRate != null ? s.lfoRate : 0, 0, 8, 0.05, t.id, 'lfoRate', ' Hz')}
+      ${devSlider('LFO-dybde (filter)', s.lfoDepth != null ? s.lfoDepth : 0, 0, 1, 0.01, t.id, 'lfoDepth', '')}
       <div class="daw-dev-row"><label>Volum</label><input type="range" min="0" max="1" step="0.01" value="${t.vol}" oninput="DAW.setVol('${t.id}',this.value)"></div>`;
   }
 
@@ -735,7 +740,7 @@ const DAW = (() => {
         <button class="daw-toolbtn" onclick="DAW.noteLen(1)">${Icon('plus')} Lengde</button>
         <button class="daw-toolbtn" onclick="DAW.noteLen(-1)">${Icon('minus')} Lengde</button>
         <button class="daw-toolbtn" onclick="DAW.selectAllNotes()">Marker alt</button>
-        <span class="daw-hint">${pencilTool ? 'Klikk/dra for å tegne · dobbeltklikk note for å slette' : 'Klikk note for å markere · shift for flere'}</span>
+        <span class="daw-hint">${pencilTool ? 'Klikk/dra for å tegne' : 'Klikk for å markere · shift for flere'} · dra note = flytt · dra høyre kant = lengde · dobbeltklikk = slett</span>
       </div>
       <div class="daw-pr-scroll"><div class="daw-pr-grid" style="position:relative">${grid}<div class="daw-pr-notes">${notes}</div></div></div>`;
   }
@@ -760,19 +765,8 @@ const DAW = (() => {
       cell.addEventListener('mouseenter', () => { if (pencilTool && painting) addAt(midi, step, false); });
     });
     window.addEventListener('mouseup', () => { painting = false; }, { once: true });
-    grid.querySelectorAll('.daw-pr-note').forEach(noteEl => {
-      noteEl.addEventListener('mousedown', e => {
-        e.stopPropagation(); const idx = +noteEl.dataset.idx;
-        if (e.shiftKey) { selection.has(idx) ? selection.delete(idx) : selection.add(idx); }
-        else selection = new Set([idx]);
-        const no = t.notes[idx]; if (no) E().noteOn(selectedTrack, no.midi, no.vel);
-        paintNoteSel();
-      });
-      noteEl.addEventListener('dblclick', e => {
-        e.stopPropagation(); const idx = +noteEl.dataset.idx;
-        t.notes.splice(idx, 1); selection = new Set(); renderBottom(); renderArrange();
-      });
-    });
+    attachNoteHandlers();
+    bindNoteDrag();
   }
   // lightweight repaint of note overlay without full re-render (keeps paint drag smooth)
   function paintNotes() {
@@ -790,14 +784,39 @@ const DAW = (() => {
   }
   function attachNoteHandlers() {
     const t = track(selectedTrack); if (!t) return;
+    const CW = 26, RH = 18;
     document.querySelectorAll('.daw-pr-note').forEach(noteEl => {
       noteEl.addEventListener('mousedown', e => {
-        e.stopPropagation(); const idx = +noteEl.dataset.idx;
-        if (e.shiftKey) { selection.has(idx) ? selection.delete(idx) : selection.add(idx); } else selection = new Set([idx]);
-        const no = t.notes[idx]; if (no) E().noteOn(selectedTrack, no.midi, no.vel); paintNoteSel();
+        e.stopPropagation(); e.preventDefault();
+        const idx = +noteEl.dataset.idx, no = t.notes[idx]; if (!no) return;
+        if (e.shiftKey) { selection.has(idx) ? selection.delete(idx) : selection.add(idx); }
+        else if (!selection.has(idx)) selection = new Set([idx]);
+        const rect = noteEl.getBoundingClientRect();
+        const mode = (e.clientX > rect.right - 8) ? 'resize' : 'move';
+        noteDrag = { idx, mode, startX: e.clientX, startY: e.clientY, cw: CW, rh: RH, orig: { start: no.start, midi: no.midi, len: no.len }, moved: false };
+        E().noteOn(selectedTrack, no.midi, no.vel); paintNoteSel();
       });
       noteEl.addEventListener('dblclick', e => { e.stopPropagation(); t.notes.splice(+noteEl.dataset.idx, 1); selection = new Set(); renderBottom(); renderArrange(); });
     });
+  }
+  let noteDrag = null, noteDragBound = false;
+  function bindNoteDrag() {
+    if (noteDragBound) return; noteDragBound = true;
+    window.addEventListener('mousemove', e => {
+      if (!noteDrag) return;
+      const t = track(selectedTrack); if (!t) return; const no = t.notes[noteDrag.idx]; if (!no) return;
+      const dStep = Math.round((e.clientX - noteDrag.startX) / noteDrag.cw);
+      if (Math.abs(e.clientX - noteDrag.startX) > 3 || Math.abs(e.clientY - noteDrag.startY) > 3) noteDrag.moved = true;
+      if (noteDrag.mode === 'resize') {
+        no.len = Math.max(1, Math.min(totalSteps() - no.start, noteDrag.orig.len + dStep));
+      } else {
+        const dPitch = Math.round((noteDrag.startY - e.clientY) / noteDrag.rh);
+        no.start = Math.max(0, Math.min(totalSteps() - no.len, noteDrag.orig.start + dStep));
+        no.midi = Math.max(MIN_MIDI, Math.min(MAX_MIDI, noteDrag.orig.midi + dPitch));
+      }
+      paintNotes();
+    });
+    window.addEventListener('mouseup', () => { if (noteDrag) { const moved = noteDrag.moved; noteDrag = null; if (moved) renderArrange(); } });
   }
   function noteLen(d) {
     const t = track(selectedTrack); if (!t) return;
@@ -893,6 +912,12 @@ const DAW = (() => {
           ${sliderRow('Tid', t.busFx.delayTime, 0.02, 1.5, 0.01, `DAW.setBusFx('${t.id}','delayTime',this.value)`, 's')}
           ${sliderRow('Feedback', t.busFx.delayFb, 0, 0.9, 0.01, `DAW.setBusFx('${t.id}','delayFb',this.value)`, '')}
           ${sliderRow('Mix', t.busFx.delayMix, 0, 1, 0.01, `DAW.setBusFx('${t.id}','delayMix',this.value)`, '')}
+        </div>
+        <div class="daw-strip-col">
+          <h4>${Icon('droplet')} Reverb</h4>
+          <p class="daw-hint">Ekte foldnings-reverb (convolution).</p>
+          ${sliderRow('Mix', t.busFx.reverbMix != null ? t.busFx.reverbMix : 0.35, 0, 1, 0.01, `DAW.setBusFx('${t.id}','reverbMix',this.value)`, '')}
+          ${sliderRow('Romstørrelse', t.busFx.reverbSize != null ? t.busFx.reverbSize : 2.2, 0.2, 5, 0.1, `DAW.setBusFx('${t.id}','reverbSize',this.value)`, 's')}
         </div>
       </div>`;
   }
