@@ -18,7 +18,7 @@
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
   <!-- QR Code generator -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20260627-info">
+  <link rel="stylesheet" href="styles.css?v=20260627-about">
 </head>
 <body>
 
@@ -362,6 +362,21 @@
               <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
             </svg>
           </a>
+          <a class="social-link" href="https://www.apple.com/itunes/" target="_blank" rel="noopener noreferrer" title="iTunes">
+            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+            </svg>
+          </a>
+          <a class="social-link" href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer" title="Spotify">
+            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.84-.179-.96-.539-.122-.421.18-.84.54-.96 4.561-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
+            </svg>
+          </a>
+          <a class="social-link" href="https://bandcamp.com/" target="_blank" rel="noopener noreferrer" title="Bandcamp">
+            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 18.75l7.437-13.5H24l-7.438 13.5H0z"/>
+            </svg>
+          </a>
           <a class="social-link social-link-img" href="https://feedfreq.com/" target="_blank" rel="noopener noreferrer" title="FeedFreq">
             <img src="https://feedfreq.com/wp-content/uploads/2023/08/logo-Header.svg" alt="FeedFreq" class="social-logo-img">
           </a>
@@ -383,6 +398,9 @@
           <a class="social-link social-link-img" href="https://diceradio.gr/" target="_blank" rel="noopener noreferrer" title="DiceRadio">
             <img src="https://diceradio.gr/Content/images/dice_logo_hd.png" alt="DiceRadio" class="social-logo-img">
           </a>
+          <a class="social-link social-link-img" href="https://app.bigfreq.com/communities/groups/bigfreq-public/home" target="_blank" rel="noopener noreferrer" title="BIGFREQ Community">
+            <img src="https://www.google.com/s2/favicons?domain=bigfreq.com&sz=128" alt="BIGFREQ Community" class="social-logo-img social-logo-img--round">
+          </a>
         </div>
       </div>
     </div>
@@ -393,6 +411,37 @@
       <span data-icon="image"></span>
     </button>
 
+  </div>
+
+  <!-- ═══ ABOUT SOUNDCORE — utdragbar fane i høyre kant ═══ -->
+  <div id="about-tab">
+    <button id="about-tab-handle" type="button" aria-label="About SoundCore" aria-expanded="false" aria-controls="about-panel">
+      <span class="about-tab-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="about-tab-label">About SoundCore</span>
+    </button>
+    <aside id="about-panel" class="about-panel" aria-hidden="true" aria-label="About SoundCore">
+      <div class="about-panel-hdr">
+        <h2>About SoundCore</h2>
+        <button class="about-panel-close" id="about-panel-close" type="button" aria-label="Lukk"><span data-icon="x"></span></button>
+      </div>
+      <div class="about-panel-body">
+        <section class="about-block">
+          <p class="about-lead">I've created a <strong>VERY special community</strong> for both fans &amp; producers &mdash; join for free and let's connect!</p>
+          <p class="about-contact">Contact: <a href="mailto:producerenur@gmail.com">producerenur@gmail.com</a></p>
+          <a class="about-cta about-cta--primary" href="https://app.bigfreq.com/communities/groups/bigfreq-public/home" target="_blank" rel="noopener noreferrer">Join Now</a>
+        </section>
+        <section class="about-block">
+          <h3>World Tour</h3>
+          <p class="about-quote">&ldquo;We are the music makers, and we are the dreamers of dreams.&rdquo;</p>
+          <a class="about-cta" href="#/shows">Watch Dates</a>
+        </section>
+        <section class="about-block">
+          <h3>Latest Videos</h3>
+          <p class="about-quote">Music touches us emotionally, where words alone can't.</p>
+          <a class="about-cta" href="https://www.youtube.com" target="_blank" rel="noopener noreferrer">View Videos</a>
+        </section>
+      </div>
+    </aside>
   </div>
 
   <!-- Hidden Google Translate element -->
@@ -419,13 +468,16 @@
   <script src="js/audioEngine.js"></script>
   <script src="js/daw.js"></script>
   <script src="js/router.js"></script>
-  <script src="js/app.js?v=20260627-info"></script>
+  <script src="js/app.js?v=20260627-info2"></script>
   <script src="js/platform.js"></script>
+  <script src="js/platformDrag.js"></script>
   <script src="js/lang.js"></script>
+  <script src="js/langDrag.js"></script>
   <script src="js/playerDrag.js"></script>
   <script src="js/diceplayerDrag.js"></script>
   <script src="js/aiAssistant.js"></script>
   <script src="js/dock.js"></script>
+  <script src="js/aboutTab.js"></script>
   <script type="text/javascript">
     function googleTranslateElementInit() {
       new google.translate.TranslateElement(
