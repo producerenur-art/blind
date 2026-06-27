@@ -441,7 +441,7 @@ const App = (() => {
         downtempo:   ['groovesalad', 'lush', 'beatblender', 'gsclassic', '1fm-chillout'],
         progressive: ['trancearound', 'atr', 'rr-progressive'],
         ambient:     ['spacestation', 'deepspaceone', 'missioncontrol', 'dronezone'],
-        goa:         ['suburbsofgoa', 'stellar-psy'],
+        goa:         ['suburbsofgoa', 'dmtfm', 'psyndora', 'babaganousha', 'babaganousha-labs'],
         dub:         ['stellar-psy', 'heavyweightreggae'],
       };
       let _currentId = null;
@@ -472,8 +472,6 @@ const App = (() => {
         const extraHtml = genre === 'psytrance'
           ? `<iframe class="hr-radio-embed" src="https://www.diceradio.gr/" loading="lazy" allow="autoplay; encrypted-media"></iframe>
              <iframe class="hr-radio-embed" src="https://radiozora.fm/" loading="lazy" allow="autoplay; encrypted-media"></iframe>`
-          : genre === 'goa'
-          ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/ZimhFgAlzOU?list=RDZimhFgAlzOU" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
           : genre === 'dub'
           ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/videoseries?list=PLv1XAUg92fX9rVnD0r0ek-7monLM4JINL" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
           : '';

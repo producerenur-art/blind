@@ -70,6 +70,34 @@ const Radio = (() => {
       emoji: '🕉️', color: '#f59e0b',
       desc: 'Indian electronica & psytrance ✓',
     },
+    {
+      id: 'dmtfm', cat: 'Psytrance / Goa',
+      name: 'DMT FM — Psytrance 24/7',
+      url:  'https://dc1.serverse.com/proxy/ywycfrxn/stream',
+      emoji: '🍄', color: '#22c55e',
+      desc: 'Psytrance · Goa · Psychedelic trance — Tenerife ✓',
+    },
+    {
+      id: 'psyndora', cat: 'Psytrance / Goa',
+      name: 'Psyndora Psytrance',
+      url:  'https://cast.magicstreams.gr:9111/stream/1/',
+      emoji: '🧿', color: '#06b6d4',
+      desc: 'Psytrance · Progressive · Goa · Fullon ✓',
+    },
+    {
+      id: 'babaganousha', cat: 'Psytrance / Goa',
+      name: 'Babaganousha Radio',
+      url:  'https://babaganousha.net:8443/stream/1/',
+      emoji: '🌌', color: '#a855f7',
+      desc: 'Psychedelic · Goa · Psytrance ✓',
+    },
+    {
+      id: 'babaganousha-labs', cat: 'Psytrance / Goa',
+      name: 'Babaganousha Labs',
+      url:  'https://babaganousha.net:9443/stream/1/',
+      emoji: '🧪', color: '#8b5cf6',
+      desc: 'Psychedelic · Goa · Psytrance ✓',
+    },
 
     // ════════════════════════════════════════════
     // PROGRESSIVE PSY / TRANCE
