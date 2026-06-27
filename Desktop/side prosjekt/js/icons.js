@@ -223,11 +223,11 @@
     var size = opts.size || 40;
     var h  = psyHash(seed);
     var h1 = h % 360;
-    var h2 = (h1 + 70 + (h >> 3) % 90) % 360;
-    var h3 = (h1 + 180 + (h >> 7) % 90) % 360;
-    var ang = (h >> 5) % 360;          // swirl rotation
-    var px  = 28 + (h >> 9)  % 44;     // highlight x %
-    var py  = 28 + (h >> 11) % 44;     // highlight y %
+    var h2 = (h1 + 70 + (h >>> 3) % 90) % 360;
+    var h3 = (h1 + 180 + (h >>> 7) % 90) % 360;
+    var ang = (h >>> 5) % 360;          // swirl rotation
+    var px  = 28 + (h >>> 9)  % 44;     // highlight x %
+    var py  = 28 + (h >>> 11) % 44;     // highlight y %
     var conic = 'conic-gradient(from ' + ang + 'deg at ' + px + '% ' + py + '%,'
       + 'hsl(' + h1 + ',92%,62%),'
       + 'hsl(' + h2 + ',88%,56%),'

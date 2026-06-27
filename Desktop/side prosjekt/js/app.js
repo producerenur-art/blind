@@ -287,7 +287,7 @@ const App = (() => {
                   </div>
                 </a>
                 <div class="np-card-station">
-                  <span class="np-card-emoji">${iconForEmoji(r.emoji, 'radio')}</span>
+                  <span class="np-card-emoji">${psychedelicCover(r.name || r.url, { size: 26 })}</span>
                   <div class="np-card-station-name">${r.name || 'Radio'}</div>
                 </div>
                 <button class="np-play-btn" onclick="Radio.playUrl('${r.url}','${(r.name||'Radio').replace(/'/g,"\\'")}','${r.emoji||'📻'}');event.preventDefault()">
