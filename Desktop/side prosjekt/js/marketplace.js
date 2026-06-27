@@ -25,7 +25,7 @@ const Marketplace = (() => {
     const u = Auth.current();
     if (!u) { Router.go('/login'); return; }
     try {
-      const r = await fetch('/api/connect-onboard', {
+      const r = await fetch('/api/marketplace?action=connect-onboard', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: u.username }),
       });
@@ -39,7 +39,7 @@ const Marketplace = (() => {
 
   async function sellerStatus(username) {
     try {
-      const r = await fetch('/api/connect-status?username=' + encodeURIComponent(username));
+      const r = await fetch('/api/marketplace?action=connect-status&username=' + encodeURIComponent(username));
       return await r.json();
     } catch { return { seller: false, onboarding_complete: false }; }
   }
@@ -68,7 +68,7 @@ const Marketplace = (() => {
       const path = `${u.username}/${trackId}.${ext}`;
 
       // 1) Hent signert opplastings-URL for privat bøtte
-      const up  = await fetch('/api/song-upload-url', {
+      const up  = await fetch('/api/marketplace?action=song-upload-url', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path }),
       });
@@ -81,7 +81,7 @@ const Marketplace = (() => {
       if (upErr) throw new Error(upErr.message);
 
       // 3) Registrer produktet
-      const r = await fetch('/api/list-product', {
+      const r = await fetch('/api/marketplace?action=list-product', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: u.username, productId: rec.productId || null,
@@ -113,7 +113,7 @@ const Marketplace = (() => {
     const u = Auth.current();
     if (!u) { Router.go('/login'); return; }
     try {
-      const r = await fetch('/api/create-song-checkout', {
+      const r = await fetch('/api/marketplace?action=create-checkout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId, buyerUsername: u.username }),
       });
@@ -130,7 +130,7 @@ const Marketplace = (() => {
     const u = Auth.current();
     if (!u) { Router.go('/login'); return; }
     try {
-      const r = await fetch(`/api/download-song?productId=${encodeURIComponent(productId)}&username=${encodeURIComponent(u.username)}`);
+      const r = await fetch(`/api/marketplace?action=download&productId=${encodeURIComponent(productId)}&username=${encodeURIComponent(u.username)}`);
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Ingen tilgang');
       window.open(d.url, '_blank', 'noopener');
@@ -144,7 +144,7 @@ const Marketplace = (() => {
   async function listSellerProducts(username) {
     if (!isConfigured()) return [];
     try {
-      const r = await fetch('/api/store-products?username=' + encodeURIComponent(username));
+      const r = await fetch('/api/marketplace?action=store-products&username=' + encodeURIComponent(username));
       const d = await r.json();
       return r.ok ? (d.products || []) : [];
     } catch { return []; }
@@ -154,7 +154,7 @@ const Marketplace = (() => {
   async function myPurchases(username) {
     if (!isConfigured()) return [];
     try {
-      const r = await fetch('/api/my-purchases?username=' + encodeURIComponent(username));
+      const r = await fetch('/api/marketplace?action=my-purchases&username=' + encodeURIComponent(username));
       const d = await r.json();
       return r.ok ? (d.purchases || []) : [];
     } catch { return []; }
