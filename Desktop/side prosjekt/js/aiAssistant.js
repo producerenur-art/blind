@@ -148,7 +148,7 @@ const Assistant = (() => {
     } catch (e) {
       typing.remove();
       const code = currentLangCode();
-      const comingSoon = /not configured|konfigurert|503/i.test(String(e && e.message));
+      const comingSoon = /not configured|konfigurert|503|credit|balance|billing|kreditt/i.test(String(e && e.message));
       let msg;
       if (comingSoon) {
         msg = code === 'en'

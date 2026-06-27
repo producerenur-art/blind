@@ -29,6 +29,49 @@ const App = (() => {
     document.documentElement.classList.remove('modal-open');
   }
 
+  // ── Info / «Hva er Sound Core?» ───────────────────────────────────────
+  function showInfo() {
+    const box = document.getElementById('modal-box');
+    if (!box) return;
+    const feat = (icon, name, desc) => `
+      <div class="info-feat">
+        <span class="info-feat-icon">${Icon(icon)}</span>
+        <div>
+          <div class="info-feat-name">${name}</div>
+          <p class="info-feat-desc">${desc}</p>
+        </div>
+      </div>`;
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2>${Icon('info')} Hva er Sound&nbsp;Core?</h2>
+        <button class="btn-icon" onclick="App.closeModal()" aria-label="Lukk">${Icon('x')}</button>
+      </div>
+      <div class="info-body">
+        <p class="info-intro">
+          <strong>Sound&nbsp;Core</strong> er en desentralisert sosial plattform for musikk og lyd —
+          en samlingsplass for elektronisk musikk, radio, DJ-miks og felleskap. Alt skjer i nettleseren,
+          uten en sentral server som eier dataene dine. Her er funksjonene du finner:
+        </p>
+        ${feat('radio',    'Radio',       'Lytt til kuraterte radiostasjoner og live-strømmer — ambient, psytrance, downtempo og mer. Spilleren følger deg på tvers av sidene mens du surfer.')}
+        ${feat('music',    'Discover',    'Oppdag ny musikk og finn andre brukere. Bla gjennom utgivelser, legg til venner og bygg ditt eget nettverk av lyttere og artister.')}
+        ${feat('moon',     'Underground', 'Den mørkere, eksperimentelle undergrunnsscenen — for deg som vil grave dypere enn det vanlige og finne de skjulte perlene.')}
+        ${feat('calendar', 'Shows',       'Hold oversikt over kommende arrangementer, konserter og live-sett. Se hvem som spiller live akkurat nå.')}
+        ${feat('message',  'Chat',        'Sanntidsprat med andre brukere, bygget desentralisert med Gun.js — meldingene flyter direkte mellom dere, uten en mellommann.')}
+        ${feat('sliders',  'DJ',          'Last opp dine egne DJ-miks, spill dem av for andre, og oppdag sett fra DJ-er over hele plattformen.')}
+        ${feat('waveform', 'Studio Pro',  'Et fullverdig musikkstudio rett i nettleseren (Web Audio) — lag, lagre og mikse egne spor uten å installere noe.')}
+        ${feat('palette',  'Blend',       'Et visuelt blend-studio for å lage og leke med bilder og grafikk som matcher lyden din.')}
+        ${feat('user',     'Min side',    'Din egen profil med musikken din, miksene dine, arrangementer og venner samlet på ett sted.')}
+        ${feat('mail',     'Innboks',     'Private meldinger og venneforespørsler — hold kontakten med folk du møter på plattformen.')}
+        ${feat('message',  'AI-assistent','En innebygd hjelper du kan spørre om hva som helst på plattformen, døgnet rundt.')}
+        ${feat('image',    'Tilpasning',  'Bytt bakgrunn, velg språk og åpne Sound Core på mobil, Mac eller App Store — gjør opplevelsen til din egen.')}
+        <p class="info-welcome">
+          Velkommen til alle!<br>
+          <span class="info-sign">Vennlig hilsen<br>Sound&nbsp;Core Team</span>
+        </p>
+      </div>`;
+    openModal();
+  }
+
   // ── Uleste PM-er ──────────────────────────────────────────────────────
   function getUnreadPMTotal(username) {
     const allUsers = Auth.getAllPublicUsers();
@@ -2172,7 +2215,7 @@ const App = (() => {
   }
 
   return {
-    init, toast, openModal, closeModal,
+    init, toast, openModal, closeModal, showInfo,
     logout, renderNav, updateNavBadge, markWallSeen,
     doLogin, doRegister, doForgotPassword, doResetPassword,
     resendActivationByEmail,

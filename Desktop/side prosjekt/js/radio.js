@@ -255,6 +255,7 @@ const Radio = (() => {
   let searchResults = [];
   let aiHistory = [];
   let aiOpen = false;
+  let embedAbort = null; // AbortController for the resizable embed-pane drag listeners
 
   // ── Radio Browser API search ──────────────────────────────────────────
   async function searchRadio(query) {
@@ -611,6 +612,16 @@ const Radio = (() => {
               allowfullscreen
               loading="lazy"
             ></iframe>
+            <!-- Resize handles — drag any edge/corner to grow/shrink the pane.
+                 Double-click a handle to reset to the default fill size. -->
+            <div class="rer n"  data-resize="n"  title="Dra for å endre størrelse"></div>
+            <div class="rer s"  data-resize="s"  title="Dra for å endre størrelse"></div>
+            <div class="rer e"  data-resize="e"  title="Dra for å endre størrelse"></div>
+            <div class="rer w"  data-resize="w"  title="Dra for å endre størrelse"></div>
+            <div class="rer ne" data-resize="ne" title="Dra for å endre størrelse"></div>
+            <div class="rer nw" data-resize="nw" title="Dra for å endre størrelse"></div>
+            <div class="rer se" data-resize="se" title="Dra for å endre størrelse"></div>
+            <div class="rer sw" data-resize="sw" title="Dra for å endre størrelse"></div>
           </div>
         </div>
       </div>`;
@@ -884,7 +895,11 @@ const Radio = (() => {
 
     // Show embed, hide visualizer
     document.getElementById('radio-vis-wrap')?.classList.add('hidden');
-    document.getElementById('radio-embed-wrap')?.classList.remove('hidden');
+    const wrap = document.getElementById('radio-embed-wrap');
+    wrap?.classList.remove('hidden');
+
+    // Restore the last chosen size and wire up edge/corner drag-resize
+    if (wrap) { applyEmbedSize(wrap); initEmbedResize(); }
 
     // Update now-playing panel
     updateNowPlaying({ name: p.name, desc: p.desc, emoji: p.emoji, color: p.color, url: p.url });
@@ -895,11 +910,142 @@ const Radio = (() => {
   function closeEmbed() {
     const frame = document.getElementById('radio-embed-frame');
     if (frame) frame.src = '';
+    if (embedAbort) { embedAbort.abort(); embedAbort = null; }
     document.getElementById('radio-embed-wrap')?.classList.add('hidden');
     document.getElementById('radio-vis-wrap')?.classList.remove('hidden');
     document.querySelectorAll('.radio-station-btn').forEach(b => b.classList.remove('active'));
     const st = document.getElementById('np-status');
     if (st) st.textContent = 'Stoppet';
+  }
+
+  // ── Resizable embed pane ──────────────────────────────────────────────
+  // The pane normally fills .radio-main (flex:1). Dragging an edge/corner
+  // switches it to an absolutely-positioned, explicitly-sized box anchored
+  // inside .radio-main so it can grow taller over the hero/now-playing strip.
+  // Mirrors the chat float window's resize (chat.js initDragResize).
+  const EMBED_SIZE_KEY = 'pv_radio_embed_size';
+  const EMBED_MIN_W = 320, EMBED_MIN_H = 300;
+
+  function loadEmbedSize() {
+    try { return JSON.parse(localStorage.getItem(EMBED_SIZE_KEY) || 'null'); }
+    catch { return null; }
+  }
+
+  function saveEmbedSize(wrap) {
+    if (!wrap.classList.contains('resized')) return;
+    try {
+      localStorage.setItem(EMBED_SIZE_KEY, JSON.stringify({
+        left: wrap.offsetLeft, top: wrap.offsetTop,
+        width: wrap.offsetWidth, height: wrap.offsetHeight,
+      }));
+    } catch {}
+  }
+
+  // Apply a previously saved size, clamped to the current container so a size
+  // saved on a larger screen never overflows. No saved size → default fill.
+  function applyEmbedSize(wrap) {
+    const cont = wrap.parentElement;
+    const saved = loadEmbedSize();
+    if (!saved || !cont) {
+      wrap.classList.remove('resized');
+      wrap.style.left = wrap.style.top = wrap.style.width = wrap.style.height = '';
+      return;
+    }
+    const maxW = cont.clientWidth, maxH = cont.clientHeight;
+    const w = Math.max(EMBED_MIN_W, Math.min(saved.width,  maxW));
+    const h = Math.max(EMBED_MIN_H, Math.min(saved.height, maxH));
+    const l = Math.max(0, Math.min(saved.left, maxW - w));
+    const t = Math.max(0, Math.min(saved.top,  maxH - h));
+    wrap.classList.add('resized');
+    wrap.style.left = l + 'px'; wrap.style.top = t + 'px';
+    wrap.style.width = w + 'px'; wrap.style.height = h + 'px';
+  }
+
+  function resetEmbedSize(wrap) {
+    wrap.classList.remove('resized');
+    wrap.style.left = wrap.style.top = wrap.style.width = wrap.style.height = '';
+    try { localStorage.removeItem(EMBED_SIZE_KEY); } catch {}
+  }
+
+  // Freeze the current in-flow geometry as explicit inline size before the
+  // first drag, so the pane doesn't jump when it becomes position:absolute.
+  function ensureResized(wrap) {
+    if (wrap.classList.contains('resized')) return;
+    const l = wrap.offsetLeft, t = wrap.offsetTop, w = wrap.offsetWidth, h = wrap.offsetHeight;
+    wrap.classList.add('resized');
+    wrap.style.left = l + 'px'; wrap.style.top = t + 'px';
+    wrap.style.width = w + 'px'; wrap.style.height = h + 'px';
+  }
+
+  function initEmbedResize() {
+    const wrap  = document.getElementById('radio-embed-wrap');
+    const frame = document.getElementById('radio-embed-frame');
+    if (!wrap) return;
+
+    if (embedAbort) embedAbort.abort();
+    embedAbort = new AbortController();
+    const sig = embedAbort.signal;
+
+    let action = null; // resize direction string: n|s|e|w|ne|nw|se|sw
+    let startX, startY, startLeft, startTop, startW, startH;
+
+    function beginResize(cx, cy, dir) {
+      ensureResized(wrap);
+      action = dir;
+      startX = cx; startY = cy;
+      startLeft = wrap.offsetLeft; startTop = wrap.offsetTop;
+      startW = wrap.offsetWidth; startH = wrap.offsetHeight;
+      document.body.style.userSelect = 'none';
+      // While dragging, let pointer events pass THROUGH the iframe — otherwise
+      // it captures the pointer and pointermove stops firing mid-drag.
+      if (frame) frame.style.pointerEvents = 'none';
+    }
+
+    function applyMove(cx, cy) {
+      if (!action) return;
+      const cont = wrap.parentElement;
+      const maxW = cont.clientWidth, maxH = cont.clientHeight;
+      const dx = cx - startX, dy = cy - startY;
+      let nx = startLeft, ny = startTop, nw = startW, nh = startH;
+
+      if (action.includes('e')) nw = Math.max(EMBED_MIN_W, Math.min(startW + dx, maxW - startLeft));
+      if (action.includes('w')) {
+        nw = Math.max(EMBED_MIN_W, Math.min(startW - dx, startLeft + startW));
+        nx = startLeft + startW - nw;
+      }
+      if (action.includes('s')) nh = Math.max(EMBED_MIN_H, Math.min(startH + dy, maxH - startTop));
+      if (action.includes('n')) {
+        nh = Math.max(EMBED_MIN_H, Math.min(startH - dy, startTop + startH));
+        ny = startTop + startH - nh;
+      }
+
+      wrap.style.left = nx + 'px'; wrap.style.top = ny + 'px';
+      wrap.style.width = nw + 'px'; wrap.style.height = nh + 'px';
+    }
+
+    function endAction() {
+      if (action) saveEmbedSize(wrap);
+      action = null;
+      document.body.style.userSelect = '';
+      if (frame) frame.style.pointerEvents = '';
+    }
+
+    wrap.querySelectorAll('.rer').forEach(handle => {
+      handle.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        e.preventDefault(); e.stopPropagation();
+        beginResize(e.clientX, e.clientY, handle.dataset.resize);
+      }, { signal: sig });
+      // Double-click a handle to reset to the default fill size.
+      handle.addEventListener('dblclick', e => {
+        e.preventDefault(); e.stopPropagation();
+        resetEmbedSize(wrap);
+      }, { signal: sig });
+    });
+
+    document.addEventListener('pointermove', e => applyMove(e.clientX, e.clientY), { signal: sig });
+    document.addEventListener('pointerup', endAction, { signal: sig });
+    document.addEventListener('pointercancel', endAction, { signal: sig });
   }
 
   function setAsFavorite() {
