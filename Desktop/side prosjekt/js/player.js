@@ -10,6 +10,16 @@ const Player = (() => {
   function init() {
     audio = $('audio-engine');
 
+    // "Spiller nå"-equalizer i albumkunsten (vist via .player-bar.playing i CSS)
+    const art = $('player-artwork');
+    if (art && !art.querySelector('.np-eq')) {
+      const eq = document.createElement('div');
+      eq.className = 'np-eq';
+      eq.setAttribute('aria-hidden', 'true');
+      eq.innerHTML = '<span></span><span></span><span></span><span></span>';
+      art.appendChild(eq);
+    }
+
     $('ctrl-play').addEventListener('click', togglePlay);
     $('ctrl-prev').addEventListener('click', prev);
     $('ctrl-next').addEventListener('click', next);

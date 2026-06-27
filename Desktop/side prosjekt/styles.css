@@ -7139,3 +7139,77 @@ body { top: 0 !important; }
 .hr-stop-active:hover {
   background: #dc2626 !important;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Flytende widgets & overlapp-polish (layout-fix)
+   Lagt til på slutten med vilje: overstyrer via kilderekkefølge så vi slipper
+   å redigere spredte regler over. Rører IKKE farger/fonter/ikoner/bakgrunn.
+
+   Stable-rekkefølge (z-index): bakgrunn 0 · innhold 10 · nav 200 · footer 395
+   · spiller 400 · flytende chat 460 · modal 500 · embed 600 · toast 999.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* 1 ── Flytende chat foran spiller/nav (var z-index:150 → havnet BAK spilleren) */
+.chat-float-window { z-index: var(--z-ai); }
+
+/* Mobil: ikke tving 420px bredde på små skjermer (lot vinduet renne utenfor) */
+@media (max-width: 480px) {
+  .chat-float-window { min-width: 0; min-height: 0; max-width: 100vw; }
+}
+
+/* 2 ── Touch-drag: hindre at drag/resize trigger scroll/zoom på mobil */
+.chat-float-drag-bar,
+.chat-float-window .cfr,
+.player-bar-header,
+#footer-drag-handle { touch-action: none; }
+
+/* 3 ── Spiller: tydelig «spiller nå»-indikasjon (synlig også minimert) */
+.player-artwork { position: relative; }
+.player-bar.playing .player-artwork {
+  box-shadow: 0 0 0 1.5px rgba(34,197,94,0.55), 0 0 14px rgba(34,197,94,0.30);
+}
+/* Klassisk equalizer-overlay (injiseres av player.js), kun synlig ved avspilling */
+.np-eq {
+  display: none;
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 16px;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 0 2px;
+  background: linear-gradient(to top, rgba(0,0,0,0.55), transparent);
+  pointer-events: none;
+}
+.player-bar.playing .np-eq { display: flex; }
+.np-eq span {
+  width: 3px;
+  height: 4px;
+  border-radius: 2px;
+  background: #34d399;
+  animation: pv-eq 0.9s ease-in-out infinite;
+}
+.np-eq span:nth-child(2) { animation-delay: 0.18s; }
+.np-eq span:nth-child(3) { animation-delay: 0.36s; }
+.np-eq span:nth-child(4) { animation-delay: 0.54s; }
+@keyframes pv-eq {
+  0%, 100% { height: 4px; }
+  50%      { height: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .np-eq span { animation: none; height: 9px; }
+}
+
+/* Minimert: behold tittel + kilde + equalizer så man alltid ser HVA og FRA HVOR */
+.player-bar.minimized .player-artist { display: block; }
+.player-bar.minimized .np-eq { height: 12px; }
+
+/* 4 ── Footer: gjør «dra opp/ned»-håndtaket synlig og åpenbart gripbart */
+#footer-drag-handle {
+  opacity: 0.9;
+  cursor: grab;
+  border-radius: 6px;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+#footer-drag-handle:hover { opacity: 1; color: var(--text2); background: rgba(255,255,255,0.06); }
+#footer-drag-handle:active { cursor: grabbing; }

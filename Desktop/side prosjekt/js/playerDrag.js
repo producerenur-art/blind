@@ -24,13 +24,12 @@ const PlayerDrag = (() => {
       _applyMinimize();
     }
 
-    // Drag only on pointer devices (PC/laptop), not touch-only screens
-    const hasMouse = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    if (hasMouse) {
-      handle.addEventListener('mousedown', onDown);
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-    }
+    // Pointer Events unify mouse, touch and pen — so the player can be dragged
+    // on phones/tablets too (the handle strip has touch-action:none in CSS).
+    handle.addEventListener('pointerdown', onDown);
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
   }
 
   // ── Drag ─────────────────────────────────────────────────────────────
