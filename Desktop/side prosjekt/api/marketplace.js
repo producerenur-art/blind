@@ -92,6 +92,10 @@ async function connectStatus(req, res, db) {
 
 // ── Opplasting + produkter ────────────────────────────────────────────────
 async function songUploadUrl(req, res, db) {
+  // SIKKERHETSPORT: av til en auth-layer er på plass (se MARKETPLACE-SECURITY-TODO.md).
+  // Uten dette er dette et åpent opplastingsendepunkt. Sett MARKETPLACE_ENABLED=true når auth er klar.
+  if (process.env.MARKETPLACE_ENABLED !== 'true')
+    return res.status(503).json({ error: 'Markedsplassen er ikke aktivert ennå.' });
   let path = typeof req.body?.path === 'string' ? req.body.path.trim() : '';
   path = path.replace(/^\/+/, '').replace(/\.{2,}/g, '').replace(/[^\w./-]/g, '_');
   if (!path) return res.status(400).json({ error: 'Mangler gyldig sti' });
@@ -165,6 +169,10 @@ async function createCheckout(req, res, db) {
 }
 
 async function download(req, res, db) {
+  // SIKKERHETSPORT: av til en auth-layer er på plass (se MARKETPLACE-SECURITY-TODO.md).
+  // Uten dette kan betalingsmuren omgås via et offentlig brukernavn. Sett MARKETPLACE_ENABLED=true når auth er klar.
+  if (process.env.MARKETPLACE_ENABLED !== 'true')
+    return res.status(503).json({ error: 'Markedsplassen er ikke aktivert ennå.' });
   const productId = req.query.productId, username = req.query.username;
   if (!productId || !username) return res.status(400).json({ error: 'Mangler productId eller username.' });
   const { data: product } = await db.from('products').select('*').eq('id', productId).maybeSingle();
