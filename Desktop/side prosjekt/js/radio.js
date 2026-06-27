@@ -10,6 +10,7 @@ const Radio = (() => {
       color: '#e11d48',
       desc: 'Radio for the mind travellers',
       url: 'https://radioq37.com/player/', // ← bytt til din faktiske player-URL
+      live: true,
     },
     {
       id: 'u-recken',
@@ -17,7 +18,8 @@ const Radio = (() => {
       emoji: '🌀',
       color: '#7c3aed',
       desc: 'Psytrance to chill out',
-      url: 'https://u-recken.com/',
+      // Bandcamp: Best Of DigiCult & U-Recken (album=4028077808) — embeddable player
+      url: 'https://bandcamp.com/EmbeddedPlayer/album=4028077808/size=large/bgcol=181a1b/linkcol=7c3aed/tracklist=true/transparent=true/',
     },
     {
       id: 'dice-radio',
@@ -26,6 +28,7 @@ const Radio = (() => {
       color: '#1d4ed8',
       desc: 'Greek electronic & underground radio',
       url: 'https://www.diceradio.gr/',
+      live: true,
     },
   ];
 
@@ -505,7 +508,8 @@ const Radio = (() => {
                 <span class="station-desc">${p.desc}</span>
               </span>
               <div class="station-actions">
-                <span class="ext-player-badge">LIVE</span>
+                ${p.live ? '<span class="ext-player-badge">LIVE</span>' : ''}
+                <button class="station-play-btn" title="Spill av" onclick="event.stopPropagation();Radio.openEmbed('${p.id}')">▶</button>
                 <button class="station-vol-btn" title="Lyd av/på" onclick="event.stopPropagation();Radio.toggleMute()">${muted ? '🔇' : '🔊'}</button>
               </div>
             </div>
@@ -885,7 +889,7 @@ const Radio = (() => {
     // Update now-playing panel
     updateNowPlaying({ name: p.name, desc: p.desc, emoji: p.emoji, color: p.color, url: p.url });
     const st = document.getElementById('np-status');
-    if (st) st.textContent = 'LIVE';
+    if (st) st.textContent = p.live ? 'LIVE' : 'Album';
   }
 
   function closeEmbed() {
