@@ -393,11 +393,11 @@ const App = (() => {
     // Home radio widget controller
     window.HomeRadio = (() => {
       const GENRE_IDS = {
-        psytrance:   ['schizoid-psy', 'di-goapsy', 'psychedelik'],
-        downtempo:   ['groovesalad', 'lush', 'beatblender', 'gsclassic', 'cafemission', 'frisky-chill', '1fm-chillout'],
-        progressive: ['schizoid-prog', 'frisky-prog', 'protonradio'],
+        psytrance:   ['stellar-psy', 'suburbsofgoa', 'thetrip'],
+        downtempo:   ['groovesalad', 'lush', 'beatblender', 'gsclassic', '1fm-chillout'],
+        progressive: ['trancearound', 'digitalis', 'defcon'],
         ambient:     ['dronezone', 'darkzone', 'doomed', 'spacestation', 'deepspaceone', 'missioncontrol'],
-        goa:         ['suburbsofgoa', 'di-goapsy'],
+        goa:         ['suburbsofgoa', 'stellar-psy'],
       };
       let _currentId = null;
       let _playing = false;
