@@ -40,7 +40,7 @@ const Radio = (() => {
     {
       id: 'stellar-psy', cat: 'Stellar',
       name: 'Stellar PSY',
-      url:  'https://ice2.somafm.com/spacestation-256-mp3',
+      url:  'https://ice2.somafm.com/spacestation-128-mp3',
       emoji: '🌠', color: '#7c3aed',
       desc: 'Psychedelic Dub · Sound Core sin hovedkanal',
       featured: true,
@@ -61,27 +61,6 @@ const Radio = (() => {
     // PSYTRANCE / GOA  ▲ høyest energi
     // ════════════════════════════════════════════
     {
-      id: 'schizoid-psy', cat: 'Psytrance / Goa',
-      name: 'Radio Schizoid — Psy',
-      url:  'http://94.130.113.214:8000/psytrance',
-      emoji: '🍄', color: '#7c3aed',
-      desc: 'Free psytrance stream 24/7',
-    },
-    {
-      id: 'di-goapsy', cat: 'Psytrance / Goa',
-      name: 'Goa-Psy Trance',
-      url:  'https://stream.rcs.revma.com/ypqpa4ys2tzuv',
-      emoji: '🕉️', color: '#f59e0b',
-      desc: 'Goa & full-on psychedelic trance',
-    },
-    {
-      id: 'psychedelik', cat: 'Psytrance / Goa',
-      name: 'Psychedelik Radio',
-      url:  'https://psychedelik.com:8100/stream/1/',
-      emoji: '🌈', color: '#ec4899',
-      desc: 'French psy trance — psychedelik.com',
-    },
-    {
       id: 'suburbsofgoa', cat: 'Psytrance / Goa',
       name: 'Suburbs of Goa',
       url:  'https://ice2.somafm.com/suburbsofgoa-128-mp3',
@@ -93,58 +72,16 @@ const Radio = (() => {
     // PROGRESSIVE PSY / TRANCE
     // ════════════════════════════════════════════
     {
-      id: 'schizoid-prog', cat: 'Progressive Psy / Trance',
-      name: 'Radio Schizoid — Progressive',
-      url:  'http://94.130.113.214:8000/progressive',
-      emoji: '🌀', color: '#6d28d9',
-      desc: 'Psychill & progressive psy',
-    },
-    {
-      id: 'frisky-prog', cat: 'Progressive Psy / Trance',
-      name: 'FRISKY Progressive',
-      url:  'https://stream.frisky.fm/listen/frisky',
-      emoji: '🌐', color: '#a78bfa',
-      desc: 'FRISKY — progressive trance',
-    },
-    {
       id: 'trancearound', cat: 'Progressive Psy / Trance',
       name: 'TranceAround.FM',
       url:  'https://strm112.1.fm/trance_mobile_mp3',
       emoji: '🌀', color: '#9333ea',
       desc: '1.FM — trance around the clock',
     },
-    {
-      id: 'protonradio', cat: 'Progressive Psy / Trance',
-      name: 'Proton Radio',
-      url:  'https://streams.protonate.com/protonradio.mp3',
-      emoji: '⚛️', color: '#6366f1',
-      desc: 'Progressive & melodic house/techno',
-    },
-    {
-      id: 'frisky-main', cat: 'Progressive Psy / Trance',
-      name: 'FRISKY Radio',
-      url:  'https://stream.frisky.fm/listen/frisky',
-      emoji: '🎉', color: '#e879f9',
-      desc: 'FRISKY — progressive house & trance',
-    },
 
     // ════════════════════════════════════════════
     // EDM / HOUSE / TECHNO
     // ════════════════════════════════════════════
-    {
-      id: 'insideout', cat: 'EDM / House / Techno',
-      name: 'Underground House',
-      url:  'https://ice2.somafm.com/insideout-128-mp3',
-      emoji: '🪩', color: '#f43f5e',
-      desc: 'Deep, funky & underground house ✓',
-    },
-    {
-      id: 'frisky-deep', cat: 'EDM / House / Techno',
-      name: 'FRISKY Deep',
-      url:  'https://stream.frisky.fm/listen/deep',
-      emoji: '🌊', color: '#818cf8',
-      desc: 'FRISKY — deep & melodic house',
-    },
     {
       id: 'digitalis', cat: 'EDM / House / Techno',
       name: 'Digitalis',
@@ -160,27 +97,6 @@ const Radio = (() => {
       desc: 'Underground techno & hacker electronica ✓',
     },
     {
-      id: 'technobase', cat: 'EDM / House / Techno',
-      name: 'TechnoBase.FM',
-      url:  'https://strm112.1.fm/technobase_mobile_mp3',
-      emoji: '🏭', color: '#dc2626',
-      desc: "Germany's #1 techno station",
-    },
-    {
-      id: 'housetime', cat: 'EDM / House / Techno',
-      name: 'HouseTime.FM',
-      url:  'https://strm112.1.fm/housetime_mobile_mp3',
-      emoji: '🏠', color: '#d97706',
-      desc: '1.FM — pure house music 24/7',
-    },
-    {
-      id: 'fnoob', cat: 'EDM / House / Techno',
-      name: 'Fnoob Techno',
-      url:  'https://fnoobtechno.com/listen',
-      emoji: '🔌', color: '#7c3aed',
-      desc: 'Underground techno & electronic',
-    },
-    {
       id: 'specials', cat: 'EDM / House / Techno',
       name: 'SomaFM Specials',
       url:  'https://ice2.somafm.com/specials-128-mp3',
@@ -188,30 +104,6 @@ const Radio = (() => {
       desc: 'Eclectic electronic block party & dance ✓',
     },
 
-    // ════════════════════════════════════════════
-    // DRUM & BASS / BREAKS
-    // ════════════════════════════════════════════
-    {
-      id: 'bassdrive', cat: 'Drum & Bass / Breaks',
-      name: 'Bassdrive',
-      url:  'https://bassdrive.com/bassdrive.mp3',
-      emoji: '🥁', color: '#b91c1c',
-      desc: 'Premier underground D&B station',
-    },
-    {
-      id: 'dnb-radio', cat: 'Drum & Bass / Breaks',
-      name: 'Jungle City Radio',
-      url:  'https://stream.radio.co/s3e4c95e01/listen',
-      emoji: '🌴', color: '#15803d',
-      desc: 'Jungle & breakbeat classics',
-    },
-    {
-      id: 'dnbforum', cat: 'Drum & Bass / Breaks',
-      name: 'BassPortal DnB',
-      url:  'https://ice9.securenetsystems.net/OWTK',
-      emoji: '🔊', color: '#dc2626',
-      desc: 'Drum & bass 24/7',
-    },
 
     // ════════════════════════════════════════════
     // LO-FI / IDM
@@ -222,13 +114,6 @@ const Radio = (() => {
       url:  'https://ice2.somafm.com/cliqhop-256-mp3',
       emoji: '🔮', color: '#8b5cf6',
       desc: 'Clicks, cuts & beeping IDM ✓',
-    },
-    {
-      id: 'earwax', cat: 'Lo-Fi / IDM',
-      name: 'Earwax',
-      url:  'https://ice2.somafm.com/earwax-128-mp3',
-      emoji: '👂', color: '#84cc16',
-      desc: 'Dub, glitch & eclectic electronic ✓',
     },
     {
       id: 'poptron', cat: 'Lo-Fi / IDM',
@@ -244,7 +129,7 @@ const Radio = (() => {
     {
       id: 'thetrip', cat: 'Psybient / Psychill',
       name: 'The Trip',
-      url:  'https://ice2.somafm.com/thetrip-256-mp3',
+      url:  'https://ice2.somafm.com/thetrip-128-mp3',
       emoji: '🌀', color: '#7c3aed',
       desc: 'Progressive trip-hop & psychedelic electronica ✓',
     },
@@ -254,13 +139,6 @@ const Radio = (() => {
       url:  'https://ice2.somafm.com/fluid-128-mp3',
       emoji: '💧', color: '#06b6d4',
       desc: 'Psychedelic, electronic, experimental ✓',
-    },
-    {
-      id: 'ibiza-sonica', cat: 'Psybient / Psychill',
-      name: 'Ibiza Sonica',
-      url:  'https://radioibiziasonica.out.airtime.pro/radioibiziasonica_a',
-      emoji: '🌿', color: '#10b981',
-      desc: 'Psychedelic chill & spiritual ambient — Ibiza',
     },
 
     // ════════════════════════════════════════════
@@ -295,27 +173,6 @@ const Radio = (() => {
       desc: 'Deep electronic beats & downtempo ✓',
     },
     {
-      id: 'cafemission', cat: 'Chill Out / Downtempo',
-      name: 'Café Mission',
-      url:  'https://ice2.somafm.com/cafemission-128-mp3',
-      emoji: '🫖', color: '#a78bfa',
-      desc: 'Smooth downtempo & chill ✓',
-    },
-    {
-      id: 'chilltrax', cat: 'Chill Out / Downtempo',
-      name: 'Chilltrax',
-      url:  'https://playerservices.streamtheworld.com/api/livestream-redirect/CHILLTRAX',
-      emoji: '🌊', color: '#0ea5e9',
-      desc: "The world's #1 chillout station",
-    },
-    {
-      id: 'frisky-chill', cat: 'Chill Out / Downtempo',
-      name: 'FRISKY Chill',
-      url:  'https://stream.frisky.fm/listen/chill',
-      emoji: '🧊', color: '#38bdf8',
-      desc: 'FRISKY Radio — chillout channel',
-    },
-    {
       id: '1fm-chillout', cat: 'Chill Out / Downtempo',
       name: '1.FM Chillout Lounge',
       url:  'https://strm112.1.fm/chilloutlounge_mobile_mp3',
@@ -323,23 +180,6 @@ const Radio = (() => {
       desc: '1.FM — electronic chill lounge 24/7',
     },
 
-    // ════════════════════════════════════════════
-    // IBIZA / CAFÉ CHILL
-    // ════════════════════════════════════════════
-    {
-      id: 'ibiza-global', cat: 'Ibiza / Café Chill',
-      name: 'Ibiza Global Radio',
-      url:  'https://listen.ibizaglobalradio.com/8004/stream',
-      emoji: '🌴', color: '#f97316',
-      desc: 'Ibiza chill, lounge & sunset vibes 🌅',
-    },
-    {
-      id: 'cafedelmar', cat: 'Ibiza / Café Chill',
-      name: 'Café del Mar Radio',
-      url:  'https://streams.radio.co/s814567310/listen',
-      emoji: '☀️', color: '#f59e0b',
-      desc: 'Ibiza iconic psychedelic chill out — Café del Mar',
-    },
 
     // ════════════════════════════════════════════
     // AMBIENT / SPACE
@@ -347,14 +187,14 @@ const Radio = (() => {
     {
       id: 'spacestation', cat: 'Ambient / Space',
       name: 'Space Station',
-      url:  'https://ice2.somafm.com/spacestation-256-mp3',
+      url:  'https://ice2.somafm.com/spacestation-128-mp3',
       emoji: '🛸', color: '#0ea5e9',
       desc: 'Spacemusic & ambient electronica ✓',
     },
     {
       id: 'deepspaceone', cat: 'Ambient / Space',
       name: 'Deep Space One',
-      url:  'https://ice2.somafm.com/deepspaceone-256-mp3',
+      url:  'https://ice2.somafm.com/deepspaceone-128-mp3',
       emoji: '🌑', color: '#1e40af',
       desc: 'Deep electronic ambient ✓',
     },
