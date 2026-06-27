@@ -18,6 +18,10 @@ module.exports = async (req, res) => {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  // SIKKERHETSPORT: av til en auth-layer er på plass (se MARKETPLACE-SECURITY-TODO.md).
+  // Uten dette er dette et åpent opplastingsendepunkt. Sett MARKETPLACE_ENABLED=true når auth er klar.
+  if (process.env.MARKETPLACE_ENABLED !== 'true')
+    return res.status(503).json({ error: 'Markedsplassen er ikke aktivert ennå.' });
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY)
     return res.status(503).json({ error: 'Lagring er ikke konfigurert (mangler SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).' });
 
