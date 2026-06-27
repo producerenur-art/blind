@@ -203,9 +203,50 @@
     });
   }
 
+  // ── Psychedelic cover ────────────────────────────────────────────────
+  // Deterministic swirl thumbnail generated from a seed string (e.g. a radio
+  // station name). Pure CSS conic/radial gradients — no assets, on-brand with
+  // the site's nebula background. Same seed always yields the same swirl, so a
+  // user's favourite channel keeps a stable little psychedelic "cover".
+  function psyHash(str) {
+    var h = 2166136261; // FNV-1a
+    str = String(str || 'radio');
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  function psychedelicCover(seed, opts) {
+    opts = opts || {};
+    var size = opts.size || 40;
+    var h  = psyHash(seed);
+    var h1 = h % 360;
+    var h2 = (h1 + 70 + (h >> 3) % 90) % 360;
+    var h3 = (h1 + 180 + (h >> 7) % 90) % 360;
+    var ang = (h >> 5) % 360;          // swirl rotation
+    var px  = 28 + (h >> 9)  % 44;     // highlight x %
+    var py  = 28 + (h >> 11) % 44;     // highlight y %
+    var conic = 'conic-gradient(from ' + ang + 'deg at ' + px + '% ' + py + '%,'
+      + 'hsl(' + h1 + ',92%,62%),'
+      + 'hsl(' + h2 + ',88%,56%),'
+      + 'hsl(' + h3 + ',94%,64%),'
+      + 'hsl(' + h2 + ',88%,52%),'
+      + 'hsl(' + h1 + ',92%,62%))';
+    var glow = 'radial-gradient(circle at ' + px + '% ' + py + '%,'
+      + 'rgba(255,255,255,0.6),rgba(255,255,255,0) 58%)';
+    var cls = 'psy-cover' + (opts.cls ? ' ' + opts.cls : '');
+    var style = 'width:' + size + 'px;height:' + size + 'px;'
+      + '--psy-accent:hsl(' + h1 + ',90%,60%);'
+      + 'background:' + glow + ',' + conic + ';';
+    return '<span class="' + cls + '" style="' + style + '" aria-hidden="true"></span>';
+  }
+
+  window.psychedelicCover = psychedelicCover;
   window.Icon = svg;
   window.iconForEmoji = iconForEmoji;
-  window.Icons = { svg: svg, forEmoji: iconForEmoji, hydrate: hydrate, names: P, map: EMOJI };
+  window.Icons = { svg: svg, forEmoji: iconForEmoji, hydrate: hydrate, names: P, map: EMOJI, cover: psychedelicCover };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () { hydrate(document); });

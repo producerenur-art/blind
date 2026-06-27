@@ -385,12 +385,18 @@ const Profile = (() => {
       </div>` : '';
 
     // ── Favorite radio ─────────────────────────────────────────────────────
-    const favRadioHtml = user.favoriteRadio ? `
+    const favRadioHtml = user.favoriteRadio ? (() => {
+      const fr = user.favoriteRadio;
+      return `
       <div class="profile-fav-radio">
-        <span>${iconForEmoji(user.favoriteRadio.emoji, 'radio')}</span>
-        <span>${user.favoriteRadio.name}</span>
-        <button class="btn btn-ghost btn-sm" onclick="Radio.playUrl('${user.favoriteRadio.url}','${(user.favoriteRadio.name||'Radio').replace(/'/g,"\\'")}','${user.favoriteRadio.emoji||'📻'}')">${Icon('play')} Lytt</button>
-      </div>` : '';
+        ${psychedelicCover(fr.name || fr.url, { size: 46 })}
+        <div class="fav-radio-meta">
+          <div class="fav-radio-label">${Icon('radio')} Favorittkanal</div>
+          <div class="fav-radio-name">${esc(fr.name || 'Radio')}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm fav-radio-play" onclick="Radio.playUrl('${(fr.url||'').replace(/'/g,"\\'")}','${(fr.name||'Radio').replace(/'/g,"\\'")}','${fr.emoji||'📻'}')">${Icon('play')} Lytt</button>
+      </div>`;
+    })() : '';
 
     const wallCount = (JSON.parse(localStorage.getItem(`pv_wall_${username}`) || '[]')).length;
 
