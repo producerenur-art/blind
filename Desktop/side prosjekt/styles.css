@@ -597,7 +597,16 @@ img, video { display: block; max-width: 100%; }
   align-items: center;
   gap: 0.75rem;
   margin-left: auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;            /* Firefox */
+  -ms-overflow-style: none;         /* IE/Edge */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
+.nav-right::-webkit-scrollbar { display: none; }  /* skjul scrollbar */
+.nav-right > * { flex-shrink: 0; }                /* knappene beholder full bredde */
 
 /* ── Buttons ── */
 .btn {
