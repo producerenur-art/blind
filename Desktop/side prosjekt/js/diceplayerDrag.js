@@ -117,12 +117,17 @@ const DicePlayerDrag = (() => {
     }
   }
 
-  // Klikk → toggle ekte avspilling. Player.togglePlay() ruter til radio når vi
-  // er i radiomodus, ellers til musikkspilleren; faller tilbake til å styre
-  // <audio> direkte dersom Player ikke er lastet.
+  // Klikk → toggle ekte avspilling, uansett tilstand:
+  //  • Radio er aktiv kilde  → Radio.togglePlay() (kobler live-strømmen til igjen).
+  //  • En musikksang er lastet → Player.togglePlay().
+  //  • Ingenting valgt ennå (første trykk) → start standard web-radio-kanal,
+  //    slik at samme knapp deretter kan spille/pause hva som helst.
+  // Faller tilbake til å styre <audio> direkte dersom modulene ikke er lastet.
   function requestToggle() {
-    if (window.Player?.togglePlay) { Player.togglePlay(); return; }
     const audio = document.getElementById('audio-engine');
+    if (window._radioMode && window.Radio?.togglePlay) { Radio.togglePlay(); return; }
+    if (audio?.currentSrc && window.Player?.togglePlay) { Player.togglePlay(); return; }
+    if (window.Radio?.playDefault) { Radio.playDefault(); return; }
     if (!audio) return;
     if (audio.paused) audio.play().catch(() => {});
     else audio.pause();
