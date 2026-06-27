@@ -266,14 +266,55 @@
   }
   ensurePsyStyles();
 
+  // ── Profil "Butikk"-fane (trygg placeholder) ─────────────────────────
+  // Injiseres her i stedet for profile.js, som er under samtidig omskriving.
+  // switchTab er generisk (toggler paa data-tab), saa fanen virker. Ingen
+  // kall til marketplace-endepunkter — ren "kommer snart"-placeholder.
+  function injectShopTab() {
+    if (typeof document === 'undefined') return;
+    var tabs = document.getElementById('profile-tabs');
+    if (tabs && !tabs.querySelector('[data-tab="butikk"]')) {
+      var btn = document.createElement('button');
+      btn.className = 'tab-btn';
+      btn.setAttribute('data-tab', 'butikk');
+      btn.setAttribute('onclick', "Profile.switchTab('butikk')");
+      btn.innerHTML = svg('store') + ' Butikk';
+      tabs.appendChild(btn);
+    }
+    var vegg = document.getElementById('tab-vegg');
+    if (vegg && !document.getElementById('tab-butikk')) {
+      var panel = document.createElement('div');
+      panel.className = 'profile-tab-content hidden';
+      panel.setAttribute('data-tab', 'butikk');
+      panel.id = 'tab-butikk';
+      panel.innerHTML =
+        '<div style="text-align:center;padding:2.75rem 1.25rem;color:var(--text2)">'
+        + '<div style="font-size:2.6rem;color:var(--accent,#7c3aed);margin-bottom:.6rem">' + svg('store') + '</div>'
+        + '<h3 style="margin:0 0 .5rem;color:var(--text)">Butikk</h3>'
+        + '<p style="max-width:380px;margin:0 auto 1rem;font-size:.9rem;line-height:1.5">Snart kan du kjøpe og selge låter direkte fra profilen.</p>'
+        + '<span style="display:inline-block;font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:.35rem .8rem;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--text2)">Kommer snart</span>'
+        + '</div>';
+      vegg.parentNode.insertBefore(panel, vegg.nextSibling);
+    }
+  }
+  function watchForProfile() {
+    if (typeof document === 'undefined' || !document.body) return;
+    injectShopTab();
+    var app = document.getElementById('app');
+    try {
+      new MutationObserver(function () { injectShopTab(); })
+        .observe(app || document.body, app ? { childList: true } : { childList: true, subtree: true });
+    } catch (e) {}
+  }
+
   window.psychedelicCover = psychedelicCover;
   window.Icon = svg;
   window.iconForEmoji = iconForEmoji;
   window.Icons = { svg: svg, forEmoji: iconForEmoji, hydrate: hydrate, names: P, map: EMOJI, cover: psychedelicCover };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { hydrate(document); });
+    document.addEventListener('DOMContentLoaded', function () { hydrate(document); watchForProfile(); });
   } else {
-    hydrate(document);
+    hydrate(document); watchForProfile();
   }
 })();
