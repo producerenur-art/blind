@@ -1,38 +1,57 @@
-// AI — Claude API integration for profile AI features
+// AI — Claude integration. All calls go through the serverless proxy
+// (/api/chat) so the API key stays server-side (process.env.ANTHROPIC_API_KEY).
 const AI = (() => {
-  const API_URL = 'https://api.anthropic.com/v1/messages';
-  const MODEL   = 'claude-haiku-4-5-20251001'; // fast + cheap for UI features
+  const PROXY_URL = '/api/chat';
+  const MODEL     = 'claude-haiku-4-5-20251001'; // fast + cheap for UI features
 
-  async function callClaude(systemPrompt, userPrompt, maxTokens = 300) {
-    const key = CONFIG.ANTHROPIC_API_KEY;
-    if (!key) throw new Error('no_key');
-
-    const res = await fetch(API_URL, {
+  // Core transport: send {system, messages} to the proxy, get text back.
+  async function proxyCall(system, messages, maxTokens = 400, model = MODEL) {
+    const res = await fetch(PROXY_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key':    key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-calls': 'true',
-      },
-      body: JSON.stringify({
-        model:      MODEL,
-        max_tokens: maxTokens,
-        system:     systemPrompt,
-        messages:   [{ role: 'user', content: userPrompt }],
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system, messages, max_tokens: maxTokens, model }),
     });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `HTTP ${res.status}`);
-    }
-    const data = await res.json();
-    return data.content[0].text.trim();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return (data.text || '').trim();
   }
 
+  // Single-turn helper
+  function callClaude(systemPrompt, userPrompt, maxTokens = 300) {
+    return proxyCall(systemPrompt, [{ role: 'user', content: userPrompt }], maxTokens);
+  }
+
+  // ── Site knowledge base — what the assistant knows about the platform ──
+  const SITE_KNOWLEDGE = `Sound Core er en desentralisert sosial plattform for elektronisk musikk, radio og DJ-miks.
+
+NAVIGASJON (hash-ruter):
+- Hjem (#/): oppdag brukere og utvalgt musikk
+- Radio (#/radio): live-strømming, 40+ kanaler (psytrance, ambient, techno, deep dub m.m.) — velg kanal for å spille
+- Discover (#/discover): algoritmisk musikkoppdaging, sjangre, trender
+- Chat (#/chat): desentralisert sanntidschat (Gun.js, ingen server)
+- DJ (#/dj): DJ-miks og private meldinger
+- Studio (#/studio): blend-studio for å lage visuelle komposisjoner og eksportere
+- Shows (#/shows): festivaler og arrangementer
+- Min side (#/minside): din egen profil
+- Innstillinger (#/settings): konto, abonnement, AI
+- Innboks (#/inbox): venneforespørsler og meldinger
+
+SLIK GJØR MAN TING:
+- Laste opp sang/musikk: Gå til profileditoren (#/edit) → fanen «Musikk» → «Last opp musikk» (lyd-filer). Musikken vises på profilen din og kan spilles i spilleren.
+- Laste opp DJ-miks: Profileditor (#/edit) → dra/slipp i «Last opp DJ Mix».
+- Laste opp bilder/video: Profileditor (#/edit) → «Media»-fanen.
+- Legge til venner: Finn en bruker (søk øverst, eller kort på Hjem/Discover) → klikk «+ Legg til venn». Du kan også gå til en profil (#/u/brukernavn). Aksepter forespørsler i Innboksen (#/inbox).
+- Tilpasse profil: Profileditor (#/edit) → endre bio, avatar, banner, farger, bakgrunn, layout, strømmelenker (Spotify, Apple Music, SoundCloud, YouTube).
+- Spille radio: #/radio → klikk en kanal. Spilleren nederst styrer av/på, neste, volum.
+- Bytte bakgrunn på siden: Klikk bilde-knappen i kontroll-dokken nede til høyre.
+- Bytte språk: Språk-knappen (globus) i dokken.
+- Pro-abonnement: #/settings → oppgrader (Sound Core Pro, månedlig) for ekstra funksjoner.
+
+Dokken nede til høyre samler: AI-assistent (deg), språk, plattform, lenker og bakgrunn.`;
+
   return {
-    hasKey() { return !!CONFIG.ANTHROPIC_API_KEY; },
+    // Serverless proxy means the key is always available server-side.
+    hasKey() { return true; },
 
     // Generate a polished bio from keywords
     async generateBio(keywords, style = 'kreativ') {
@@ -100,9 +119,6 @@ const AI = (() => {
 
     // Multi-turn profile design assistant
     async profileDesignChat(history, profileContext) {
-      const key = CONFIG.ANTHROPIC_API_KEY;
-      if (!key) throw new Error('no_key');
-
       const ctx = JSON.stringify(profileContext);
       const system = `Du er en kreativ AI design-assistent for Sound Core profilredigering. Hjelp brukeren med å lage en unik og vakker profilside.
 
@@ -120,93 +136,37 @@ Instruksjoner:
 - Når du foreslår farger/bio/layout, legg ALLTID inn riktig handlingstag slik brukeren kan bruke det med ett klikk
 - Ta utgangspunkt i brukerens eksisterende info (roller, bio, etc.) når du gir råd`;
 
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-calls': 'true',
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: 600,
-          system,
-          messages: history,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error?.message || `HTTP ${res.status}`);
-      }
-      const data = await res.json();
-      return data.content[0].text.trim();
+      return proxyCall(system, history, 600);
     },
 
-    // General site assistant for the Settings AI tab
+    // General site assistant (Settings AI tab — kept for backwards compat)
     async siteAssistantChat(history) {
-      const key = CONFIG.ANTHROPIC_API_KEY;
-      if (!key) throw new Error('no_key');
+      const system = `Du heter Core og er en vennlig og hjelpsom AI-assistent for Sound Core. Svar kort, vennlig og konkret (maks 3 setninger). Hvis du ikke vet noe, si det ærlig. Svar alltid på norsk med mindre brukeren skriver på et annet språk.\n\n${SITE_KNOWLEDGE}`;
+      return proxyCall(system, history, 400);
+    },
 
-      const system = `Du heter Core og er en vennlig og hjelpsom AI-assistent for Sound Core — en norsk musikk- og radioplatform. Du hjelper brukere med å:
-- Navigere og bruke siden (radio, chat, profil, DJ-mixes, events, discover)
-- Finne riktig radiokanal eller musikk basert på humør eller sjanger
-- Tilpasse sin profilside (bio, farger, bakgrunn, layout)
-- Forstå abonnement og funksjoner (Gratis vs Pro)
-- Svare på generelle musikkrelaterte spørsmål
+    // Floating widget assistant — site-aware, multilingual, fuller answers.
+    // opts: { langName: 'Norwegian', contextNote: 'innlogget som @x, på #/radio' }
+    async assistantChat(history, opts = {}) {
+      const langLine = opts.langName
+        ? `Svar på ${opts.langName}. Hvis brukeren tydelig skriver på et annet språk, svar på det språket i stedet.`
+        : 'Svar på samme språk som brukeren skriver på (standard norsk).';
+      const ctxLine = opts.contextNote ? `\nKontekst akkurat nå: ${opts.contextNote}` : '';
+      const system = `Du heter Core — en vennlig, kunnskapsrik AI-assistent som bor i Sound Core og hjelper brukere med å finne fram og bruke alt på siden. Du kjenner hele plattformen.
 
-Svar alltid på norsk med mindre brukeren skriver på et annet språk. Vær kort, vennlig og konkret (maks 3 setninger). Hvis du ikke vet noe, si det ærlig.`;
+${langLine}
 
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-calls': 'true',
-        },
-        body: JSON.stringify({ model: MODEL, max_tokens: 400, system, messages: history }),
-      });
+Stil: varm, tydelig og konkret. Forklar steg for steg når noen spør hvordan de gjør noe (nevn riktig meny/rute, f.eks. «#/edit → Musikk-fanen»). Hold deg til det du faktisk vet om Sound Core; ikke finn på funksjoner. Hvis noe ikke finnes, si det ærlig. Hold svar til 1–5 setninger, gjerne med punktliste ved framgangsmåter.${ctxLine}
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error?.message || `HTTP ${res.status}`);
-      }
-      const data = await res.json();
-      return data.content[0].text.trim();
+${SITE_KNOWLEDGE}`;
+      return proxyCall(system, history, 700);
     },
 
     // Multi-turn radio assistant — answers in any language, knows available stations
     async radioChat(history, stationList) {
-      const key = CONFIG.ANTHROPIC_API_KEY;
-      if (!key) throw new Error('no_key');
-
       const stationsCtx = stationList.map(s => `"${s.name}" (${s.cat}): ${s.desc}`).join('\n');
       const system = `You are a friendly radio assistant helping users find the perfect radio channel on this site. Always respond in the exact same language the user writes in. Be concise (2-3 sentences max). Available channels on this site:\n${stationsCtx}\nWhen you recommend a channel, mention its exact name. If no channel on the list fits, suggest using the search box to find more stations.`;
-
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-calls': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 300,
-          system,
-          messages: history,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error?.message || `HTTP ${res.status}`);
-      }
-      const data = await res.json();
-      return data.content[0].text.trim();
+      return proxyCall(system, history, 300);
     },
   };
 })();

@@ -14,10 +14,19 @@ const App = (() => {
 
   // ── Modal ─────────────────────────────────────────────────────────────
   function openModal() {
-    document.getElementById('modal-overlay')?.classList.remove('hidden');
+    const ov = document.getElementById('modal-overlay');
+    if (!ov) return;
+    ov.classList.remove('hidden');
+    // Lock background scroll so the page behind doesn't scroll under the modal.
+    // overflow:hidden keeps the current scroll position (no jump) and avoids the
+    // `body { top:0 !important }` Google-Translate hack a position:fixed lock hits.
+    document.documentElement.classList.add('modal-open');
   }
   function closeModal() {
-    document.getElementById('modal-overlay')?.classList.add('hidden');
+    const ov = document.getElementById('modal-overlay');
+    if (!ov) return;
+    ov.classList.add('hidden');
+    document.documentElement.classList.remove('modal-open');
   }
 
   // ── Uleste PM-er ──────────────────────────────────────────────────────
@@ -89,7 +98,8 @@ const App = (() => {
         <a href="#/underground" class="btn btn-ghost btn-sm">${Icon('moon')} Underground</a>
         <a href="#/shows"       class="btn btn-ghost btn-sm">${Icon('calendar')} Shows</a>
         <a href="#/dj"          class="btn btn-ghost btn-sm">${Icon('sliders')} DJ</a>
-        <a href="#/studio"      class="btn btn-ghost btn-sm" title="Blend Studio">${Icon('palette')} Studio</a>
+        <a href="#/daw"         class="btn btn-ghost btn-sm" title="SoundCore Studio — musikkstudio">${Icon('waveform')} Studio Pro</a>
+        <a href="#/studio"      class="btn btn-ghost btn-sm" title="Blend Studio">${Icon('palette')} Blend</a>
         <a href="#/inbox"       class="btn btn-ghost btn-sm" style="position:relative">${Icon('mail')} Innboks${inboxBadge}</a>
         <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">${Icon('user')} ${user.displayName}</a>
         <a href="#/edit"        class="btn btn-ghost btn-sm" title="Rediger profil">${Icon('edit')}</a>
@@ -1556,8 +1566,7 @@ const App = (() => {
             <div class="settings-section-header">${Icon('bot')} AI-integrasjon (Claude API)</div>
             <div class="settings-section-body">
               <p class="text-muted text-sm" style="margin-bottom:1rem">
-                Legg inn din Claude API-nøkkel for AI bio-generator, fargeforslag og AI-assistent.
-                <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">Få nøkkel ${Icon('arrow-right')}</a>
+                ${Icon('check-circle')} AI-funksjonene (assistenten Core, bio-generator, fargeforslag) kjører nå via serveren — du trenger ikke legge inn en egen nøkkel. Feltet under er valgfritt og brukes kun hvis du vil overstyre med din egen Claude-nøkkel.
               </p>
               <div class="form-group">
                 <label class="form-label">Claude (Anthropic) API-nøkkel</label>
@@ -1981,6 +1990,7 @@ const App = (() => {
       if (!Auth.current()) { toast('Logg inn for å bruke Studio', 'error'); Router.go('/login'); return; }
       Studio.render();
     });
+    Router.define('/daw',                () => DAW.render());
     Router.define('/messages/:username', ({ username }) => {
       if (!Auth.current()) { toast('Logg inn for å sende meldinger', 'error'); Router.go('/login'); return; }
       DJ.renderPrivateChat(username);
@@ -2262,9 +2272,39 @@ function openMedia(url, title) {
   document.getElementById('embed-panel-title').textContent = title || '';
   document.getElementById('embed-panel-frame').src = src;
   document.getElementById('embed-panel').classList.remove('hidden');
+
+  // Show the music search field when this is a SoundCloud embed.
+  const searchEl = document.getElementById('embed-panel-search');
+  if (searchEl) searchEl.classList.toggle('hidden', !url.includes('soundcloud.com'));
+}
+
+// Search field inside the SoundCloud embed window.
+// A pasted track/set link plays in-panel; a free-text query opens SoundCloud
+// search in a new tab (SoundCloud blocks embedding its search-results page).
+function embedPanelSearch(ev) {
+  if (ev) ev.preventDefault();
+  const input = document.getElementById('embed-panel-search-input');
+  const q = (input?.value || '').trim();
+  if (!q) return false;
+
+  if (/^https?:\/\//i.test(q)) {
+    const src = _embedSrc(q);
+    if (src) {
+      document.getElementById('embed-panel-title').textContent = q;
+      document.getElementById('embed-panel-frame').src = src;
+    } else {
+      window.open(q, '_blank', 'noopener,noreferrer');
+    }
+  } else {
+    window.open('https://soundcloud.com/search?q=' + encodeURIComponent(q),
+      '_blank', 'noopener,noreferrer');
+  }
+  return false;
 }
 
 function closeEmbedPanel() {
   document.getElementById('embed-panel-frame').src = '';
   document.getElementById('embed-panel').classList.add('hidden');
+  const searchInput = document.getElementById('embed-panel-search-input');
+  if (searchInput) searchInput.value = '';
 }

@@ -84,3 +84,7 @@ CLAUDE-automation.md  # Trigger.dev Workflow Builder referanse →
 
 - [CLAUDE-automation.md](CLAUDE-automation.md) — Trigger.dev TypeScript automations
   (for fremtidig automatiseringsarbeid ved siden av dette prosjektet)
+
+  ## gjentagende prompter
+
+  - hvis jeg må be deg gjøre ting 2 ganger skal du alltid undersøke hvorfor det ble slik og oppdatere minnet ditt. alltid en .md fil med riktige pointere og riktig kontekst så du alltid finner frem.

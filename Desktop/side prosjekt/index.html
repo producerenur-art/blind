@@ -30,6 +30,8 @@
     <div id="bg-nebula-c"></div>
     <div id="bg-nebula-d"></div>
     <div id="bg-nebula-e"></div>
+    <!-- Cosmos sun — distant glowing star (only shown for data-bg-effect="cosmos") -->
+    <div id="bg-sun"></div>
     <!-- User image sits on top of nebula -->
     <div id="bg-img-wrap">
       <img id="bg-img" alt="" draggable="false">
@@ -38,11 +40,47 @@
     <div id="bg-prism-2"></div>
     <div id="bg-prism-3"></div>
     <canvas id="bg-particles-canvas"></canvas>
+    <!-- Cosmos UFO — vector saucer flying across (only shown for data-bg-effect="cosmos") -->
+    <div id="bg-ufo" aria-hidden="true">
+      <svg viewBox="0 0 220 300" width="220" height="300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="ufoBeamGrad" cx="50%" cy="0%" r="100%">
+            <stop offset="0%"   stop-color="#7ffcff" stop-opacity="0.55"/>
+            <stop offset="55%"  stop-color="#48d0ff" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#48d0ff" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="ufoBodyGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#d7ddff"/>
+            <stop offset="46%"  stop-color="#8390de"/>
+            <stop offset="54%"  stop-color="#3a3f6b"/>
+            <stop offset="100%" stop-color="#1a1e38"/>
+          </linearGradient>
+          <radialGradient id="ufoDomeGrad" cx="40%" cy="28%" r="85%">
+            <stop offset="0%"   stop-color="#eafdff"/>
+            <stop offset="45%"  stop-color="#7be0ff"/>
+            <stop offset="100%" stop-color="#2a6bd6"/>
+          </radialGradient>
+        </defs>
+        <!-- Tractor beam -->
+        <polygon class="ufo-beam" points="82,118 138,118 198,292 22,292" fill="url(#ufoBeamGrad)"/>
+        <!-- Saucer body -->
+        <ellipse cx="110" cy="106" rx="98" ry="26" fill="url(#ufoBodyGrad)"/>
+        <ellipse cx="110" cy="99"  rx="70" ry="15" fill="#aab6ff" opacity="0.45"/>
+        <!-- Dome -->
+        <path d="M62 98 A48 46 0 0 1 158 98 Z" fill="url(#ufoDomeGrad)"/>
+        <ellipse cx="94" cy="74" rx="15" ry="9" fill="#ffffff" opacity="0.6"/>
+        <!-- Rim lights -->
+        <circle class="ufo-light" cx="40"  cy="113" r="7" fill="#ff4dd2"/>
+        <circle class="ufo-light" cx="75"  cy="121" r="7" fill="#6fffb0"/>
+        <circle class="ufo-light" cx="110" cy="124" r="7" fill="#ffe14d"/>
+        <circle class="ufo-light" cx="145" cy="121" r="7" fill="#6fe0ff"/>
+        <circle class="ufo-light" cx="180" cy="113" r="7" fill="#ff4dd2"/>
+      </svg>
+    </div>
     <div id="bg-vignette"></div>
   </div>
 
-  <!-- Background change button (always visible) -->
-  <button id="bg-change-btn" title="Bytt bakgrunn" onclick="BgManager.openPicker()" data-icon="image"></button>
+  <!-- Background file input (button now lives in the control dock) -->
   <input type="file" id="bg-file-input" accept="image/*" style="display:none" onchange="BgManager.uploadImage(this)">
 
   <!-- ═══ PERSISTENT NAV ═══ -->
@@ -60,54 +98,6 @@
 
   <!-- ═══ MAIN CONTENT (routes render here) ═══ -->
   <main id="app"></main>
-
-  <!-- ═══ SOCIAL FOOTER ═══ -->
-  <footer id="site-footer">
-    <div class="footer-drag-handle" id="footer-drag-handle" title="Dra for å flytte" data-icon="grip"></div>
-    <div id="footer-links" class="footer-links">
-    <a class="social-link" href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" title="Facebook">
-      <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.532-4.697 1.312 0 2.686.235 2.686.235v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
-      </svg>
-    </a>
-    <a class="social-link" href="https://x.com" target="_blank" rel="noopener noreferrer" title="X">
-      <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-      </svg>
-    </a>
-    <a class="social-link" href="https://www.soundcloud.com" target="_blank" rel="noopener noreferrer" title="SoundCloud">
-      <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M1.175 12.225c-.015 0-.023.011-.023.028l.435 2.301-.435 2.221c0 .017.008.028.023.028.016 0 .024-.011.027-.028l.497-2.221-.497-2.301c-.003-.017-.011-.028-.027-.028zm.882-.218c-.019 0-.03.013-.03.032l-.372 2.515.372 2.346c0 .019.011.032.03.032.018 0 .03-.013.033-.032l.424-2.346-.424-2.515c-.003-.019-.015-.032-.033-.032zm.912-.101c-.022 0-.036.015-.036.037l-.309 2.616.309 2.468c0 .022.014.037.036.037.021 0 .035-.015.038-.037l.352-2.468-.352-2.616c-.003-.022-.017-.037-.038-.037zm.921-.064c-.025 0-.041.017-.041.042l-.246 2.68.246 2.588c0 .025.016.042.041.042.024 0 .04-.017.043-.042l.28-2.588-.28-2.68c-.003-.025-.019-.042-.043-.042zM5.81 11.7c-.028 0-.046.019-.046.047l-.184 2.745.184 2.708c0 .028.018.047.046.047.027 0 .045-.019.048-.047l.209-2.708-.209-2.745c-.003-.028-.021-.047-.048-.047zm.928-.144c-.03 0-.05.021-.05.051l-.121 2.836.121 2.827c0 .03.02.051.05.051s.05-.021.053-.051l.138-2.827-.138-2.836c-.003-.03-.023-.051-.053-.051zm.931-.07c-.034 0-.055.023-.055.056l-.059 2.89.059 2.947c0 .033.021.056.055.056.033 0 .054-.023.057-.056l.067-2.947-.067-2.89c-.003-.033-.024-.056-.057-.056zm.933-.003c-.037 0-.06.026-.06.062l.003 2.893-.003 2.965c0 .036.023.062.06.062.036 0 .059-.026.062-.062l.003-2.965-.003-2.893c-.003-.036-.026-.062-.062-.062zm.937.068c-.04 0-.065.028-.065.067l.065 2.825-.065 2.983c0 .039.025.067.065.067s.065-.028.068-.067l.074-2.983-.074-2.825c-.003-.039-.028-.067-.068-.067zm4.63-5.434C12.753 2.87 11.14 2 9.324 2 8.515 2 7.748 2.187 7.066 2.52c-.268.124-.34.249-.343.362v11.808c.003.12.097.215.218.225h7.79c.119-.01.213-.104.213-.225V8.97c.001-1.664-1.345-3.01-3.01-3.01-.488 0-.948.117-1.355.323V5.117zM21.5 9.128c-.578 0-1.128.117-1.63.33C19.577 6.93 17.335 5 14.63 5c-.322 0-.637.034-.944.096v13.49c.003.131.104.235.236.235h7.578c.131 0 .236-.105.236-.235V9.364c0-.13-.105-.236-.236-.236z"/>
-      </svg>
-    </a>
-    <a class="social-link" href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" title="YouTube">
-      <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-      </svg>
-    </a>
-    <a class="social-link social-link-img" href="https://feedfreq.com/" target="_blank" rel="noopener noreferrer" title="FeedFreq">
-      <img src="https://feedfreq.com/wp-content/uploads/2023/08/logo-Header.svg" alt="FeedFreq" class="social-logo-img">
-    </a>
-    <a class="social-link social-link-img" href="https://cryochamber.bandcamp.com/" target="_blank" rel="noopener noreferrer" title="Cryo Chamber">
-      <img src="https://f4.bcbits.com/img/0044856012_100.png" alt="Cryo Chamber" class="social-logo-img social-logo-img--round">
-    </a>
-    <a class="social-link social-link-img" href="https://ultimae.com/" target="_blank" rel="noopener noreferrer" title="Ultimae Records">
-      <img src="https://ultimae.com/wp-content/uploads/2016/07/Horizontal-Ultimae-Records-2016-White.png" alt="Ultimae Records" class="social-logo-img">
-    </a>
-    <a class="social-link social-link-img" href="https://cosmicleaf.bandcamp.com/" target="_blank" rel="noopener noreferrer" title="Cosmicleaf Records">
-      <img src="https://f4.bcbits.com/img/0019220328_21.jpg" alt="Cosmicleaf Records" class="social-logo-img social-logo-img--round">
-    </a>
-    <a class="social-link social-link-img" href="https://soundcloud.com/gagarinproject" target="_blank" rel="noopener noreferrer" title="Gagarin Project">
-      <img src="https://i1.sndcdn.com/avatars-SgNgVNRKf2gOewld-okFyUQ-t500x500.jpg" alt="Gagarin Project" class="social-logo-img social-logo-img--round">
-    </a>
-    <a class="social-link social-link-img" href="https://stepstoknowledge.com/" target="_blank" rel="noopener noreferrer" title="Steps to Knowledge">
-      <img src="https://www.google.com/s2/favicons?domain=stepstoknowledge.com&sz=128" alt="Steps to Knowledge" class="social-logo-img social-logo-img--round">
-    </a>
-    </div><!-- /footer-links -->
-    <button class="footer-toggle-btn" id="footer-toggle-btn" onclick="FooterWidget.toggle()" title="Skjul" data-icon="minus"></button>
-  </footer>
-  <!-- Floating restore bubble shown when footer is minimized -->
-  <button id="footer-restore-btn" class="footer-restore-btn" onclick="FooterWidget.show()" title="Vis lenker" style="display:none" data-icon="link"></button>
 
   <!-- ═══ TOAST NOTIFICATIONS ═══ -->
   <div id="toast-container"></div>
@@ -188,58 +178,131 @@
       <span id="embed-panel-title"></span>
       <button class="embed-panel-close" onclick="closeEmbedPanel()" data-icon="x"></button>
     </div>
+    <form id="embed-panel-search" class="embed-panel-search hidden" onsubmit="return embedPanelSearch(event)" autocomplete="off">
+      <span class="embed-panel-search-icon" data-icon="search"></span>
+      <input id="embed-panel-search-input" type="search" class="embed-panel-search-input"
+             placeholder="Søk musikk på SoundCloud …" aria-label="Søk musikk på SoundCloud" />
+      <button type="submit" class="embed-panel-search-go">Søk</button>
+    </form>
     <iframe id="embed-panel-frame" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
   </div>
 
-  <!-- ═══ PLATFORM SWITCHER ═══ -->
-  <div id="platform-widget">
-    <button id="platform-toggle" title="Open on another platform">
-      <span id="platform-icon" data-icon="share"></span>
-      <span id="platform-label">Platform</span>
-      <span id="platform-chevron" data-icon="chevron-up"></span>
-    </button>
-    <div id="platform-panel">
-      <div class="platform-title">Open on</div>
-      <a class="platform-item" id="platform-mobile" href="#" target="_blank" rel="noopener">
-        <span class="platform-emoji" data-icon="smartphone"></span>
-        <div class="platform-info">
-          <span class="platform-name">Smartphone</span>
-          <span class="platform-desc">Mobile version</span>
-        </div>
-        <span class="platform-arrow" data-icon="arrow-up-right"></span>
-      </a>
-      <a class="platform-item" id="platform-desktop" href="#" target="_blank" rel="noopener">
-        <span class="platform-emoji" data-icon="laptop"></span>
-        <div class="platform-info">
-          <span class="platform-name">Mac / Laptop</span>
-          <span class="platform-desc">Desktop version</span>
-        </div>
-        <span class="platform-arrow" data-icon="arrow-up-right"></span>
-      </a>
-      <a class="platform-item" id="platform-appstore" href="#" target="_blank" rel="noopener">
-        <span class="platform-emoji" data-icon="store"></span>
-        <div class="platform-info">
-          <span class="platform-name">App Store</span>
-          <span class="platform-desc">iOS & Mac App</span>
-        </div>
-        <span class="platform-arrow" data-icon="arrow-up-right"></span>
-      </a>
-    </div>
-  </div>
+  <!-- ═══ CONTROL DOCK — samler AI, språk, plattform, lenker og bakgrunn ═══ -->
+  <div id="dock">
 
-  <!-- ═══ LANGUAGE PICKER ═══ -->
-  <div id="lang-widget">
-    <button id="lang-toggle" title="Choose language">
-      <span id="lang-globe" data-icon="globe"></span>
-      <span id="lang-current-label">Language</span>
-      <span id="lang-chevron" data-icon="chevron-up"></span>
+    <!-- AI assistant launcher -->
+    <button id="dock-ai-btn" class="dock-btn dock-btn-ai" title="AI-assistent — spør om hjelp"
+            aria-label="Åpne AI-assistent" onclick="Assistant.toggle()">
+      <span data-icon="message"></span>
     </button>
-    <div id="lang-panel">
-      <div id="lang-search-wrap">
-        <input id="lang-search" type="text" placeholder="Search language..." autocomplete="off" spellcheck="false">
+
+    <!-- Language picker -->
+    <div id="lang-widget" class="dock-widget">
+      <button id="lang-toggle" title="Choose language">
+        <span id="lang-globe" data-icon="globe"></span>
+        <span id="lang-current-label">Language</span>
+        <span id="lang-chevron" data-icon="chevron-up"></span>
+      </button>
+      <div id="lang-panel">
+        <div id="lang-search-wrap">
+          <input id="lang-search" type="text" placeholder="Search language..." autocomplete="off" spellcheck="false">
+        </div>
+        <ul id="lang-list"></ul>
       </div>
-      <ul id="lang-list"></ul>
     </div>
+
+    <!-- Platform switcher -->
+    <div id="platform-widget" class="dock-widget">
+      <button id="platform-toggle" title="Open on another platform">
+        <span id="platform-icon" data-icon="share"></span>
+        <span id="platform-label">Platform</span>
+        <span id="platform-chevron" data-icon="chevron-up"></span>
+      </button>
+      <div id="platform-panel">
+        <div class="platform-title">Open on</div>
+        <a class="platform-item" id="platform-mobile" href="#" target="_blank" rel="noopener">
+          <span class="platform-emoji" data-icon="smartphone"></span>
+          <div class="platform-info">
+            <span class="platform-name">Smartphone</span>
+            <span class="platform-desc">Mobile version</span>
+          </div>
+          <span class="platform-arrow" data-icon="arrow-up-right"></span>
+        </a>
+        <a class="platform-item" id="platform-desktop" href="#" target="_blank" rel="noopener">
+          <span class="platform-emoji" data-icon="laptop"></span>
+          <div class="platform-info">
+            <span class="platform-name">Mac / Laptop</span>
+            <span class="platform-desc">Desktop version</span>
+          </div>
+          <span class="platform-arrow" data-icon="arrow-up-right"></span>
+        </a>
+        <a class="platform-item" id="platform-appstore" href="#" target="_blank" rel="noopener">
+          <span class="platform-emoji" data-icon="store"></span>
+          <div class="platform-info">
+            <span class="platform-name">App Store</span>
+            <span class="platform-desc">iOS & Mac App</span>
+          </div>
+          <span class="platform-arrow" data-icon="arrow-up-right"></span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Social / label links (moved out of the old floating footer) -->
+    <div id="dock-links-widget" class="dock-widget">
+      <button id="dock-links-btn" class="dock-btn" title="Lenker" aria-label="Lenker">
+        <span data-icon="link"></span>
+      </button>
+      <div id="dock-links-panel">
+        <div class="platform-title">Lenker</div>
+        <div class="dock-links-grid">
+          <a class="social-link" href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" title="Facebook">
+            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.532-4.697 1.312 0 2.686.235 2.686.235v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+            </svg>
+          </a>
+          <a class="social-link" href="https://x.com" target="_blank" rel="noopener noreferrer" title="X">
+            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </a>
+          <a class="social-link" href="https://www.soundcloud.com" target="_blank" rel="noopener noreferrer" title="SoundCloud">
+            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1.175 12.225c-.015 0-.023.011-.023.028l.435 2.301-.435 2.221c0 .017.008.028.023.028.016 0 .024-.011.027-.028l.497-2.221-.497-2.301c-.003-.017-.011-.028-.027-.028zm.882-.218c-.019 0-.03.013-.03.032l-.372 2.515.372 2.346c0 .019.011.032.03.032.018 0 .03-.013.033-.032l.424-2.346-.424-2.515c-.003-.019-.015-.032-.033-.032zm.912-.101c-.022 0-.036.015-.036.037l-.309 2.616.309 2.468c0 .022.014.037.036.037.021 0 .035-.015.038-.037l.352-2.468-.352-2.616c-.003-.022-.017-.037-.038-.037zm.921-.064c-.025 0-.041.017-.041.042l-.246 2.68.246 2.588c0 .025.016.042.041.042.024 0 .04-.017.043-.042l.28-2.588-.28-2.68c-.003-.025-.019-.042-.043-.042zM5.81 11.7c-.028 0-.046.019-.046.047l-.184 2.745.184 2.708c0 .028.018.047.046.047.027 0 .045-.019.048-.047l.209-2.708-.209-2.745c-.003-.028-.021-.047-.048-.047zm.928-.144c-.03 0-.05.021-.05.051l-.121 2.836.121 2.827c0 .03.02.051.05.051s.05-.021.053-.051l.138-2.827-.138-2.836c-.003-.03-.023-.051-.053-.051zm.931-.07c-.034 0-.055.023-.055.056l-.059 2.89.059 2.947c0 .033.021.056.055.056.033 0 .054-.023.057-.056l.067-2.947-.067-2.89c-.003-.033-.024-.056-.057-.056zm.933-.003c-.037 0-.06.026-.06.062l.003 2.893-.003 2.965c0 .036.023.062.06.062.036 0 .059-.026.062-.062l.003-2.965-.003-2.893c-.003-.036-.026-.062-.062-.062zm.937.068c-.04 0-.065.028-.065.067l.065 2.825-.065 2.983c0 .039.025.067.065.067s.065-.028.068-.067l.074-2.983-.074-2.825c-.003-.039-.028-.067-.068-.067zm4.63-5.434C12.753 2.87 11.14 2 9.324 2 8.515 2 7.748 2.187 7.066 2.52c-.268.124-.34.249-.343.362v11.808c.003.12.097.215.218.225h7.79c.119-.01.213-.104.213-.225V8.97c.001-1.664-1.345-3.01-3.01-3.01-.488 0-.948.117-1.355.323V5.117zM21.5 9.128c-.578 0-1.128.117-1.63.33C19.577 6.93 17.335 5 14.63 5c-.322 0-.637.034-.944.096v13.49c.003.131.104.235.236.235h7.578c.131 0 .236-.105.236-.235V9.364c0-.13-.105-.236-.236-.236z"/>
+            </svg>
+          </a>
+          <a class="social-link" href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" title="YouTube">
+            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+          </a>
+          <a class="social-link social-link-img" href="https://feedfreq.com/" target="_blank" rel="noopener noreferrer" title="FeedFreq">
+            <img src="https://feedfreq.com/wp-content/uploads/2023/08/logo-Header.svg" alt="FeedFreq" class="social-logo-img">
+          </a>
+          <a class="social-link social-link-img" href="https://cryochamber.bandcamp.com/" target="_blank" rel="noopener noreferrer" title="Cryo Chamber">
+            <img src="https://f4.bcbits.com/img/0044856012_100.png" alt="Cryo Chamber" class="social-logo-img social-logo-img--round">
+          </a>
+          <a class="social-link social-link-img" href="https://ultimae.com/" target="_blank" rel="noopener noreferrer" title="Ultimae Records">
+            <img src="https://ultimae.com/wp-content/uploads/2016/07/Horizontal-Ultimae-Records-2016-White.png" alt="Ultimae Records" class="social-logo-img">
+          </a>
+          <a class="social-link social-link-img" href="https://cosmicleaf.bandcamp.com/" target="_blank" rel="noopener noreferrer" title="Cosmicleaf Records">
+            <img src="https://f4.bcbits.com/img/0019220328_21.jpg" alt="Cosmicleaf Records" class="social-logo-img social-logo-img--round">
+          </a>
+          <a class="social-link social-link-img" href="https://soundcloud.com/gagarinproject" target="_blank" rel="noopener noreferrer" title="Gagarin Project">
+            <img src="https://i1.sndcdn.com/avatars-SgNgVNRKf2gOewld-okFyUQ-t500x500.jpg" alt="Gagarin Project" class="social-logo-img social-logo-img--round">
+          </a>
+          <a class="social-link social-link-img" href="https://stepstoknowledge.com/" target="_blank" rel="noopener noreferrer" title="Steps to Knowledge">
+            <img src="https://www.google.com/s2/favicons?domain=stepstoknowledge.com&sz=128" alt="Steps to Knowledge" class="social-logo-img social-logo-img--round">
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Background changer -->
+    <button id="bg-change-btn" class="dock-btn" title="Bytt bakgrunn"
+            aria-label="Bytt bakgrunn" onclick="BgManager.openPicker()">
+      <span data-icon="image"></span>
+    </button>
+
   </div>
 
   <!-- Hidden Google Translate element -->
@@ -263,12 +326,15 @@
   <script src="js/shows.js"></script>
   <script src="js/dj.js"></script>
   <script src="js/studio.js"></script>
+  <script src="js/audioEngine.js"></script>
+  <script src="js/daw.js"></script>
   <script src="js/router.js"></script>
   <script src="js/app.js"></script>
   <script src="js/platform.js"></script>
   <script src="js/lang.js"></script>
   <script src="js/playerDrag.js"></script>
-  <script src="js/footerDrag.js"></script>
+  <script src="js/aiAssistant.js"></script>
+  <script src="js/dock.js"></script>
   <script type="text/javascript">
     function googleTranslateElementInit() {
       new google.translate.TranslateElement(

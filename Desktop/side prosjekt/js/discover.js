@@ -299,6 +299,54 @@ const Discover = (() => {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // ── YouTube-søk ────────────────────────────────────────────────────────
+  // Lèt folk søke opp ein låt/artist direkte på YouTube frå kvar YouTube-lenkje.
+  function openYt(query) {
+    const q = String(query || '').trim();
+    if (!q) return;
+    window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(q), '_blank', 'noopener');
+  }
+  // onsubmit-handler for søkjefelta.
+  function ytSearch(ev) {
+    if (ev && ev.preventDefault) ev.preventDefault();
+    const input = ev && ev.target ? ev.target.querySelector('.yt-search-input') : null;
+    openYt(input ? input.value : '');
+    return false;
+  }
+  // Liten søkjelinje folk kan bruke for å finne ein låt på YouTube.
+  function ytSearchBar(placeholder) {
+    const ph = escHtml(placeholder || 'Søk opp ein låt på YouTube…');
+    return `<form class="yt-search" onsubmit="return Discover.ytSearch(event)">
+        <span class="yt-search-icon">${Icon('search')}</span>
+        <input type="search" class="yt-search-input" placeholder="${ph}" aria-label="Søk på YouTube">
+        <button class="yt-search-btn" type="submit" title="Søk på YouTube">${Icon('arrow-right')}</button>
+      </form>`;
+  }
+  // YouTube-lenkjekort med innebygd søkjefelt under.
+  function ytFindCard(url, desc) {
+    return `<div class="yt-find">
+        <a class="disc-psy-label-card" href="${escHtml(url)}" target="_blank" rel="noopener noreferrer">
+          <div class="disc-psy-label-icon">${Icon('play')}</div>
+          <div>
+            <div class="disc-psy-label-name">YouTube</div>
+            <div class="disc-psy-label-desc">${escHtml(desc)}</div>
+          </div>
+        </a>
+        ${ytSearchBar()}
+      </div>`;
+  }
+  // Brukt i LINKS.map: vanleg plattform-kort, men YouTube får søkjefelt.
+  function psyLinkCard(l) {
+    if (/youtube\.com|youtu\.be/i.test(l.url)) return ytFindCard(l.url, l.desc);
+    return `<a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
+        <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
+        <div>
+          <div class="disc-psy-label-name">${escHtml(l.name)}</div>
+          <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
+        </div>
+      </a>`;
+  }
+
   // ── Genre radio storage ───────────────────────────────────────────────
   function genreRadioKey() {
     const u = Auth.current();
@@ -1320,15 +1368,7 @@ const Discover = (() => {
           <span class="disc-psy-section-title">Finn Altar Records</span>
         </div>
         <div class="disc-psy-label-grid">
-          ${LINKS.map(l => `
-            <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
-              <div>
-                <div class="disc-psy-label-name">${escHtml(l.name)}</div>
-                <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
-              </div>
-            </a>
-          `).join('')}
+          ${LINKS.map(psyLinkCard).join('')}
         </div>
       </div>
     `;
@@ -1469,13 +1509,7 @@ const Discover = (() => {
               <div class="disc-psy-label-desc">Bilete og artwork frå festivalen</div>
             </div>
           </a>
-          <a class="disc-psy-label-card" href="https://www.youtube.com/user/hadrarecords" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">${Icon('play')}</div>
-            <div>
-              <div class="disc-psy-label-name">YouTube</div>
-              <div class="disc-psy-label-desc">Sett og videoar frå tidlegare år</div>
-            </div>
-          </a>
+          ${ytFindCard('https://www.youtube.com/user/hadrarecords', 'Sett og videoar frå tidlegare år')}
         </div>
       </div>
     `;
@@ -1575,12 +1609,15 @@ const Discover = (() => {
         </div>
         <div class="disc-psy-mix-grid">
           ${TRACKS.map(t => `
-            <div class="disc-psy-mix-card" style="cursor:default">
+            <div class="disc-psy-mix-card yt-clickable" role="button" tabindex="0" title="Søk på YouTube"
+                 onclick="Discover.openYt('${escHtml(t).replace(/'/g,'&#39;')}')"
+                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Discover.openYt('${escHtml(t).replace(/'/g,'&#39;')}')}">
               <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#1b1040,#0d0a2e);font-size:1.2rem">${Icon('wind')}</div>
               <div class="disc-psy-mix-info">
                 <div class="disc-psy-mix-title">${escHtml(t.split(' – ')[1] || t)}</div>
                 <div class="disc-psy-mix-artist">${escHtml(t.split(' – ')[0] || '')}</div>
               </div>
+              <span class="yt-clickable-go">${Icon('search')}</span>
             </div>
           `).join('')}
         </div>
@@ -1627,10 +1664,7 @@ const Discover = (() => {
             <div class="disc-psy-label-icon">${Icon('camera')}</div>
             <div><div class="disc-psy-label-name">Instagram</div><div class="disc-psy-label-desc">Artwork og oppdateringar</div></div>
           </a>
-          <a class="disc-psy-label-card" href="https://www.youtube.com/user/dacru" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">${Icon('play')}</div>
-            <div><div class="disc-psy-label-name">YouTube</div><div class="disc-psy-label-desc">Sett, videoar og live-opptak</div></div>
-          </a>
+          ${ytFindCard('https://www.youtube.com/user/dacru', 'Sett, videoar og live-opptak')}
         </div>
       </div>
     `;
@@ -1729,12 +1763,15 @@ const Discover = (() => {
         </div>
         <div class="disc-psy-mix-grid">
           ${MIXES.map(m => `
-            <div class="disc-psy-mix-card" style="cursor:default">
+            <div class="disc-psy-mix-card yt-clickable" role="button" tabindex="0" title="Søk på YouTube"
+                 onclick="Discover.openYt('${escHtml(m + ' Raja Ram').replace(/'/g,'&#39;')}')"
+                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Discover.openYt('${escHtml(m + ' Raja Ram').replace(/'/g,'&#39;')}')}">
               <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#2d1060,#1a0d2e);font-size:1.2rem">${Icon('crown')}</div>
               <div class="disc-psy-mix-info">
                 <div class="disc-psy-mix-title">${escHtml(m)}</div>
                 <div class="disc-psy-mix-artist">Raja Ram · T.I.P. Records</div>
               </div>
+              <span class="yt-clickable-go">${Icon('search')}</span>
             </div>
           `).join('')}
         </div>
@@ -1781,10 +1818,7 @@ const Discover = (() => {
             <div class="disc-psy-label-icon">${Icon('cloud')}</div>
             <div><div class="disc-psy-label-name">SoundCloud</div><div class="disc-psy-label-desc">Stream T.I.P.-musikk gratis</div></div>
           </a>
-          <a class="disc-psy-label-card" href="https://www.youtube.com/user/TipWorldRecords" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">${Icon('play')}</div>
-            <div><div class="disc-psy-label-name">YouTube</div><div class="disc-psy-label-desc">Musikkvideor og live-sett</div></div>
-          </a>
+          ${ytFindCard('https://www.youtube.com/user/TipWorldRecords', 'Musikkvideor og live-sett')}
         </div>
       </div>
     `;
@@ -1842,15 +1876,7 @@ const Discover = (() => {
           <span class="disc-psy-section-title">Finn Cosmic Leaf</span>
         </div>
         <div class="disc-psy-label-grid">
-          ${LINKS.map(l => `
-            <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
-              <div>
-                <div class="disc-psy-label-name">${escHtml(l.name)}</div>
-                <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
-              </div>
-            </a>
-          `).join('')}
+          ${LINKS.map(psyLinkCard).join('')}
         </div>
       </div>
     `;
@@ -1907,15 +1933,7 @@ const Discover = (() => {
           <span class="disc-psy-section-title">Finn Kukan Dub Lagan</span>
         </div>
         <div class="disc-psy-label-grid">
-          ${LINKS.map(l => `
-            <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
-              <div>
-                <div class="disc-psy-label-name">${escHtml(l.name)}</div>
-                <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
-              </div>
-            </a>
-          `).join('')}
+          ${LINKS.map(psyLinkCard).join('')}
         </div>
       </div>
     `;
@@ -2162,12 +2180,15 @@ const Discover = (() => {
         </div>
         <div class="disc-psy-mix-grid">
           ${ALBUMS.map(a => `
-            <div class="disc-psy-mix-card" style="cursor:default">
+            <div class="disc-psy-mix-card yt-clickable" role="button" tabindex="0" title="Søk på YouTube"
+                 onclick="Discover.openYt('${escHtml(a.title + ' Younger Brother').replace(/'/g,'&#39;')}')"
+                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Discover.openYt('${escHtml(a.title + ' Younger Brother').replace(/'/g,'&#39;')}')}">
               <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#122840,#1a3a5c);font-size:1.2rem">${Icon('atom')}</div>
               <div class="disc-psy-mix-info">
                 <div class="disc-psy-mix-title">${escHtml(a.title)} <span style="opacity:0.6;font-size:0.8em">(${escHtml(a.year)})</span></div>
                 <div class="disc-psy-mix-artist">${escHtml(a.desc)}</div>
               </div>
+              <span class="yt-clickable-go">${Icon('search')}</span>
             </div>
           `).join('')}
         </div>
@@ -2205,15 +2226,7 @@ const Discover = (() => {
           <span class="disc-psy-section-title">Finn Younger Brother</span>
         </div>
         <div class="disc-psy-label-grid">
-          ${LINKS.map(l => `
-            <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
-              <div>
-                <div class="disc-psy-label-name">${escHtml(l.name)}</div>
-                <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
-              </div>
-            </a>
-          `).join('')}
+          ${LINKS.map(psyLinkCard).join('')}
         </div>
       </div>
     `;
@@ -2283,12 +2296,15 @@ const Discover = (() => {
         </div>
         <div class="disc-psy-mix-grid">
           ${ALBUMS.map(a => `
-            <div class="disc-psy-mix-card" style="cursor:default">
+            <div class="disc-psy-mix-card yt-clickable" role="button" tabindex="0" title="Søk på YouTube"
+                 onclick="Discover.openYt('${escHtml(a.title + ' Shpongle').replace(/'/g,'&#39;')}')"
+                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Discover.openYt('${escHtml(a.title + ' Shpongle').replace(/'/g,'&#39;')}')}">
               <div class="disc-psy-mix-thumb" style="background:linear-gradient(135deg,#1a0b3d,#2a0d5e);font-size:1.2rem">${Icon('sparkles')}</div>
               <div class="disc-psy-mix-info">
                 <div class="disc-psy-mix-title">${escHtml(a.title)} <span style="opacity:0.6;font-size:0.8em">(${escHtml(a.year)})</span></div>
                 <div class="disc-psy-mix-artist">${escHtml(a.desc)}</div>
               </div>
+              <span class="yt-clickable-go">${Icon('search')}</span>
             </div>
           `).join('')}
         </div>
@@ -2300,15 +2316,7 @@ const Discover = (() => {
           <span class="disc-psy-section-title">Finn Shpongle</span>
         </div>
         <div class="disc-psy-label-grid">
-          ${LINKS.map(l => `
-            <a class="disc-psy-label-card" href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
-              <div>
-                <div class="disc-psy-label-name">${escHtml(l.name)}</div>
-                <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
-              </div>
-            </a>
-          `).join('')}
+          ${LINKS.map(psyLinkCard).join('')}
         </div>
       </div>
     `;
@@ -2416,10 +2424,7 @@ const Discover = (() => {
             <div class="disc-psy-label-icon">${Icon('camera')}</div>
             <div><div class="disc-psy-label-name">Instagram</div><div class="disc-psy-label-desc">Bilete, artwork og oppdateringar</div></div>
           </a>
-          <a class="disc-psy-label-card" href="https://www.youtube.com/user/astralprojection1" target="_blank" rel="noopener noreferrer">
-            <div class="disc-psy-label-icon">${Icon('play')}</div>
-            <div><div class="disc-psy-label-name">YouTube</div><div class="disc-psy-label-desc">Musikkvideor og live-sett</div></div>
-          </a>
+          ${ytFindCard('https://www.youtube.com/user/astralprojection1', 'Musikkvideor og live-sett')}
         </div>
       </div>
     `;
@@ -2628,6 +2633,7 @@ const Discover = (() => {
           ${a.facebook ? linkBtn(a.facebook, 'f', 'Facebook', 'fb') : ''}
           ${a.website  ? linkBtn(a.website,  Icon('globe'), 'Nettstad', 'web') : ''}
         </div>
+        ${a.youtube ? ytSearchBar('Søk ' + a.name + ' på YouTube…') : ''}
       </div>
     `).join('');
 
@@ -2646,6 +2652,7 @@ const Discover = (() => {
           ${l.facebook ? linkBtn(l.facebook, 'f', 'Facebook', 'fb') : ''}
           ${l.youtube  ? linkBtn(l.youtube,  '▶', 'YouTube',  'yt') : ''}
         </div>
+        ${l.youtube ? ytSearchBar('Søk ' + l.name + ' på YouTube…') : ''}
         <div class="dz-demo-box">
           <div class="dz-demo-title">${Icon('mail')} Send demo</div>
           <div class="dz-demo-contact">${escHtml(l.demoContact)}</div>
@@ -3125,5 +3132,6 @@ const Discover = (() => {
     onCategoryChange, setDiscGenreRadio, clearGenreRadio,
     downloadTrack, closeDownloadModal, confirmDownloadPayment,
     openDroneZone, closeDroneZone,
+    ytSearch, openYt,
   };
 })();

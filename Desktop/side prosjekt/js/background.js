@@ -6,6 +6,7 @@ const BgManager = (() => {
   const PARTICLE_KEY = 'pv_bg_particles';
 
   const EFFECTS = {
+    cosmos:      { label: '🛸 Verdensrom',   hue: '40s',  breathe: '40s', sat: 1.4, bright: 0.40 },
     psychedelic: { label: '🌀 Psykedelisk', hue: '10s',  breathe: '9s',  sat: 2.2, bright: 0.55 },
     acid:        { label: '⚡ Acid',         hue: '3s',   breathe: '2.5s',sat: 4.0, bright: 0.65 },
     space:       { label: '🚀 Space',        hue: '30s',  breathe: '20s', sat: 1.6, bright: 0.40 },
@@ -20,7 +21,7 @@ const BgManager = (() => {
     none:    '✕ Ingen',
   };
 
-  let currentEffect   = localStorage.getItem(EFFECT_KEY)   || 'psychedelic';
+  let currentEffect   = localStorage.getItem(EFFECT_KEY)   || 'cosmos';
   let currentParticles= localStorage.getItem(PARTICLE_KEY) || 'stars';
 
   let canvas, ctx, frame, particles = [];
@@ -240,13 +241,16 @@ const BgManager = (() => {
     // particle every frame and was the single biggest canvas cost. Glow is faked
     // with a cheap larger low-alpha disc instead.
     if (p.type === 'star') {
+      // Cosmos scene wants real starlight (cool white), not the rotating-hue glow.
+      const haloC = currentEffect === 'cosmos' ? `hsla(210,35%,90%,${alpha * 0.16})` : `hsla(${hue},90%,75%,${alpha * 0.18})`;
+      const coreC = currentEffect === 'cosmos' ? `hsla(210,25%,98%,${alpha * 0.95})` : `hsla(${hue},90%,82%,${alpha * 0.9})`;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r * 2.4, 0, Math.PI * 2);
-      ctx.fillStyle = `hsla(${hue},90%,75%,${alpha * 0.18})`;  // soft halo
+      ctx.fillStyle = haloC;  // soft halo
       ctx.fill();
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `hsla(${hue},90%,82%,${alpha * 0.9})`;   // bright core
+      ctx.fillStyle = coreC;   // bright core
       ctx.fill();
     } else if (p.type === 'bubble') {
       ctx.beginPath();
