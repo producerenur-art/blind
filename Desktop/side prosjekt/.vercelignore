@@ -3,3 +3,18 @@ node_modules
 .env
 .env.*
 .DS_Store
+
+# Marketplace-backend holdt ute av deploy inntil Supabase/Stripe er satt opp
+# (Vercel Hobby tillater maks 12 serverless-funksjoner). Koden blir i repoet.
+# Wire inn igjen ved å fjerne disse linjene når MARKETPLACE-SETUP.md er gjort.
+api/_hmac.js
+api/connect-onboard.js
+api/connect-status.js
+api/create-song-checkout.js
+api/download-song.js
+api/list-product.js
+api/my-purchases.js
+api/song-upload-url.js
+api/store-products.js
+api/stripe-webhook.js
+api/upload-url.js
