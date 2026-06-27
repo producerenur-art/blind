@@ -1596,12 +1596,12 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
 }
 .player-bar:hover .player-bar-header { opacity: 1; }
 .player-bar-header:active { cursor: grabbing; }
-.player-drag-dots { font-size: 1rem; color: var(--text3); letter-spacing: 1px; }
+.player-drag-dots { font-size: 1rem; color: var(--text2); letter-spacing: 1px; }
 .player-bar-hdr-btns { display: flex; gap: 4px; }
 .pbar-hdr-btn {
   width: 22px; height: 16px;
   border: none; background: none;
-  color: var(--text2); cursor: pointer;
+  color: var(--text); cursor: pointer;
   font-size: 0.85rem; border-radius: 4px;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.15s;
@@ -1631,6 +1631,18 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
 .player-bar.floating .player-bar-body {
   grid-template-columns: 1fr 1.4fr 0.7fr;
 }
+
+/* ── Enlarged state (forstørre — litt større) ── */
+.player-bar.floating.enlarged { width: 540px; }
+.player-bar.enlarged .player-bar-body {
+  height: auto;
+  min-height: var(--player-h);
+  padding-top: 0.5rem; padding-bottom: 0.5rem;
+}
+.player-bar.enlarged .player-artwork { width: 64px; height: 64px; }
+.player-bar.enlarged .ctrl-btn  { width: 38px; height: 38px; font-size: 1.05rem; }
+.player-bar.enlarged .ctrl-play { width: 48px; height: 48px; font-size: 1.3rem; }
+.player-bar.enlarged .player-title { font-size: 1rem; }
 
 /* ── Minimized state ── */
 .player-bar.minimized .player-bar-body {
@@ -1672,14 +1684,14 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
   width: 32px; height: 32px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  color: var(--text2);
+  color: var(--text);
   font-size: 0.9rem;
   transition: all var(--trans);
   background: none;
   border: none;
   cursor: pointer;
 }
-.ctrl-btn:hover { color: var(--text); }
+.ctrl-btn:hover { color: #fff; }
 .ctrl-play {
   width: 40px; height: 40px;
   background: var(--accent);

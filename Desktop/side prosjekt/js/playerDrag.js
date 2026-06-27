@@ -1,16 +1,24 @@
 const PlayerDrag = (() => {
   const STORAGE_KEY = 'playerDragState';
 
-  let bar, handle, minimizeBtn, dockBtn;
+  let bar, handle, minimizeBtn, maximizeBtn, dockBtn;
   let dragging = false;
   let startX, startY, startLeft, startTop;
   let isFloating = false;
   let isMinimized = false;
+  let isEnlarged = false;
+
+  // Swap a header button's glyph using the SVG icon system (falls back to text).
+  function _setIcon(btn, name) {
+    if (!btn) return;
+    if (window.Icon) btn.innerHTML = window.Icon(name);
+  }
 
   function init() {
     bar         = document.getElementById('player-bar');
     handle      = document.getElementById('player-drag-handle');
     minimizeBtn = document.getElementById('player-minimize-btn');
+    maximizeBtn = document.getElementById('player-maximize-btn');
     dockBtn     = document.getElementById('player-dock-btn');
 
     if (!bar || !handle) return;
@@ -19,6 +27,9 @@ const PlayerDrag = (() => {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     if (saved.floating && saved.left != null && saved.top != null) {
       _applyFloat(saved.left, saved.top);
+    }
+    if (saved.enlarged) {
+      _applyEnlarge();
     }
     if (saved.minimized) {
       _applyMinimize();
@@ -97,17 +108,39 @@ const PlayerDrag = (() => {
   // ── Minimize / expand ─────────────────────────────────────────────────
   function _applyMinimize() {
     bar.classList.add('minimized');
-    if (minimizeBtn) { minimizeBtn.textContent = '+'; minimizeBtn.title = 'Utvid'; }
+    if (minimizeBtn) { _setIcon(minimizeBtn, 'plus'); minimizeBtn.title = 'Utvid'; }
     isMinimized = true;
   }
 
   function toggleMinimize() {
     if (isMinimized) {
       bar.classList.remove('minimized');
-      if (minimizeBtn) { minimizeBtn.textContent = '—'; minimizeBtn.title = 'Minimer'; }
+      if (minimizeBtn) { _setIcon(minimizeBtn, 'minus'); minimizeBtn.title = 'Minimer'; }
       isMinimized = false;
     } else {
+      // Minimize and enlarge are mutually exclusive.
+      if (isEnlarged) toggleMaximize();
       _applyMinimize();
+    }
+    _save();
+  }
+
+  // ── Forstørre (slightly larger) ───────────────────────────────────────
+  function _applyEnlarge() {
+    bar.classList.add('enlarged');
+    if (maximizeBtn) { _setIcon(maximizeBtn, 'minimize-2'); maximizeBtn.title = 'Tilbakestill størrelse'; }
+    isEnlarged = true;
+  }
+
+  function toggleMaximize() {
+    if (isEnlarged) {
+      bar.classList.remove('enlarged');
+      if (maximizeBtn) { _setIcon(maximizeBtn, 'maximize'); maximizeBtn.title = 'Forstørre'; }
+      isEnlarged = false;
+    } else {
+      // Expand out of minimized first so the bigger controls are visible.
+      if (isMinimized) toggleMinimize();
+      _applyEnlarge();
     }
     _save();
   }
@@ -116,6 +149,7 @@ const PlayerDrag = (() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       floating:  isFloating,
       minimized: isMinimized,
+      enlarged:  isEnlarged,
       left:      bar.style.left,
       top:       bar.style.top,
     }));
@@ -123,5 +157,5 @@ const PlayerDrag = (() => {
 
   document.addEventListener('DOMContentLoaded', init);
 
-  return { dock, toggleMinimize };
+  return { dock, toggleMinimize, toggleMaximize };
 })();
