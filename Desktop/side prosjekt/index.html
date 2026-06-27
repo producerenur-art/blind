@@ -170,6 +170,33 @@
     </div>
   </div>
 
+  <!-- ═══ DICE PLAYER (flyttbar + skalerbar widget) ═══ -->
+  <div id="diceplayer_container" title="Dra for å flytte · dra hjørnet for å endre størrelse">
+    <div id="diceplayerHtml" class="cp-container">
+      <div class="cp-buffer-holder">
+        <div class="cp-buffer-1"></div>
+        <div class="cp-buffer-2"></div>
+      </div>
+      <div class="cp-progress-holder cp-gt50">
+        <div class="cp-progress-1"></div>
+        <div class="cp-progress-2"></div>
+      </div>
+      <div class="cp-circle-control"></div>
+      <ul class="cp-controls">
+        <li><a class="cp-play" tabindex="1">play</a></li>
+        <li><a class="cp-pause" style="display:none;" tabindex="1">pause</a></li>
+      </ul>
+    </div>
+    <div id="nowplaying">
+      <div id="nowplaying_state">NOW <span class="live">LIVE </span>ON AIR:</div>
+      <div id="nowplaying_title_container">
+        <div class="dp-marquee"><span>@115 ANTEPRIMA H.D.D.C. IN DOWNTEMPO WITH AUTOMATA BY HANUMAN GOA BY KALKI KRISHNAN PSYCHEDEVOLUTION</span></div>
+      </div>
+    </div>
+    <!-- Hjørnehåndtak for å endre størrelse -->
+    <div class="dp-resize" title="Endre størrelse"></div>
+  </div>
+
   <!-- Hidden audio engine -->
   <audio id="audio-engine" preload="metadata" crossorigin="anonymous"></audio>
 
@@ -337,6 +364,7 @@
   <script src="js/platform.js"></script>
   <script src="js/lang.js"></script>
   <script src="js/playerDrag.js"></script>
+  <script src="js/diceplayerDrag.js"></script>
   <script src="js/aiAssistant.js"></script>
   <script src="js/dock.js"></script>
   <script type="text/javascript">

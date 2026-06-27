@@ -7883,3 +7883,136 @@ body { top: 0 !important; }
 }
 .daw-pr-note:hover::after { background: rgba(255,255,255,0.35); }
 .daw-dev-sub { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text3); margin: 0.5rem 0 0.4rem; border-top: 1px solid var(--border); padding-top: 0.5rem; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DICE PLAYER — flyttbar (venstre/høyre/opp/ned) + skalerbar (ut/inn) widget
+   Drag/resize-logikk i js/diceplayerDrag.js
+   ═══════════════════════════════════════════════════════════════════════ */
+#diceplayer_container {
+  position: fixed;
+  left: 24px;
+  bottom: 104px;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px 12px 12px;
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(124,58,237,0.18) 0%, rgba(14,12,32,0.92) 100%);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  backdrop-filter: blur(12px);
+  transform: scale(var(--dp-scale, 1));
+  transform-origin: top left;
+  touch-action: none;       /* la pointer-events styre drag/resize fritt */
+  user-select: none;
+  cursor: grab;
+}
+#diceplayer_container.dp-floating { bottom: auto; }   /* fri plassering via top/left */
+#diceplayer_container:active { cursor: grabbing; }
+
+/* ── Sirkulær avspiller ───────────────────────────────────────────────── */
+#diceplayer_container .cp-container {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+}
+#diceplayer_container .cp-buffer-holder,
+#diceplayer_container .cp-progress-holder {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+#diceplayer_container .cp-buffer-holder { border: 3px solid var(--border2); }
+#diceplayer_container .cp-progress-holder {
+  background: conic-gradient(var(--accent) calc(var(--cp-progress, 35) * 1%), transparent 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+}
+/* Den gamle to-halvdels-rotasjonsteknikken erstattes av conic-ringen over */
+#diceplayer_container .cp-progress-1,
+#diceplayer_container .cp-progress-2,
+#diceplayer_container .cp-buffer-1,
+#diceplayer_container .cp-buffer-2 { display: none !important; }
+
+#diceplayer_container .cp-circle-control {
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--accent2), var(--accent));
+  box-shadow: 0 2px 10px rgba(124,58,237,0.5);
+}
+#diceplayer_container .cp-controls { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; }
+#diceplayer_container .cp-controls li { position: absolute; inset: 0; }
+#diceplayer_container .cp-controls a {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 0;            /* skjuler ordene "play"/"pause" — vises som glyf */
+  color: #fff;
+}
+#diceplayer_container .cp-play::before {
+  content: "";
+  width: 0; height: 0;
+  border-left: 13px solid #fff;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  margin-left: 4px;
+}
+#diceplayer_container .cp-pause::before {
+  content: "";
+  width: 12px; height: 14px;
+  border-left: 4px solid #fff;
+  border-right: 4px solid #fff;
+}
+
+/* ── Now playing + rullende tittel (marquee) ──────────────────────────── */
+#diceplayer_container #nowplaying { min-width: 0; }
+#diceplayer_container #nowplaying_state {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 4px;
+}
+#diceplayer_container #nowplaying_state .live { color: #ef4444; }
+#diceplayer_container #nowplaying_title_container {
+  width: 240px;
+  overflow: hidden;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+          mask: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+}
+#diceplayer_container .dp-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  padding-left: 100%;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  animation: dp-marquee 18s linear infinite;
+}
+#diceplayer_container:hover .dp-marquee { animation-play-state: paused; }
+@keyframes dp-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
+/* ── Hjørnehåndtak for å endre størrelse ──────────────────────────────── */
+#diceplayer_container .dp-resize {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  border-radius: 0 0 12px 0;
+  background:
+    linear-gradient(135deg, transparent 50%, var(--text3) 50%, var(--text3) 60%, transparent 60%,
+                    transparent 70%, var(--text3) 70%, var(--text3) 80%, transparent 80%);
+  opacity: 0.7;
+}
+#diceplayer_container .dp-resize:hover { opacity: 1; }
