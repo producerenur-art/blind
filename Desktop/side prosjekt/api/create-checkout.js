@@ -1,5 +1,14 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { PLANS } = require('./_plans');
+
+// Autoritativ prisliste — klienten kan ALDRI sette beløp selv.
+// Alle planer er Sound Core Pro med påløpende (recurring) betaling.
+// Lengre bindingstid = lavere månedspris. Beløp i øre (NOK).
+const PLANS = {
+  monthly: { amount:  14900, interval: 'month', interval_count: 1, label: '1 måned'    }, // 149 kr/mnd
+  quarter: { amount:  39900, interval: 'month', interval_count: 3, label: '3 måneder'  }, // 133 kr/mnd
+  half:    { amount:  74900, interval: 'month', interval_count: 6, label: '6 måneder'  }, // 125 kr/mnd
+  year:    { amount: 129000, interval: 'year',  interval_count: 1, label: '12 måneder' }, // 108 kr/mnd
+};
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

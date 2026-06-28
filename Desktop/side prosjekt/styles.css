@@ -65,15 +65,6 @@
 .shop-link-arrow { flex: 0 0 auto; color: var(--text3, #6b7280); }
 .shop-link-card:hover .shop-link-arrow { color: #a78bfa; }
 
-/* Kvittering (på skjerm, etter betaling) */
-.receipt-star { width: 60px; height: 60px; margin: 0 auto; border-radius: 50%;
-  background: linear-gradient(135deg, #f59e0b, #f472b6); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
-.receipt-box { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
-  border-radius: 12px; padding: .35rem 1.1rem; }
-.receipt-benefits { display: flex; flex-direction: column; gap: .35rem; }
-.receipt-benefit { display: flex; align-items: center; gap: .5rem; font-size: .88rem; color: var(--text2, #9aa4b2); }
-.receipt-benefit svg { color: #4ade80; width: 16px; height: 16px; flex: 0 0 auto; }
-
 /* ═══════════════════════════════════════════════
    PSYCHEDELIC BACKGROUND SYSTEM
    ═══════════════════════════════════════════════ */

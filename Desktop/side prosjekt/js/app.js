@@ -2240,10 +2240,10 @@ const App = (() => {
   // ════════════════════════════════════════════════════════════════════
   // Abonnementsplaner — display-side. Autoritative beløp ligger i api/create-checkout.js (PLANS).
   const SHOP_PLANS = [
-    { key: 'monthly', name: '1 måned',    months:  1, total: '149 kr',   per: '149 kr / mnd', save: null,         best: false },
-    { key: 'quarter', name: '3 måneder',  months:  3, total: '399 kr',   per: '133 kr / mnd', save: 'Spar 11 %',  best: false },
-    { key: 'half',    name: '6 måneder',  months:  6, total: '749 kr',   per: '125 kr / mnd', save: 'Spar 16 %',  best: false },
-    { key: 'year',    name: '12 måneder', months: 12, total: '1 290 kr', per: '108 kr / mnd', save: 'Spar 28 %',  best: true  },
+    { key: 'monthly', name: '1 måned',    total: '149 kr',   per: '149 kr / mnd', save: null,         best: false },
+    { key: 'quarter', name: '3 måneder',  total: '399 kr',   per: '133 kr / mnd', save: 'Spar 11 %',  best: false },
+    { key: 'half',    name: '6 måneder',  total: '749 kr',   per: '125 kr / mnd', save: 'Spar 16 %',  best: false },
+    { key: 'year',    name: '12 måneder', total: '1 290 kr', per: '108 kr / mnd', save: 'Spar 28 %',  best: true  },
   ];
 
   // Eksterne lenker — kjøp & oppdag musikk og festivalar utanfor Sound Core.
@@ -2255,15 +2255,6 @@ const App = (() => {
     { icon: 'tv',         name: 'Trancentral',     desc: 'Psytrance-kultur, nyheiter & video',   url: 'https://trancentral.tv/' },
     { icon: 'globe',      name: 'Goabase',         desc: 'Verdsomspennande party-database',      url: 'https://www.goabase.net/' },
     { icon: 'ticket',     name: 'Ozora Festival',  desc: 'Registrer deg for billett 2026',       url: 'https://ticket.ozorafestival.eu/register?flag=HU&event_code=OZ&year=26' },
-  ];
-
-  // Pro-fordeler — vist i kvittering/receipt og Shop. Speilar api/_plans.js PRO_BENEFITS.
-  const PRO_BENEFITS = [
-    'DJ-mixes over 3 timer (opptil 20 t)',
-    'Privat / offentlig synlighet på mixes',
-    'Pro-badge på profilen',
-    'Ubegrenset lagring',
-    'Prioritert støtte',
   ];
 
   function renderShop() {
@@ -2328,7 +2319,7 @@ const App = (() => {
 
   return {
     init, toast, openModal, closeModal, showInfo,
-    renderShop, shopPlans: SHOP_PLANS, proBenefits: PRO_BENEFITS,
+    renderShop,
     logout, renderNav, updateNavBadge, markWallSeen,
     doLogin, doRegister, doForgotPassword, doResetPassword,
     resendActivationByEmail,
