@@ -3,6 +3,43 @@
    ═══════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════
+   SHOP — produktbutikk (SoundCore Studio + mer)
+   ═══════════════════════════════════════════════ */
+.shop-page { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.shop-page h1 { display: flex; align-items: center; gap: .5rem; }
+.shop-sub { color: var(--text2, #9aa4b2); margin: .25rem 0 1.25rem; }
+.shop-launch-banner {
+  background: linear-gradient(90deg, rgba(124,58,237,.25), rgba(236,72,153,.18));
+  border: 1px solid rgba(124,58,237,.5); border-radius: 12px;
+  padding: .8rem 1rem; margin-bottom: 1.25rem;
+}
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+.shop-card {
+  position: relative; background: var(--surface, #161622);
+  border: 1px solid rgba(255,255,255,.08); border-radius: 16px;
+  padding: 1.4rem; display: flex; flex-direction: column;
+}
+.shop-card-soon { opacity: .72; }
+.shop-card-icon { font-size: 1.8rem; color: #a78bfa; margin-bottom: .4rem; }
+.shop-card h2 { margin: .1rem 0 .4rem; font-size: 1.15rem; }
+.shop-card p { color: var(--text2, #9aa4b2); font-size: .9rem; flex: 1; }
+.shop-card-price { font-size: 1.5rem; font-weight: 800; margin: .6rem 0 .9rem; }
+.shop-card-price span { font-size: .85rem; font-weight: 500; color: var(--text2, #9aa4b2); }
+.shop-badge {
+  position: absolute; top: 1rem; right: 1rem; font-size: .72rem; font-weight: 700;
+  padding: .25rem .55rem; border-radius: 999px; background: rgba(255,255,255,.1);
+}
+.shop-badge-free { background: linear-gradient(90deg, #7c3aed, #ec4899); color: #fff; }
+.shop-badge-active { background: #16a34a; color: #fff; }
+/* DAW gratis-i-lansering banner */
+.daw-trial-banner {
+  background: linear-gradient(90deg, rgba(124,58,237,.3), rgba(236,72,153,.2));
+  border-bottom: 1px solid rgba(124,58,237,.5);
+  padding: .55rem 1rem; text-align: center; font-size: .9rem;
+}
+.daw-trial-banner a { color: #fff; font-weight: 700; text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════
    PSYCHEDELIC BACKGROUND SYSTEM
    ═══════════════════════════════════════════════ */
 

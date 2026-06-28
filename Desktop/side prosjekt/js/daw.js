@@ -157,12 +157,21 @@ const DAW = (() => {
       app.innerHTML = lockedHero('Logg inn for å bruke SoundCore Studio', true);
       return;
     }
-    if (current.subscription !== 'pro') {
+    // Lansering: gratis for ALLE innloggede brukere i 14 dager (se App.studioFree),
+    // deretter låst bak Pro. Pro-brukere har alltid tilgang.
+    const trial   = (window.App && App.studioFree) ? App.studioFree() : { free: false, daysLeft: 0 };
+    const onTrial = current.subscription !== 'pro' && trial.free;
+    if (current.subscription !== 'pro' && !trial.free) {
       app.innerHTML = lockedHero('SoundCore Studio er en Pro-funksjon', false);
       return;
     }
     if (!project) newProject();
     app.innerHTML = shell();
+    if (onTrial) {
+      const dl = `${trial.daysLeft} ${trial.daysLeft === 1 ? 'dag' : 'dager'}`;
+      app.insertAdjacentHTML('afterbegin',
+        `<div class="daw-trial-banner">🎉 Gratis i lanseringen — ${dl} igjen. <a href="#/shop">Lås opp permanent →</a></div>`);
+    }
     buildEngine();
     renderAll();
     initMidiUI();
@@ -181,7 +190,7 @@ const DAW = (() => {
           <p class="daw-locked-msg">${msg}</p>
           ${needLogin
             ? `<button class="btn btn-primary btn-lg" onclick="Router.go('/login')">${Icon('user')} Logg inn</button>`
-            : `<button class="btn btn-primary btn-lg" onclick="DAW.upgrade()">${Icon('crown')} Oppgrader til Pro</button>`}
+            : `<button class="btn btn-primary btn-lg" onclick="Router.go('/shop')">${Icon('store')} Lås opp i Shop</button>`}
           <div class="daw-locked-feats">
             ${['Fler-spors mikser','Analoge synther','Trommer & congas','MIDI-piano','Eksternt lydkort','Echo · distortion · sidechain','Multibånd-kompressor','Render til WAV'].map(f => `<span class="badge badge-purple">${Icon('check')} ${f}</span>`).join('')}
           </div>
