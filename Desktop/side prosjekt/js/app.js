@@ -174,6 +174,7 @@ const App = (() => {
     if (user && window.SC) SC.startPresence(user.username);
     if (window.Notify)     Notify.init();
     if (window.FriendChat) FriendChat.refresh();
+    if (window.NavDrag)    NavDrag.refresh();   // oppdater grab-markør for nytt fane-antal
   }
 
   function logout() {

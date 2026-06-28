@@ -857,6 +857,14 @@ img, video { display: block; max-width: 100%; }
 }
 .nav-right::-webkit-scrollbar { display: none; }  /* skjul scrollbar */
 .nav-right > * { flex-shrink: 0; }                /* knappene beholder full bredde */
+.nav-right.nav-scrollable { cursor: grab; }       /* viser at lina kan dras */
+.nav-right.nav-grabbing {                          /* mens du drar */
+  cursor: grabbing;
+  user-select: none;
+  scroll-behavior: auto;                           /* dra skal følge musa direkte */
+}
+.nav-right.nav-grabbing a,
+.nav-right.nav-grabbing button { cursor: grabbing; }
 
 /* ── Buttons ── */
 .btn {
