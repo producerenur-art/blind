@@ -24,7 +24,14 @@ const A1 = (() => {
 
   // Videoar: YouTube- eller direkte video-URL-ar. Legg til/byt ut fritt.
   // Eks: { title: 'Min film', url: 'https://www.youtube.com/watch?v=XXXXXXXXXXX' }
+  // Alle ID-ar verifiserte embeddable via YouTube oEmbed 2026-06-28 (offisielle kanalar).
   const VIDEOS = [
+    { title: 'The Story of the Messenger — Marshall Vian Summers',                 url: 'https://www.youtube.com/watch?v=GTlV3-UOe94' },
+    { title: 'A Prayer for the World — Marshall Vian Summers',                     url: 'https://www.youtube.com/watch?v=mXPfCg1HKVU' },
+    { title: 'The Allies of Humanity — presentert av Marshall Vian Summers',       url: 'https://www.youtube.com/watch?v=g4EjxvGcOUQ' },
+    { title: 'The Extraterrestrial Presence in the World Today — Allies, Book One', url: 'https://www.youtube.com/watch?v=OWXp0INcv9Q' },
+    { title: '12-Point Summary of the Allies of Humanity Briefings',               url: 'https://www.youtube.com/watch?v=YX7yxk85woM' },
+    { title: 'Allies of Humanity — Book Four',                                      url: 'https://www.youtube.com/watch?v=UJ8iNy95U9k' },
   ];
 
   // ── Brukar-lagra videoar (gratis, live — lagra lokalt i nettlesaren) ──
@@ -65,11 +72,30 @@ const A1 = (() => {
   //  DRABAR A1-CHAT  (flyttbar høgre/venstre/opp/ned — posisjon lagra)
   // ════════════════════════════════════════════════════════════════════
   const POS_KEY = 'a1_chat_pos';
+  const MIN_KEY = 'a1_chat_min';
   let chatHistory = [];
   let chatBusy = false;
 
   function loadPos() { try { return JSON.parse(localStorage.getItem(POS_KEY)) || null; } catch { return null; } }
   function savePos(p) { try { localStorage.setItem(POS_KEY, JSON.stringify(p)); } catch {} }
+  function loadCollapsed() { try { return localStorage.getItem(MIN_KEY) === '1'; } catch { return false; } }
+  function saveCollapsed(v) { try { localStorage.setItem(MIN_KEY, v ? '1' : '0'); } catch {} }
+
+  function applyCollapsed(collapsed) {
+    const el = chatEl(); if (!el) return;
+    el.classList.toggle('is-collapsed', collapsed);
+    const btn = document.getElementById('a1-chat-min');
+    if (btn) {
+      btn.innerHTML = Icon(collapsed ? 'chevron-up' : 'chevron-down');
+      btn.title = collapsed ? 'Opne chat' : 'Lukk chat';
+    }
+  }
+  function toggleChat() {
+    const el = chatEl(); if (!el) return;
+    const collapsed = !el.classList.contains('is-collapsed');
+    saveCollapsed(collapsed);
+    applyCollapsed(collapsed);
+  }
 
   function chatEl() { return document.getElementById('a1-chat'); }
   function msgsEl() { return document.getElementById('a1-chat-msgs'); }
@@ -167,6 +193,7 @@ const A1 = (() => {
           <span class="a1-chat-grip">${Icon('grip')}</span>
           <span class="a1-chat-title">${Icon('sparkles')} A1-chat</span>
           <span class="a1-chat-hint">dra meg ↔ ↕</span>
+          <button type="button" class="a1-chat-min" id="a1-chat-min" onclick="A1.toggleChat()" title="Lukk chat" aria-label="Lukk eller opne chat">${Icon('chevron-down')}</button>
         </div>
         <div class="a1-chat-msgs" id="a1-chat-msgs"></div>
         <form class="a1-chat-form" id="a1-chat-form">
@@ -278,6 +305,7 @@ const A1 = (() => {
       applyChatPos(Math.max(12, window.innerWidth - w - 28), Math.max(80, window.innerHeight - h - 120));
     }
     initChatDrag();
+    applyCollapsed(loadCollapsed());
     const form = document.getElementById('a1-chat-form');
     if (form) form.addEventListener('submit', e => { e.preventDefault();
       const inp = document.getElementById('a1-chat-input'); const v = inp.value.trim();
@@ -322,5 +350,5 @@ const A1 = (() => {
       `<span class="a1-feat-badge">${Icon('star')} Spelar no</span>${player}<div class="a1-video-cap">${esc(v.title||host(v.url))}</div>`;
   }
 
-  return { render, searchOn, askA1FromSearch, addVideo, featureVideo, chatAsk };
+  return { render, searchOn, askA1FromSearch, addVideo, featureVideo, chatAsk, toggleChat };
 })();
