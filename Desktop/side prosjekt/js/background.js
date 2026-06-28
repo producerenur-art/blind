@@ -371,6 +371,7 @@ const BgManager = (() => {
         vx: (Math.random() - 0.5) * 0.3,
         vy: -0.15 - Math.random() * 0.4,
         hue, life: 1, decay: 0.003 + Math.random() * 0.004,
+        tw: Math.random() * Math.PI * 2,   // twinkle phase (cosmos)
         type: 'star',
       });
     } else if (currentParticles === 'bubbles') {
@@ -425,7 +426,10 @@ const BgManager = (() => {
     if (p.type === 'aurora') p.y += Math.sin((p.phase || 0) + now * 0.0005) * 0.4;
 
     const hue  = (p.hue + now * 0.05) % 360;
-    const alpha = p.life;
+    // Cosmos stars twinkle — gently modulate brightness per-star; other modes steady.
+    const alpha = (p.type === 'star' && currentEffect === 'cosmos')
+      ? p.life * (0.55 + 0.45 * Math.sin((p.tw || 0) + now * 0.004))
+      : p.life;
 
     ctx.save();
     ctx.globalCompositeOperation = 'screen';

@@ -398,10 +398,89 @@ body[data-bg-effect="cosmos"] #bg-prism-2 { opacity: 0.22; }
 body[data-bg-effect="cosmos"] #bg-prism-3 { opacity: 0.4; }
 body[data-bg-effect="cosmos"] #bg-img-wrap { display: none; }
 
-/* Respect reduced-motion: park the UFO, stop blink/pulse */
+/* ═══════════════════════════════════════════════
+   NASA-STYLE DEEP-SPACE FIELD  (cosmos only)
+   Two cheap, mostly-static layers composited once on the GPU — no per-frame
+   repaint cost (only opacity twinkles, which the compositor handles):
+     • base   → near-black space
+     • ::before → dense multi-distance, multi-temperature starfield + a soft
+                  Milky-Way galactic dust lane (the band is the bottom-most
+                  background layer, so the stars sit on top of it)
+   The drifting canvas stars add live sparkle on top; the nebula orbs below
+   supply the Hubble-style colour clouds.
+   ═══════════════════════════════════════════════ */
+body[data-bg-effect="cosmos"] #bg-layer { background: #01020a; }
+
+body[data-bg-effect="cosmos"] #bg-layer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-repeat: repeat;
+  /* tile sizes — smaller tiles = denser star populations */
+  background-size:
+    430px 430px, 430px 430px, 300px 300px, 360px 360px,
+    220px 220px, 190px 190px, 250px 250px, 100% 100%;
+  background-position:
+    0 0, 215px 130px, 60px 200px, 180px 40px,
+    30px 90px, 120px 250px, 90px 10px, 0 0;
+  background-image:
+    /* bright foreground stars (white / blue / warm) */
+    radial-gradient(1.7px 1.7px at 40px 60px,  #ffffff 99%, transparent 100%),
+    radial-gradient(1.6px 1.6px at 300px 250px, #ffffff 99%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 150px 90px,  #cdd8ff 99%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 250px 300px, #ffeccb 99%, transparent 100%),
+    /* fine background dust — small + dense */
+    radial-gradient(1px 1px at 60px 40px,   #d9e6ff 99%, transparent 100%),
+    radial-gradient(0.9px 0.9px at 30px 150px, #ffffff 99%, transparent 100%),
+    radial-gradient(0.9px 0.9px at 200px 80px, #c7d6ff 99%, transparent 100%),
+    /* Milky-Way galactic dust lane — soft diagonal band, bottom-most */
+    linear-gradient(118deg,
+      transparent 32%,
+      rgba(150,170,255,0.05) 43%,
+      rgba(216,206,255,0.13) 50%,
+      rgba(255,228,192,0.07) 57%,
+      transparent 68%);
+  opacity: 0.9;
+  animation: starTwinkle 7s ease-in-out infinite;
+}
+@keyframes starTwinkle { 0%,100% { opacity: 0.62; } 50% { opacity: 0.95; } }
+
+/* Re-tune the nebula orbs into Hubble-style colour clouds for cosmos.
+   Kept deliberately FAINT and tight (transparent by ~45%) so the frame reads
+   as deep black space with contained colour clouds — not a full-screen wash. */
+body[data-bg-effect="cosmos"] #bg-nebula-a {
+  background: radial-gradient(circle, rgba(124,80,255,0.26) 0%, transparent 48%);
+  opacity: 0.45;
+}
+body[data-bg-effect="cosmos"] #bg-nebula-b {
+  background: radial-gradient(circle, rgba(255,72,150,0.22) 0%, transparent 48%);
+  opacity: 0.4;
+}
+body[data-bg-effect="cosmos"] #bg-nebula-c {
+  background: radial-gradient(circle, rgba(40,182,222,0.2) 0%, transparent 48%);
+  opacity: 0.36;
+}
+body[data-bg-effect="cosmos"] #bg-nebula-d {
+  background: radial-gradient(circle, rgba(90,255,210,0.16) 0%, transparent 46%);
+  opacity: 0.3;
+}
+body[data-bg-effect="cosmos"] #bg-nebula-e {
+  background: radial-gradient(circle, rgba(255,182,92,0.16) 0%, transparent 46%);
+  opacity: 0.3;
+}
+/* Deep-space vignette: pull the frame edges down to true black like a Hubble plate */
+body[data-bg-effect="cosmos"] #bg-vignette {
+  background:
+    radial-gradient(ellipse at 70% 28%, transparent 30%, rgba(0,0,0,0.55) 100%),
+    linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 22%, transparent 72%, rgba(0,0,0,0.6) 100%);
+}
+
+/* Respect reduced-motion: park the UFO, stop blink/pulse + star twinkle */
 @media (prefers-reduced-motion: reduce) {
   #bg-ufo { animation: none; transform: translate(42vw, 0); }
   .ufo-light, .ufo-beam, #bg-sun, #bg-sun::after { animation: none; }
+  body[data-bg-effect="cosmos"] #bg-layer::before { animation: none; opacity: 0.8; }
 }
 
 /* ── Background change button ── */
