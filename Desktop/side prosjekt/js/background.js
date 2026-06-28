@@ -61,6 +61,9 @@ const BgManager = (() => {
     document.body.dataset.bgEffect = currentEffect;
     document.body.dataset.ufoSize  = currentUfoSize;
 
+    // Make the UFO grabbable: drag to move, corner handles to resize
+    initUfoControls();
+
     // Pause all CSS background animations while the tab is backgrounded — no point
     // burning GPU/CPU compositing nebula + prism layers nobody is looking at.
     const bgLayer = document.getElementById('bg-layer');
@@ -172,12 +175,139 @@ const BgManager = (() => {
   // ── UFO size ──────────────────────────────────────────────────────────
   function setUfoSize(size) {
     if (!UFO_SIZES[size]) return;
+    // Et størrelsesvalg nullstiller en manuell plassering, slik at presetet
+    // (bredde + evt. fullskjerm-parkering) faktisk vises i stedet for å bli
+    // overstyrt av inline left/top/width fra dra-/skaleringslogikken.
+    resetUfoFree();
     currentUfoSize = size;
     localStorage.setItem(UFO_SIZE_KEY, size);
     document.body.dataset.ufoSize = size;
     document.querySelectorAll('.ufo-size-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.ufoSize === size);
     });
+  }
+
+  // ── UFO drag + resize ─────────────────────────────────────────────────
+  // Tallerkenen kan dras fritt (opp/ned/venstre/høyre) og skaleres via fire
+  // hjørnehåndtak — større eller minimert ned i et hjørne. Plassering + bredde
+  // lagres, så den ligger der du la den ved neste lasting. Dobbeltklikk =
+  // nullstill og la den fly igjen.
+  const UFO_FREE_KEY = 'pv_ufo_free';
+  const UFO_MIN_W = 48;                 // minimert
+  const UFO_ASPECT = 300 / 220;         // svg viewBox h/w → høyde = bredde * dette
+  const ufoMaxW = () => Math.min(2000, window.innerWidth * 1.5);
+
+  // Fjern manuell plassering → tilbake til CSS-styrt (flyr igjen / preset-bredde)
+  function resetUfoFree() {
+    const ufo = document.getElementById('bg-ufo');
+    if (!ufo) return;
+    ufo.classList.remove('ufo-free');
+    ufo.style.left = ufo.style.top = ufo.style.width = '';
+    localStorage.removeItem(UFO_FREE_KEY);
+  }
+
+  function initUfoControls() {
+    const ufo = document.getElementById('bg-ufo');
+    if (!ufo || ufo.dataset.ufoCtl) return;   // bare én gang
+    ufo.dataset.ufoCtl = '1';
+    ufo.classList.add('ufo-interactive');
+
+    // Hjørnehåndtak for skalering
+    ['nw', 'ne', 'sw', 'se'].forEach(c => {
+      const h = document.createElement('div');
+      h.className = 'ufo-handle ' + c;
+      h.dataset.corner = c;
+      ufo.appendChild(h);
+    });
+
+    // Gjenopprett en tidligere plassert/skalert tallerken (klemt innenfor skjermen)
+    try {
+      const s = JSON.parse(localStorage.getItem(UFO_FREE_KEY) || 'null');
+      if (s && Number.isFinite(s.x)) {
+        const w = Number.isFinite(s.w) ? s.w : 200;
+        ufo.classList.add('ufo-free');
+        if (Number.isFinite(s.w)) ufo.style.width = w + 'px';
+        ufo.style.left = Math.min(Math.max(40 - w, s.x), window.innerWidth - 40) + 'px';
+        ufo.style.top  = Math.min(Math.max(0, s.y), window.innerHeight - 40) + 'px';
+      }
+    } catch {}
+
+    let mode = null;                    // 'drag' | 'resize'
+    let startX = 0, startY = 0, originLeft = 0, originTop = 0;
+    let cx = 0, cy = 0, startW = 0, dirX = 1;
+
+    // Frikoble fra flyge-animasjonen og frys på nåværende skjermposisjon
+    function freeNow() {
+      const r = ufo.getBoundingClientRect();
+      ufo.classList.add('ufo-free');
+      ufo.style.left  = r.left + 'px';
+      ufo.style.top   = r.top + 'px';
+      ufo.style.width = r.width + 'px';
+      return r;
+    }
+
+    function save() {
+      localStorage.setItem(UFO_FREE_KEY, JSON.stringify({
+        x: parseFloat(ufo.style.left) || 0,
+        y: parseFloat(ufo.style.top) || 0,
+        w: parseFloat(ufo.style.width) || ufo.getBoundingClientRect().width,
+      }));
+    }
+
+    function onMove(e) {
+      if (!mode) return;
+      if (mode === 'drag') {
+        const w = ufo.getBoundingClientRect().width;
+        let nx = originLeft + (e.clientX - startX);
+        let ny = originTop  + (e.clientY - startY);
+        nx = Math.max(40 - w, Math.min(window.innerWidth - 40, nx));   // hold litt synlig
+        ny = Math.max(0, Math.min(window.innerHeight - 40, ny));
+        ufo.style.left = nx + 'px';
+        ufo.style.top  = ny + 'px';
+      } else {
+        const delta = (e.clientX - startX) * dirX;            // utover = større
+        const w = Math.max(UFO_MIN_W, Math.min(ufoMaxW(), startW + delta * 2));
+        const h = w * UFO_ASPECT;
+        ufo.style.width = w + 'px';
+        ufo.style.left  = (cx - w / 2) + 'px';                // skaler om sentrum
+        ufo.style.top   = (cy - h / 2) + 'px';
+      }
+    }
+
+    function onUp(e) {
+      mode = null;
+      ufo.classList.remove('ufo-dragging', 'ufo-resizing');
+      try { ufo.releasePointerCapture(e.pointerId); } catch {}
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      save();
+    }
+
+    ufo.addEventListener('pointerdown', (e) => {
+      if (e.button) return;                                   // bare primærknapp
+      const handle = e.target.closest('.ufo-handle');
+      const r = freeNow();
+      startX = e.clientX; startY = e.clientY;
+      if (handle) {
+        mode = 'resize';
+        dirX = (handle.dataset.corner === 'ne' || handle.dataset.corner === 'se') ? 1 : -1;
+        startW = r.width;
+        cx = r.left + r.width / 2;
+        cy = r.top + r.height / 2;
+        ufo.classList.add('ufo-resizing');
+      } else {
+        mode = 'drag';
+        originLeft = r.left; originTop = r.top;
+        ufo.classList.add('ufo-dragging');
+      }
+      try { ufo.setPointerCapture(e.pointerId); } catch {}
+      e.preventDefault();
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    });
+
+    // Dobbeltklikk → nullstill: glem lagret plass og la den fly igjen
+    ufo.addEventListener('dblclick', (e) => { e.preventDefault(); resetUfoFree(); });
   }
 
   // ── Particle system ───────────────────────────────────────────────────

@@ -311,6 +311,50 @@ body[data-ufo-size="full"] #bg-ufo {
   transform: translate(-50%, -52%);
 }
 
+/* ── UFO interaktiv: dra for å flytte, hjørnehåndtak for å endre størrelse ──
+   Tallerkenen løftes til forgrunnen (over innhold, under navet) så den kan gripes.
+   Når du drar eller skalerer den slutter den å fly og blir liggende (.ufo-free).
+   Dobbeltklikk = nullstill og la den fly igjen. Styres av BgManager (background.js). */
+#bg-ufo.ufo-interactive {
+  position: fixed;
+  z-index: 150;            /* over sideinnhold (--z-content:10), under navet (200) */
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#bg-ufo.ufo-interactive.ufo-dragging,
+#bg-ufo.ufo-interactive.ufo-dragging * { cursor: grabbing; }
+/* Når brukeren har plassert/skalert den: koble fra flyge-animasjonen,
+   posisjon + bredde styres da av inline left/top/width fra JS. */
+#bg-ufo.ufo-free {
+  animation: none !important;
+  transform: none !important;
+}
+
+/* Hjørnehåndtak — vises ved hover, eller mens man drar i dem */
+.ufo-handle {
+  position: absolute;
+  width: 18px; height: 18px;
+  margin: -9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #eaffff, #69d6ff 60%, #2b8fc4);
+  border: 1.5px solid #07131f;
+  box-shadow: 0 0 8px rgba(105,214,255,0.85), 0 1px 2px rgba(0,0,0,0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease, transform .1s ease;
+  z-index: 3;
+}
+.ufo-handle:hover { transform: scale(1.18); }
+#bg-ufo.ufo-interactive:hover .ufo-handle,
+#bg-ufo.ufo-resizing .ufo-handle { opacity: 0.95; pointer-events: auto; }
+.ufo-handle.nw { top: 18%; left: 8%;  cursor: nwse-resize; }
+.ufo-handle.ne { top: 18%; right: 8%; cursor: nesw-resize; }
+.ufo-handle.sw { top: 48%; left: 8%;  cursor: nesw-resize; }
+.ufo-handle.se { top: 48%; right: 8%; cursor: nwse-resize; }
+
 /* Drift left → right across viewport with a gentle bob + subtle piloted tilt */
 @keyframes ufoFlight {
   0%   { transform: translate(-26vw, 0)     rotate(-2deg);   }
