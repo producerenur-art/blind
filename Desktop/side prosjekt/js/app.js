@@ -1364,7 +1364,7 @@ const App = (() => {
               <div class="plan-card-price">fra 108 kr / måned</div>
               <ul class="plan-card-features">
                 <li>Alt i Gratis</li>
-                <li>DJ-mixes over 3 timer (opptil 20 t)</li>
+                <li>DJ-mixes over 3 timer (ingen grense)</li>
                 <li>Private DJ-mixes</li>
                 <li>Pro-badge + prioritert støtte</li>
               </ul>
@@ -2286,7 +2286,7 @@ const App = (() => {
         ${isPro ? `<div class="shop-launch-banner">${Icon('check')} <strong>Du har Pro aktivt.</strong> Takk for støtten! ${Icon('sliders')}</div>` : ''}
 
         <div class="shop-pro-feats">
-          <div class="shop-pro-feat">${Icon('sliders')} DJ-mixes over 3 timer (opptil 20 t)</div>
+          <div class="shop-pro-feat">${Icon('sliders')} DJ-mixes over 3 timer (ingen grense)</div>
           <div class="shop-pro-feat">${Icon('lock')} Privat / offentlig synlighet</div>
           <div class="shop-pro-feat">${Icon('star')} Pro-badge på profilen</div>
           <div class="shop-pro-feat">${Icon('cloud')} Ubegrenset lagring + prioritert støtte</div>

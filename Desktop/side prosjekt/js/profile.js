@@ -1476,7 +1476,7 @@ const Profile = (() => {
           <div class="mix-sub-banner-inner">
             <div>
               <div class="mix-sub-title">${Icon('sliders')} DJ Mix Opplasting</div>
-              <div class="mix-sub-desc">Gratis: opptil 3 timer, offentlig synlighet · <strong>Pro:</strong> opptil 20 timer + privat/offentlig</div>
+              <div class="mix-sub-desc">Gratis: opptil 3 timer, offentlig synlighet · <strong>Pro:</strong> ingen tidsgrense + privat/offentlig</div>
             </div>
             <button class="btn btn-gold btn-sm" onclick="Profile.upgradeToPro()">${Icon('star')} Oppgrader til Pro</button>
           </div>
@@ -1484,7 +1484,7 @@ const Profile = (() => {
         <div class="mix-sub-banner mix-sub-banner--pro">
           <div class="mix-sub-banner-inner">
             <span class="mix-pro-badge">${Icon('star')} Pro</span>
-            <span style="font-size:0.85rem;color:var(--text2)">Mixes opptil 20 timer · privat/offentlig · ubegrenset lagring</span>
+            <span style="font-size:0.85rem;color:var(--text2)">Mixes uten tidsgrense · privat/offentlig · ubegrenset lagring</span>
           </div>
         </div>`}
         <div class="upload-zone" id="mix-dropzone" onclick="document.getElementById('mix-file-input').click()">
@@ -2035,7 +2035,6 @@ const Profile = (() => {
         duration = await new Promise(res => { a.onloadedmetadata = () => res(a.duration); a.onerror = () => res(0); setTimeout(() => res(0), 8000); });
         URL.revokeObjectURL(tempUrl);
         if (duration > 0 && duration < 60) { App.toast(`${file.name}: mixen er kortere enn 1 minutt`, 'error'); row.remove(); continue; }
-        if (duration > 72000) { App.toast(`${file.name}: overstiger 20-timers grensen`, 'error'); row.remove(); continue; }
         if (!isPro && duration > FREE_MIX_MAX_SECONDS) {
           App.toast(`${file.name}: mixes over 3 timer krever Pro ⭐ — oppgrader i Shop`, 'error', 6000);
           row.remove(); continue;
@@ -2072,7 +2071,7 @@ const Profile = (() => {
       </div>
       <div style="padding:1.5rem 0">
         <div class="mix-pro-feature-list">
-          <div class="mix-pro-feature">${Icon('sliders')} Last opp mixes over 3 timer (opptil 20 t)</div>
+          <div class="mix-pro-feature">${Icon('sliders')} Last opp mixes over 3 timer (ingen grense)</div>
           <div class="mix-pro-feature">${Icon('lock')} Privat/offentlig synlighet på mixes</div>
           <div class="mix-pro-feature">${Icon('star')} Pro-badge på profil</div>
         </div>
