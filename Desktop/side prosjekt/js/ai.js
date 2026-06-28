@@ -35,6 +35,7 @@ NAVIGASJON (hash-ruter):
 - Min side (#/minside): din egen profil
 - Innstillinger (#/settings): konto, abonnement, AI
 - Innboks (#/inbox): venneforespørsler og meldinger
+- A1 (#/a1): eiga AI-fane — drabar A1-chat (flyttbar fritt på skjermen), gratis universalsøk til heile nettet (opnar Google/DuckDuckGo/YouTube/Wikipedia i ny fane), og eit vekevis roterande galleri av utvalde nettstader og videoar. Gratis og open for alle.
 
 SLIK GJØR MAN TING:
 - Laste opp sang/musikk: Gå til profileditoren (#/edit) → fanen «Musikk» → «Last opp musikk» (lyd-filer). Musikken vises på profilen din og kan spilles i spilleren.

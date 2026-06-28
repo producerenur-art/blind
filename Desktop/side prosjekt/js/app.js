@@ -105,7 +105,9 @@ const App = (() => {
     const pendingFriend = Auth.getPendingRequestsCount(user.username);
     const unreadPMs     = getUnreadPMTotal(user.username);
     const unreadWall    = _getUnreadWallCount(user.username);
-    const total         = pendingFriend + unreadPMs + unreadWall;
+    const unreadNotif   = (window.Notify ? Notify.unreadCount() : 0);
+    if (window.Notify) Notify.updateBell();
+    const total         = pendingFriend + unreadPMs + unreadWall + unreadNotif;
     if (total === _lastBadgeTotal) return;
     _lastBadgeTotal = total;
     let badge = link.querySelector('.nav-badge');
@@ -139,6 +141,8 @@ const App = (() => {
         <a href="#/underground" class="btn btn-ghost btn-sm">${Icon('moon')} Underground</a>
         <a href="#/shows"       class="btn btn-ghost btn-sm">${Icon('calendar')} Shows</a>
         <a href="#/world"       class="btn btn-ghost btn-sm" title="All Over The World — global psytrance & psybient">${Icon('globe')} World</a>
+        <a href="#/a1"          class="btn btn-ghost btn-sm a1-nav-link" title="A1 — AI + søk heile nettet + ukas lenker & videoar">${Icon('sparkles')} A1</a>
+        <a href="#/community"   class="btn btn-ghost btn-sm" title="Community — fellesveggen">${Icon('users')} Community</a>
         <a href="#/shop"        class="btn btn-ghost btn-sm" title="Shop">${Icon('store')} Shop</a>
         <a href="#/studio"      class="btn btn-ghost btn-sm" title="Blend Studio">${Icon('palette')} Blend</a>
         <a href="#/inbox"       class="btn btn-ghost btn-sm" style="position:relative">${Icon('mail')} Innboks${inboxBadge}</a>
@@ -146,6 +150,8 @@ const App = (() => {
         <a href="#/edit"        class="btn btn-ghost btn-sm" title="Rediger profil">${Icon('edit')}</a>
         <a href="#/settings"    class="btn btn-ghost btn-sm" title="Innstillinger">${Icon('settings')}</a>
         <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne/lukk flytende chat-vindu">${Icon('message')} Chat-vindu</button>
+        <button id="nav-friends-btn" class="btn btn-ghost btn-sm" onclick="if(window.FriendChat)FriendChat.toggle()" title="Vennechat">${Icon('users')} Venner</button>
+        <button id="nav-bell" class="btn btn-ghost btn-sm nav-bell-btn" onclick="if(window.Notify)Notify.togglePanel()" title="Varsler" style="position:relative">${Icon('bell')}</button>
         <a href="#/login"       class="btn btn-ghost btn-sm" title="Du er online"><span class="nav-status-dot nav-status-dot--online" title="Online"></span>${Icon('log-in')} Logg inn</a>
         <button class="btn btn-ghost btn-sm" onclick="App.logout()">${Icon('log-out')} Logg ut</button>
       `;
@@ -157,6 +163,8 @@ const App = (() => {
         <a href="#/underground" class="btn btn-ghost btn-sm">${Icon('moon')} Underground</a>
         <a href="#/shows"       class="btn btn-ghost btn-sm">${Icon('calendar')} Shows</a>
         <a href="#/world"       class="btn btn-ghost btn-sm" title="All Over The World — global psytrance & psybient">${Icon('globe')} World</a>
+        <a href="#/a1"          class="btn btn-ghost btn-sm a1-nav-link" title="A1 — AI + søk heile nettet + ukas lenker & videoar">${Icon('sparkles')} A1</a>
+        <a href="#/community"   class="btn btn-ghost btn-sm" title="Community — fellesveggen">${Icon('users')} Community</a>
         <a href="#/shop"        class="btn btn-ghost btn-sm" title="Shop">${Icon('store')} Shop</a>
         <a href="#/login"       class="btn btn-ghost btn-sm">${Icon('log-in')} Logg inn</a>
         <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Du er offline"><span class="nav-status-dot nav-status-dot--offline" title="Offline"></span>${Icon('log-out')} Logg ut</button>
@@ -164,6 +172,10 @@ const App = (() => {
         <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne/lukk flytende chat-vindu">${Icon('message')} Chat-vindu</button>
       `;
     }
+    // Sosialt sanntidslag: start nærvær + varsel-innboks + vennechat (idempotent).
+    if (user && window.SC) SC.startPresence(user.username);
+    if (window.Notify)     Notify.init();
+    if (window.FriendChat) FriendChat.refresh();
   }
 
   function logout() {
@@ -1293,6 +1305,7 @@ const App = (() => {
     btn.className = 'user-card-friend-btn user-card-friend-btn--pending';
     btn.onclick = null;
     toast(`Venneforespørsel sendt til @${targetUsername}`, 'success');
+    if (window.Notify) Notify.emit(targetUsername, { type: 'friend_request', text: 'sendte deg en venneforespørsel', link: `#/u/${current.username}` });
     renderNav();
     const targetUser = Auth.getUser(targetUsername);
     if (targetUser?.email) {
@@ -1310,6 +1323,7 @@ const App = (() => {
     statusDiv.className = 'user-card-friend-status';
     statusDiv.textContent = '✓ Venner';
     btn.replaceWith(statusDiv);
+    if (window.Notify) Notify.emit(fromUsername, { type: 'friend_accept', text: 'godtok venneforespørselen din', link: `#/u/${current.username}` });
     toast(`Du er nå venner med @${fromUsername}! ${Icon('party')}`, 'success');
     renderNav();
   }
@@ -2058,6 +2072,8 @@ const App = (() => {
     Router.define('/underground',        () => Underground.render());
     Router.define('/shows',              () => Shows.render());
     Router.define('/world',              () => World.render());
+    Router.define('/a1',                 () => A1.render());
+    Router.define('/community',          () => { if (window.Community) Community.render(); });
     Router.define('/studio',             () => {
       if (!Auth.current()) { toast('Logg inn for å bruke Studio', 'error'); Router.go('/login'); return; }
       Studio.render();
@@ -2245,10 +2261,19 @@ const App = (() => {
   // ════════════════════════════════════════════════════════════════════
   // Abonnementsplaner — display-side. Autoritative beløp ligger i api/create-checkout.js (PLANS).
   const SHOP_PLANS = [
-    { key: 'monthly', name: '1 måned',    total: '149 kr',   per: '149 kr / mnd', save: null,         best: false },
-    { key: 'quarter', name: '3 måneder',  total: '399 kr',   per: '133 kr / mnd', save: 'Spar 11 %',  best: false },
-    { key: 'half',    name: '6 måneder',  total: '749 kr',   per: '125 kr / mnd', save: 'Spar 16 %',  best: false },
-    { key: 'year',    name: '12 måneder', total: '1 290 kr', per: '108 kr / mnd', save: 'Spar 28 %',  best: true  },
+    { key: 'monthly', name: '1 måned',    months:  1, total: '149 kr',   per: '149 kr / mnd', save: null,         best: false },
+    { key: 'quarter', name: '3 måneder',  months:  3, total: '399 kr',   per: '133 kr / mnd', save: 'Spar 11 %',  best: false },
+    { key: 'half',    name: '6 måneder',  months:  6, total: '749 kr',   per: '125 kr / mnd', save: 'Spar 16 %',  best: false },
+    { key: 'year',    name: '12 måneder', months: 12, total: '1 290 kr', per: '108 kr / mnd', save: 'Spar 28 %',  best: true  },
+  ];
+
+  // Pro-fordeler — vist i skjerm-kvittering (Payment.showReceipt) og Shop. Speilar api/_plans.js PRO_BENEFITS.
+  const PRO_BENEFITS = [
+    'DJ-mixes over 3 timer (opptil 20 t)',
+    'Privat / offentlig synlighet på mixes',
+    'Pro-badge på profilen',
+    'Ubegrenset lagring',
+    'Prioritert støtte',
   ];
 
   // Månadens tilbod — roterer automatisk per kalendermånad. Reint display/marknadsføring:
@@ -2361,7 +2386,7 @@ const App = (() => {
 
   return {
     init, toast, openModal, closeModal, showInfo,
-    renderShop,
+    renderShop, shopPlans: SHOP_PLANS, proBenefits: PRO_BENEFITS,
     logout, renderNav, updateNavBadge, markWallSeen,
     doLogin, doRegister, doForgotPassword, doResetPassword,
     resendActivationByEmail,
