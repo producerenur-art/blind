@@ -251,6 +251,26 @@
     </div>
   </div>
 
+  <!-- ═══ FLYTENDE RADIO-FANE (vises når en kanal er valgt) ═══ -->
+  <div id="radio-dock" class="radio-dock hidden" role="region" aria-label="Radio-kontroll">
+    <div class="radio-dock-handle" id="radio-dock-handle">
+      <span class="radio-dock-grip" data-icon="grip"></span>
+      <span class="radio-dock-name" id="radio-dock-name">Radio</span>
+      <button class="radio-dock-toggle" id="radio-dock-toggle" onclick="RadioDock.toggleOpen()" title="Lukk" aria-label="Åpne/lukk"></button>
+    </div>
+    <div class="radio-dock-body">
+      <div class="radio-dock-vol">
+        <button class="radio-dock-btn radio-dock-vol-btn" onclick="RadioDock.volDown()" title="Lyd ned" aria-label="Lyd ned" data-icon="minus"></button>
+        <div class="radio-dock-vol-meter"><div class="radio-dock-vol-fill" id="radio-dock-vol-fill"></div></div>
+        <button class="radio-dock-btn radio-dock-vol-btn" onclick="RadioDock.volUp()" title="Lyd opp" aria-label="Lyd opp" data-icon="plus"></button>
+      </div>
+      <div class="radio-dock-transport">
+        <button class="radio-dock-btn radio-dock-play" id="radio-dock-play" onclick="RadioDock.togglePlay()" title="Start" aria-label="Start / pause"></button>
+        <button class="radio-dock-btn radio-dock-stop" onclick="RadioDock.stop()" title="Stopp" aria-label="Stopp" data-icon="square"></button>
+      </div>
+    </div>
+  </div>
+
   <!-- Hidden audio engine -->
   <audio id="audio-engine" preload="metadata" crossorigin="anonymous"></audio>
 
@@ -487,6 +507,7 @@
   <script src="js/lang.js?v=20260628-social3"></script>
   <script src="js/langDrag.js"></script>
   <script src="js/playerDrag.js"></script>
+  <script src="js/radioDock.js?v=20260628-radiodock"></script>
   <script src="js/footerDrag.js?v=20260628-footer"></script>
   <script src="js/navDrag.js?v=20260628-navscroll"></script>
   <script src="js/aiAssistant.js?v=20260628-bughelp"></script>

@@ -775,6 +775,9 @@ const Radio = (() => {
     if (bar) bar.classList.add('radio-mode');
     bar?.classList.remove('hidden');
 
+    // Show + refresh the floating radio dock for the selected channel
+    window.RadioDock?.sync();
+
     // Clicking station info navigates to radio page
     const playerLeft = document.getElementById('player-left');
     if (playerLeft) {
@@ -797,6 +800,7 @@ const Radio = (() => {
         startVisualizer();
         updateNowPlayingStatus(true);
         updateSidebarActiveState(currentStation.id);
+        window.RadioDock?.sync();
       }).catch(err => {
         console.warn('Stream error:', err);
         App.toast(`Kunne ikke koble til strøm. Prøv en annen kanal.`, 'error');
@@ -818,6 +822,7 @@ const Radio = (() => {
       updatePlayBtn(false);
       updateNowPlayingStatus(false);
       updateSidebarActiveState(currentStation.id);
+      window.RadioDock?.sync();
       // Keep _radioMode = true so ctrl-play in player bar resumes radio correctly
     } else {
       // Always reconnect the stream (live streams can't reliably resume from pause)
@@ -852,7 +857,14 @@ const Radio = (() => {
     if (volBar) volBar.value = Math.round(v * 100);
     const volFill = document.getElementById('vol-fill');
     if (volFill) volFill.style.width = Math.round(v * 100) + '%';
+    const radioVol = document.getElementById('radio-vol');
+    if (radioVol) radioVol.value = Math.round(v * 100);
+    window.RadioDock?.syncVol();
   }
+
+  // Step volume up/down (used by the floating radio dock's +/− buttons)
+  function volumeUp()   { if (muted) toggleMute(); setVolume(Math.min(1, +(volume + 0.1).toFixed(2))); }
+  function volumeDown() { if (muted) toggleMute(); setVolume(Math.max(0, +(volume - 0.1).toFixed(2))); }
 
   function stopRadio() {
     const audio = getAudio();
@@ -879,6 +891,7 @@ const Radio = (() => {
       playerLeft.removeEventListener('click', playerLeft._radioClickHandler);
       playerLeft._radioClickHandler = null;
     }
+    window.RadioDock?.sync();
   }
 
   function toggleMute() {
@@ -905,6 +918,7 @@ const Radio = (() => {
     if (playerVolBar) playerVolBar.value = muted ? 0 : Math.round(volume * 100);
     const volFill = document.getElementById('vol-fill');
     if (volFill) volFill.style.width = (muted ? 0 : Math.round(volume * 100)) + '%';
+    window.RadioDock?.syncVol();
   }
 
   // ── UI updates ────────────────────────────────────────────────────────
@@ -1410,12 +1424,14 @@ const Radio = (() => {
 
   return {
     render, playStation, playCustom, togglePlay, stopRadio, playUrl, fetchStations,
-    setVolume, toggleMute, setVisMode, setVisSize, addCustomStream, removeCustom,
+    setVolume, volumeUp, volumeDown, toggleMute, setVisMode, setVisSize, addCustomStream, removeCustom,
     playSearchResult, saveSearchResult, onSearchInput,
     toggleAiChat, sendAiMessage, onAiKeydown,
     setAsFavorite, openEmbed, closeEmbed, stopForMusicPlayer,
     get isPlaying() { return isPlaying; },
     get currentStation() { return currentStation; },
+    get volume() { return volume; },
+    get muted() { return muted; },
     get stations() { return STATIONS; },
   };
 })();
