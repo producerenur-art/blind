@@ -14,7 +14,8 @@ const Radio = (() => {
     },
     {
       id: 'u-recken',
-      name: 'U-Recken',
+      // 'U\u2011Recken' uses a non-breaking hyphen (U+2011) so the name never wraps to "U-/Recken" on narrow cards
+      name: 'U‑Recken',
       emoji: '🌀',
       color: '#7c3aed',
       desc: 'Psytrance to chill out',

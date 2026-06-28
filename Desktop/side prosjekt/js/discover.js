@@ -1816,7 +1816,7 @@ const Discover = (() => {
       { icon: '🌊', name: 'E-Mov',              genres: 'Progressive Psytrance' },
       { icon: '🌿', name: 'Spirit Architect',   genres: 'Psychedelic Trance' },
       { icon: '🏖', name: 'Tropical Bleyage',   genres: 'Full-On · Psychedelic Trance' },
-      { icon: '🌀', name: 'U-Recken',           genres: 'Psychedelic Trance · Full-On' },
+      { icon: '🌀', name: 'U‑Recken',           genres: 'Psychedelic Trance · Full-On' },
       { icon: '💡', name: 'Ephedrix',           genres: 'Psychedelic Trance' },
       { icon: '🔢', name: 'Bitkit',             genres: 'Psychedelic Trance · Progressive' },
       { icon: '⏱', name: 'Chronos',            genres: 'Psychedelic Trance' },
@@ -3095,7 +3095,7 @@ const Discover = (() => {
             <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('wind')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">
-                U-Recken <span style="font-size:0.85rem;opacity:0.7">🇮🇱 Israel</span>
+                U‑Recken <span style="font-size:0.85rem;opacity:0.7">🇮🇱 Israel</span>
               </div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
                 Psytrance-produsent og live-artist med 20 år på scena — frå underground til store festivalar.
