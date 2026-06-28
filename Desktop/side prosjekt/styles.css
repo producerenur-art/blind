@@ -7211,6 +7211,7 @@ body.lang-dragging #lang-toggle { cursor: grabbing; user-select: none; }
 
 .lang-flag { font-size: 1.05rem; flex-shrink: 0; }
 .lang-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lang-empty { padding: 10px 14px; color: #9a8fb8; font-size: 0.85rem; text-align: center; }
 
 /* Hide Google Translate toolbar banner */
 .goog-te-banner-frame, #goog-te-banner-frame { display: none !important; }
@@ -8689,6 +8690,70 @@ body { top: 0 !important; }
 .community-post-del .icon { width: 15px; height: 15px; }
 .community-post-text { margin-top: 0.25rem; color: var(--text); font-size: 0.92rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
 .community-empty { padding: 2.5rem 1rem; text-align: center; color: var(--text3); }
+
+/* ── Community 2.0: filter, auto-del, media, kommentarar, reaksjonar ─────── */
+.community-autoshare { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.74rem; color: var(--text2); cursor: pointer; }
+.community-autoshare input { accent-color: var(--accent); }
+
+.community-filter { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+.community-filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text2); border-radius: 9999px; padding: 0.28rem 0.8rem; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; }
+.community-filter-btn:hover { color: var(--text); }
+.community-filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.community-media { margin-top: 0.55rem; border-radius: 10px; overflow: hidden; }
+.community-media-title { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.35rem; }
+.community-media-title .icon { width: 15px; height: 15px; }
+.community-audio audio { width: 100%; height: 38px; }
+.community-media video { width: 100%; max-height: 360px; border-radius: 10px; background: #000; display: block; }
+.community-yt { position: relative; padding-bottom: 56.25%; height: 0; }
+.community-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 10px; }
+.community-blend img { width: 100%; border-radius: 10px; display: block; }
+a.community-link { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.7rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--accent); text-decoration: none; font-size: 0.85rem; word-break: break-all; }
+a.community-link .icon { width: 15px; height: 15px; }
+
+/* Reaksjonar (👍/👎) */
+.sc-react { display: flex; gap: 0.4rem; margin-top: 0.55rem; }
+.sc-react-btn { display: inline-flex; align-items: center; gap: 0.3rem; background: var(--surface); border: 1px solid var(--border); color: var(--text2); border-radius: 9999px; padding: 0.18rem 0.6rem; font-size: 0.82rem; cursor: pointer; transition: all 0.15s; }
+.sc-react-btn:hover { color: var(--text); border-color: var(--accent); }
+.sc-react-btn.active { background: rgba(124,58,237,0.18); border-color: var(--accent); color: var(--text); }
+.sc-react-btn.down.active { background: rgba(239,68,68,0.16); border-color: #ef4444; }
+.sc-react-btn span { font-size: 0.74rem; color: var(--text3); }
+
+/* Kommentarar */
+.sc-cmt-block { margin-top: 0.6rem; border-top: 1px solid var(--border); padding-top: 0.55rem; }
+.sc-cmt-bar { font-size: 0.74rem; color: var(--text3); display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.4rem; }
+.sc-cmt-bar .icon { width: 14px; height: 14px; }
+.sc-cmt-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.sc-cmt-row { display: flex; gap: 0.5rem; }
+.sc-cmt-av { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.78rem; color: #fff; text-decoration: none; background: linear-gradient(135deg,#7c3aed,#2563eb); }
+.sc-cmt-main { min-width: 0; flex: 1; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 0.4rem 0.6rem; }
+.sc-cmt-head { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+.sc-cmt-name { font-weight: 600; font-size: 0.82rem; color: var(--text); text-decoration: none; }
+.sc-cmt-name:hover { color: var(--accent); }
+.sc-cmt-time { font-size: 0.68rem; color: var(--text3); }
+.sc-cmt-del { margin-left: auto; background: none; border: none; color: var(--text3); cursor: pointer; padding: 0; }
+.sc-cmt-del:hover { color: #ef4444; }
+.sc-cmt-del .icon { width: 13px; height: 13px; }
+.sc-cmt-text { margin-top: 0.15rem; font-size: 0.86rem; color: var(--text); line-height: 1.4; word-break: break-word; white-space: pre-wrap; }
+.sc-cmt-main .sc-react { margin-top: 0.35rem; }
+.sc-cmt-main .sc-react-btn { padding: 0.08rem 0.45rem; font-size: 0.74rem; }
+.sc-cmt-composer { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.55rem; flex-wrap: wrap; }
+.sc-cmt-input { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 9999px; padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+.sc-cmt-input:focus { outline: none; border-color: var(--accent); }
+.sc-cmt-emoji-btn { background: none; border: none; font-size: 1.05rem; cursor: pointer; line-height: 1; }
+.sc-cmt-login { font-size: 0.8rem; color: var(--text3); margin-top: 0.5rem; }
+.sc-cmt-login a { color: var(--accent); }
+.sc-emoji-bar { display: flex; flex-wrap: wrap; gap: 0.15rem; width: 100%; margin-top: 0.3rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.3rem; }
+.sc-emoji-pill { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 0.1rem 0.25rem; border-radius: 6px; line-height: 1; }
+.sc-emoji-pill:hover { background: rgba(255,255,255,0.08); }
+
+/* Venn-knapp overalt */
+.sc-friend { display: inline-flex; gap: 0.25rem; }
+.sc-friend-btn-mini { background: var(--surface); border: 1px solid var(--border); color: var(--text2); border-radius: 9999px; padding: 0.1rem 0.5rem; font-size: 0.7rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.2rem; }
+.sc-friend-btn-mini:hover { color: var(--text); border-color: var(--accent); }
+.sc-friend-btn-mini.sc-friend-add { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sc-friend-btn-mini .icon { width: 12px; height: 12px; }
+.disc-people-friend { margin-top: 0.5rem; }
 
 @media (max-width: 520px) {
   .fc-dock { right: 8px; left: 8px; bottom: 8px; width: auto; }
