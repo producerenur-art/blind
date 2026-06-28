@@ -152,7 +152,7 @@ const App = (() => {
         <a href="#/edit"        class="btn btn-ghost btn-sm" title="Rediger profil">${Icon('edit')}</a>
         <a href="#/settings"    class="btn btn-ghost btn-sm" title="Innstillinger">${Icon('settings')}</a>
         <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne/lukk flytende chat-vindu">${Icon('message')} Chat-vindu</button>
-        <button id="nav-friends-btn" class="btn btn-ghost btn-sm" onclick="if(window.FriendChat)FriendChat.toggle()" title="Vennechat">${Icon('users')} Venner</button>
+        <a href="#/friends" class="btn btn-ghost btn-sm" title="Friends — sjå kven som er online og venene dine">${Icon('users')} Friends</a>
         <button id="nav-bell" class="btn btn-ghost btn-sm nav-bell-btn" onclick="if(window.Notify)Notify.togglePanel()" title="Varsler" style="position:relative">${Icon('bell')}</button>
         <a href="#/login"       class="btn btn-ghost btn-sm" title="Du er online"><span class="nav-status-dot nav-status-dot--online" title="Online"></span>${Icon('log-in')} Logg inn</a>
         <button class="btn btn-ghost btn-sm" onclick="App.logout()">${Icon('log-out')} Logg ut</button>
@@ -178,6 +178,7 @@ const App = (() => {
     if (user && window.Social) Social.init(user.username);   // abonner på eigen gjestebok → nav-merke
     if (window.Notify)     Notify.init();
     if (window.FriendChat) FriendChat.refresh();
+    if (window.Friends)    Friends.init();      // held test-admin online medan appen er open
     if (window.NavDrag)    NavDrag.refresh();   // oppdater grab-markør for nytt fane-antal
   }
 
@@ -2076,6 +2077,7 @@ const App = (() => {
     Router.define('/world',              () => World.render());
     Router.define('/a1',                 () => A1.render());
     Router.define('/community',          () => { if (window.Community) Community.render(); });
+    Router.define('/friends',            () => { if (window.Friends) Friends.render(); });
     Router.define('/studio',             () => {
       if (!Auth.current()) { toast('Logg inn for å bruke Studio', 'error'); Router.go('/login'); return; }
       Studio.render();

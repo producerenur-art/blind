@@ -180,6 +180,23 @@ const Auth = (() => {
       return getUsers()[username] || null;
     },
 
+    // Slett ein brukar heilt + rydd referansar hos alle andre (vener, forespurnader, følgjarar).
+    deleteUser(username) {
+      const users = getUsers();
+      if (!users[username]) return false;
+      delete users[username];
+      for (const k in users) {
+        const u = users[k];
+        if (u.friends)        u.friends        = u.friends.filter(f => f !== username);
+        if (u.sentRequests)   u.sentRequests   = u.sentRequests.filter(f => f !== username);
+        if (u.friendRequests) u.friendRequests = u.friendRequests.filter(r => r.from !== username);
+        if (u.followers)      u.followers      = u.followers.filter(f => f !== username);
+        if (u.following)      u.following      = u.following.filter(f => f !== username);
+      }
+      saveUsers(users);
+      return true;
+    },
+
     getAllPublicUsers() {
       return Object.values(getUsers()).map(u => ({
         username:    u.username,
