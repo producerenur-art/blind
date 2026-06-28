@@ -226,7 +226,7 @@ const App = (() => {
         <div class="stellar-hero-glow"></div>
         <div class="stellar-hero-content">
           <div class="stellar-hero-badge">${Icon('sparkles')} Psychedelic · Ambient · Dub</div>
-          <h1 class="stellar-hero-title">Sound Core<span> Development</span></h1>
+          <h1 class="stellar-hero-title">Sound Core</h1>
           <div class="stellar-hero-for">
             <span>Friends</span>
             <span class="stellar-hero-for-dot">·</span>
@@ -999,7 +999,7 @@ const App = (() => {
       <div class="auth-page">
         <div class="auth-card">
           <div class="auth-logo">
-            <h1>Sound Core<span> Development</span></h1>
+            <h1>Sound Core</h1>
             <p>Tilbakestill passord</p>
           </div>
           <div class="form-group">
@@ -1048,7 +1048,7 @@ const App = (() => {
       <div class="auth-page">
         <div class="auth-card">
           <div class="auth-logo">
-            <h1>Sound Core<span> Development</span></h1>
+            <h1>Sound Core</h1>
             <p>Nytt passord</p>
           </div>
           <div class="form-group">
