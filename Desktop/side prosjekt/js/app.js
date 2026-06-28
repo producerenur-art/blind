@@ -1361,15 +1361,16 @@ const App = (() => {
             </div>
             <div class="plan-card ${isPro ? 'current-plan' : ''}">
               <div class="plan-card-name">${Icon('star')} Pro</div>
-              <div class="plan-card-price">149 kr / måned</div>
+              <div class="plan-card-price">fra 108 kr / måned</div>
               <ul class="plan-card-features">
                 <li>Alt i Gratis</li>
+                <li>DJ-mixes over 3 timer (opptil 20 t)</li>
                 <li>Private DJ-mixes</li>
-                <li>Live Mix tid</li>
-                <li>Prioritert støtte</li>
+                <li>Pro-badge + prioritert støtte</li>
               </ul>
               ${!isPro
-                ? `<button class="btn btn-primary w-full" onclick="Payment.startCheckout('${user.username}')">Oppgrader til Pro</button>`
+                ? `<button class="btn btn-primary w-full" onclick="Payment.startCheckout('${user.username}')">Oppgrader til Pro</button>
+                   <a href="#/shop" class="shop-link-sm" style="text-align:center;width:100%;margin-top:0.6rem">Se 1, 3, 6 og 12 mnd i Shop →</a>`
                 : `<div style="text-align:center;color:#4ade80;font-weight:700;margin-top:0.5rem">${Icon('check')} Aktivt abonnement</div>`}
             </div>
           </div>
@@ -2237,19 +2238,57 @@ const App = (() => {
   // ════════════════════════════════════════════════════════════════════
   //  Shop — produktbutikk. Flere produkter kommer hit etter hvert.
   // ════════════════════════════════════════════════════════════════════
+  // Abonnementsplaner — display-side. Autoritative beløp ligger i api/create-checkout.js (PLANS).
+  const SHOP_PLANS = [
+    { key: 'monthly', name: '1 måned',    total: '149 kr',   per: '149 kr / mnd', save: null,         best: false },
+    { key: 'quarter', name: '3 måneder',  total: '399 kr',   per: '133 kr / mnd', save: 'Spar 11 %',  best: false },
+    { key: 'half',    name: '6 måneder',  total: '749 kr',   per: '125 kr / mnd', save: 'Spar 16 %',  best: false },
+    { key: 'year',    name: '12 måneder', total: '1 290 kr', per: '108 kr / mnd', save: 'Spar 28 %',  best: true  },
+  ];
+
   function renderShop() {
+    const user  = Auth.current();
+    const isPro = user?.subscription === 'pro';
+    const uname = user?.username || '';
+
+    const planCard = (p) => {
+      let action;
+      if (isPro)       action = `<button class="btn btn-ghost w-full" disabled style="margin-top:auto">${Icon('check')} Du har Pro</button>`;
+      else if (uname)  action = `<button class="btn btn-gold w-full" style="margin-top:auto" onclick="Payment.startCheckout('${uname}','${p.key}')">${Icon('credit-card')} Kjøp</button>`;
+      else             action = `<button class="btn btn-gold w-full" style="margin-top:auto" onclick="Router.go('/login')">${Icon('log-in')} Logg inn for å kjøpe</button>`;
+      return `
+        <div class="shop-card shop-plan${p.best ? ' shop-plan--best' : ''}">
+          ${p.best ? `<span class="shop-badge shop-badge-free">${Icon('star')} Beste verdi</span>` : ''}
+          <div class="shop-plan-period">Pro · påløpende</div>
+          <h2>${p.name}</h2>
+          <div class="shop-card-price">${p.total}</div>
+          <div class="shop-plan-per">${p.per}${p.save ? ` · <strong class="shop-save">${p.save}</strong>` : ''}</div>
+          ${action}
+        </div>`;
+    };
+
     document.getElementById('app').innerHTML = `
       <div class="shop-page">
         <h1>${Icon('store')} Shop</h1>
-        <p class="shop-sub">Flere produkter legges til her fortløpende.</p>
-        <div class="shop-grid">
-          <div class="shop-card shop-card-soon">
-            <div class="shop-card-icon">${Icon('plus')}</div>
-            <h2>Mer kommer</h2>
-            <p>Nye produkter, pakker og utvidelser dukker opp her snart.</p>
-            <span class="shop-badge">Kommer snart</span>
-          </div>
+        <p class="shop-sub">Sound Core Pro — lås opp alt. Velg perioden som passer deg. Alle abonnement er påløpende og kan avbrytes når som helst.</p>
+
+        ${isPro ? `<div class="shop-launch-banner">${Icon('check')} <strong>Du har Pro aktivt.</strong> Takk for støtten! ${Icon('sliders')}</div>` : ''}
+
+        <div class="shop-pro-feats">
+          <div class="shop-pro-feat">${Icon('sliders')} DJ-mixes over 3 timer (opptil 20 t)</div>
+          <div class="shop-pro-feat">${Icon('lock')} Privat / offentlig synlighet</div>
+          <div class="shop-pro-feat">${Icon('star')} Pro-badge på profilen</div>
+          <div class="shop-pro-feat">${Icon('cloud')} Ubegrenset lagring + prioritert støtte</div>
         </div>
+
+        <div class="shop-grid">
+          ${SHOP_PLANS.map(planCard).join('')}
+        </div>
+
+        <p class="shop-sub" style="margin-top:1.5rem;font-size:.8rem">
+          Sikker betaling via Stripe. Gratis-kontoer kan laste opp DJ-mixes på opptil 3 timer.
+          Spørsmål om abonnement? <a href="mailto:producerenur@gmail.com">producerenur@gmail.com</a>
+        </p>
       </div>`;
   }
 

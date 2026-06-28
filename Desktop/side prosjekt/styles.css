@@ -32,6 +32,21 @@
 .shop-badge-free { background: linear-gradient(90deg, #7c3aed, #ec4899); color: #fff; }
 .shop-badge-active { background: #16a34a; color: #fff; }
 
+/* Abonnementsplaner i Shop */
+.shop-plan { transition: border-color .15s ease, transform .15s ease; }
+.shop-plan:hover { border-color: rgba(167,139,250,.45); transform: translateY(-2px); }
+.shop-plan--best { border-color: rgba(124,58,237,.6); box-shadow: 0 0 0 1px rgba(124,58,237,.35), 0 8px 30px rgba(124,58,237,.18); }
+.shop-plan-period { font-size: .68rem; color: var(--text3, #6b7280); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .25rem; }
+.shop-plan .shop-card-price { margin: .15rem 0 .35rem; }
+.shop-plan-per { font-size: .82rem; color: var(--text2, #9aa4b2); margin-bottom: 1rem; }
+.shop-save { color: #4ade80; }
+.shop-pro-feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .55rem .9rem; margin: 0 0 1.5rem; }
+.shop-pro-feat { display: flex; align-items: center; gap: .55rem; font-size: .85rem; color: var(--text, #e5e7eb);
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 10px; padding: .55rem .75rem; }
+.shop-pro-feat svg { color: #a78bfa; flex: 0 0 auto; width: 18px; height: 18px; }
+.shop-link-sm { display: inline-block; margin-top: .6rem; font-size: .78rem; color: #a78bfa; text-decoration: none; }
+.shop-link-sm:hover { text-decoration: underline; }
+
 /* ═══════════════════════════════════════════════
    PSYCHEDELIC BACKGROUND SYSTEM
    ═══════════════════════════════════════════════ */

@@ -1,12 +1,12 @@
 // Stripe payment integration
 const Payment = (() => {
 
-  async function startCheckout(username) {
+  async function startCheckout(username, plan = 'monthly') {
     try {
       const res = await fetch('/api/create-checkout', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ username }),
+        body:    JSON.stringify({ username, plan }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Feil ved opprettelse av betaling');
@@ -43,11 +43,12 @@ const Payment = (() => {
       if (result.success) {
         Auth.updateUser(current.username, {
           subscription:   'pro',
+          proPlan:        result.plan || null,
           stripeSession:  sessionId,
           stripeSubId:    result.subscriptionId || null,
           proActivatedAt: Date.now(),
         });
-        Object.assign(current, { subscription: 'pro' });
+        Object.assign(current, { subscription: 'pro', proPlan: result.plan || null });
         App.toast('⭐ Velkommen til Pro! Privat mixes er nå aktivert.', 'success', 6000);
 
         // Send kjøpsbekreftelse på e-post (best effort — blokkerer ikke UI)

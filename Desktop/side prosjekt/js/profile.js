@@ -1476,7 +1476,7 @@ const Profile = (() => {
           <div class="mix-sub-banner-inner">
             <div>
               <div class="mix-sub-title">${Icon('sliders')} DJ Mix Opplasting</div>
-              <div class="mix-sub-desc">Gratis: Opplasting med offentlig synlighet · <strong>Pro:</strong> Privat/offentlig valgfritt</div>
+              <div class="mix-sub-desc">Gratis: opptil 3 timer, offentlig synlighet · <strong>Pro:</strong> opptil 20 timer + privat/offentlig</div>
             </div>
             <button class="btn btn-gold btn-sm" onclick="Profile.upgradeToPro()">${Icon('star')} Oppgrader til Pro</button>
           </div>
@@ -1484,13 +1484,13 @@ const Profile = (() => {
         <div class="mix-sub-banner mix-sub-banner--pro">
           <div class="mix-sub-banner-inner">
             <span class="mix-pro-badge">${Icon('star')} Pro</span>
-            <span style="font-size:0.85rem;color:var(--text2)">Privat mixes aktivert · ubegrenset lagring</span>
+            <span style="font-size:0.85rem;color:var(--text2)">Mixes opptil 20 timer · privat/offentlig · ubegrenset lagring</span>
           </div>
         </div>`}
         <div class="upload-zone" id="mix-dropzone" onclick="document.getElementById('mix-file-input').click()">
           <div class="upload-icon">${Icon('sliders')}</div>
           <div style="font-weight:600;margin-bottom:0.25rem">Last opp DJ Mix</div>
-          <div style="font-size:0.8rem;color:var(--text3)">MP3, WAV, AAC, FLAC · 1 minutt – 20 timer per mix</div>
+          <div style="font-size:0.8rem;color:var(--text3)">MP3, WAV, AAC, FLAC · 1 minutt – ${isPro ? '20' : '3'} timer per mix</div>
         </div>
         <input type="file" id="mix-file-input" accept="audio/*" style="display:none" onchange="Profile.uploadMix(this.files)">
         <div id="mix-upload-progress" style="margin-top:0.75rem"></div>
@@ -2014,9 +2014,12 @@ const Profile = (() => {
     });
   }
 
+  const FREE_MIX_MAX_SECONDS = 3 * 60 * 60; // gratis-kontoer: opptil 3 timer per mix
+
   async function uploadMix(files) {
     const current = Auth.current();
     if (!current) return;
+    const isPro = current.subscription === 'pro';
     const progressEl = document.getElementById('mix-upload-progress');
     for (const file of files) {
       const id = `mix_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -2033,6 +2036,10 @@ const Profile = (() => {
         URL.revokeObjectURL(tempUrl);
         if (duration > 0 && duration < 60) { App.toast(`${file.name}: mixen er kortere enn 1 minutt`, 'error'); row.remove(); continue; }
         if (duration > 72000) { App.toast(`${file.name}: overstiger 20-timers grensen`, 'error'); row.remove(); continue; }
+        if (!isPro && duration > FREE_MIX_MAX_SECONDS) {
+          App.toast(`${file.name}: mixes over 3 timer krever Pro ⭐ — oppgrader i Shop`, 'error', 6000);
+          row.remove(); continue;
+        }
       } catch {}
 
       const titleRaw = file.name.replace(/\.[^.]+$/, '');
@@ -2065,11 +2072,11 @@ const Profile = (() => {
       </div>
       <div style="padding:1.5rem 0">
         <div class="mix-pro-feature-list">
+          <div class="mix-pro-feature">${Icon('sliders')} Last opp mixes over 3 timer (opptil 20 t)</div>
           <div class="mix-pro-feature">${Icon('lock')} Privat/offentlig synlighet på mixes</div>
-          <div class="mix-pro-feature">${Icon('sliders')} Last opp mixes fra 1 minutt til 20 timer</div>
           <div class="mix-pro-feature">${Icon('star')} Pro-badge på profil</div>
         </div>
-        <div class="mix-pro-price">150 NOK / mnd</div>
+        <div class="mix-pro-price">149 kr / mnd</div>
         <p style="font-size:0.78rem;color:var(--text3);margin-bottom:1.25rem">
           Sikker betaling via Stripe. Avbryt når som helst.
         </p>
@@ -2077,7 +2084,10 @@ const Profile = (() => {
           ${Icon('credit-card')} Betal med Stripe
         </button>
         <div id="stripe-pay-error" style="display:none;margin-top:0.75rem;font-size:0.82rem;color:var(--red)"></div>
-        <p style="font-size:0.72rem;color:var(--text3);margin-top:1rem;text-align:center">
+        <a href="#/shop" class="shop-link-sm" style="text-align:center;width:100%;margin-top:0.85rem" onclick="App.closeModal()">
+          Spar med 3, 6 eller 12 måneder i Shop →
+        </a>
+        <p style="font-size:0.72rem;color:var(--text3);margin-top:0.75rem;text-align:center">
           Du blir sendt til Stripe sin sikre betalingsside
         </p>
       </div>`;

@@ -22,6 +22,7 @@ module.exports = async (req, res) => {
     res.status(200).json({
       success:        true,
       username:       session.metadata?.username || null,
+      plan:           session.metadata?.plan     || null,
       subscriptionId: session.subscription      || null,
       customerEmail:  session.customer_details?.email || null,
     });
