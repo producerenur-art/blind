@@ -268,6 +268,19 @@ body[data-bg-effect="cosmos"]:not(.route-home) #bg-ufo { display: none; }
 }
 #bg-ufo svg { display: block; width: 100%; height: auto; overflow: visible; }
 
+/* UFO-størrelse — styres fra bakgrunnsvelgeren (BgManager.setUfoSize).
+   "medium" er standard og bruker #bg-ufo-regelen over. */
+body[data-ufo-size="small"] #bg-ufo { width: clamp(80px, 9vw, 140px); }
+body[data-ufo-size="large"] #bg-ufo { width: clamp(220px, 32vw, 480px); }
+/* Fullskjerm: park tallerkenen midt på siden og la den dekke skjermen */
+body[data-ufo-size="full"] #bg-ufo {
+  width: min(94vw, 72vh);
+  top: 50%;
+  left: 50%;
+  animation: none;
+  transform: translate(-50%, -52%);
+}
+
 /* Drift left → right across viewport with a gentle bob + subtle piloted tilt */
 @keyframes ufoFlight {
   0%   { transform: translate(-26vw, 0)     rotate(-2deg);   }

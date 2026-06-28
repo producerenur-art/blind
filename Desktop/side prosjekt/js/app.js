@@ -1972,6 +1972,18 @@ const App = (() => {
     // Init player
     Player.init();
 
+    // Bare én spiller av gangen: når et media-element starter, pause alle andre
+    // hørbare audio/video (hovedspiller, radio, profil-temamusikk, media-modal-video).
+    // Lydløse forhåndsvisninger (media-grid-videoer, hero-bakgrunn) er unntatt så de
+    // kan loope stille videre. Media-events bobler ikke → fang i capture-fasen.
+    document.addEventListener('play', e => {
+      const started = e.target;
+      if (!(started instanceof HTMLMediaElement) || started.muted) return;
+      document.querySelectorAll('audio, video').forEach(m => {
+        if (m !== started && !m.paused && !m.muted) m.pause();
+      });
+    }, true);
+
     // Render nav
     renderNav();
 

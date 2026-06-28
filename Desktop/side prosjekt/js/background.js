@@ -4,6 +4,16 @@ const BgManager = (() => {
   const BG_ID        = 'site_bg_v1';
   const EFFECT_KEY   = 'pv_bg_effect';
   const PARTICLE_KEY = 'pv_bg_particles';
+  const UFO_SIZE_KEY = 'pv_ufo_size';
+  // Standard-bakgrunner som roterer som en pauseskjerm når ingen egen bakgrunn er
+  // lagret. Legg bildene i assets/ (default-bg.jpg, bg1.jpg, bg2.jpg, …). De som
+  // finnes brukes; manglende hoppes over. Kryssfader gjennom den mørke bakgrunnen.
+  const DEFAULT_BGS = [
+    'assets/default-bg.jpg',
+    'assets/bg1.jpg', 'assets/bg2.jpg', 'assets/bg3.jpg',
+    'assets/bg4.jpg', 'assets/bg5.jpg', 'assets/bg6.jpg',
+  ];
+  const SLIDE_MS = 14000;   // bytt bilde hvert 14. sekund
 
   const EFFECTS = {
     cosmos:      { label: '🛸 Verdensrom',   hue: '40s',  breathe: '40s', sat: 1.4, bright: 0.40 },
@@ -21,8 +31,18 @@ const BgManager = (() => {
     none:    '✕ Ingen',
   };
 
+  // UFO-størrelse (kun synlig med cosmos-effekt). "full" parkerer tallerkenen
+  // midt på siden og lar den dekke skjermen — se styles.css.
+  const UFO_SIZES = {
+    small:  '🛸 Liten',
+    medium: '🛸 Middels',
+    large:  '🛸 Stor',
+    full:   '🛸 Fullskjerm',
+  };
+
   let currentEffect   = localStorage.getItem(EFFECT_KEY)   || 'cosmos';
   let currentParticles= localStorage.getItem(PARTICLE_KEY) || 'stars';
+  let currentUfoSize  = localStorage.getItem(UFO_SIZE_KEY) || 'medium';
 
   let canvas, ctx, frame, particles = [];
 
@@ -37,8 +57,9 @@ const BgManager = (() => {
       startParticles();
     }
 
-    // Apply saved effect
+    // Apply saved effect + UFO size
     document.body.dataset.bgEffect = currentEffect;
+    document.body.dataset.ufoSize  = currentUfoSize;
 
     // Pause all CSS background animations while the tab is backgrounded — no point
     // burning GPU/CPU compositing nebula + prism layers nobody is looking at.
@@ -49,11 +70,42 @@ const BgManager = (() => {
       });
     }
 
-    // Load saved image from IndexedDB
+    // Load saved image from IndexedDB, else fall back to the default site image
     try {
       const url = await DB.getBlobUrl('media', BG_ID);
       if (url) _showImage(url);
-    } catch {}
+      else _startDefaultSlideshow();
+    } catch { _startDefaultSlideshow(); }
+  }
+
+  // Roter standard-bakgrunnene som en pauseskjerm — men bare de filene som finnes.
+  let _slideList = [], _slideIdx = 0, _slideTimer = null;
+
+  async function _startDefaultSlideshow() {
+    const found = await Promise.all(DEFAULT_BGS.map(src => new Promise(res => {
+      const im = new Image();
+      im.onload  = () => res(src);
+      im.onerror = () => res(null);
+      im.src = src;
+    })));
+    _slideList = found.filter(Boolean);
+    if (!_slideList.length) return;        // ingen filer ennå → behold prosedyre-bg
+    _slideIdx = 0;
+    _showImage(_slideList[0]);
+    const base = document.getElementById('bg-img');
+    if (base) base.style.transition = 'opacity 1.6s ease-in-out';
+    if (_slideList.length < 2) return;     // bare ett bilde → ingen rotasjon
+    clearInterval(_slideTimer);
+    _slideTimer = setInterval(_nextSlide, SLIDE_MS);
+  }
+
+  // Kryssfade: ton ut til den mørke bakgrunnen, bytt bilde, ton inn igjen.
+  function _nextSlide() {
+    const base = document.getElementById('bg-img');
+    if (!base || _slideList.length < 2 || document.hidden) return;
+    _slideIdx = (_slideIdx + 1) % _slideList.length;
+    base.style.opacity = '0';
+    setTimeout(() => { base.src = _slideList[_slideIdx]; base.style.opacity = ''; }, 1600);
   }
 
   function resize() {
@@ -114,6 +166,17 @@ const BgManager = (() => {
     // Update picker buttons if panel is open
     document.querySelectorAll('.effect-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.effect === id);
+    });
+  }
+
+  // ── UFO size ──────────────────────────────────────────────────────────
+  function setUfoSize(size) {
+    if (!UFO_SIZES[size]) return;
+    currentUfoSize = size;
+    localStorage.setItem(UFO_SIZE_KEY, size);
+    document.body.dataset.ufoSize = size;
+    document.querySelectorAll('.ufo-size-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.ufoSize === size);
     });
   }
 
@@ -314,6 +377,16 @@ const BgManager = (() => {
                   onclick="BgManager.setParticleStyle('${id}')">
             ${label}
           </button>`).join('')}
+      </div>
+
+      <div class="picker-section-label">UFO-størrelse <span style="opacity:.6;font-weight:400">(forsiden · cosmos)</span></div>
+      <div class="effect-grid">
+        ${Object.entries(UFO_SIZES).map(([id, label]) => `
+          <button class="effect-btn ufo-size-btn ${currentUfoSize === id ? 'active' : ''}"
+                  data-ufo-size="${id}"
+                  onclick="BgManager.setUfoSize('${id}')">
+            ${label}
+          </button>`).join('')}
       </div>`;
 
     document.body.appendChild(panel);
@@ -332,5 +405,5 @@ const BgManager = (() => {
     }, 50);
   }
 
-  return { init, uploadImage, openPicker, setEffect, setParticleStyle };
+  return { init, uploadImage, openPicker, setEffect, setParticleStyle, setUfoSize };
 })();
