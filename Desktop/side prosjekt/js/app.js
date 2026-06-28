@@ -429,7 +429,9 @@ const App = (() => {
           <div class="page-loading"><div class="spinner"></div></div>
         </div>
       </div>
-      <footer class="site-footer">
+      <footer class="site-footer" id="site-footer">
+        <div class="footer-drag-handle" id="footer-drag-handle" title="Dra for å flytte footeren">${Icon('grip')}</div>
+        <button class="footer-min-btn" id="footer-toggle-btn" onclick="FooterWidget.hide()" title="Skjul footer">${Icon('minus')}</button>
         <div class="site-footer-inner">
           <div class="site-footer-logo">${Icon('sparkles')} Sound Core</div>
           <div class="site-footer-contact">
@@ -438,7 +440,10 @@ const App = (() => {
           </div>
           <div class="site-footer-copy">© ${new Date().getFullYear()} Sound Core</div>
         </div>
-      </footer>`;
+      </footer>
+      <button class="footer-restore-btn" id="footer-restore-btn" onclick="FooterWidget.show()" title="Vis footer igjen">${Icon('chevron-up')} Footer</button>`;
+
+    if (window.FooterWidget) FooterWidget.init();
 
     // Home radio widget controller
     window.HomeRadio = (() => {

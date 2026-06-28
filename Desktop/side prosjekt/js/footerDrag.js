@@ -6,7 +6,11 @@ const FooterWidget = (() => {
   let startX, startY, startLeft, startTop;
   let isFloating  = false;
   let isCollapsed = false;
+  let docBound    = false;
 
+  // init() is safe to call repeatedly — the footer is re-rendered on every
+  // home view, so app.js calls this after each render. Handle listeners bind
+  // to the fresh element; document-level listeners bind once (docBound guard).
   function init() {
     footer     = document.getElementById('site-footer');
     handle     = document.getElementById('footer-drag-handle');
@@ -15,9 +19,12 @@ const FooterWidget = (() => {
 
     if (!footer || !handle) return;
 
+    // fresh element starts in-flow; saved state is re-applied below
+    isFloating = false; isCollapsed = false; dragging = false;
+
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     if (saved.floating && saved.left != null && saved.top != null) {
-      _applyFloat(saved.left, saved.top);
+      _applyFloat(parseInt(saved.left) || 0, parseInt(saved.top) || 0);
     }
     if (saved.collapsed) {
       _applyCollapse();
@@ -25,10 +32,13 @@ const FooterWidget = (() => {
 
     handle.addEventListener('mousedown', onDown);
     handle.addEventListener('touchstart', onDown, { passive: false });
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('touchmove', onMove, { passive: false });
-    document.addEventListener('mouseup', onUp);
-    document.addEventListener('touchend', onUp);
+    if (!docBound) {
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('mouseup', onUp);
+      document.addEventListener('touchend', onUp);
+      docBound = true;
+    }
   }
 
   // ── Drag ─────────────────────────────────────────────────────────────
@@ -117,5 +127,7 @@ const FooterWidget = (() => {
 
   document.addEventListener('DOMContentLoaded', init);
 
-  return { toggle, show, hide };
+  const api = { init, toggle, show, hide };
+  window.FooterWidget = api;
+  return api;
 })();

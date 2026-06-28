@@ -7654,6 +7654,43 @@ body { top: 0 !important; }
 .site-footer-email:hover { text-decoration: underline; }
 .site-footer-copy { font-size: 0.75rem; color: var(--text3); }
 
+/* ── Draggable / collapsible footer (FooterWidget) ──────────── */
+.site-footer { position: relative; }
+.footer-drag-handle {
+  position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; justify-content: center;
+  width: 46px; height: 16px; color: var(--text3);
+  cursor: grab; opacity: 0.45; transition: opacity 0.2s; touch-action: none;
+}
+.footer-drag-handle:hover { opacity: 1; }
+.footer-drag-handle:active { cursor: grabbing; }
+.footer-drag-handle svg { width: 18px; height: 18px; transform: rotate(90deg); }
+.footer-min-btn {
+  position: absolute; top: 8px; right: 10px;
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 7px;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  color: var(--text2); cursor: pointer; transition: background 0.2s, color 0.2s;
+}
+.footer-min-btn:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+.footer-min-btn svg { width: 15px; height: 15px; }
+.site-footer.footer-floating {
+  position: fixed; z-index: 1200; margin: 0;
+  width: min(560px, calc(100vw - 2rem));
+  border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+}
+.footer-restore-btn {
+  position: fixed; right: 18px; bottom: calc(var(--player-h) + 16px);
+  z-index: 1200; display: none; align-items: center; gap: 0.35rem;
+  padding: 0.5rem 0.9rem; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); cursor: pointer; font-size: 0.78rem; font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+}
+.footer-restore-btn:hover { background: rgba(255,255,255,0.08); }
+.footer-restore-btn svg { width: 15px; height: 15px; }
+
 /* ══════════════════════════════════════════════════════════
    HOME RADIO WIDGET
 ══════════════════════════════════════════════════════════ */
@@ -7985,6 +8022,89 @@ body { top: 0 !important; }
 /* ═══════════════════════════════════════════════
    AI ASSISTANT — floating, draggable chat widget ("Core")
    ═══════════════════════════════════════════════ */
+/* ── BugHelp — vennleg feilvarsel nede til venstre ──────────────────── */
+.bug-toast {
+  position: fixed;
+  left: 16px;
+  bottom: 96px;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  z-index: var(--z-toast);
+  background: rgba(12, 10, 24, 0.97);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(239,68,68,0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 1rem 1.1rem 1.1rem;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  opacity: 0;
+  transform: translateY(14px) scale(0.98);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.bug-toast--in  { opacity: 1; transform: translateY(0) scale(1); }
+.bug-toast--out { opacity: 0; transform: translateY(14px) scale(0.98); }
+.bug-toast-x {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+  border-radius: 6px;
+}
+.bug-toast-x:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.bug-toast-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 1.5rem 0.4rem 0;
+  font-size: 0.98rem;
+  color: #fff;
+}
+.bug-toast-ico { font-size: 1.1rem; }
+.bug-toast-msg {
+  margin: 0 0 0.85rem;
+  color: #b8c0d0;
+  line-height: 1.45;
+  font-size: 0.85rem;
+}
+.bug-toast-actions { display: flex; gap: 0.5rem; }
+.bug-toast-btn {
+  flex: 1;
+  padding: 0.55rem 0.6rem;
+  border-radius: 9px;
+  border: 1px solid var(--border2);
+  background: rgba(255,255,255,0.05);
+  color: #e2e8f0;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.bug-toast-btn:hover { background: rgba(255,255,255,0.12); }
+.bug-toast-btn:active { transform: translateY(1px); }
+.bug-toast-btn:disabled { opacity: 0.7; cursor: default; }
+.bug-toast-btn--ai {
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  border-color: transparent;
+  color: #fff;
+}
+.bug-toast-btn--ai:hover { filter: brightness(1.08); background: linear-gradient(135deg, #7c3aed, #2563eb); }
+.bug-toast-btn--done {
+  background: rgba(34,197,94,0.18) !important;
+  border-color: rgba(34,197,94,0.45);
+  color: #86efac;
+}
+@media (max-width: 480px) {
+  .bug-toast { left: 12px; right: 12px; width: auto; bottom: 88px; }
+}
+
 .ai-asst {
   position: fixed;
   width: 360px;
