@@ -146,7 +146,7 @@ const App = (() => {
         <a href="#/edit"        class="btn btn-ghost btn-sm" title="Rediger profil">${Icon('edit')}</a>
         <a href="#/settings"    class="btn btn-ghost btn-sm" title="Innstillinger">${Icon('settings')}</a>
         <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne/lukk flytende chat-vindu">${Icon('message')} Chat-vindu</button>
-        <a href="#/login"       class="btn btn-ghost btn-sm" title="Logg inn på en annen konto">${Icon('log-in')} Logg inn</a>
+        <a href="#/login"       class="btn btn-ghost btn-sm" title="Du er online"><span class="nav-status-dot nav-status-dot--online" title="Online"></span>${Icon('log-in')} Logg inn</a>
         <button class="btn btn-ghost btn-sm" onclick="App.logout()">${Icon('log-out')} Logg ut</button>
       `;
     } else {
@@ -159,7 +159,7 @@ const App = (() => {
         <a href="#/world"       class="btn btn-ghost btn-sm" title="All Over The World — global psytrance & psybient">${Icon('globe')} World</a>
         <a href="#/shop"        class="btn btn-ghost btn-sm" title="Shop">${Icon('store')} Shop</a>
         <a href="#/login"       class="btn btn-ghost btn-sm">${Icon('log-in')} Logg inn</a>
-        <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Logg ut">${Icon('log-out')} Logg ut</button>
+        <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Du er offline"><span class="nav-status-dot nav-status-dot--offline" title="Offline"></span>${Icon('log-out')} Logg ut</button>
         <a href="#/register"    class="btn btn-primary btn-sm">Registrer</a>
         <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne/lukk flytende chat-vindu">${Icon('message')} Chat-vindu</button>
       `;
@@ -2246,6 +2246,29 @@ const App = (() => {
     { key: 'year',    name: '12 måneder', total: '1 290 kr', per: '108 kr / mnd', save: 'Spar 28 %',  best: true  },
   ];
 
+  // Månadens tilbod — roterer automatisk per kalendermånad. Reint display/marknadsføring:
+  // framhevar éin plan med eit tema, men endrar ALDRI pris (autoritativ pris i api/create-checkout.js).
+  // Indeks = månad (0 = januar … 11 = desember). Desember = eige juletilbod (holiday: true).
+  const SHOP_OFFERS = [
+    { icon: 'sparkles',   emoji: '✨', title: 'Nytt år, ny lyd',     tag: 'Start året med Pro — 12 månader full tilgang.',          feature: 'year'    },
+    { icon: 'headphones', emoji: '🎧', title: 'Vinterlytting',       tag: 'Lange mixar for kalde kveldar — 6 mnd ekstra verdi.',    feature: 'half'    },
+    { icon: 'leaf',       emoji: '🌱', title: 'Vårslepp',            tag: 'Frisk start på sesongen — prøv 3 månader Pro.',          feature: 'quarter' },
+    { icon: 'sliders',    emoji: '🎛️', title: 'Studio-månad',        tag: 'Produser meir — 6 mnd med ubegrensa lagring.',           feature: 'half'    },
+    { icon: 'ticket',     emoji: '🎟️', title: 'Festival-oppvarming',  tag: 'Klar for sommaren — 12 mnd til beste pris.',             feature: 'year'    },
+    { icon: 'sun',        emoji: '☀️', title: 'Sommarstart',         tag: 'Lange sett heile sommaren — 6 mnd Pro.',                 feature: 'half'    },
+    { icon: 'music',      emoji: '🌞', title: 'Sommarmix',           tag: 'Mixar opptil 20 timar — heile året med Pro.',            feature: 'year'    },
+    { icon: 'flame',      emoji: '🔥', title: 'Festival-topp',       tag: 'Ozora-sesong — prøv 3 mnd og del settet ditt.',          feature: 'quarter' },
+    { icon: 'feather',    emoji: '🍂', title: 'Haust-comeback',      tag: 'Tilbake i studio — 6 mnd full tilgang.',                 feature: 'half'    },
+    { icon: 'moon',       emoji: '🌙', title: 'Mørketid-lytting',     tag: 'Djupe ambient-mixar — 6 mnd ekstra verdi.',              feature: 'half'    },
+    { icon: 'tag',        emoji: '🏷️', title: 'Haust-tilbod',        tag: 'Beste verdi før jul — 12 månader Pro.',                  feature: 'year'    },
+    { icon: 'snowflake',  emoji: '🎄', title: 'Juletilbod',          tag: 'Gje deg sjølv eit heilt år med Pro — berre 108 kr/mnd.', feature: 'year', holiday: true },
+  ];
+
+  // Tilbodet for inneverande kalendermånad (lokal tid).
+  function currentShopOffer() {
+    return SHOP_OFFERS[new Date().getMonth()] || SHOP_OFFERS[0];
+  }
+
   // Eksterne lenker — kjøp & oppdag musikk og festivalar utanfor Sound Core.
   const SHOP_LINKS = [
     { icon: 'cart',       name: 'Bandcamp',        desc: 'Kjøp musikk direkte frå artistar',     url: 'https://bandcamp.com/' },
@@ -2261,14 +2284,20 @@ const App = (() => {
     const user  = Auth.current();
     const isPro = user?.subscription === 'pro';
     const uname = user?.username || '';
+    const offer = currentShopOffer();
 
     const planCard = (p) => {
       let action;
       if (isPro)       action = `<button class="btn btn-ghost w-full" disabled style="margin-top:auto">${Icon('check')} Du har Pro</button>`;
       else if (uname)  action = `<button class="btn btn-gold w-full" style="margin-top:auto" onclick="Payment.startCheckout('${uname}','${p.key}')">${Icon('credit-card')} Kjøp</button>`;
       else             action = `<button class="btn btn-gold w-full" style="margin-top:auto" onclick="Router.go('/login')">${Icon('log-in')} Logg inn for å kjøpe</button>`;
+      const featured = p.key === offer.feature;
+      const ribbon   = featured
+        ? `<span class="shop-offer-ribbon${offer.holiday ? ' shop-offer-ribbon--holiday' : ''}">${offer.emoji} ${offer.holiday ? 'Juletilbod' : 'Månadens tilbod'}</span>`
+        : '';
       return `
-        <div class="shop-card shop-plan${p.best ? ' shop-plan--best' : ''}">
+        <div class="shop-card shop-plan${p.best ? ' shop-plan--best' : ''}${featured ? ' shop-plan--offer' : ''}${featured && offer.holiday ? ' shop-plan--holiday' : ''}">
+          ${ribbon}
           ${p.best ? `<span class="shop-badge shop-badge-free">${Icon('star')} Beste verdi</span>` : ''}
           <div class="shop-plan-period">Pro · påløpende</div>
           <h2>${p.name}</h2>
@@ -2282,6 +2311,14 @@ const App = (() => {
       <div class="shop-page">
         <h1>${Icon('store')} Shop</h1>
         <p class="shop-sub">Sound Core Pro — lås opp alt. Velg perioden som passer deg. Alle abonnement er påløpende og kan avbrytes når som helst.</p>
+
+        <div class="shop-offer-banner${offer.holiday ? ' shop-offer-banner--holiday' : ''}">
+          <span class="shop-offer-banner-icon">${Icon(offer.icon)}</span>
+          <div class="shop-offer-banner-text">
+            <strong>${offer.emoji} ${offer.holiday ? 'Juletilbod' : 'Månadens tilbod'} · ${offer.title}</strong>
+            <span>${offer.tag}</span>
+          </div>
+        </div>
 
         ${isPro ? `<div class="shop-launch-banner">${Icon('check')} <strong>Du har Pro aktivt.</strong> Takk for støtten! ${Icon('sliders')}</div>` : ''}
 

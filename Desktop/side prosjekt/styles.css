@@ -40,6 +40,40 @@
 .shop-plan .shop-card-price { margin: .15rem 0 .35rem; }
 .shop-plan-per { font-size: .82rem; color: var(--text2, #9aa4b2); margin-bottom: 1rem; }
 .shop-save { color: #4ade80; }
+
+/* Månadens tilbod — roterande kampanje-banner (display only, endrar ikkje pris) */
+.shop-offer-banner {
+  display: flex; align-items: center; gap: .9rem;
+  background: linear-gradient(90deg, rgba(167,139,250,.22), rgba(236,72,153,.14));
+  border: 1px solid rgba(167,139,250,.45); border-radius: 14px;
+  padding: .85rem 1.1rem; margin-bottom: 1.25rem;
+}
+.shop-offer-banner-icon {
+  flex: 0 0 auto; display: grid; place-items: center;
+  width: 42px; height: 42px; border-radius: 12px;
+  background: rgba(167,139,250,.18); color: #c4b5fd;
+}
+.shop-offer-banner-icon svg { width: 22px; height: 22px; }
+.shop-offer-banner-text { display: flex; flex-direction: column; gap: .15rem; }
+.shop-offer-banner-text strong { font-size: .98rem; }
+.shop-offer-banner-text span { font-size: .85rem; color: var(--text2, #9aa4b2); }
+/* Juletilbod-variant (desember) — varmare raud/grøn jule-tone */
+.shop-offer-banner--holiday {
+  background: linear-gradient(90deg, rgba(220,38,38,.20), rgba(22,163,74,.16));
+  border-color: rgba(74,222,128,.5);
+}
+.shop-offer-banner--holiday .shop-offer-banner-icon { background: rgba(74,222,128,.18); color: #86efac; }
+
+/* Framheva plan-kort for månadens tilbod */
+.shop-plan--offer { border-color: rgba(167,139,250,.55); box-shadow: 0 0 0 1px rgba(167,139,250,.3), 0 8px 28px rgba(167,139,250,.16); }
+.shop-plan--holiday { border-color: rgba(74,222,128,.55); box-shadow: 0 0 0 1px rgba(74,222,128,.3), 0 8px 28px rgba(22,163,74,.18); }
+.shop-offer-ribbon {
+  position: absolute; top: 1rem; left: 1rem; font-size: .72rem; font-weight: 700;
+  padding: .25rem .55rem; border-radius: 999px; color: #fff;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+}
+.shop-offer-ribbon--holiday { background: linear-gradient(90deg, #dc2626, #16a34a); }
+
 .shop-pro-feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .55rem .9rem; margin: 0 0 1.5rem; }
 .shop-pro-feat { display: flex; align-items: center; gap: .55rem; font-size: .85rem; color: var(--text, #e5e7eb);
   background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 10px; padding: .55rem .75rem; }
@@ -6308,6 +6342,26 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
   font-weight: 600;
   margin-left: 0.4rem;
   animation: pulse-green 2s infinite;
+}
+
+/* Nav login/logout status light — grønn = online, svart = offline.
+   Berre eitt lys synleg om gangen (styrt av innloggingsstatus i renderNav). */
+.nav-status-dot {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.nav-status-dot--online {
+  background: #22c55e;
+  box-shadow: 0 0 7px #22c55ecc;
+  animation: pulse-green 2s infinite;
+}
+.nav-status-dot--offline {
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.25);
 }
 
 /* ════════════════════════════════════════════
