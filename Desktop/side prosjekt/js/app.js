@@ -141,7 +141,6 @@ const App = (() => {
         <a href="#/shows"       class="btn btn-ghost btn-sm">${Icon('calendar')} Shows</a>
         <a href="#/world"       class="btn btn-ghost btn-sm" title="All Over The World — global psytrance & psybient">${Icon('globe')} World</a>
         <a href="#/a1"          class="btn btn-ghost btn-sm a1-nav-link" title="A1 — AI + søk heile nettet + ukas lenker & videoar">${Icon('sparkles')} A1</a>
-        <a href="#/community"   class="btn btn-ghost btn-sm" title="Community — fellesveggen">${Icon('users')} Community</a>
         <a href="#/shop"        class="btn btn-ghost btn-sm" title="Shop">${Icon('store')} Shop</a>
         <a href="#/inbox"       class="btn btn-ghost btn-sm" style="position:relative">${Icon('mail')} Innboks${inboxBadge}</a>
         <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">${Icon('user')} ${user.displayName}</a>
@@ -162,7 +161,6 @@ const App = (() => {
         <a href="#/shows"       class="btn btn-ghost btn-sm">${Icon('calendar')} Shows</a>
         <a href="#/world"       class="btn btn-ghost btn-sm" title="All Over The World — global psytrance & psybient">${Icon('globe')} World</a>
         <a href="#/a1"          class="btn btn-ghost btn-sm a1-nav-link" title="A1 — AI + søk heile nettet + ukas lenker & videoar">${Icon('sparkles')} A1</a>
-        <a href="#/community"   class="btn btn-ghost btn-sm" title="Community — fellesveggen">${Icon('users')} Community</a>
         <a href="#/shop"        class="btn btn-ghost btn-sm" title="Shop">${Icon('store')} Shop</a>
         <a href="#/login"       class="btn btn-ghost btn-sm">${Icon('log-in')} Logg inn</a>
         <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Du er offline"><span class="nav-status-dot nav-status-dot--offline" title="Offline"></span>${Icon('log-out')} Logg ut</button>
