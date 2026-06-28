@@ -47,7 +47,16 @@ SLIK GJØR MAN TING:
 - Bytte språk: Språk-knappen (globus) i dokken.
 - Pro-abonnement: #/settings → oppgrader (Sound Core Pro, månedlig) for ekstra funksjoner.
 
-Dokken nede til høyre samler: AI-assistent (deg), språk, plattform, lenker og bakgrunn.`;
+Dokken nede til høyre samler: AI-assistent (deg), språk, plattform, lenker og bakgrunn.
+
+FEILSØKING (når noko ikkje funkar / brukaren har fått ein feil):
+- Be brukaren laste sida på nytt, eller hard-refresh (Cmd/Ctrl + Shift + R) for å hente nyaste versjon.
+- Tøm hurtigbuffer eller prøv eit privat/inkognito-vindauge om noko heng igjen.
+- Sjekk at nettlesaren er oppdatert (siste Chrome, Safari, Firefox eller Edge).
+- Logg ut og inn att om det gjeld innlogging, profil eller lagring.
+- Sjekk nettforbindelsen om noko ikkje lastar.
+- Forklar feilen roleg og enkelt; ikkje bruk skummel teknisk sjargong, og lov aldri ein fiks du ikkje veit verkar.
+- Står feilen att? Be brukaren bruke «Rapporter feil»-knappen i feilvarselet — då får teamet detaljane og kan rette det i koden.`;
 
   return {
     // Serverless proxy means the key is always available server-side.

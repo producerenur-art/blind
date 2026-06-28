@@ -218,10 +218,27 @@ const Assistant = (() => {
     else open();
   }
 
+  // Open the assistant pre-loaded with a captured site error, so Core can
+  // explain it in plain language and suggest a fix. Called by BugHelp.
+  function openWithBug(ctx) {
+    open();
+    const code = currentLangCode();
+    const summary = (ctx && ctx.message) || (code === 'en' ? 'an error on the site' : 'ein feil på sida');
+    const route   = (ctx && ctx.route) || (location.hash || '#/');
+    const lead = code === 'en'
+      ? "I'm here — let's sort this out. 🛠️"
+      : 'Eg er her — vi finn ut av dette. 🛠️';
+    addMsg('assistant', lead, false);
+    const msg = code === 'en'
+      ? `I just got an error on the site: "${summary}" (page ${route}). What does it mean, and what can I do to get past it?`
+      : `Eg fekk nettopp ein feil på sida: «${summary}» (rute ${route}). Kva betyr det, og kva kan eg gjere for å komme vidare?`;
+    if (inputEl) { inputEl.value = msg; send(); }
+  }
+
   // Reopen if it was open last session
   document.addEventListener('DOMContentLoaded', () => {
     if (loadState().open) open();
   });
 
-  return { toggle, open, close, send };
+  return { toggle, open, close, send, openWithBug };
 })();

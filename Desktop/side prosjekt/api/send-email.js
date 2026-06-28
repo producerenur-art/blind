@@ -173,6 +173,43 @@ function purchaseHtml(name, siteUrl) {
 </html>`;
 }
 
+function bugReportHtml(info) {
+  const row = (label, value) =>
+    `<tr>
+      <td style="padding:0.45rem 0.75rem;color:#94a3b8;font-size:0.85rem;vertical-align:top;white-space:nowrap;border-top:1px solid rgba(255,255,255,0.06)">${label}</td>
+      <td style="padding:0.45rem 0.75rem;color:#e2e8f0;font-size:0.85rem;vertical-align:top;border-top:1px solid rgba(255,255,255,0.06);word-break:break-word">${escHtml(value || '—')}</td>
+    </tr>`;
+  const stack = info.errorStack
+    ? `<pre style="margin:0.75rem 0 0;padding:0.9rem;background:#0f0f1a;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#cbd5e1;font-size:0.78rem;line-height:1.5;white-space:pre-wrap;word-break:break-word;overflow:auto">${escHtml(String(info.errorStack).slice(0, 4000))}</pre>`
+    : '';
+  return `<!DOCTYPE html>
+<html lang="no">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:'Inter',Arial,sans-serif">
+  <div style="max-width:620px;margin:2rem auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(239,68,68,0.35)">
+    <div style="background:linear-gradient(135deg,#ef4444,#7c3aed);padding:1.5rem 2rem;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:1.4rem;font-weight:800;letter-spacing:-0.5px">🐛 Bug-rapport — Sound<span style="color:#fde68a">Core</span></h1>
+    </div>
+    <div style="padding:1.75rem 2rem;color:#e2e8f0">
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1rem">Ein brukar fekk ein feil på sida. Detaljane er fanga automatisk:</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden">
+        ${row('Feilmelding', info.errorMessage)}
+        ${row('Rute', info.route)}
+        ${row('Kjelde', [info.source, info.line && `:${info.line}`, info.col && `:${info.col}`].filter(Boolean).join(''))}
+        ${row('Brukar', info.username ? '@' + info.username : 'ikkje innlogga')}
+        ${row('Tidspunkt', info.time)}
+        ${row('Nettlesar', info.userAgent)}
+      </table>
+      ${stack}
+    </div>
+    <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
+      <p style="color:#475569;font-size:0.75rem;margin:0">Automatisk varsel frå Sound Core · © ${new Date().getFullYear()}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -190,17 +227,31 @@ module.exports = async (req, res) => {
   }
 
   const { type, toEmail, toName, token, fromName, fromUsername, inboxUrl } = req.body || {};
-  if (!type || !toEmail || !toName) {
-    return res.status(400).json({ error: 'Mangler påkrevde felt' });
+  if (!type) {
+    return res.status(400).json({ error: 'Mangler type' });
   }
 
   const siteUrl = (process.env.SITE_URL || `https://${req.headers.host}`).replace(/\/$/, '');
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'Sound Core <onboarding@resend.dev>';
   const resend = new Resend(process.env.RESEND_API_KEY);
 
-  // Bygg emne + HTML basert på type
-  let subject, html;
-  if (type === 'activation') {
+  // Bygg emne + HTML basert på type. `to` kan overstyrast per type (t.d. bug-rapport
+  // går alltid til teamet, aldri til ei klient-oppgitt adresse).
+  let subject, html, to = toEmail;
+
+  // Bug-rapport: mottakar vert sett på serveren — klienten kan IKKJE velje adresse.
+  if (type === 'bug_report') {
+    const b = req.body || {};
+    to = process.env.BUG_REPORT_EMAIL || 'producerenur@gmail.com';
+    subject = `🐛 Bug-rapport — Sound Core${b.route ? ` · ${String(b.route).slice(0, 60)}` : ''}`;
+    html = bugReportHtml({
+      errorMessage: b.errorMessage, errorStack: b.errorStack, source: b.source,
+      line: b.line, col: b.col, route: b.route, username: b.username,
+      time: b.time, userAgent: b.userAgent,
+    });
+  } else if (!toEmail || !toName) {
+    return res.status(400).json({ error: 'Mangler påkrevde felt' });
+  } else if (type === 'activation') {
     if (!token) return res.status(400).json({ error: 'Mangler token' });
     subject = `Aktiver Sound Core-kontoen din, ${toName}!`;
     html = activationHtml(toName, `${siteUrl}/#/activate/${token}`, siteUrl);
@@ -224,7 +275,7 @@ module.exports = async (req, res) => {
     // Sjekk error eksplisitt, elles vert avvising (t.d. gratis-tier som berre tillèt sending
     // til kontoeigaren, eller manglande verifisert domene) rapportert som «sendt» til brukaren
     // sjølv om e-posten aldri gjekk ut.
-    const { data, error } = await resend.emails.send({ from: fromEmail, to: toEmail, subject, html });
+    const { data, error } = await resend.emails.send({ from: fromEmail, to, subject, html });
     if (error) {
       console.error('Resend avviste e-post:', error);
       return res.status(502).json({ error: error.message || 'Resend kunne ikke sende e-posten' });
