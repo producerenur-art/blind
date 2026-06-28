@@ -1,4 +1,5 @@
 const { Resend } = require('resend');
+const { getPlan, fmtKr, fmtDate, nextRenewal, PRO_BENEFITS } = require('./_plans');
 
 function activationHtml(name, url, siteUrl) {
   const base       = (siteUrl || '').replace(/\/$/, '');
@@ -145,7 +146,24 @@ function friendRequestHtml(toName, fromName, fromUsername, inboxUrl) {
 </html>`;
 }
 
-function purchaseHtml(name, siteUrl) {
+function purchaseHtml(name, siteUrl, planKey, orderRef) {
+  const p         = getPlan(planKey);
+  const now       = Date.now();
+  const dateStr   = fmtDate(now);
+  const nextStr   = fmtDate(nextRenewal(planKey, now));
+  const renewWord = p.interval === 'year' ? 'hvert år' : (p.months > 1 ? `hver ${p.months}. måned` : 'hver måned');
+
+  const row = (label, value, strong) => `
+        <tr>
+          <td style="padding:0.55rem 0;color:#94a3b8;font-size:0.9rem">${label}</td>
+          <td style="padding:0.55rem 0;text-align:right;color:${strong ? '#fff' : '#e2e8f0'};font-size:0.9rem;font-weight:${strong ? '800' : '600'}">${value}</td>
+        </tr>`;
+
+  const benefits = PRO_BENEFITS.map(b => `
+        <tr><td style="padding:0.3rem 0;color:#cbd5e1;font-size:0.9rem">
+          <span style="color:#4ade80;font-weight:800">✓</span>&nbsp; ${escHtml(b)}
+        </td></tr>`).join('');
+
   return `<!DOCTYPE html>
 <html lang="no">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -153,17 +171,34 @@ function purchaseHtml(name, siteUrl) {
   <div style="max-width:560px;margin:2rem auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(124,58,237,0.3)">
     <div style="background:linear-gradient(135deg,#7c3aed,#2563eb);padding:2rem;text-align:center">
       <h1 style="color:#fff;margin:0;font-size:1.75rem;font-weight:800;letter-spacing:-0.5px">Sound<span style="color:#f59e0b">Core</span></h1>
+      <p style="color:rgba(255,255,255,0.85);margin:0.4rem 0 0;font-size:0.85rem;letter-spacing:0.04em">KVITTERING · PRO-ABONNEMENT</p>
     </div>
     <div style="padding:2rem;color:#e2e8f0">
-      <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="text-align:center;margin-bottom:1.25rem">
         <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#f472b6);display:inline-flex;align-items:center;justify-content:center;font-size:2rem">⭐</div>
       </div>
-      <h2 style="color:#fff;margin:0 0 1rem;font-size:1.25rem;text-align:center">Velkommen til Sound Core Pro!</h2>
-      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1.5rem">Hei ${escHtml(name)}! Takk for kjøpet. Pro-abonnementet ditt er nå aktivt, og du har låst opp blant annet private mixes og alle Pro-funksjoner.</p>
-      <div style="text-align:center;margin:2rem 0">
+      <h2 style="color:#fff;margin:0 0 0.5rem;font-size:1.25rem;text-align:center">Takk for kjøpet, ${escHtml(name)}!</h2>
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1.5rem;text-align:center">Pro-abonnementet ditt er nå aktivt. Her er kvitteringen din.</p>
+
+      <div style="background:#12121f;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.5rem 1.25rem;margin-bottom:1.5rem">
+        <table style="width:100%;border-collapse:collapse">
+          ${row('Produkt', 'Sound Core Pro')}
+          ${row('Periode', p.label)}
+          ${row('Kjøpsdato', dateStr)}
+          ${row('Fornyes', `${renewWord} (neste: ${nextStr})`)}
+          ${orderRef ? row('Ordre-ref', escHtml(orderRef)) : ''}
+          <tr><td colspan="2" style="border-top:1px solid rgba(255,255,255,0.1);padding-top:0.25rem"></td></tr>
+          ${row('Betalt', fmtKr(p.amount), true)}
+        </table>
+      </div>
+
+      <p style="color:#fff;font-weight:700;font-size:0.95rem;margin:0 0 0.5rem">Dette har du låst opp:</p>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem">${benefits}</table>
+
+      <div style="text-align:center;margin:0 0 1.5rem">
         <a href="${siteUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;text-decoration:none;padding:0.875rem 2rem;border-radius:8px;font-weight:700;font-size:1rem">Gå til Sound Core</a>
       </div>
-      <p style="color:#64748b;font-size:0.85rem;line-height:1.5;margin:0">Dette er en bekreftelse på kjøpet ditt. Du kan administrere abonnementet i innstillingene. Spørsmål? Bare svar på denne e-posten.</p>
+      <p style="color:#64748b;font-size:0.82rem;line-height:1.5;margin:0">Abonnementet fornyes automatisk ${renewWord}. Du kan administrere eller avslutte det i innstillingene når som helst. Spørsmål? Bare svar på denne e-posten.</p>
     </div>
     <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
       <p style="color:#475569;font-size:0.75rem;margin:0">© ${new Date().getFullYear()} Sound Core</p>
@@ -226,7 +261,7 @@ module.exports = async (req, res) => {
     return res.status(503).json({ error: 'E-post ikke konfigurert på serveren' });
   }
 
-  const { type, toEmail, toName, token, fromName, fromUsername, inboxUrl } = req.body || {};
+  const { type, toEmail, toName, token, fromName, fromUsername, inboxUrl, plan, orderRef } = req.body || {};
   if (!type) {
     return res.status(400).json({ error: 'Mangler type' });
   }
@@ -265,7 +300,7 @@ module.exports = async (req, res) => {
     html = friendRequestHtml(toName, fromName, fromUsername, inboxUrl || `${siteUrl}/#/inbox`);
   } else if (type === 'purchase') {
     subject = 'Kvittering — Sound Core Pro er aktivert ⭐';
-    html = purchaseHtml(toName, `${siteUrl}/`);
+    html = purchaseHtml(toName, `${siteUrl}/`, plan, orderRef);
   } else {
     return res.status(400).json({ error: 'Ukjent e-posttype' });
   }

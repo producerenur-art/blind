@@ -23,12 +23,12 @@ const Email = (() => {
     return true;
   }
 
-  async function callApi(type, toEmail, toName, token) {
+  async function callApi(type, toEmail, toName, token, extra = {}) {
     try {
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, toEmail, toName, token }),
+        body: JSON.stringify({ type, toEmail, toName, token, ...extra }),
       });
       const data = await res.json();
       if (!res.ok) return { error: data.error || 'Serverfeil' };
@@ -96,9 +96,9 @@ const Email = (() => {
     return { error: apiRes.error || 'Kunne ikke sende e-post akkurat nå. Prøv igjen senere.' };
   }
 
-  async function sendPurchaseConfirmation(toEmail, username) {
+  async function sendPurchaseConfirmation(toEmail, username, plan, orderRef) {
     // Kun server-API (Resend) — ingen EmailJS-mal for kjøp. Stille fallback i dev.
-    const apiRes = await callApi('purchase', toEmail, username, null);
+    const apiRes = await callApi('purchase', toEmail, username, null, { plan, orderRef });
     if (apiRes.success) return { success: true };
     console.info(`[DEV] Kjøpsbekreftelse ville blitt sendt til ${username} <${toEmail}>`);
     return { success: true, devMode: true };
