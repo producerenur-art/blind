@@ -603,7 +603,10 @@ const Discover = (() => {
   // ── Tab bar ───────────────────────────────────────────────────────────
   function renderTabBar() {
     return `
-      <div class="disc-tab-bar">
+      <div class="disc-tab-scroll at-start" id="disc-tab-scroll">
+      <button class="disc-tab-arrow disc-tab-arrow--left" type="button" aria-label="Bla til venstre"
+        onclick="Discover.scrollTabs(-1)">${Icon('chevron-left')}</button>
+      <div class="disc-tab-bar" id="disc-tab-bar" onscroll="Discover.updateTabArrows()">
         <button class="disc-tab-btn ${activeTab === 'music' ? 'active' : ''}"
           onclick="Discover.switchTab('music')">${Icon('music')} Musikk</button>
         <button class="disc-tab-btn ${activeTab === 'people' ? 'active' : ''}"
@@ -636,6 +639,9 @@ const Discover = (() => {
           onclick="Discover.switchTab('kukan-dub')">${Icon('cloud')} Kukan Dub Lagan</button>
         <button class="disc-tab-btn ${activeTab === 'cosmic-leaf' ? 'active' : ''}"
           onclick="Discover.switchTab('cosmic-leaf')">${Icon('leaf')} Cosmic Leaf</button>
+      </div>
+      <button class="disc-tab-arrow disc-tab-arrow--right" type="button" aria-label="Bla til høyre"
+        onclick="Discover.scrollTabs(1)">${Icon('chevron-right')}</button>
       </div>`;
   }
 
@@ -995,7 +1001,31 @@ const Discover = (() => {
 
     startActivityScroll();
     loadPeopleAvatars(allUsers);
+    requestAnimationFrame(updateTabArrows);
   }
+
+  // ── Tab-bar horizontal scrolling ──────────────────────────────────────
+  // Tab-baren kan ha mange artist-/label-faner. Den scrollar horisontalt
+  // (sveip / trackpad / piler) så alle held seg synlege og fleire kan leggjast til.
+  function scrollTabs(dir) {
+    const bar = document.getElementById('disc-tab-bar');
+    if (!bar) return;
+    const step = Math.max(220, Math.round(bar.clientWidth * 0.75));
+    bar.scrollBy({ left: dir * step, behavior: 'smooth' });
+  }
+
+  // Skjuler venstre-/høgrepila når ein er heilt i kvar ende, og begge når
+  // alt får plass utan scrolling.
+  function updateTabArrows() {
+    const wrap = document.getElementById('disc-tab-scroll');
+    const bar  = document.getElementById('disc-tab-bar');
+    if (!wrap || !bar) return;
+    const overflow = bar.scrollWidth - bar.clientWidth;
+    wrap.classList.toggle('no-scroll', overflow <= 2);
+    wrap.classList.toggle('at-start', bar.scrollLeft <= 2);
+    wrap.classList.toggle('at-end',   bar.scrollLeft >= overflow - 2);
+  }
+  window.addEventListener('resize', updateTabArrows);
 
   function renderAmbientMannTab() {
     const TAGS = [
@@ -3091,5 +3121,6 @@ const Discover = (() => {
     downloadTrack, closeDownloadModal, confirmDownloadPayment,
     openDroneZone, closeDroneZone,
     ytSearch, openYt,
+    scrollTabs, updateTabArrows,
   };
 })();
