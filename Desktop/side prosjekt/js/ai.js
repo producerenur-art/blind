@@ -29,7 +29,7 @@ NAVIGASJON (hash-ruter):
 - Radio (#/radio): live-strømming, 40+ kanaler (psytrance, ambient, techno, deep dub m.m.) — velg kanal for å spille
 - Discover (#/discover): algoritmisk musikkoppdaging, sjangre, trender
 - Chat (#/chat): desentralisert sanntidschat (Gun.js, ingen server)
-- DJ (#/dj): DJ-miks og private meldinger
+- Private meldinger: 1-til-1 chat via innboksen (#/inbox)
 - Studio (#/studio): blend-studio for å lage visuelle komposisjoner og eksportere
 - Shows (#/shows): festivaler og arrangementer
 - Min side (#/minside): din egen profil

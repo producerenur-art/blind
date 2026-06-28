@@ -309,6 +309,7 @@ const Radio = (() => {
   let sourceNode = null;
   let visFrame = null;
   let visMode = 'bars'; // 'bars' | 'circle' | 'wave'
+  let visSize = localStorage.getItem('pv_vis_size') || 'medium'; // 'small'|'medium'|'large'|'full'
   let canvas = null, visCtx = null;
   let customStreams = JSON.parse(localStorage.getItem('pv_custom_streams') || '[]');
   let searchTimer = null;
@@ -650,6 +651,10 @@ const Radio = (() => {
               <button class="vis-btn" onclick="Radio.setVisMode('wave',this)">Bølge</button>
               <button class="vis-btn" onclick="Radio.setVisMode('particles',this)">Partikler</button>
             </div>
+            <div class="vis-size-row">
+              ${[['small','Liten'],['medium','Middels'],['large','Stor'],['full','⛶ Full']].map(([s,l]) =>
+                `<button class="vis-btn vis-size-btn ${visSize===s?'active':''}" data-size="${s}" onclick="Radio.setVisSize('${s}',this)">${l}</button>`).join('')}
+            </div>
           </div>
 
           <!-- External embed area (hidden by default) -->
@@ -687,7 +692,7 @@ const Radio = (() => {
       </div>`;
 
     canvas = document.getElementById('radio-canvas');
-    resizeCanvas();
+    applyVisSize();              // setter lagret størrelse + kaller resizeCanvas
     window.removeEventListener('resize', resizeCanvas);
     window.addEventListener('resize', resizeCanvas);
     if (currentStation && isPlaying) startVisualizer();
@@ -1324,9 +1329,33 @@ const Radio = (() => {
 
   function setVisMode(mode, btn) {
     visMode = mode;
-    document.querySelectorAll('.vis-btn').forEach(b => b.classList.remove('active'));
+    // Bare visualiser-stil-knappene, ikke størrelse-knappene
+    document.querySelectorAll('.vis-style-row .vis-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     particles = [];
+  }
+
+  // ── Visualizer-størrelse (Liten · Middels · Stor · Fullskjerm) ─────────
+  function setVisSize(size, btn) {
+    visSize = size;
+    localStorage.setItem('pv_vis_size', size);
+    applyVisSize();
+    document.querySelectorAll('.vis-size-btn').forEach(b => b.classList.toggle('active', b.dataset.size === size));
+  }
+
+  function applyVisSize() {
+    const wrap = document.getElementById('radio-vis-wrap');
+    if (!wrap) return;
+    wrap.classList.remove('vis-size-small', 'vis-size-medium', 'vis-size-large', 'vis-size-full');
+    wrap.classList.add('vis-size-' + visSize);
+    // Esc avslutter fullskjerm
+    if (visSize === 'full') document.addEventListener('keydown', _visEsc);
+    else                    document.removeEventListener('keydown', _visEsc);
+    resizeCanvas();
+  }
+
+  function _visEsc(e) {
+    if (e.key === 'Escape') setVisSize('medium', document.querySelector('.vis-size-btn[data-size="medium"]'));
   }
 
   // ── Custom streams ────────────────────────────────────────────────────
@@ -1380,7 +1409,7 @@ const Radio = (() => {
 
   return {
     render, playStation, playCustom, togglePlay, stopRadio, playUrl, fetchStations,
-    setVolume, toggleMute, setVisMode, addCustomStream, removeCustom,
+    setVolume, toggleMute, setVisMode, setVisSize, addCustomStream, removeCustom,
     playSearchResult, saveSearchResult, onSearchInput,
     toggleAiChat, sendAiMessage, onAiKeydown,
     setAsFavorite, openEmbed, closeEmbed, stopForMusicPlayer,

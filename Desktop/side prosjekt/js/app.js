@@ -57,8 +57,6 @@ const App = (() => {
         ${feat('moon',     'Underground', 'Den rå, eksperimentelle undergrunnsscenen — for deg som vil grave dypere enn topplistene og finne de skjulte perlene.')}
         ${feat('calendar', 'Shows',       'Hold styr på kommende arrangementer, konserter og live-sett — og se hvem som spiller live akkurat nå.')}
         ${feat('message',  'Chat',        'Sanntidsprat med andre brukere, bygget desentralisert med Gun.js. Meldingene flyter direkte mellom dere, uten en sentral mellommann.')}
-        ${feat('sliders',  'DJ',          'Last opp dine egne DJ-miks, del dem med fellesskapet, og oppdag sett fra DJ-er over hele plattformen.')}
-        ${feat('waveform', 'Studio Pro',  'Et fullverdig musikkstudio rett i nettleseren, drevet av Web Audio. Lag, lagre og mikse egne spor — uten å installere noe som helst.')}
         ${feat('palette',  'Blend',       'Et visuelt studio for å lage og leke med bilder og grafikk som matcher lyden og stemningen din.')}
         ${feat('user',     'Min side',    'Din egen profil — musikken din, miksene dine, arrangementer og venner, samlet på ett sted.')}
         ${feat('mail',     'Innboks',     'Private meldinger og venneforespørsler, så du holder kontakten med folkene du møter underveis.')}
@@ -140,8 +138,7 @@ const App = (() => {
         <a href="#/discover"    class="btn btn-ghost btn-sm">${Icon('music')} Discover</a>
         <a href="#/underground" class="btn btn-ghost btn-sm">${Icon('moon')} Underground</a>
         <a href="#/shows"       class="btn btn-ghost btn-sm">${Icon('calendar')} Shows</a>
-        <a href="#/dj"          class="btn btn-ghost btn-sm">${Icon('sliders')} DJ</a>
-        <a href="#/daw"         class="btn btn-ghost btn-sm" title="SoundCore Studio — musikkstudio">${Icon('waveform')} Studio Pro</a>
+        <a href="#/world"       class="btn btn-ghost btn-sm" title="All Over The World — global psytrance & psybient">${Icon('globe')} World</a>
         <a href="#/shop"        class="btn btn-ghost btn-sm" title="Shop">${Icon('store')} Shop</a>
         <a href="#/studio"      class="btn btn-ghost btn-sm" title="Blend Studio">${Icon('palette')} Blend</a>
         <a href="#/inbox"       class="btn btn-ghost btn-sm" style="position:relative">${Icon('mail')} Innboks${inboxBadge}</a>
@@ -158,6 +155,7 @@ const App = (() => {
         <a href="#/discover"    class="btn btn-ghost btn-sm">${Icon('music')} Discover</a>
         <a href="#/underground" class="btn btn-ghost btn-sm">${Icon('moon')} Underground</a>
         <a href="#/shows"       class="btn btn-ghost btn-sm">${Icon('calendar')} Shows</a>
+        <a href="#/world"       class="btn btn-ghost btn-sm" title="All Over The World — global psytrance & psybient">${Icon('globe')} World</a>
         <a href="#/shop"        class="btn btn-ghost btn-sm" title="Shop">${Icon('store')} Shop</a>
         <a href="#/login"       class="btn btn-ghost btn-sm">Logg inn</a>
         <a href="#/register"    class="btn btn-primary btn-sm">Registrer</a>
@@ -649,7 +647,7 @@ const App = (() => {
             <span class="ms-item-label" id="ms-mix-label-${id}">Laster…</span>
             <button class="btn btn-ghost btn-sm" onclick="Profile.playMix('${id}','')">${Icon('play')} Spill</button>
           </div>`).join('')
-      : '<p class="ms-empty">Ingen mixes lastet opp ennå. <a href="#/dj">Gå til DJ</a></p>';
+      : '<p class="ms-empty">Ingen mixes lastet opp ennå. <a href="#/edit">Last opp</a></p>';
 
     // Musikk
     const musicRows = tracks.length
@@ -751,7 +749,6 @@ const App = (() => {
                 <a href="#/u/${user.username}" class="btn btn-ghost">${Icon('user')} Min profil</a>
                 <a href="#/edit" class="btn btn-ghost">${Icon('edit')} Rediger profil</a>
                 <a href="#/radio" class="btn btn-ghost">${Icon('radio')} Radio</a>
-                <a href="#/dj" class="btn btn-ghost">${Icon('sliders')} DJ Studio</a>
                 <a href="#/studio" class="btn btn-ghost">${Icon('palette')} Blend Studio</a>
                 <a href="#/inbox" class="btn btn-ghost">${Icon('mail')} Innboks</a>
                 <a href="#/settings" class="btn btn-ghost">${Icon('settings')} Innstillinger</a>
@@ -2036,12 +2033,11 @@ const App = (() => {
     Router.define('/discover',           () => Discover.render());
     Router.define('/underground',        () => Underground.render());
     Router.define('/shows',              () => Shows.render());
-    Router.define('/dj',                 () => DJ.render());
+    Router.define('/world',              () => World.render());
     Router.define('/studio',             () => {
       if (!Auth.current()) { toast('Logg inn for å bruke Studio', 'error'); Router.go('/login'); return; }
       Studio.render();
     });
-    Router.define('/daw',                () => DAW.render());
     Router.define('/messages/:username', ({ username }) => {
       if (!Auth.current()) { toast('Logg inn for å sende meldinger', 'error'); Router.go('/login'); return; }
       DJ.renderPrivateChat(username);
@@ -2221,53 +2217,14 @@ const App = (() => {
   }
 
   // ════════════════════════════════════════════════════════════════════
-  //  Shop + SoundCore Studio lanseringstilbud
-  //  Studio (DAW) er GRATIS for alle innloggede brukere i 14 dager fra
-  //  lansering; deretter låst bak Pro (149 kr/mnd, samme Stripe-checkout
-  //  som Innstillinger → Abonnement). Endre datoen for å forlenge tilbudet.
+  //  Shop — produktbutikk. Flere produkter kommer hit etter hvert.
   // ════════════════════════════════════════════════════════════════════
-  const STUDIO_FREE_UNTIL = Date.parse('2026-07-11T23:59:59');   // 14 dager fra 2026-06-27
-
-  function studioFree() {
-    const left = STUDIO_FREE_UNTIL - Date.now();
-    return { free: left > 0, daysLeft: Math.max(0, Math.ceil(left / 86400000)) };
-  }
-
   function renderShop() {
-    const user  = Auth.current();
-    const isPro = user?.subscription === 'pro';
-    const t     = studioFree();
-    const dl    = `${t.daysLeft} ${t.daysLeft === 1 ? 'dag' : 'dager'}`;
-
-    const studioBtn = isPro
-      ? `<button class="btn btn-primary w-full" onclick="Router.go('/daw')">${Icon('play')} Åpne Studio</button>`
-      : t.free
-        ? `<button class="btn btn-primary w-full" onclick="Router.go('/daw')">${Icon('play')} Prøv gratis nå</button>
-           <button class="btn btn-ghost w-full" style="margin-top:.5rem" onclick="${user ? `Payment.startCheckout('${user.username}')` : `Router.go('/login')`}">${Icon('star')} Lås opp permanent</button>`
-        : user
-          ? `<button class="btn btn-primary w-full" onclick="Payment.startCheckout('${user.username}')">${Icon('cart')} Abonner – 149 kr/mnd</button>`
-          : `<button class="btn btn-primary w-full" onclick="Router.go('/login')">${Icon('user')} Logg inn for å kjøpe</button>`;
-
-    const badge = isPro
-      ? `<span class="shop-badge shop-badge-active">${Icon('check')} Aktivt</span>`
-      : t.free
-        ? `<span class="shop-badge shop-badge-free">🎉 Gratis nå · ${dl} igjen</span>`
-        : `<span class="shop-badge">${Icon('star')} Pro</span>`;
-
     document.getElementById('app').innerHTML = `
       <div class="shop-page">
         <h1>${Icon('store')} Shop</h1>
-        <p class="shop-sub">Lås opp ekstra kraft i SoundCore. Flere produkter legges til her fortløpende.</p>
-        ${t.free ? `<div class="shop-launch-banner">🎉 Lanseringstilbud: <strong>SoundCore Studio er gratis for alle</strong> i ${dl} til!</div>` : ''}
+        <p class="shop-sub">Flere produkter legges til her fortløpende.</p>
         <div class="shop-grid">
-          <div class="shop-card">
-            ${badge}
-            <div class="shop-card-icon">${Icon('waveform')}</div>
-            <h2>SoundCore Studio</h2>
-            <p>Et komplett musikkstudio i nettleseren — analoge synther, trommer, MIDI, opptak, effekter og WAV-eksport.</p>
-            <div class="shop-card-price">149 kr <span>/ måned</span></div>
-            ${studioBtn}
-          </div>
           <div class="shop-card shop-card-soon">
             <div class="shop-card-icon">${Icon('plus')}</div>
             <h2>Mer kommer</h2>
@@ -2280,7 +2237,7 @@ const App = (() => {
 
   return {
     init, toast, openModal, closeModal, showInfo,
-    studioFree, renderShop,
+    renderShop,
     logout, renderNav, updateNavBadge, markWallSeen,
     doLogin, doRegister, doForgotPassword, doResetPassword,
     resendActivationByEmail,

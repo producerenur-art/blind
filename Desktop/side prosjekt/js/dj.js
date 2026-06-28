@@ -1,7 +1,7 @@
-// DJ Hub — gig board, live session, private messaging
+// Private messaging module — DJ-fanen (gig-board, live-DJ, stream) er fjernet.
+// Kun 1-til-1 private meldinger gjenstår. Den globale heter fortsatt `DJ` fordi
+// /messages-ruten kaller DJ.renderPrivateChat.
 const DJ = (() => {
-
-  const GIG_KEY = 'sr_dj_gigs';
 
   // ── Lyder (Web Audio API) ─────────────────────────────────────────────
   function playMessageSound(type = 'send') {
@@ -73,294 +73,18 @@ const DJ = (() => {
     } catch (_) {}
   }
 
-  function getGigs() {
-    try { return JSON.parse(localStorage.getItem(GIG_KEY) || '[]'); }
-    catch { return []; }
-  }
-  function saveGigs(g) { localStorage.setItem(GIG_KEY, JSON.stringify(g)); }
-
-  function timeAgo(ts) {
-    const d = Date.now() - ts;
-    if (d < 60000)   return 'Akkurat nå';
-    if (d < 3600000) return `${Math.floor(d/60000)} min siden`;
-    if (d < 86400000) return `${Math.floor(d/3600000)} t siden`;
-    return `${Math.floor(d/86400000)} d siden`;
-  }
-
-  // ── Main DJ page ───────────────────────────────────────────────────────
-  function render() {
-    const app     = document.getElementById('app');
-    const current = Auth.current();
-    const gigs    = getGigs().sort((a, b) => b.createdAt - a.createdAt);
-    const djUsers = Auth.getAllPublicUsers().filter(u => Auth.getUser(u.username)?.isDJ);
-
-    app.innerHTML = `
-      <div class="dj-page">
-        <!-- Hero -->
-        <div class="dj-hero">
-          <div class="dj-hero-glow"></div>
-          <div class="dj-hero-content">
-            <div class="dj-hero-badge">${Icon('sliders')} DJ Hub</div>
-            <h1 class="dj-hero-title">DJ<span>Network</span></h1>
-            <p class="dj-hero-sub">Finn en jobb, finn en DJ, eller stream ditt eget sett live via YouTube.</p>
-            ${current ? `
-              <div class="dj-hero-actions">
-                <button class="btn btn-primary" onclick="DJ.openPostGig()">${Icon('bell')} Legg ut annonse</button>
-                <button class="btn ${Auth.getUser(current.username)?.isDJ ? 'btn-ghost' : 'btn-ghost'}" onclick="DJ.toggleDJStatus()">
-                  ${Auth.getUser(current.username)?.isDJ ? '✅ Du er registrert som DJ' : '🎛️ Registrer deg som DJ'}
-                </button>
-              </div>` : `
-              <div class="dj-hero-actions">
-                <a href="#/login" class="btn btn-primary">Logg inn for å annonsere</a>
-              </div>`}
-          </div>
-        </div>
-
-        <!-- Layout -->
-        <div class="dj-layout">
-          <!-- Left: Gig board + Live -->
-          <div class="dj-main">
-            <!-- Live Stream Section -->
-            <div class="dj-section">
-              <div class="dj-section-header">
-                <div class="dj-section-title">${Icon('circle')} Live DJ Session</div>
-                <div class="dj-section-sub">Lim inn YouTube-lenke for å strømme ditt sett live</div>
-              </div>
-              <div class="dj-live-wrap">
-                <div class="dj-live-input-row">
-                  <input class="form-input" id="dj-yt-url" placeholder="https://youtube.com/watch?v=... eller https://youtu.be/...">
-                  <button class="btn btn-primary" onclick="DJ.loadLiveStream()">${Icon('play')} Start stream</button>
-                  <button class="btn btn-ghost" onclick="DJ.stopLiveStream()" id="dj-stop-btn" style="display:none">${Icon('square')} Stopp</button>
-                </div>
-                <div id="dj-live-player" class="dj-live-player hidden">
-                  <div class="dj-live-badge-wrap">
-                    <span class="dj-live-pill"><span class="dj-live-dot"></span> LIVE</span>
-                  </div>
-                  <div id="dj-yt-frame-wrap"></div>
-                </div>
-                <div class="dj-live-hint">
-                  ${Icon('lightbulb')} Du kan også hoste via webcam — start en YouTube Live stream og lim inn lenken her.
-                </div>
-              </div>
-            </div>
-
-            <!-- Gig board -->
-            <div class="dj-section">
-              <div class="dj-section-header">
-                <div class="dj-section-title">${Icon('clipboard')} Oppdrag & Tilbud</div>
-                <div class="dj-section-sub">Arrangører søker DJ · DJer søker jobb</div>
-              </div>
-              <div id="dj-gig-list">
-                ${gigs.length ? gigs.map(gigCard).join('') : `
-                  <div class="dj-empty">
-                    <div style="font-size:3rem">${Icon('sliders')}</div>
-                    <p>Ingen annonser ennå. Vær den første!</p>
-                    ${current ? `<button class="btn btn-primary" style="margin-top:1rem" onclick="DJ.openPostGig()">Legg ut annonse</button>` : ''}
-                  </div>`}
-              </div>
-            </div>
-          </div>
-
-          <!-- Right sidebar: DJ profiles -->
-          <div class="dj-sidebar">
-            <div class="dj-sidebar-card">
-              <div class="dj-sidebar-title">${Icon('sliders')} DJer på Stellar</div>
-              ${djUsers.length ? djUsers.map(u => `
-                <div class="dj-profile-item">
-                  <a class="dj-profile-link" href="#/u/${u.username}">
-                    <div class="dj-profile-av">${u.displayName.charAt(0).toUpperCase()}</div>
-                    <div>
-                      <div class="dj-profile-name">${u.displayName}</div>
-                      <div class="dj-profile-user">@${u.username}</div>
-                    </div>
-                  </a>
-                  ${current && current.username !== u.username ? `
-                    <button class="btn btn-ghost btn-sm" onclick="Router.go('/messages/${u.username}')">${Icon('message')}</button>
-                  ` : ''}
-                </div>`).join('') : `<p style="font-size:0.82rem;color:var(--text2)">Ingen registrerte DJer ennå.</p>`}
-            </div>
-
-            ${current ? `
-            <div class="dj-sidebar-card">
-              <div class="dj-sidebar-title">${Icon('message')} Meldinger</div>
-              <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.75rem">Send privat melding til andre brukere</p>
-              <div class="dj-msg-search">
-                <input class="form-input" id="dj-msg-user" placeholder="Søk brukernavn…" oninput="DJ.searchMsgUsers(this.value)">
-              </div>
-              <div id="dj-msg-results"></div>
-            </div>` : ''}
-          </div>
-        </div>
-      </div>
-
-      <!-- Post gig modal content (hidden) -->
-      <div id="dj-post-gig-content" style="display:none">
-        <div class="modal-header">
-          <h2>${Icon('bell')} Legg ut annonse</h2>
-          <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
-        </div>
-        <div style="padding:0 0 1rem">
-          <div class="form-group">
-            <label class="form-label">Type annonse</label>
-            <select class="form-input" id="gig-type">
-              <option value="dj-available">${Icon('sliders')} DJ tilgjengelig for jobb</option>
-              <option value="dj-wanted">${Icon('bell')} Søker DJ til arrangement</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Tittel</label>
-            <input class="form-input" id="gig-title" placeholder="f.eks. «DJ søker fredagsjobb i Oslo»">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Beskrivelse</label>
-            <textarea class="form-input" id="gig-desc" rows="3" placeholder="Sjanger, erfaring, dato, sted, pris…"></textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Kontakt (e-post, Insta, tlf…)</label>
-            <input class="form-input" id="gig-contact" placeholder="deg@eksempel.no">
-          </div>
-          <button class="btn btn-primary w-full" onclick="DJ.postGig()">Publiser annonse</button>
-        </div>
-      </div>
-    `;
-  }
-
-  function gigCard(g) {
-    const isAvail = g.type === 'dj-available';
-    return `
-      <div class="dj-gig-card">
-        <div class="dj-gig-type-badge dj-gig-type-${g.type}">
-          ${isAvail ? '🎛️ DJ tilgjengelig' : '📢 Søker DJ'}
-        </div>
-        <div class="dj-gig-title">${g.title}</div>
-        ${g.desc ? `<div class="dj-gig-desc">${g.desc}</div>` : ''}
-        <div class="dj-gig-footer">
-          <span class="dj-gig-author">
-            <a href="#/u/${g.username}" style="color:var(--accent)">${g.displayName}</a>
-            · ${timeAgo(g.createdAt)}
-          </span>
-          <div style="display:flex;gap:0.4rem;align-items:center">
-            ${g.contact ? `<a class="btn btn-ghost btn-sm" href="mailto:${g.contact}" style="font-size:0.72rem">${Icon('mail')} Kontakt</a>` : ''}
-            ${Auth.current()?.username === g.username ? `<button class="btn-icon btn-danger" onclick="DJ.deleteGig('${g.id}')" title="Slett">${Icon('trash')}</button>` : ''}
-          </div>
-        </div>
-      </div>`;
-  }
-
-  function openPostGig() {
-    const content = document.getElementById('dj-post-gig-content');
-    const box = document.getElementById('modal-box');
-    if (!content || !box) return;
-    box.innerHTML = content.innerHTML;
-    App.openModal();
-  }
-
-  function postGig() {
-    const current = Auth.current();
-    if (!current) return;
-    const type    = document.getElementById('gig-type')?.value;
-    const title   = document.getElementById('gig-title')?.value?.trim();
-    const desc    = document.getElementById('gig-desc')?.value?.trim();
-    const contact = document.getElementById('gig-contact')?.value?.trim();
-    if (!title) { App.toast('Tittel er påkrevd', 'error'); return; }
-    const gig = {
-      id:          `gig_${Date.now()}`,
-      type,
-      title,
-      desc,
-      contact,
-      username:    current.username,
-      displayName: current.displayName,
-      createdAt:   Date.now(),
-    };
-    const gigs = [gig, ...getGigs()];
-    saveGigs(gigs);
-    App.closeModal();
-    App.toast('Annonse publisert! 🎛️', 'success');
-    render();
-  }
-
-  function deleteGig(id) {
-    saveGigs(getGigs().filter(g => g.id !== id));
-    document.querySelector(`[data-gig-id="${id}"]`)?.remove();
-    render();
-    App.toast('Annonse slettet', 'info');
-  }
-
-  function toggleDJStatus() {
-    const current = Auth.current();
-    if (!current) return;
-    const isDJ = !Auth.getUser(current.username)?.isDJ;
-    Auth.updateUser(current.username, { isDJ });
-    App.toast(isDJ ? 'Du er nå registrert som DJ! 🎛️' : 'DJ-status fjernet', 'info');
-    render();
-  }
-
-  function loadLiveStream() {
-    const input = document.getElementById('dj-yt-url');
-    const url = input?.value?.trim();
-    if (!url) { App.toast('Lim inn en YouTube-lenke', 'error'); return; }
-    const videoId = extractYtId(url);
-    if (!videoId) { App.toast('Ugyldig YouTube-lenke', 'error'); return; }
-    const player = document.getElementById('dj-live-player');
-    const frame  = document.getElementById('dj-yt-frame-wrap');
-    const stop   = document.getElementById('dj-stop-btn');
-    if (!player || !frame) return;
-    frame.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" width="100%" height="360" frameborder="0" allow="autoplay;fullscreen" allowfullscreen></iframe>`;
-    player.classList.remove('hidden');
-    if (stop) stop.style.display = '';
-  }
-
-  function stopLiveStream() {
-    const player = document.getElementById('dj-live-player');
-    const frame  = document.getElementById('dj-yt-frame-wrap');
-    const stop   = document.getElementById('dj-stop-btn');
-    if (frame) frame.innerHTML = '';
-    if (player) player.classList.add('hidden');
-    if (stop) stop.style.display = 'none';
-    const input = document.getElementById('dj-yt-url');
-    if (input) input.value = '';
-  }
-
-  function extractYtId(url) {
-    try {
-      const u = new URL(url);
-      const v = u.searchParams.get('v') || url.match(/youtu\.be\/([^?&]+)/)?.[1];
-      if (v && /^[\w-]{11}$/.test(v)) return v;
-    } catch {}
-    return null;
-  }
-
-  function searchMsgUsers(q) {
-    const res = document.getElementById('dj-msg-results');
-    if (!res) return;
-    if (!q.trim()) { res.innerHTML = ''; return; }
-    const users = Auth.getAllPublicUsers().filter(u =>
-      u.username.toLowerCase().includes(q.toLowerCase()) ||
-      u.displayName.toLowerCase().includes(q.toLowerCase())
-    ).slice(0, 5);
-    res.innerHTML = users.map(u => `
-      <div class="dj-msg-user-item" onclick="Router.go('/messages/${u.username}')">
-        <div class="dj-profile-av" style="width:28px;height:28px;font-size:0.75rem">${u.displayName.charAt(0).toUpperCase()}</div>
-        <div>
-          <div style="font-size:0.82rem;font-weight:600">${u.displayName}</div>
-          <div style="font-size:0.72rem;color:var(--text2)">@${u.username}</div>
-        </div>
-      </div>`).join('');
-  }
-
   // ── Private chat ───────────────────────────────────────────────────────
   function renderPrivateChat(targetUsername) {
     const current = Auth.current();
     if (!current) { App.toast('Logg inn for å sende meldinger', 'error'); Router.go('/login'); return; }
     const target = Auth.getUser(targetUsername);
-    if (!target) { Router.go('/dj'); return; }
+    if (!target) { Router.go('/inbox'); return; }
 
     const app = document.getElementById('app');
     app.innerHTML = `
       <div class="dj-chat-page">
         <div class="dj-chat-header">
-          <a href="#/dj" class="btn btn-ghost btn-sm">${Icon('arrow-left')} Tilbake</a>
+          <a href="#/inbox" class="btn btn-ghost btn-sm">${Icon('arrow-left')} Tilbake</a>
           <a href="#/u/${target.username}" style="display:flex;align-items:center;gap:0.6rem;text-decoration:none;color:inherit">
             <div class="dj-profile-av">${target.displayName.charAt(0).toUpperCase()}</div>
             <div>
@@ -449,11 +173,7 @@ const DJ = (() => {
   }
 
   return {
-    render, renderPrivateChat,
-    openPostGig, postGig, deleteGig,
-    toggleDJStatus,
-    loadLiveStream, stopLiveStream,
-    searchMsgUsers, sendPM,
+    renderPrivateChat, sendPM,
     getTotalUnreadPMs, requestNotificationPermission,
   };
 })();

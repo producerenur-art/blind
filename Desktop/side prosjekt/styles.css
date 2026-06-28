@@ -2360,6 +2360,23 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
 }
 .vis-btn.active, .vis-btn:hover { background: rgba(124,58,237,0.4); border-color: var(--accent); color: #fff; }
 
+/* Visualizer size control (top-left) + size presets */
+.vis-size-row {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  display: flex;
+  gap: 0.35rem;
+  z-index: 2;
+}
+.radio-visualizer-wrap.vis-size-small  { flex: none; height: 150px; }
+.radio-visualizer-wrap.vis-size-medium { flex: none; height: 260px; }
+.radio-visualizer-wrap.vis-size-large  { flex: none; height: 460px; }
+.radio-visualizer-wrap.vis-size-full {
+  position: fixed; inset: 0; z-index: 3000;
+  width: 100vw; height: 100vh; min-height: 0; border-radius: 0;
+}
+
 /* Search field */
 .radio-search-wrap {
   padding: 0.75rem 1rem;
@@ -7235,6 +7252,55 @@ body { top: 0 !important; }
   border-radius: 20px; padding: 0.18rem 0.55rem; font-size: 0.74rem;
 }
 .shows-festival-cta { font-size: 0.82rem; color: var(--accent); font-weight: 600; }
+
+/* ── All Over The World page (global psytrance/psybient directory) ── */
+.world-page { min-height: calc(100vh - var(--nav-h) - var(--player-h)); }
+.world-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1.25rem;
+}
+.world-card .shows-festival-banner { padding: 1.1rem 1.3rem; }
+.world-card .shows-festival-emoji { font-size: 2.4rem; }
+.world-card .shows-festival-theme { line-height: 1.5; }
+.world-links { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.2rem; }
+.world-link {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.75rem; font-weight: 600; text-decoration: none;
+  color: var(--text2); background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border); border-radius: 99px;
+  padding: 0.28rem 0.65rem; cursor: pointer;
+  transition: background 0.16s, color 0.16s, border-color 0.16s, transform 0.12s;
+}
+.world-link:hover { color: var(--text1); background: rgba(124,58,237,0.16); border-color: rgba(124,58,237,0.45); transform: translateY(-1px); }
+.world-link svg { width: 13px; height: 13px; }
+.world-link--play {
+  color: #fff; background: var(--accent); border-color: var(--accent);
+}
+.world-link--play:hover { background: var(--accent2, #f472b6); border-color: var(--accent2, #f472b6); color: #fff; }
+.world-hero-stats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1rem;
+}
+.world-stat {
+  font-size: 0.78rem; color: var(--text2);
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: 12px; padding: 0.5rem 0.7rem;
+}
+.world-stat span {
+  display: block; font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.4rem; font-weight: 800; color: var(--text1); line-height: 1.1;
+}
+.world-outro {
+  display: flex; align-items: center; gap: 1rem;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 1.25rem 1.5rem;
+}
+.world-outro-icon { font-size: 1.6rem; color: var(--accent); flex-shrink: 0; }
+.world-outro p { color: var(--text2); line-height: 1.6; margin: 0; }
+.world-outro a { color: var(--accent); }
+@media (max-width: 560px) {
+  .world-grid { grid-template-columns: 1fr; }
+}
 
 /* ── Social links (now live in the dock's links popover; footer floater retired) ── */
 .social-link {
