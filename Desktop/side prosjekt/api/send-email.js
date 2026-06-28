@@ -198,46 +198,38 @@ module.exports = async (req, res) => {
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'Sound Core <onboarding@resend.dev>';
   const resend = new Resend(process.env.RESEND_API_KEY);
 
-  try {
-    if (type === 'activation') {
-      if (!token) return res.status(400).json({ error: 'Mangler token' });
-      const url = `${siteUrl}/#/activate/${token}`;
-      await resend.emails.send({
-        from: fromEmail,
-        to: toEmail,
-        subject: `Aktiver Sound Core-kontoen din, ${toName}!`,
-        html: activationHtml(toName, url, siteUrl),
-      });
-    } else if (type === 'reset') {
-      if (!token) return res.status(400).json({ error: 'Mangler token' });
-      const url = `${siteUrl}/#/reset/${token}`;
-      await resend.emails.send({
-        from: fromEmail,
-        to: toEmail,
-        subject: 'Tilbakestill passordet ditt på Sound Core',
-        html: resetHtml(toName, url),
-      });
-    } else if (type === 'friend_request') {
-      if (!fromName || !fromUsername) return res.status(400).json({ error: 'Mangler avsenderinfo' });
-      const inbox = inboxUrl || `${siteUrl}/#/inbox`;
-      await resend.emails.send({
-        from: fromEmail,
-        to: toEmail,
-        subject: `${fromName} ønsker å bli venn med deg på Sound Core`,
-        html: friendRequestHtml(toName, fromName, fromUsername, inbox),
-      });
-    } else if (type === 'purchase') {
-      await resend.emails.send({
-        from: fromEmail,
-        to: toEmail,
-        subject: 'Kvittering — Sound Core Pro er aktivert ⭐',
-        html: purchaseHtml(toName, `${siteUrl}/`),
-      });
-    } else {
-      return res.status(400).json({ error: 'Ukjent e-posttype' });
-    }
+  // Bygg emne + HTML basert på type
+  let subject, html;
+  if (type === 'activation') {
+    if (!token) return res.status(400).json({ error: 'Mangler token' });
+    subject = `Aktiver Sound Core-kontoen din, ${toName}!`;
+    html = activationHtml(toName, `${siteUrl}/#/activate/${token}`, siteUrl);
+  } else if (type === 'reset') {
+    if (!token) return res.status(400).json({ error: 'Mangler token' });
+    subject = 'Tilbakestill passordet ditt på Sound Core';
+    html = resetHtml(toName, `${siteUrl}/#/reset/${token}`);
+  } else if (type === 'friend_request') {
+    if (!fromName || !fromUsername) return res.status(400).json({ error: 'Mangler avsenderinfo' });
+    subject = `${fromName} ønsker å bli venn med deg på Sound Core`;
+    html = friendRequestHtml(toName, fromName, fromUsername, inboxUrl || `${siteUrl}/#/inbox`);
+  } else if (type === 'purchase') {
+    subject = 'Kvittering — Sound Core Pro er aktivert ⭐';
+    html = purchaseHtml(toName, `${siteUrl}/`);
+  } else {
+    return res.status(400).json({ error: 'Ukjent e-posttype' });
+  }
 
-    return res.status(200).json({ success: true });
+  try {
+    // VIKTIG: Resend-SDK-en (v6) kastar IKKJE ved API-feil — han returnerer { data, error }.
+    // Sjekk error eksplisitt, elles vert avvising (t.d. gratis-tier som berre tillèt sending
+    // til kontoeigaren, eller manglande verifisert domene) rapportert som «sendt» til brukaren
+    // sjølv om e-posten aldri gjekk ut.
+    const { data, error } = await resend.emails.send({ from: fromEmail, to: toEmail, subject, html });
+    if (error) {
+      console.error('Resend avviste e-post:', error);
+      return res.status(502).json({ error: error.message || 'Resend kunne ikke sende e-posten' });
+    }
+    return res.status(200).json({ success: true, id: data?.id });
   } catch (e) {
     console.error('Resend feil:', e);
     return res.status(500).json({ error: e?.message || 'Kunne ikke sende e-post' });

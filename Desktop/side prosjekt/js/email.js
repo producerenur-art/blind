@@ -1,6 +1,13 @@
 // Email — prøver /api/send-email (Resend) først, deretter EmailJS, så dev-modus
 const Email = (() => {
 
+  // Berre lokal utvikling — i produksjon skal vi ALDRI vise tilbakestillings-/aktiveringslenker
+  // direkte i nettlesaren (det ville la kven som helst nullstille kven som helst sitt passord).
+  function isLocalhost() {
+    const h = location.hostname;
+    return h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '';
+  }
+
   function isEmailJSConfigured() {
     return !!(
       CONFIG.EMAILJS_SERVICE_ID &&
@@ -80,10 +87,13 @@ const Email = (() => {
       }
     }
 
-    // 3) Dev-modus
+    // 3) Dev-modus — KUN lokalt. I produksjon returnerer vi feil i staden for å lekke lenka.
     const link = `${window.location.origin}/#/reset/${token}`;
-    console.info(`[DEV] Tilbakestillingslenke for ${username}:\n${link}`);
-    return { success: true, devMode: true, link };
+    if (isLocalhost()) {
+      console.info(`[DEV] Tilbakestillingslenke for ${username}:\n${link}`);
+      return { success: true, devMode: true, link };
+    }
+    return { error: apiRes.error || 'Kunne ikke sende e-post akkurat nå. Prøv igjen senere.' };
   }
 
   async function sendPurchaseConfirmation(toEmail, username) {
