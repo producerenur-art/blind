@@ -67,10 +67,18 @@ const Marketplace = (() => {
       const ext  = (rec.name || '').match(/\.([a-z0-9]+)$/i)?.[1] || (rec.type || '').split('/')[1] || 'mp3';
       const path = `${u.username}/${trackId}.${ext}`;
 
-      // 1) Hent signert opplastings-URL for privat bøtte
+      // 1a) Hent opplastings-token (HMAC, scoper til egen mappe server-side)
+      const tk = await fetch('/api/marketplace?action=upload-token', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u.username }),
+      });
+      const tkd = await tk.json();
+      if (!tk.ok) throw new Error(tkd.error || 'Kunne ikke hente opplastings-token');
+
+      // 1b) Hent signert opplastings-URL for privat bøtte
       const up  = await fetch('/api/marketplace?action=song-upload-url', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path }),
+        body: JSON.stringify({ path, uploadToken: tkd.token }),
       });
       const upd = await up.json();
       if (!up.ok) throw new Error(upd.error || 'Opplasting feilet');
@@ -119,18 +127,33 @@ const Marketplace = (() => {
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Feil');
-      if (d.free) { App.toast('Gratis nedlasting klar! 🎁', 'success'); return download(productId); }
+      if (d.free) {
+        if (d.downloadToken) storeDlToken(d.productId || productId, d.downloadToken);
+        App.toast('Gratis nedlasting klar! 🎁', 'success');
+        return download(productId);
+      }
       window.location.href = d.url;
     } catch (e) {
       App.toast('Kjøp feilet: ' + e.message, 'error');
     }
   }
 
+  // Nedlastings-tokens lagres lokalt per produkt (utstedt ved kjøp/gratis).
+  function storeDlToken(productId, token) {
+    if (!productId || !token) return;
+    try { const m = JSON.parse(localStorage.getItem('sc_dl_tokens') || '{}'); m[productId] = token; localStorage.setItem('sc_dl_tokens', JSON.stringify(m)); } catch (_) {}
+  }
+  function getDlToken(productId) {
+    try { return JSON.parse(localStorage.getItem('sc_dl_tokens') || '{}')[productId] || null; } catch (_) { return null; }
+  }
+
   async function download(productId) {
     const u = Auth.current();
     if (!u) { Router.go('/login'); return; }
+    const token = getDlToken(productId);
+    if (!token) { App.toast('Nedlastingslenken mangler eller er utløpt. For gratis sanger: trykk «Gratis nedlasting» på nytt.', 'error', 6000); return; }
     try {
-      const r = await fetch(`/api/marketplace?action=download&productId=${encodeURIComponent(productId)}&username=${encodeURIComponent(u.username)}`);
+      const r = await fetch(`/api/marketplace?action=download&productId=${encodeURIComponent(productId)}&token=${encodeURIComponent(token)}`);
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Ingen tilgang');
       window.open(d.url, '_blank', 'noopener');
@@ -160,14 +183,26 @@ const Marketplace = (() => {
     } catch { return []; }
   }
 
-  // Etter retur fra Stripe Checkout (?song_purchase=...)
-  function handlePurchaseRedirect() {
+  // Etter retur fra Stripe Checkout (?song_purchase=...) — veksle sesjon mot
+  // et nedlastings-token (server bekrefter at betalingen er fullført).
+  async function handlePurchaseRedirect() {
     const p   = new URLSearchParams(window.location.search);
     const sid = p.get('song_purchase');
     if (!sid) return;
     const clean = window.location.pathname + window.location.hash;
     window.history.replaceState({}, '', clean);
-    App.toast('Takk for kjøpet! 🎶 Nedlastingen blir tilgjengelig så snart betalingen er bekreftet (et øyeblikk).', 'success', 8000);
+    try {
+      const r = await fetch('/api/marketplace?action=download-token&session_id=' + encodeURIComponent(sid));
+      const d = await r.json();
+      if (r.ok && d.token) {
+        storeDlToken(d.productId, d.token);
+        App.toast('Takk for kjøpet! 🎶 Last ned i «Mine kjøp».', 'success', 8000);
+      } else {
+        App.toast('Takk for kjøpet! Nedlastingen blir klar straks betalingen er bekreftet.', 'success', 8000);
+      }
+    } catch (_) {
+      App.toast('Takk for kjøpet! 🎶', 'success', 6000);
+    }
   }
 
   return {

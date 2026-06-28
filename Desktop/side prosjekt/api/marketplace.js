@@ -4,9 +4,16 @@
 // Action velges via ?action=… (query), POST-data i body.
 const Stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
+const { sign, verify } = require('./_hmac');
 const stripe = process.env.STRIPE_SECRET_KEY ? Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 const BUCKET = 'songs';
+const UPLOAD_TTL   = 3600;        // 1 time — selger laster opp rett etter
+const DOWNLOAD_TTL = 2592000;     // 30 dager — gjør re-nedlasting i «Mine kjøp» praktisk
+
+// _hmac.secret() kaster hvis MARKETPLACE_TOKEN_SECRET mangler → pakk inn.
+function safeSign(payload, ttl) { try { return sign(payload, ttl); } catch (e) { return null; } }
+function safeVerify(token)       { try { return verify(token);    } catch (e) { return null; } }
 
 function supa() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -32,9 +39,11 @@ module.exports = async (req, res) => {
     switch (action) {
       case 'connect-onboard': return await connectOnboard(req, res, db);
       case 'connect-status':  return await connectStatus(req, res, db);
+      case 'upload-token':    return await uploadToken(req, res, db);
       case 'song-upload-url': return await songUploadUrl(req, res, db);
       case 'list-product':    return await listProduct(req, res, db);
       case 'create-checkout': return await createCheckout(req, res, db);
+      case 'download-token':  return await downloadToken(req, res, db);
       case 'download':        return await download(req, res, db);
       case 'store-products':  return await storeProducts(req, res, db);
       case 'my-purchases':    return await myPurchases(req, res, db);
@@ -90,15 +99,49 @@ async function connectStatus(req, res, db) {
   return res.status(200).json({ seller: true, onboarding_complete, charges_enabled, payouts_enabled });
 }
 
+// ── Token-utstedelse ──────────────────────────────────────────────────────
+// Opplastings-token: utstedt ved et selger-øyeblikk. App-auth er klient-side, så
+// dette er best-effort — men token + sti-scoping hindrer kryss-skriv til private
+// mapper og krever at opplasting går via API-et.
+async function uploadToken(req, res) {
+  const { username } = req.body || {};
+  if (!username) return res.status(400).json({ error: 'Mangler brukernavn' });
+  const token = safeSign({ purpose: 'upload', username }, UPLOAD_TTL);
+  if (!token) return res.status(503).json({ error: 'MARKETPLACE_TOKEN_SECRET er ikke satt på serveren.' });
+  return res.status(200).json({ token });
+}
+
+// Nedlastings-token: utstedt KUN ved et server-verifisert øyeblikk — bekreftet
+// Stripe-betaling (her) eller gratis-kjøp (i createCheckout).
+async function downloadToken(req, res) {
+  if (!stripe) return res.status(503).json({ error: 'Stripe er ikke konfigurert.' });
+  const sessionId = req.query.session_id;
+  if (!sessionId) return res.status(400).json({ error: 'Mangler session_id' });
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  if (!session || session.payment_status !== 'paid')
+    return res.status(402).json({ error: 'Betaling ikke bekreftet ennå.' });
+  const productId = session.metadata?.productId;
+  const username  = session.metadata?.buyerUsername;
+  if (!productId || !username) return res.status(400).json({ error: 'Mangler metadata på sesjonen.' });
+  const token = safeSign({ purpose: 'download', productId, username }, DOWNLOAD_TTL);
+  if (!token) return res.status(503).json({ error: 'MARKETPLACE_TOKEN_SECRET er ikke satt på serveren.' });
+  return res.status(200).json({ token, productId });
+}
+
 // ── Opplasting + produkter ────────────────────────────────────────────────
 async function songUploadUrl(req, res, db) {
-  // SIKKERHETSPORT: av til en auth-layer er på plass (se MARKETPLACE-SECURITY-TODO.md).
-  // Uten dette er dette et åpent opplastingsendepunkt. Sett MARKETPLACE_ENABLED=true når auth er klar.
   if (process.env.MARKETPLACE_ENABLED !== 'true')
     return res.status(503).json({ error: 'Markedsplassen er ikke aktivert ennå.' });
+  // Krev gyldig opplastings-token (utstedt av action=upload-token).
+  const claim = safeVerify(req.body?.uploadToken);
+  if (!claim || claim.purpose !== 'upload' || !claim.username)
+    return res.status(401).json({ error: 'Ugyldig eller manglende opplastings-token' });
   let path = typeof req.body?.path === 'string' ? req.body.path.trim() : '';
   path = path.replace(/^\/+/, '').replace(/\.{2,}/g, '').replace(/[^\w./-]/g, '_');
   if (!path) return res.status(400).json({ error: 'Mangler gyldig sti' });
+  // Server-autoritativt: tving filen inn i selgerens egen mappe (hindrer kryss-skriv).
+  const safeUser = String(claim.username).replace(/[^\w.-]/g, '_');
+  path = safeUser + '/' + path.split('/').pop();
   const { data, error } = await db.storage.from(BUCKET).createSignedUploadUrl(path);
   if (error) throw error;
   return res.status(200).json({ token: data.token, path: data.path, bucket: BUCKET });
@@ -140,7 +183,8 @@ async function createCheckout(req, res, db) {
 
   if (product.is_free || product.price_ore <= 0) {
     await db.from('purchases').insert({ product_id: productId, buyer_username: buyerUsername, amount_ore: 0, status: 'paid' });
-    return res.status(200).json({ free: true });
+    const downloadToken = safeSign({ purpose: 'download', productId, username: buyerUsername }, DOWNLOAD_TTL);
+    return res.status(200).json({ free: true, downloadToken, productId });
   }
   if (!stripe) return res.status(503).json({ error: 'Stripe er ikke konfigurert.' });
 
@@ -169,22 +213,18 @@ async function createCheckout(req, res, db) {
 }
 
 async function download(req, res, db) {
-  // SIKKERHETSPORT: av til en auth-layer er på plass (se MARKETPLACE-SECURITY-TODO.md).
-  // Uten dette kan betalingsmuren omgås via et offentlig brukernavn. Sett MARKETPLACE_ENABLED=true når auth er klar.
   if (process.env.MARKETPLACE_ENABLED !== 'true')
     return res.status(503).json({ error: 'Markedsplassen er ikke aktivert ennå.' });
-  const productId = req.query.productId, username = req.query.username;
-  if (!productId || !username) return res.status(400).json({ error: 'Mangler productId eller username.' });
-  const { data: product } = await db.from('products').select('*').eq('id', productId).maybeSingle();
-  if (!product) return res.status(404).json({ error: 'Fant ikke sangen.' });
+  const productId = req.query.productId;
+  if (!productId) return res.status(400).json({ error: 'Mangler productId.' });
+  // Krev nedlastings-token (utstedt ved gratis-kjøp eller bekreftet Stripe-betaling).
+  // Erstatter den usikre «klient-oppgitt brukernavn»-sjekken.
+  const claim = safeVerify(req.query.token);
+  if (!claim || claim.purpose !== 'download' || claim.productId !== productId)
+    return res.status(403).json({ error: 'Ugyldig eller utløpt nedlastings-token' });
 
-  let allowed = product.is_free;
-  if (!allowed) {
-    const { data: pur } = await db.from('purchases').select('id')
-      .eq('product_id', productId).eq('buyer_username', username).eq('status', 'paid').limit(1);
-    allowed = !!(pur && pur.length);
-  }
-  if (!allowed) return res.status(403).json({ error: 'Ingen gyldig kjøp funnet for denne sangen.' });
+  const { data: product } = await db.from('products').select('audio_path,title').eq('id', productId).maybeSingle();
+  if (!product) return res.status(404).json({ error: 'Fant ikke sangen.' });
 
   const { data, error } = await db.storage.from(BUCKET).createSignedUrl(product.audio_path, 60 * 60);
   if (error) throw error;

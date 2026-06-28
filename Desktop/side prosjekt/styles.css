@@ -5937,6 +5937,16 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
 .yt-search-btn:hover { filter: brightness(1.12); transform: scale(1.05); }
 .yt-search-btn .icon { width: 1em; height: 1em; }
 
+/* Ambient Mann — in-page YouTube-søk (treff spelar i embed-en på SoundCore) */
+.disc-am-yt-form { margin-bottom: 0.75rem; }
+#disc-am-yt-results:not(:empty) { margin-top: 0.85rem; }
+.disc-am-yt-status {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 0.25rem; color: var(--text3); font-size: 0.82rem;
+}
+.disc-am-yt-status .icon { width: 1em; height: 1em; }
+
 /* Klikkbare spor/album — søkjer seg sjølv opp på YouTube */
 .yt-clickable .yt-clickable-go {
   flex-shrink: 0; display: flex; align-items: center; justify-content: center;
