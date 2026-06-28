@@ -1,6 +1,50 @@
 // Discover — music & people discovery
 const Discover = (() => {
 
+  // Roterer innhald kvar 7. dag, deterministisk ut frå ukenummer (epoch-veker).
+  // Same veke = same val for alle besøkande; byter automatisk når ei ny veke startar.
+  // Brukast for dei roterande Discover-kategoriane — IKKJE Ambient Mann.
+  // VIKTIG: kvar kategori sin pool må halde seg innanfor kategorien sine eigne sjangre.
+  const weeklyIndex = () => Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+  const weeklyPick = (arr) => arr[weeklyIndex() % arr.length];
+
+  // Ambient Mann radio-miks — PERMANENT. Skal IKKJE rotere (unntaket frå 7-dagars-rotasjonen).
+  const AMBIENT_MANN_MIX = 'iLjKF9-iC1k';  // "Ambient Mann Dark Ambient and Drone mix"
+
+  // Roterande radio-miksar per Discover-kategori — på-sjanger YouTube-video-ID-ar.
+  // weeklyPick byter til neste i lista kvar 7. dag. Legg til/byt ut ID-ar fritt (hald deg på-sjanger).
+  const CATEGORY_MIXES = {
+    'psy-tour':        ['2fXd4htj7Vo', 'caX18upOO7c', '3g2vBKiWXjY'],  // full-on / peak psytrance
+    'psybient':        ['IAZIzaqxaZk', '3LQYUBw_Icc', 'V6zgkhAYhEQ'],  // psybient / psychill
+    'altar-records':   ['X2WV1RnCPlw', 'Y91C2yTq8BQ', 'pu-IVYOLsDc'],  // progressive psytrance
+    'hadra':           ['2crX23JpCrI', 'ifwKC8r0C5w', 'KavG_9PgRHs'],  // psytrance festival-sett
+    'dacru':           ['ie82s2wXlY4', 'fiFiArs1kDw', 'Q25Uwy2UBTg'],  // psytrance-label
+    'tip-raja':        ['pqLKL9nIHC0', 't4KAxWh9fGs', 'fl40hDwEnOs'],  // goa / psytrance (Raja Ram / TIP)
+    'astral':          ['jDpvkePMsw0', 'R_4RaHzQo0U', 'yMwdMMMggpc'],  // goa trance
+    'shpongle':        ['ZYowY7tvBbY', 'u5Y1SzkoPOI', 'XwtT4ZBa3CE'],  // psybient / psydub
+    'younger-brother': ['rkMt4GudJzg', 'sEdUddGvoac', 'MBtgRZMaAYg'],  // psykedelisk elektronika
+    'goa-gil':         ['xPOAsccVSvw', '0HZgSztO_24', 'gcsr00s4JoQ'],  // darkpsy / goa
+    'shunyata':        ['MhaE4T6yO1g', 'MR5Sva5ljbI', 'OdreXgf_5iM'],  // psytrance (plassholder — fann ikkje labelen)
+    'kukan-dub':       ['Knq6rBP8Afk', 'iRgtYUfUjiE', 'oU3Be14rrwU'],  // dub / psydub
+    'cosmic-leaf':     ['nUW7oEiwVqY', 'hKMzD6sclAY', 'grWRSyptTnk'],  // psychill / progressive / downtempo
+  };
+
+  // Genererer ein "Radio-miks"-seksjon som byter YouTube-video kvar 7. dag for ein kategori.
+  function renderWeeklyMix(catKey) {
+    const pool = CATEGORY_MIXES[catKey];
+    if (!pool || !pool.length) return '';
+    const ytId = weeklyPick(pool);
+    return `
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('radio')}</span>
+          <span class="disc-psy-section-title">Radio-miks</span>
+          <span class="disc-psy-section-badge">YouTube · byter kvar veke</span>
+        </div>
+        <iframe class="hr-yt-embed" src="https://www.youtube.com/embed/${ytId}?list=RD${ytId}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      </div>`;
+  }
+
   const GENRES = [
     { tag: 'all',          label: 'Alt',          emoji: '🎵' },
     { tag: 'ambient',      label: 'Ambient',       emoji: '🌌' },
@@ -313,6 +357,51 @@ const Discover = (() => {
     openYt(input ? input.value : '');
     return false;
   }
+  // ── Ambient Mann: in-page YouTube-søk ─────────────────────────────────
+  // Søkjer på YouTube via api/youtube (Data API), viser treff som klikkbare
+  // kort og spelar valt låt i embed-en — alt blir på SoundCore, inga ny fane.
+  async function ambientYtSearch(ev) {
+    if (ev && ev.preventDefault) ev.preventDefault();
+    const input   = document.getElementById('disc-am-yt-q');
+    const results = document.getElementById('disc-am-yt-results');
+    const q = (input ? input.value : '').trim();
+    if (!results) return false;
+    if (!q) { results.innerHTML = ''; return false; }
+    results.innerHTML = `<div class="disc-am-yt-status">${Icon('search')} Søkjer etter «${escHtml(q)}»…</div>`;
+    try {
+      const r = await fetch('/api/youtube?q=' + encodeURIComponent(q));
+      const data = await r.json();
+      if (!r.ok) throw new Error(data && data.error ? data.error : 'Søk feila');
+      const items = data.items || [];
+      if (!items.length) {
+        results.innerHTML = `<div class="disc-am-yt-status">Ingen treff for «${escHtml(q)}»</div>`;
+        return false;
+      }
+      results.innerHTML = items.map(it => `
+        <div class="disc-psy-mix-card" role="button" tabindex="0" style="cursor:pointer"
+             onclick="Discover.ambientYtPlay('${escHtml(it.id)}','${escHtml(it.title).replace(/'/g,'&#39;')}')"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Discover.ambientYtPlay('${escHtml(it.id)}','${escHtml(it.title).replace(/'/g,'&#39;')}')}">
+          <div class="disc-psy-mix-thumb"${it.thumb ? ` style="background-image:url('${escHtml(it.thumb)}');background-size:cover;background-position:center"` : ' style="background:linear-gradient(135deg,#c00,#ff3d3d)"'}>${it.thumb ? '' : Icon('play')}</div>
+          <div class="disc-psy-mix-info">
+            <div class="disc-psy-mix-title">${escHtml(it.title)}</div>
+            <div class="disc-psy-mix-artist">${escHtml(it.channel)}</div>
+          </div>
+          <span class="disc-psy-mix-arrow">${Icon('play')}</span>
+        </div>`).join('');
+    } catch (e) {
+      results.innerHTML = `<div class="disc-am-yt-status">${escHtml(e && e.message ? e.message : 'Søk feila')}</div>`;
+    }
+    return false;
+  }
+
+  // Spelar valt søkjetreff i Ambient Mann-embed-en (autoplay, blir på SoundCore).
+  function ambientYtPlay(id, title) {
+    const player = document.getElementById('disc-am-yt-player');
+    if (!player || !id || !/^[a-zA-Z0-9_-]{11}$/.test(id)) return;
+    player.innerHTML = `<iframe class="hr-yt-embed" title="${escHtml(title || 'YouTube')}" src="https://www.youtube.com/embed/${id}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    player.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
   // Liten søkjelinje folk kan bruke for å finne ein låt på YouTube.
   function ytSearchBar(placeholder) {
     const ph = escHtml(placeholder || 'Søk opp ein låt på YouTube…');
@@ -609,6 +698,8 @@ const Discover = (() => {
       <div class="disc-tab-bar" id="disc-tab-bar" onscroll="Discover.updateTabArrows()">
         <button class="disc-tab-btn ${activeTab === 'music' ? 'active' : ''}"
           onclick="Discover.switchTab('music')">${Icon('music')} Musikk</button>
+        <button class="disc-tab-btn ${activeTab === 'ultimae' ? 'active' : ''}"
+          onclick="Discover.switchTab('ultimae')">${Icon('disc')} Ultimae Records</button>
         <button class="disc-tab-btn ${activeTab === 'people' ? 'active' : ''}"
           onclick="Discover.switchTab('people')">${Icon('users')} Finn folk</button>
         <button class="disc-tab-btn ${activeTab === 'psy-tour' ? 'active' : ''}"
@@ -639,6 +730,8 @@ const Discover = (() => {
           onclick="Discover.switchTab('kukan-dub')">${Icon('cloud')} Kukan Dub Lagan</button>
         <button class="disc-tab-btn ${activeTab === 'cosmic-leaf' ? 'active' : ''}"
           onclick="Discover.switchTab('cosmic-leaf')">${Icon('leaf')} Cosmic Leaf</button>
+        <button class="disc-tab-btn ${activeTab === 'mikelabella' ? 'active' : ''}"
+          onclick="Discover.switchTab('mikelabella')">${Icon('disc')} MikelaBella Records</button>
       </div>
       <button class="disc-tab-arrow disc-tab-arrow--right" type="button" aria-label="Bla til høyre"
         onclick="Discover.scrollTabs(1)">${Icon('chevron-right')}</button>
@@ -930,6 +1023,7 @@ const Discover = (() => {
         <!-- PSY TOUR TAB (hidden by default) -->
         <div id="disc-psy-tour-tab" class="hidden">
           ${renderPsyTourTab()}
+          ${renderWeeklyMix('psy-tour')}
         </div>
 
         <!-- AMBIENT MANN TAB (hidden by default) -->
@@ -940,61 +1034,83 @@ const Discover = (() => {
         <!-- PSYBIENT EVENTS TAB (hidden by default) -->
         <div id="disc-psybient-tab" class="hidden">
           ${renderPsybientTab()}
+          ${renderWeeklyMix('psybient')}
         </div>
 
         <!-- ALTAR RECORDS TAB (hidden by default) -->
         <div id="disc-altar-records-tab" class="hidden">
           ${renderAltarRecordsTab()}
+          ${renderWeeklyMix('altar-records')}
         </div>
 
         <!-- HADRA FESTIVAL TAB (hidden by default) -->
         <div id="disc-hadra-tab" class="hidden">
           ${renderHadraTab()}
+          ${renderWeeklyMix('hadra')}
         </div>
 
         <!-- DACRU RECORDS TAB (hidden by default) -->
         <div id="disc-dacru-tab" class="hidden">
           ${renderDacruTab()}
+          ${renderWeeklyMix('dacru')}
         </div>
 
         <!-- RAJA RAM / TIP RECORDS TAB (hidden by default) -->
         <div id="disc-tip-raja-tab" class="hidden">
           ${renderTipRajaTab()}
+          ${renderWeeklyMix('tip-raja')}
         </div>
 
         <!-- ASTRAL PROJECTION TAB (hidden by default) -->
         <div id="disc-astral-tab" class="hidden">
           ${renderAstralTab()}
+          ${renderWeeklyMix('astral')}
         </div>
 
         <!-- SHPONGLE TAB (hidden by default) -->
         <div id="disc-shpongle-tab" class="hidden">
           ${renderShpongleTab()}
+          ${renderWeeklyMix('shpongle')}
         </div>
 
         <!-- YOUNGER BROTHER TAB (hidden by default) -->
         <div id="disc-younger-brother-tab" class="hidden">
           ${renderYoungerBrotherTab()}
+          ${renderWeeklyMix('younger-brother')}
         </div>
 
         <!-- GOA GIL MEMORIAL TAB (hidden by default) -->
         <div id="disc-goa-gil-tab" class="hidden">
           ${renderGoaGilTab()}
+          ${renderWeeklyMix('goa-gil')}
         </div>
 
         <!-- SHUNYATA RECORDS TAB (hidden by default) -->
         <div id="disc-shunyata-tab" class="hidden">
           ${renderShunyataTab()}
+          ${renderWeeklyMix('shunyata')}
         </div>
 
         <!-- KUKAN DUB LAGAN TAB (hidden by default) -->
         <div id="disc-kukan-dub-tab" class="hidden">
           ${renderKukanDubTab()}
+          ${renderWeeklyMix('kukan-dub')}
         </div>
 
         <!-- COSMIC LEAF TAB (hidden by default) -->
         <div id="disc-cosmic-leaf-tab" class="hidden">
           ${renderCosmicLeafTab()}
+          ${renderWeeklyMix('cosmic-leaf')}
+        </div>
+
+        <!-- ULTIMAE RECORDS TAB (hidden by default) -->
+        <div id="disc-ultimae-tab" class="hidden">
+          ${renderUltimaeTab()}
+        </div>
+
+        <!-- MIKELABELLA RECORDS TAB (hidden by default) -->
+        <div id="disc-mikelabella-tab" class="hidden">
+          ${renderMikelaBellaTab()}
         </div>
 
       </div>`;
@@ -1033,6 +1149,7 @@ const Discover = (() => {
       { label: 'Downtempo',     emoji: '🌊' },
       { label: 'Experimental',  emoji: '🧪' },
     ];
+    const ytId = AMBIENT_MANN_MIX;
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0f2027,#203a43,#2c5364)">
         <div class="disc-psy-banner-emoji">${Icon('waves')}</div>
@@ -1065,6 +1182,24 @@ const Discover = (() => {
             <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
           </a>
         </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('radio')}</span>
+          <span class="disc-psy-section-title">Radio-miks &amp; søk</span>
+          <span class="disc-psy-section-badge">YouTube</span>
+        </div>
+        <form class="yt-search disc-am-yt-form" onsubmit="return Discover.ambientYtSearch(event)">
+          <span class="yt-search-icon">${Icon('search')}</span>
+          <input type="search" class="yt-search-input" id="disc-am-yt-q"
+                 placeholder="Søk og bytt sang — spelar her på SoundCore…" aria-label="Søk på YouTube">
+          <button class="yt-search-btn" type="submit" title="Søk på YouTube">${Icon('arrow-right')}</button>
+        </form>
+        <div id="disc-am-yt-player" data-mix="${ytId}">
+          <iframe class="hr-yt-embed" src="https://www.youtube.com/embed/${ytId}?list=RD${ytId}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+        <div id="disc-am-yt-results" class="disc-psy-mix-grid"></div>
       </div>
 
       <div class="disc-psy-section">
@@ -1365,6 +1500,143 @@ const Discover = (() => {
         <div class="disc-psy-section-hdr">
           <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Finn Altar Records</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${LINKS.map(psyLinkCard).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderUltimaeTab() {
+    const ARTISTS = [
+      { icon: '🌌', name: 'Aes Dana',            genres: 'Ambient · Downtempo · Psybient' },
+      { icon: '☀️', name: 'Solar Fields',        genres: 'Ambient · Downtempo · Cinematic' },
+      { icon: '🧬', name: 'Cell',                genres: 'Ambient · Downtempo · Chillout' },
+      { icon: '🌐', name: 'H.U.V.A. Network',    genres: 'Ambient · Downtempo' },
+      { icon: '🕉', name: 'Asura',               genres: 'Psychill · Ambient · Goa' },
+      { icon: '🌊', name: 'Sync24',              genres: 'Ambient · Downtempo · Chillout' },
+      { icon: '🌀', name: 'Miktek',              genres: 'Ambient · IDM · Downtempo' },
+      { icon: '🌍', name: 'Hol Baumann',         genres: 'Ambient · Downtempo · World' },
+      { icon: '🔵', name: 'Connect.Ohm',         genres: 'Ambient · IDM' },
+      { icon: '🌙', name: 'Martin Nonstatic',    genres: 'Ambient · Deep Techno · Dub' },
+      { icon: '🌱', name: 'I Awake',             genres: 'Psybient · Downtempo' },
+      { icon: '❄️', name: 'James Murray',        genres: 'Ambient · Deep Listening' },
+      { icon: '🪶', name: 'Lauge',               genres: 'Ambient · Neoclassical · Drone · Psybient' },
+      { icon: '🎹', name: 'Lars Leonhard',       genres: 'Ambient · IDM' },
+      { icon: '🔮', name: 'Master Margherita',   genres: 'Downtempo · Psychill' },
+      { icon: '🌑', name: 'Scann-Tec',           genres: 'Ambient · IDM · Sound Design' },
+      { icon: '💫', name: 'Circular',            genres: 'Ambient · Downtempo' },
+      { icon: '🌫', name: 'Fingers In The Noise',genres: 'Downtempo · IDM' },
+      { icon: '🪐', name: 'Cygna',               genres: 'Ambient · Downtempo' },
+      { icon: '🌒', name: 'Opale',               genres: 'Ambient · Downtempo' },
+      { icon: '✨', name: 'Eskostatic',          genres: 'Ambient · Downtempo' },
+      { icon: '🌿', name: 'Francis M Gri',       genres: 'Ambient · Neoclassical' },
+      { icon: '🔷', name: 'Hybrid Leisureland',  genres: 'Ambient · Downtempo' },
+      { icon: '🌬', name: 'Erot',                genres: 'Downtempo · Electronica' },
+      { icon: '🌟', name: 'Max Million',         genres: 'Ambient · Electronica' },
+      { icon: '🎛️', name: 'Ambientium',          genres: 'Ambient · Downtempo' },
+    ];
+
+    const SERIES = [
+      { emoji: '🌡', name: 'Fahrenheit Project', desc: 'Den definerande chillout/ambient-compilationserien til labelet' },
+      { emoji: '🍃', name: 'Oxycanta',           desc: 'Organisk downtempo og atmosfærisk electronica — samleserie' },
+      { emoji: '💿', name: 'Fonal / Katalog',    desc: 'CD, vinyl, kassett og digitalt — 16- og 24-bit utgivingar' },
+      { emoji: '🎚️', name: 'Ultimae Studio',     desc: 'Mastering, sound design og multikanals miks (5.1 / DTS-HD)' },
+    ];
+
+    const LINKS = [
+      { emoji: '🌐', name: 'ultimae.com',  desc: 'Offisiell nettstad — artistar, utgivingar og nyhende', url: 'https://ultimae.com/' },
+      { emoji: '🛒', name: 'Nettbutikk',   desc: 'Kjøp CD, vinyl, kassett og digitalt direkte frå labelet', url: 'https://ultimae.com/shop/' },
+      { emoji: '🎤', name: 'Artistar',     desc: 'Heile rosteret av komponistar og DJ-ar',                  url: 'https://ultimae.com/artists/' },
+      { emoji: '🎵', name: 'Bandcamp',     desc: 'Stream og støtt artistane direkte',                       url: 'https://ultimae.bandcamp.com/' },
+      { emoji: '📰', name: 'Nyhende',      desc: 'Siste utgivingar og kunngjeringar',                       url: 'https://ultimae.com/news/' },
+      { emoji: '✉️', name: 'Nyheitsbrev',  desc: 'Få oppdateringar rett i innboksen',                       url: 'https://ultimae.com/ultimae-newsletter/' },
+    ];
+
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0a0f1f,#13203a,#0d1830)">
+        <div class="disc-psy-banner-emoji">${Icon('disc')}</div>
+        <div>
+          <div class="disc-psy-banner-title">Ultimae Records</div>
+          <div class="disc-psy-banner-sub">Ambient · Downtempo · Psybient · Chillout — atmosfærisk elektronikk frå Lyon, Frankrike</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('tag')}</span>
+          <span class="disc-psy-section-title">Om labelet</span>
+          <span class="disc-psy-section-badge">ultimae.com</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://ultimae.com/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('disc')}</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Ultimae Records</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Uavhengig fransk label og studio grunnlagt i 2000 i Lyon av Sandrine Gryson og
+                Vincent Villuis (Aes Dana). Eit av dei mest innflytelsesrike namna innan ambient,
+                downtempo og psybient — kjend for djupe, filmatiske lydlandskap og høg
+                produksjonskvalitet. Roster inkluderer Solar Fields, Cell, Asura og Aes Dana sjølv,
+                og dei ikoniske <em>Fahrenheit Project</em>- og <em>Oxycanta</em>-samlingane.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">${Icon('sparkles')} Ambient</span>
+                <span class="disc-psy-section-badge">${Icon('waves')} Downtempo</span>
+                <span class="disc-psy-section-badge">${Icon('leaf')} Psybient</span>
+                <span class="disc-psy-section-badge">${Icon('moon')} Chillout</span>
+                <span class="disc-psy-section-badge">${Icon('globe')} Lyon 🇫🇷</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('mic')}</span>
+          <span class="disc-psy-section-title">Artistar</span>
+          <span class="disc-psy-section-badge">${ARTISTS.length}+ artistar</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${ARTISTS.map(a => `
+            <div class="disc-psy-label-card">
+              <div class="disc-psy-label-icon">${iconForEmoji(a.icon)}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(a.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(a.genres)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('folder')}</span>
+          <span class="disc-psy-section-title">Serier & Studio</span>
+          <span class="disc-psy-section-badge">${SERIES.length} kategoriar</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${SERIES.map(s => `
+            <a class="disc-psy-label-card" href="https://ultimae.com/shop/" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${iconForEmoji(s.emoji)}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(s.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(s.desc)}</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
+          <span class="disc-psy-section-title">Finn Ultimae Records</span>
         </div>
         <div class="disc-psy-label-grid">
           ${LINKS.map(psyLinkCard).join('')}
@@ -1873,6 +2145,88 @@ const Discover = (() => {
         <div class="disc-psy-section-hdr">
           <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Finn Cosmic Leaf</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${LINKS.map(psyLinkCard).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderMikelaBellaTab() {
+    const LINKS = [
+      { emoji: '🎵', name: 'Bandcamp',        desc: 'Stream og kjøp heile katalogen direkte frå labelet', url: 'https://mikelabellarecords.bandcamp.com/' },
+      { emoji: '💿', name: 'Diskografi',       desc: 'Alle utgivingar — album, EP-ar og compilations',     url: 'https://mikelabellarecords.bandcamp.com/music' },
+    ];
+    const RELEASES = [
+      { emoji: '🌫', name: 'Searching For A Fogbow',            artist: 'Kukan Dub Lagan' },
+      { emoji: '📦', name: 'Out Of The Box',                    artist: 'Sorian' },
+      { emoji: '🎚', name: 'Elastic Life EP',                   artist: 'Gumi' },
+      { emoji: '☀', name: 'Sunshine Music For Smiling People',  artist: 'Kukan Dub Lagan' },
+      { emoji: '🌑', name: 'Dark Side Of The Mood',             artist: 'Kukan Dub Lagan' },
+      { emoji: '🌍', name: 'VA — Planet Blue',                  artist: 'Compiled by Johnny Blue' },
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#06121f,#0a2440,#123a5e)">
+        <div class="disc-psy-banner-emoji">${Icon('disc')}</div>
+        <div>
+          <div class="disc-psy-banner-title">MikelaBella Records</div>
+          <div class="disc-psy-banner-sub">Dub · House · Downtempo — uavhengig elektronika frå Barcelona</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('disc')}</span>
+          <span class="disc-psy-section-title">Om MikelaBella</span>
+          <span class="disc-psy-section-badge">Barcelona, Spania</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://mikelabellarecords.bandcamp.com/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start;border-color:rgba(60,120,200,0.35);background:rgba(6,18,31,0.5)">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('disc')}</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">MikelaBella Records</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                MikelaBella Records er eit uavhengig plateselskap frå Barcelona som dyrkar nye og
+                originale lydar frå både etablerte og framvaksande artistar. Katalogen spenner over
+                dub, house og atmosfærisk downtempo, med ein roster av produsentar som òg er erfarne
+                DJ-ar. Heim for m.a. Kukan Dub Lagan, Sorian og Gumi.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">${iconForEmoji('🌊')} Dub</span>
+                <span class="disc-psy-section-badge">${iconForEmoji('🏠')} House</span>
+                <span class="disc-psy-section-badge">${iconForEmoji('🌙')} Downtempo</span>
+                <span class="disc-psy-section-badge">🇪🇸 Spania</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('music')}</span>
+          <span class="disc-psy-section-title">Utvalde utgivingar</span>
+          <span class="disc-psy-section-badge">Bandcamp</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${RELEASES.map(r => `
+            <a class="disc-psy-label-card" href="https://mikelabellarecords.bandcamp.com/music" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${iconForEmoji(r.emoji)}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(r.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(r.artist)}</div>
+              </div>
+            </a>`).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
+          <span class="disc-psy-section-title">Finn MikelaBella</span>
         </div>
         <div class="disc-psy-label-grid">
           ${LINKS.map(psyLinkCard).join('')}
@@ -2460,6 +2814,10 @@ const Discover = (() => {
       { day: 'Jul', month: '2026', name: 'VooV Experience', loc: 'Putlitz, Tyskland 🇩🇪', tags: ['Progressive', 'Full-On', 'Forest'], url: 'https://voov.de/' },
       { day: 'Sommar', month: '2026', name: 'Psy-Fi Festival', loc: 'Nederland 🇳🇱 — innsjø', tags: ['Psy', 'Workshops', 'Art'], url: 'https://www.psy-fi.nl/' },
       { day: 'Sommar', month: '2026', name: 'Solar Light Festival', loc: 'Italia 🇮🇹', tags: ['Psy', 'Ritual', 'Community'], url: 'https://psymedia.co.za/event_continent/europe/' },
+      { day: 'Aug', month: '2026', name: 'Modem Festival', loc: 'Kroatia 🇭🇷 — djup skog', tags: ['Dark Psy', 'Hi-Tech', 'Forest'], url: 'https://www.modemfestival.com/' },
+      { day: 'Jul', month: '2027', name: 'Boom Festival', loc: 'Idanha-a-Nova, Portugal 🇵🇹 — innsjø', tags: ['Psy', 'Visionary Art', 'Sustainability'], url: 'https://www.boomfestival.org/' },
+      { day: 'Aug–Sep', month: '2026', name: 'Burning Man', loc: 'Black Rock Desert, USA 🇺🇸', tags: ['Transformational', 'Art', 'Desert'], url: 'https://burningman.org/' },
+      { day: 'Des', month: '2026', name: 'Sunburn Festival', loc: 'Vagator, Goa, India 🇮🇳 — strand', tags: ['EDM', 'Trance', 'Beach'], url: 'https://www.sunburn.in/' },
     ];
 
     return `
@@ -2740,7 +3098,7 @@ const Discover = (() => {
   // ── Tab / sub-tab switching ───────────────────────────────────────────
   function switchTab(tab) {
     activeTab = tab;
-    const TAB_LABELS = { music: 'Musikk', people: 'folk', 'psy-tour': 'Psytrance', 'ambient-mann': 'Ambient Mann', psybient: 'Psybient', 'altar-records': 'Altar', hadra: 'Hadra', dacru: 'DaCru', 'tip-raja': 'Raja', astral: 'Astral', shpongle: 'Shpongle', 'younger-brother': 'Younger', 'goa-gil': 'Goa Gil', shunyata: 'Shunyata', 'kukan-dub': 'Kukan', 'cosmic-leaf': 'Cosmic' };
+    const TAB_LABELS = { music: 'Musikk', people: 'folk', 'psy-tour': 'Psytrance', 'ambient-mann': 'Ambient Mann', psybient: 'Psybient', 'altar-records': 'Altar', hadra: 'Hadra', dacru: 'DaCru', 'tip-raja': 'Raja', astral: 'Astral', shpongle: 'Shpongle', 'younger-brother': 'Younger', 'goa-gil': 'Goa Gil', shunyata: 'Shunyata', 'kukan-dub': 'Kukan', 'cosmic-leaf': 'Cosmic', ultimae: 'Ultimae', mikelabella: 'MikelaBella' };
     document.querySelectorAll('.disc-tab-btn').forEach(b => {
       const matched = Object.entries(TAB_LABELS).find(([, label]) => b.textContent.includes(label));
       b.classList.toggle('active', matched ? matched[0] === tab : false);
@@ -2761,6 +3119,8 @@ const Discover = (() => {
     document.getElementById('disc-shunyata-tab')?.classList.toggle('hidden', tab !== 'shunyata');
     document.getElementById('disc-kukan-dub-tab')?.classList.toggle('hidden', tab !== 'kukan-dub');
     document.getElementById('disc-cosmic-leaf-tab')?.classList.toggle('hidden', tab !== 'cosmic-leaf');
+    document.getElementById('disc-ultimae-tab')?.classList.toggle('hidden', tab !== 'ultimae');
+    document.getElementById('disc-mikelabella-tab')?.classList.toggle('hidden', tab !== 'mikelabella');
   }
 
   function switchSubTab(tab) {
@@ -3120,7 +3480,7 @@ const Discover = (() => {
     onCategoryChange, setDiscGenreRadio, clearGenreRadio,
     downloadTrack, closeDownloadModal, confirmDownloadPayment,
     openDroneZone, closeDroneZone,
-    ytSearch, openYt,
+    ytSearch, openYt, ambientYtSearch, ambientYtPlay,
     scrollTabs, updateTabArrows,
   };
 })();
