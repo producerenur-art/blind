@@ -57,7 +57,6 @@ const App = (() => {
         ${feat('moon',     'Underground', 'Den rå, eksperimentelle undergrunnsscenen — for deg som vil grave dypere enn topplistene og finne de skjulte perlene.')}
         ${feat('calendar', 'Shows',       'Hold styr på kommende arrangementer, konserter og live-sett — og se hvem som spiller live akkurat nå.')}
         ${feat('message',  'Chat',        'Sanntidsprat med andre brukere, bygget desentralisert med Gun.js. Meldingene flyter direkte mellom dere, uten en sentral mellommann.')}
-        ${feat('palette',  'Blend',       'Et visuelt studio for å lage og leke med bilder og grafikk som matcher lyden og stemningen din.')}
         ${feat('user',     'Min side',    'Din egen profil — musikken din, miksene dine, arrangementer og venner, samlet på ett sted.')}
         ${feat('mail',     'Innboks',     'Private meldinger og venneforespørsler, så du holder kontakten med folkene du møter underveis.')}
         ${feat('message',  'AI-assistent','En innebygd hjelper du kan spørre om hva som helst — fra hvordan ting fungerer til tips om hvor du bør begynne.')}
@@ -144,7 +143,6 @@ const App = (() => {
         <a href="#/a1"          class="btn btn-ghost btn-sm a1-nav-link" title="A1 — AI + søk heile nettet + ukas lenker & videoar">${Icon('sparkles')} A1</a>
         <a href="#/community"   class="btn btn-ghost btn-sm" title="Community — fellesveggen">${Icon('users')} Community</a>
         <a href="#/shop"        class="btn btn-ghost btn-sm" title="Shop">${Icon('store')} Shop</a>
-        <a href="#/studio"      class="btn btn-ghost btn-sm" title="Blend Studio">${Icon('palette')} Blend</a>
         <a href="#/inbox"       class="btn btn-ghost btn-sm" style="position:relative">${Icon('mail')} Innboks${inboxBadge}</a>
         <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">${Icon('user')} ${user.displayName}</a>
         <a href="#/edit"        class="btn btn-ghost btn-sm" title="Rediger profil">${Icon('edit')}</a>
@@ -784,7 +782,6 @@ const App = (() => {
                 <a href="#/u/${user.username}" class="btn btn-ghost">${Icon('user')} Min profil</a>
                 <a href="#/edit" class="btn btn-ghost">${Icon('edit')} Rediger profil</a>
                 <a href="#/radio" class="btn btn-ghost">${Icon('radio')} Radio</a>
-                <a href="#/studio" class="btn btn-ghost">${Icon('palette')} Blend Studio</a>
                 <a href="#/inbox" class="btn btn-ghost">${Icon('mail')} Innboks</a>
                 <a href="#/settings" class="btn btn-ghost">${Icon('settings')} Innstillinger</a>
                 <a href="#/discover" class="btn btn-ghost">${Icon('music')} Discover</a>
