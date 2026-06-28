@@ -4,8 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SoundCore">
   <meta name="theme-color" content="#0a0a0f">
   <title>Sound Core</title>
+  <!-- PWA: installerbar app på iPhone/Android -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0f'/%3E%3Cg fill='none' stroke='%23a78bfa' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M16 8v16'/%3E%3Cpath d='M11 12v8'/%3E%3Cpath d='M21 12v8'/%3E%3Cpath d='M6.5 14.5v3'/%3E%3Cpath d='M25.5 14.5v3'/%3E%3C/g%3E%3C/svg%3E">
   <meta name="description" content="SoundCore — desentralisert sosial plattform for elektronisk musikk, radio og DJ-miks.">
   <meta property="og:title" content="SoundCore">
@@ -483,5 +489,13 @@
     }
   </script>
   <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <!-- PWA service worker: gjør appen installerbar + offline-skall -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function () {});
+      });
+    }
+  </script>
 </body>
 </html>
