@@ -27,6 +27,7 @@ const Discover = (() => {
     'shunyata':        ['MhaE4T6yO1g', 'MR5Sva5ljbI', 'OdreXgf_5iM'],  // psytrance (plassholder — fann ikkje labelen)
     'kukan-dub':       ['Knq6rBP8Afk', 'iRgtYUfUjiE', 'oU3Be14rrwU'],  // dub / psydub
     'cosmic-leaf':     ['nUW7oEiwVqY', 'hKMzD6sclAY', 'grWRSyptTnk'],  // psychill / progressive / downtempo
+    'gagarin-project': ['fhcc1E9RoPE', 'h6BKzBLOgIU', 'deT8-XC7Rqw'],  // psybient / psychill / downtempo
   };
 
   // Genererer ein "Radio-miks"-seksjon som byter YouTube-video kvar 7. dag for ein kategori.
@@ -732,6 +733,10 @@ const Discover = (() => {
           onclick="Discover.switchTab('cosmic-leaf')">${Icon('leaf')} Cosmic Leaf</button>
         <button class="disc-tab-btn ${activeTab === 'mikelabella' ? 'active' : ''}"
           onclick="Discover.switchTab('mikelabella')">${Icon('disc')} MikelaBella Records</button>
+        <button class="disc-tab-btn ${activeTab === 'gagarin-project' ? 'active' : ''}"
+          onclick="Discover.switchTab('gagarin-project')">${Icon('rocket')} Gagarin Project</button>
+        <button class="disc-tab-btn ${activeTab === 'leftfield' ? 'active' : ''}"
+          onclick="Discover.switchTab('leftfield')">${Icon('moon')} Leftfield Records</button>
       </div>
       <button class="disc-tab-arrow disc-tab-arrow--right" type="button" aria-label="Bla til høyre"
         onclick="Discover.scrollTabs(1)">${Icon('chevron-right')}</button>
@@ -1111,6 +1116,17 @@ const Discover = (() => {
         <!-- MIKELABELLA RECORDS TAB (hidden by default) -->
         <div id="disc-mikelabella-tab" class="hidden">
           ${renderMikelaBellaTab()}
+        </div>
+
+        <!-- GAGARIN PROJECT TAB (hidden by default) -->
+        <div id="disc-gagarin-project-tab" class="hidden">
+          ${renderGagarinProjectTab()}
+          ${renderWeeklyMix('gagarin-project')}
+        </div>
+
+        <!-- LEFTFIELD RECORDS TAB (hidden by default) -->
+        <div id="disc-leftfield-tab" class="hidden">
+          ${renderLeftfieldTab()}
         </div>
 
       </div>`;
@@ -2235,6 +2251,170 @@ const Discover = (() => {
     `;
   }
 
+  function renderGagarinProjectTab() {
+    const LINKS = [
+      { emoji: '🎵', name: 'Bandcamp',     desc: 'Stream og kjøp heile katalogen direkte frå artisten', url: 'https://gagarinproject.bandcamp.com/' },
+      { emoji: '☁️', name: 'SoundCloud',   desc: 'Psychill-, psybient- og psydub-mixar',                url: 'https://soundcloud.com/gagarinproject' },
+      { emoji: '💛', name: 'Patreon',      desc: 'Støtt prosjektet direkte — #LiveLoveCreate',          url: 'https://www.patreon.com/gagarinproject' },
+      { emoji: '📘', name: 'Facebook',     desc: 'Nyhende, livestreams og fellesskap',                  url: 'https://www.facebook.com/gagarinproject' },
+    ];
+    const RELEASES = [
+      { emoji: '🐦', name: 'Birds in Psy Forest',                          artist: 'Gagarin Project' },
+      { emoji: '🍄', name: 'Albert Hofmann Wonderful Experience (2022 Edit)', artist: 'Gagarin Project' },
+      { emoji: '🧘', name: 'Higher States of Consciousness',               artist: 'feat. Alan Watts' },
+      { emoji: '🙏', name: 'Prayer for Love (healing meditation mix)',     artist: 'Gagarin Project' },
+      { emoji: '✨', name: 'Wonderful Experience',                          artist: 'feat. Albert Hofmann' },
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0a0420,#1a0a3e,#2c1060)">
+        <div class="disc-psy-banner-emoji">${Icon('rocket')}</div>
+        <div>
+          <div class="disc-psy-banner-title">Gagarin Project</div>
+          <div class="disc-psy-banner-sub">Psybient · Psychill · Downtempo — meditativ kosmisk elektronika frå Ukraina</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('rocket')}</span>
+          <span class="disc-psy-section-title">Om Gagarin Project</span>
+          <span class="disc-psy-section-badge">#LiveLoveCreate</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://gagarinproject.bandcamp.com/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start;border-color:rgba(120,80,200,0.35);background:rgba(10,4,32,0.5)">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('rocket')}</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Gagarin Project</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Gagarin Project er eit ukrainsk psybient-prosjekt som lagar djup, meditativ og
+                bevisstheitsutvidande elektronika i skjæringspunktet mellom psychill, psybient og
+                downtempo. Mjuke lydlandskap, organiske teksturar og åndelege/filosofiske tema —
+                med mottoet «live love create». Kjend frå psybient.org-miksane og ein rik katalog
+                av roleg, kosmisk musikk.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">${Icon('sparkles')} Psybient</span>
+                <span class="disc-psy-section-badge">${Icon('waves')} Psychill</span>
+                <span class="disc-psy-section-badge">${iconForEmoji('🌙')} Downtempo</span>
+                <span class="disc-psy-section-badge">🇺🇦 Ukraina</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('music')}</span>
+          <span class="disc-psy-section-title">Utvalde utgivingar</span>
+          <span class="disc-psy-section-badge">Bandcamp</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${RELEASES.map(r => `
+            <a class="disc-psy-label-card" href="https://gagarinproject.bandcamp.com/music" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${iconForEmoji(r.emoji)}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(r.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(r.artist)}</div>
+              </div>
+            </a>`).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
+          <span class="disc-psy-section-title">Finn Gagarin Project</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${LINKS.map(psyLinkCard).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderLeftfieldTab() {
+    const LINKS = [
+      { emoji: '🌐', name: 'lftfld.se',   desc: 'Offisiell nettstad — utgivingar, artistar og info', url: 'https://www.lftfld.se/' },
+      { emoji: '📘', name: 'Facebook',    desc: 'Nyhende og oppdateringar frå labelet',              url: 'https://www.facebook.com/lftfld/' },
+      { emoji: '💿', name: 'Discogs',      desc: 'Full diskografi — CD, vinyl og digitalt',           url: 'https://www.discogs.com/label/467138-Leftfield-Records' },
+    ];
+    const PROJECTS = [
+      { emoji: '🌿', name: 'Carbon Based Lifeforms', artist: 'Ambient-downtempo med Johannes Hedberg — éin av verdas største ambient-grupper (10M+ avspelingar)' },
+      { emoji: '🌀', name: 'Sync24',                 artist: 'Soloprosjektet til labelgründaren — i slekt med CBL, men med sin eigen smak' },
+      { emoji: '🔬', name: 'T.S.R.',                 artist: 'Eksperimentelt prosjekt med Johannes Hedberg og Magnus Birgersson (Solar Fields)' },
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#05081a,#0c1233,#161f52)">
+        <div class="disc-psy-banner-emoji">${Icon('moon')}</div>
+        <div>
+          <div class="disc-psy-banner-title">Leftfield Records</div>
+          <div class="disc-psy-banner-sub">Ambient · Downtempo · Electronica — svensk label av Sync24</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('moon')}</span>
+          <span class="disc-psy-section-title">Om Leftfield Records</span>
+          <span class="disc-psy-section-badge">lftfld.se</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://www.lftfld.se/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start;border-color:rgba(80,100,200,0.35);background:rgba(5,8,26,0.5)">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('moon')}</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Leftfield Records</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Leftfield Records er eit svensk plateselskap starta av Daniel Vadestrid (aka Sync24),
+                fokusert på prosjekta gründaren sjølv er involvert i — først og fremst Carbon Based
+                Lifeforms, Sync24 og T.S.R. Djup, atmosfærisk ambient og downtempo-elektronika.
+                Starta som eit reint digitalt label, men utvida i 2018 til òg å gje ut på CD og vinyl.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">${iconForEmoji('🌙')} Ambient</span>
+                <span class="disc-psy-section-badge">${Icon('waves')} Downtempo</span>
+                <span class="disc-psy-section-badge">${Icon('atom')} Electronica</span>
+                <span class="disc-psy-section-badge">🇸🇪 Sverige</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('users')}</span>
+          <span class="disc-psy-section-title">Prosjekt &amp; artistar</span>
+          <span class="disc-psy-section-badge">lftfld.se</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${PROJECTS.map(r => `
+            <a class="disc-psy-label-card" href="https://www.lftfld.se/" target="_blank" rel="noopener noreferrer">
+              <div class="disc-psy-label-icon">${iconForEmoji(r.emoji)}</div>
+              <div>
+                <div class="disc-psy-label-name">${escHtml(r.name)}</div>
+                <div class="disc-psy-label-desc">${escHtml(r.artist)}</div>
+              </div>
+            </a>`).join('')}
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
+          <span class="disc-psy-section-title">Finn Leftfield</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${LINKS.map(psyLinkCard).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   function renderKukanDubTab() {
     const LINKS = [
       { emoji: '🎵', name: 'Searching for a Fogbow — Bandcamp', desc: 'Stream og kjøp albumet på Bandcamp',              url: 'https://kukan-dub-lagan.bandcamp.com/album/searching-for-a-fogbow' },
@@ -3098,7 +3278,7 @@ const Discover = (() => {
   // ── Tab / sub-tab switching ───────────────────────────────────────────
   function switchTab(tab) {
     activeTab = tab;
-    const TAB_LABELS = { music: 'Musikk', people: 'folk', 'psy-tour': 'Psytrance', 'ambient-mann': 'Ambient Mann', psybient: 'Psybient', 'altar-records': 'Altar', hadra: 'Hadra', dacru: 'DaCru', 'tip-raja': 'Raja', astral: 'Astral', shpongle: 'Shpongle', 'younger-brother': 'Younger', 'goa-gil': 'Goa Gil', shunyata: 'Shunyata', 'kukan-dub': 'Kukan', 'cosmic-leaf': 'Cosmic', ultimae: 'Ultimae', mikelabella: 'MikelaBella' };
+    const TAB_LABELS = { music: 'Musikk', people: 'folk', 'psy-tour': 'Psytrance', 'ambient-mann': 'Ambient Mann', psybient: 'Psybient', 'altar-records': 'Altar', hadra: 'Hadra', dacru: 'DaCru', 'tip-raja': 'Raja', astral: 'Astral', shpongle: 'Shpongle', 'younger-brother': 'Younger', 'goa-gil': 'Goa Gil', shunyata: 'Shunyata', 'kukan-dub': 'Kukan', 'cosmic-leaf': 'Cosmic', ultimae: 'Ultimae', mikelabella: 'MikelaBella', 'gagarin-project': 'Gagarin', leftfield: 'Leftfield' };
     document.querySelectorAll('.disc-tab-btn').forEach(b => {
       const matched = Object.entries(TAB_LABELS).find(([, label]) => b.textContent.includes(label));
       b.classList.toggle('active', matched ? matched[0] === tab : false);
@@ -3121,6 +3301,8 @@ const Discover = (() => {
     document.getElementById('disc-cosmic-leaf-tab')?.classList.toggle('hidden', tab !== 'cosmic-leaf');
     document.getElementById('disc-ultimae-tab')?.classList.toggle('hidden', tab !== 'ultimae');
     document.getElementById('disc-mikelabella-tab')?.classList.toggle('hidden', tab !== 'mikelabella');
+    document.getElementById('disc-gagarin-project-tab')?.classList.toggle('hidden', tab !== 'gagarin-project');
+    document.getElementById('disc-leftfield-tab')?.classList.toggle('hidden', tab !== 'leftfield');
   }
 
   function switchSubTab(tab) {
