@@ -478,6 +478,8 @@ const App = (() => {
           ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/SdsKKXy57hw?list=RDSdsKKXy57hw" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
           : genre === 'ambient'
           ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/wXk0hq7RB1A?list=RDwXk0hq7RB1A" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
+          : genre === 'goa'
+          ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/dtk5CdOvVuc?list=RDdtk5CdOvVuc" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
           : genre === 'dub'
           ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/videoseries?list=PLv1XAUg92fX9rVnD0r0ek-7monLM4JINL" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
           : '';
