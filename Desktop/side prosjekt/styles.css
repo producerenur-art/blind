@@ -419,21 +419,29 @@ body[data-bg-effect="cosmos"] #bg-layer::before {
   background-repeat: repeat;
   /* tile sizes — smaller tiles = denser star populations */
   background-size:
-    430px 430px, 430px 430px, 300px 300px, 360px 360px,
-    220px 220px, 190px 190px, 250px 250px, 100% 100%;
+    430px 430px, 380px 380px, 300px 300px, 360px 360px,
+    260px 260px, 240px 240px, 320px 320px,
+    150px 150px, 170px 170px, 130px 130px,
+    100% 100%;
   background-position:
     0 0, 215px 130px, 60px 200px, 180px 40px,
-    30px 90px, 120px 250px, 90px 10px, 0 0;
+    30px 90px, 120px 250px, 90px 10px,
+    45px 60px, 130px 30px, 20px 120px,
+    0 0;
   background-image:
     /* bright foreground stars (white / blue / warm) */
-    radial-gradient(1.7px 1.7px at 40px 60px,  #ffffff 99%, transparent 100%),
-    radial-gradient(1.6px 1.6px at 300px 250px, #ffffff 99%, transparent 100%),
-    radial-gradient(1.4px 1.4px at 150px 90px,  #cdd8ff 99%, transparent 100%),
-    radial-gradient(1.4px 1.4px at 250px 300px, #ffeccb 99%, transparent 100%),
+    radial-gradient(1.8px 1.8px at 40px 60px,   #ffffff 99%, transparent 100%),
+    radial-gradient(1.7px 1.7px at 300px 250px,  #ffffff 99%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 150px 90px,   #cdd8ff 99%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 250px 300px,  #ffeccb 99%, transparent 100%),
+    /* mid stars */
+    radial-gradient(1.2px 1.2px at 200px 80px,   #ffffff 99%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 60px 180px,   #c7d6ff 99%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 260px 120px,  #ffe6c4 99%, transparent 100%),
     /* fine background dust — small + dense */
-    radial-gradient(1px 1px at 60px 40px,   #d9e6ff 99%, transparent 100%),
-    radial-gradient(0.9px 0.9px at 30px 150px, #ffffff 99%, transparent 100%),
-    radial-gradient(0.9px 0.9px at 200px 80px, #c7d6ff 99%, transparent 100%),
+    radial-gradient(1px 1px at 40px 30px,        #d9e6ff 99%, transparent 100%),
+    radial-gradient(0.9px 0.9px at 120px 60px,   #ffffff 99%, transparent 100%),
+    radial-gradient(0.9px 0.9px at 30px 90px,    #cfe0ff 99%, transparent 100%),
     /* Milky-Way galactic dust lane — soft diagonal band, bottom-most */
     linear-gradient(118deg,
       transparent 32%,
@@ -441,10 +449,10 @@ body[data-bg-effect="cosmos"] #bg-layer::before {
       rgba(216,206,255,0.13) 50%,
       rgba(255,228,192,0.07) 57%,
       transparent 68%);
-  opacity: 0.9;
+  opacity: 0.95;
   animation: starTwinkle 7s ease-in-out infinite;
 }
-@keyframes starTwinkle { 0%,100% { opacity: 0.62; } 50% { opacity: 0.95; } }
+@keyframes starTwinkle { 0%,100% { opacity: 0.74; } 50% { opacity: 1; } }
 
 /* Re-tune the nebula orbs into Hubble-style colour clouds for cosmos.
    Kept deliberately FAINT and tight (transparent by ~45%) so the frame reads
