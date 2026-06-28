@@ -9,12 +9,12 @@ const LANGUAGES = [
   { code: 'ar', name: 'Arabic — العربية', flag: '🇸🇦' },
   { code: 'hy', name: 'Armenian — Հայերեն', flag: '🇦🇲' },
   { code: 'az', name: 'Azerbaijani — Azərbaycan', flag: '🇦🇿' },
-  { code: 'eu', name: 'Basque — Euskara', flag: '🏴' },
+  { code: 'eu', name: 'Basque — Euskara', flag: '🇪🇸' },
   { code: 'be', name: 'Belarusian — Беларуская', flag: '🇧🇾' },
   { code: 'bn', name: 'Bengali — বাংলা', flag: '🇧🇩' },
   { code: 'bs', name: 'Bosnian — Bosanski', flag: '🇧🇦' },
   { code: 'bg', name: 'Bulgarian — Български', flag: '🇧🇬' },
-  { code: 'ca', name: 'Catalan — Català', flag: '🏴' },
+  { code: 'ca', name: 'Catalan — Català', flag: '🇪🇸' },
   { code: 'ceb', name: 'Cebuano', flag: '🇵🇭' },
   { code: 'ny', name: 'Chichewa', flag: '🇲🇼' },
   { code: 'zh-CN', name: 'Chinese (Simplified) — 简体中文', flag: '🇨🇳' },
@@ -41,7 +41,7 @@ const LANGUAGES = [
   { code: 'haw', name: 'Hawaiian — ʻŌlelo Hawaiʻi', flag: '🇺🇸' },
   { code: 'iw', name: 'Hebrew — עברית', flag: '🇮🇱' },
   { code: 'hi', name: 'Hindi — हिन्दी', flag: '🇮🇳' },
-  { code: 'hmn', name: 'Hmong', flag: '🌏' },
+  { code: 'hmn', name: 'Hmong', flag: '🇱🇦' },
   { code: 'hu', name: 'Hungarian — Magyar', flag: '🇭🇺' },
   { code: 'is', name: 'Icelandic — Íslenska', flag: '🇮🇸' },
   { code: 'ig', name: 'Igbo', flag: '🇳🇬' },
@@ -54,10 +54,10 @@ const LANGUAGES = [
   { code: 'kk', name: 'Kazakh — Қазақ', flag: '🇰🇿' },
   { code: 'km', name: 'Khmer — ខ្មែរ', flag: '🇰🇭' },
   { code: 'ko', name: 'Korean — 한국어', flag: '🇰🇷' },
-  { code: 'ku', name: 'Kurdish — Kurdî', flag: '🏴' },
+  { code: 'ku', name: 'Kurdish — Kurdî', flag: '🇮🇶' },
   { code: 'ky', name: 'Kyrgyz — Кыргызча', flag: '🇰🇬' },
   { code: 'lo', name: 'Lao — ລາວ', flag: '🇱🇦' },
-  { code: 'la', name: 'Latin — Latina', flag: '🏛️' },
+  { code: 'la', name: 'Latin — Latina', flag: '🇻🇦' },
   { code: 'lv', name: 'Latvian — Latviešu', flag: '🇱🇻' },
   { code: 'lt', name: 'Lithuanian — Lietuvių', flag: '🇱🇹' },
   { code: 'lb', name: 'Luxembourgish — Lëtzebuergesch', flag: '🇱🇺' },
@@ -104,7 +104,7 @@ const LANGUAGES = [
   { code: 'vi', name: 'Vietnamese — Tiếng Việt', flag: '🇻🇳' },
   { code: 'cy', name: 'Welsh — Cymraeg', flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿' },
   { code: 'xh', name: 'Xhosa — isiXhosa', flag: '🇿🇦' },
-  { code: 'yi', name: 'Yiddish — ייִדיש', flag: '🌍' },
+  { code: 'yi', name: 'Yiddish — ייִדיש', flag: '🇮🇱' },
   { code: 'yo', name: 'Yoruba', flag: '🇳🇬' },
   { code: 'zu', name: 'Zulu — isiZulu', flag: '🇿🇦' },
 ];
@@ -119,19 +119,35 @@ const LANGUAGES = [
 
   let open = false;
 
+  // Lowercase + strip diacritics so "francais" matches "Français",
+  // "espanol" matches "Español", etc.
+  function norm(s) {
+    return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+
   function renderList(filter = '') {
-    const q = filter.toLowerCase();
+    const q = norm(filter.trim());
     list.innerHTML = '';
-    LANGUAGES
-      .filter(l => !q || l.name.toLowerCase().includes(q) || l.code.includes(q))
-      .forEach(lang => {
-        const li = document.createElement('li');
-        li.className = 'lang-item';
-        li.dataset.code = lang.code;
-        li.innerHTML = `<span class="lang-flag">${lang.flag}</span><span class="lang-name">${lang.name}</span>`;
-        li.addEventListener('click', () => selectLang(lang));
-        list.appendChild(li);
-      });
+    const matches = LANGUAGES.filter(
+      l => !q || norm(l.name).includes(q) || l.code.toLowerCase().includes(q)
+    );
+
+    if (!matches.length) {
+      const li = document.createElement('li');
+      li.className = 'lang-empty';
+      li.textContent = 'No language found';
+      list.appendChild(li);
+      return;
+    }
+
+    matches.forEach(lang => {
+      const li = document.createElement('li');
+      li.className = 'lang-item';
+      li.dataset.code = lang.code;
+      li.innerHTML = `<span class="lang-flag">${lang.flag}</span><span class="lang-name">${lang.name}</span>`;
+      li.addEventListener('click', () => selectLang(lang));
+      list.appendChild(li);
+    });
   }
 
   function selectLang(lang) {
