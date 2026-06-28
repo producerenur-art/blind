@@ -46,6 +46,33 @@
 .shop-pro-feat svg { color: #a78bfa; flex: 0 0 auto; width: 18px; height: 18px; }
 .shop-link-sm { display: inline-block; margin-top: .6rem; font-size: .78rem; color: #a78bfa; text-decoration: none; }
 .shop-link-sm:hover { text-decoration: underline; }
+.shop-links-title { display: flex; align-items: center; gap: .5rem; margin: 2.25rem 0 .25rem; font-size: 1.2rem; }
+.shop-links-title svg { color: #a78bfa; width: 20px; height: 20px; }
+.shop-links-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .75rem; }
+.shop-link-card {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .85rem 1rem; border-radius: 12px;
+  background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+  text-decoration: none; color: var(--text, #e5e7eb);
+  transition: border-color .15s ease, transform .15s ease, background .15s ease;
+}
+.shop-link-card:hover { border-color: rgba(167,139,250,.45); background: rgba(167,139,250,.07); transform: translateY(-2px); }
+.shop-link-icon { display: grid; place-items: center; flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; background: rgba(167,139,250,.12); }
+.shop-link-icon svg { color: #a78bfa; width: 20px; height: 20px; }
+.shop-link-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.shop-link-name { font-weight: 700; font-size: .95rem; }
+.shop-link-desc { color: var(--text2, #9aa4b2); font-size: .8rem; }
+.shop-link-arrow { flex: 0 0 auto; color: var(--text3, #6b7280); }
+.shop-link-card:hover .shop-link-arrow { color: #a78bfa; }
+
+/* Kvittering (på skjerm, etter betaling) */
+.receipt-star { width: 60px; height: 60px; margin: 0 auto; border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b, #f472b6); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+.receipt-box { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px; padding: .35rem 1.1rem; }
+.receipt-benefits { display: flex; flex-direction: column; gap: .35rem; }
+.receipt-benefit { display: flex; align-items: center; gap: .5rem; font-size: .88rem; color: var(--text2, #9aa4b2); }
+.receipt-benefit svg { color: #4ade80; width: 16px; height: 16px; flex: 0 0 auto; }
 
 /* ═══════════════════════════════════════════════
    PSYCHEDELIC BACKGROUND SYSTEM

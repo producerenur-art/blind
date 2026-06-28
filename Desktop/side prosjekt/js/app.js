@@ -2240,10 +2240,30 @@ const App = (() => {
   // ════════════════════════════════════════════════════════════════════
   // Abonnementsplaner — display-side. Autoritative beløp ligger i api/create-checkout.js (PLANS).
   const SHOP_PLANS = [
-    { key: 'monthly', name: '1 måned',    total: '149 kr',   per: '149 kr / mnd', save: null,         best: false },
-    { key: 'quarter', name: '3 måneder',  total: '399 kr',   per: '133 kr / mnd', save: 'Spar 11 %',  best: false },
-    { key: 'half',    name: '6 måneder',  total: '749 kr',   per: '125 kr / mnd', save: 'Spar 16 %',  best: false },
-    { key: 'year',    name: '12 måneder', total: '1 290 kr', per: '108 kr / mnd', save: 'Spar 28 %',  best: true  },
+    { key: 'monthly', name: '1 måned',    months:  1, total: '149 kr',   per: '149 kr / mnd', save: null,         best: false },
+    { key: 'quarter', name: '3 måneder',  months:  3, total: '399 kr',   per: '133 kr / mnd', save: 'Spar 11 %',  best: false },
+    { key: 'half',    name: '6 måneder',  months:  6, total: '749 kr',   per: '125 kr / mnd', save: 'Spar 16 %',  best: false },
+    { key: 'year',    name: '12 måneder', months: 12, total: '1 290 kr', per: '108 kr / mnd', save: 'Spar 28 %',  best: true  },
+  ];
+
+  // Eksterne lenker — kjøp & oppdag musikk og festivalar utanfor Sound Core.
+  const SHOP_LINKS = [
+    { icon: 'cart',       name: 'Bandcamp',        desc: 'Kjøp musikk direkte frå artistar',     url: 'https://bandcamp.com/' },
+    { icon: 'music',      name: 'iTunes',          desc: 'Apple sin musikkbutikk',               url: 'https://www.apple.com/itunes/' },
+    { icon: 'leaf',       name: 'Ektoplazm',       desc: 'Gratis psytrance & netlabel-musikk',   url: 'https://ektoplazm.com/' },
+    { icon: 'headphones', name: 'Spotify',         desc: 'Høyr eit utvalt spor',                 url: 'https://open.spotify.com/track/2o6rVUDhwHEUDUTsB9Rmo0' },
+    { icon: 'tv',         name: 'Trancentral',     desc: 'Psytrance-kultur, nyheiter & video',   url: 'https://trancentral.tv/' },
+    { icon: 'globe',      name: 'Goabase',         desc: 'Verdsomspennande party-database',      url: 'https://www.goabase.net/' },
+    { icon: 'ticket',     name: 'Ozora Festival',  desc: 'Registrer deg for billett 2026',       url: 'https://ticket.ozorafestival.eu/register?flag=HU&event_code=OZ&year=26' },
+  ];
+
+  // Pro-fordeler — vist i kvittering/receipt og Shop. Speilar api/_plans.js PRO_BENEFITS.
+  const PRO_BENEFITS = [
+    'DJ-mixes over 3 timer (opptil 20 t)',
+    'Privat / offentlig synlighet på mixes',
+    'Pro-badge på profilen',
+    'Ubegrenset lagring',
+    'Prioritert støtte',
   ];
 
   function renderShop() {
@@ -2285,6 +2305,20 @@ const App = (() => {
           ${SHOP_PLANS.map(planCard).join('')}
         </div>
 
+        <h2 class="shop-links-title">${Icon('link')} Kjøp & oppdag musikk</h2>
+        <p class="shop-sub">Eksterne plattformar for å kjøpe, lytte og finne festivalar.</p>
+        <div class="shop-links-grid">
+          ${SHOP_LINKS.map(l => `
+            <a class="shop-link-card" href="${l.url}" target="_blank" rel="noopener noreferrer">
+              <span class="shop-link-icon">${Icon(l.icon)}</span>
+              <span class="shop-link-text">
+                <span class="shop-link-name">${l.name}</span>
+                <span class="shop-link-desc">${l.desc}</span>
+              </span>
+              <span class="shop-link-arrow">${Icon('arrow-up-right')}</span>
+            </a>`).join('')}
+        </div>
+
         <p class="shop-sub" style="margin-top:1.5rem;font-size:.8rem">
           Sikker betaling via Stripe. Gratis-kontoer kan laste opp DJ-mixes på opptil 3 timer.
           Spørsmål om abonnement? <a href="mailto:producerenur@gmail.com">producerenur@gmail.com</a>
@@ -2294,7 +2328,7 @@ const App = (() => {
 
   return {
     init, toast, openModal, closeModal, showInfo,
-    renderShop,
+    renderShop, shopPlans: SHOP_PLANS, proBenefits: PRO_BENEFITS,
     logout, renderNav, updateNavBadge, markWallSeen,
     doLogin, doRegister, doForgotPassword, doResetPassword,
     resendActivationByEmail,
