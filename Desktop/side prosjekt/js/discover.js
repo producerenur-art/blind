@@ -24,7 +24,7 @@ const Discover = (() => {
     'shpongle':        ['ZYowY7tvBbY', 'u5Y1SzkoPOI', 'XwtT4ZBa3CE'],  // psybient / psydub
     'younger-brother': ['rkMt4GudJzg', 'sEdUddGvoac', 'MBtgRZMaAYg'],  // psykedelisk elektronika
     'goa-gil':         ['xPOAsccVSvw', '0HZgSztO_24', 'gcsr00s4JoQ'],  // darkpsy / goa
-    'shunyata':        ['MhaE4T6yO1g', 'MR5Sva5ljbI', 'OdreXgf_5iM'],  // psytrance (plassholder — fann ikkje labelen)
+    'shunyata':        ['wiow3vELLYw', 'MhaE4T6yO1g', 'MR5Sva5ljbI'],  // psytrance — Mariochainsaw (ekte Shunyata Records) + 2 on-sjanger
     'kukan-dub':       ['Knq6rBP8Afk', 'iRgtYUfUjiE', 'oU3Be14rrwU'],  // dub / psydub
     'cosmic-leaf':     ['nUW7oEiwVqY', 'hKMzD6sclAY', 'grWRSyptTnk'],  // psychill / progressive / downtempo
     'gagarin-project': ['fhcc1E9RoPE', 'h6BKzBLOgIU', 'deT8-XC7Rqw'],  // psybient / psychill / downtempo
