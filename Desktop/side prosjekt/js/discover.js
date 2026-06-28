@@ -869,6 +869,7 @@ const Discover = (() => {
               <div class="disc-people-username">@${escHtml(u.username)}</div>
               <span class="disc-people-role-badge">${roleLabel}</span>
               ${u.bio ? `<div class="disc-people-bio">${escHtml(u.bio.slice(0,80))}${u.bio.length>80?'…':''}</div>` : ''}
+              ${window.Social ? `<div class="disc-people-friend">${Social.friendBtn(u.username)}</div>` : ''}
             </div>
           </a>`;
       }).join('')}
@@ -3687,17 +3688,34 @@ const Discover = (() => {
     try {
       const duration = await getAudioDuration(file);
       const id = 'music_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-
-      await DB.storeFile('music', id, file, {
+      const meta = {
         name: title, title, artist, genre,
         description: desc, mainCategory: category,
         duration, uploadedAt: Date.now(), isMix,
-      });
+        visibility: 'public', audioUrl: null, storagePath: null,
+      };
+
+      // Del store filer til Supabase når konfigurert, så alle kan høyre dei. Elles lokalt.
+      let shared = false;
+      if ((typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured()) {
+        try {
+          const res = await SC_Storage.upload(file, { prefix: 'audio' });
+          meta.audioUrl = res.url; meta.storagePath = res.path;
+          await DB.put('music', { id, ...meta });
+          shared = true;
+        } catch (e) { if (e && e.message !== 'not-configured') console.warn('Skylagring feilet, lagrer lokalt:', e.message); }
+      }
+      if (!shared) await DB.storeFile('music', id, file, meta);
 
       const musicIds = [...(user.musicIds || []), id];
       Auth.updateUser(user.username, { musicIds });
 
-      App.toast(`"${title}" er lastet opp! ${Icon('music')}`, 'success');
+      App.toast(`"${title}" er lastet opp!${shared ? ' 🌐' : ''} ${Icon('music')}`, 'success');
+      if (window.Notify) Notify.notifyFriends(user, { type: 'upload', text: 'lastet opp et nytt spor', link: `#/u/${user.username}` });
+      // Auto-del til Community-veggen (offentleg + delt → spelbar for alle).
+      if (shared && window.Community && Community.autoShareOn()) {
+        Community.shareMedia({ kind: 'audio', name: title, url: meta.audioUrl, sourceId: id, audience: 'public' });
+      }
       allTracks = await loadAllTracks();
 
       const uploadEl = document.getElementById('disc-upload-content');

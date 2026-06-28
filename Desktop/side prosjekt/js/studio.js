@@ -102,6 +102,7 @@ const Studio = (() => {
               <div style="margin-top:0.75rem">
                 <label class="form-label">Lagre til profil</label>
                 <button class="btn btn-ghost btn-sm w-full mt-1" onclick="Studio.saveToProfile()">${Icon('save')} Lagre blend til profil</button>
+                <button class="btn btn-primary btn-sm w-full mt-1" onclick="Studio.shareToCommunity()">${Icon('users')} Del blend til Community</button>
               </div>
             </div>
           </div>
@@ -410,6 +411,31 @@ const Studio = (() => {
     }, 'image/png');
   }
 
+  // Del blend-komposisjonen til Community-veggen — synleg for alle profilar (vener eller ei).
+  // Lastar PNG-en opp til Supabase (delbar URL) så andre faktisk ser bildet.
+  async function shareToCommunity() {
+    const current = Auth.current();
+    if (!current) { Router.go('/login'); return; }
+    if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured()) {
+      App.toast('Skylagring må vere på for å dele blend til Community', 'error'); return;
+    }
+    if (!window.Community) { App.toast('Community ikkje tilgjengeleg', 'error'); return; }
+    App.toast('Deler blend…', 'info', 1500);
+    canvas.toBlob(async (blob) => {
+      if (!blob) { App.toast('Kunne ikkje lage bilde', 'error'); return; }
+      try {
+        const id   = `blend_${Date.now()}`;
+        const file = new File([blob], `blend-${Date.now()}.png`, { type: 'image/png' });
+        const res  = await SC_Storage.upload(file, { prefix: 'blend' });
+        Community.shareMedia({ kind: 'blend', name: 'Blend', url: res.url, sourceId: id, audience: 'public' });
+        App.toast('Blend delt til Community! 🎨', 'success');
+      } catch (e) {
+        console.warn('[Studio] blend-deling feila', e);
+        App.toast('Deling feilet', 'error');
+      }
+    }, 'image/png');
+  }
+
   return {
     render,
     addImageLayer, addVideoLayer,
@@ -418,6 +444,6 @@ const Studio = (() => {
     moveLayer, deleteLayer, clearCanvas,
     updateLayerLabel, setLayerOpacity, setLayerProp, updateLayerFilter,
     setBlendMode, setSize, applySize,
-    exportImage, exportJPEG, toggleRecording, saveToProfile,
+    exportImage, exportJPEG, toggleRecording, saveToProfile, shareToCommunity,
   };
 })();

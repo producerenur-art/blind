@@ -86,6 +86,9 @@ const App = (() => {
   }
 
   function _getUnreadWallCount(username) {
+    // Gjesteboka er no Gun-basert (Social) — tel ulesne derifrå. Fall tilbake til
+    // gamle lokale pv_wall berre om Social ikkje er lasta enno.
+    if (window.Social && Social.wallUnread) return Social.wallUnread(username);
     const wall = JSON.parse(localStorage.getItem(`pv_wall_${username}`) || '[]');
     const seen = parseInt(localStorage.getItem(`pv_wall_seen_${username}`) || '0', 10);
     return wall.filter(p => p.ts > seen && p.fromUsername !== username).length;
@@ -93,6 +96,8 @@ const App = (() => {
 
   function markWallSeen(username) {
     localStorage.setItem(`pv_wall_seen_${username}`, Date.now().toString());
+    if (window.Social && Social.markWallSeen) Social.markWallSeen(username);
+    updateNavBadge();
   }
 
   let _lastBadgeTotal = -1;
@@ -170,6 +175,7 @@ const App = (() => {
     }
     // Sosialt sanntidslag: start nærvær + varsel-innboks + vennechat (idempotent).
     if (user && window.SC) SC.startPresence(user.username);
+    if (user && window.Social) Social.init(user.username);   // abonner på eigen gjestebok → nav-merke
     if (window.Notify)     Notify.init();
     if (window.FriendChat) FriendChat.refresh();
     if (window.NavDrag)    NavDrag.refresh();   // oppdater grab-markør for nytt fane-antal

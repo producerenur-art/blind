@@ -279,7 +279,9 @@ const Profile = (() => {
   }
 
   // ── View profile ──────────────────────────────────────────────────────
+  let _viewUser = null;   // brukarnamnet til profilen som vert vist no (for Innlegg-fana)
   async function renderView(username) {
+    _viewUser = username;
     const app = document.getElementById('app');
     app.innerHTML = '<div class="page-loading"><div class="spinner"></div></div>';
 
@@ -437,14 +439,15 @@ const Profile = (() => {
           <div class="profile-stats" style="border-color:${theme.textColor}22">
             <div class="stat"><div class="stat-value">${(user.musicIds?.length || 0) + (user.mixIds?.length || 0) + (user.mediaIds?.length || 0)}</div><div class="stat-label" style="color:${theme.textColor}88">Opplastinger</div></div>
             <div class="stat"><div class="stat-value">${(user.friends || []).length}</div><div class="stat-label" style="color:${theme.textColor}88">Venner</div></div>
-            <div class="stat"><div class="stat-value">${wallCount}</div><div class="stat-label" style="color:${theme.textColor}88">Vegg-innlegg</div></div>
+            <div class="stat"><div class="stat-value">${wallCount}</div><div class="stat-label" style="color:${theme.textColor}88">Gjestebok</div></div>
           </div>
 
           <!-- Tab bar -->
           <div class="profile-tabs" id="profile-tabs">
             <button class="tab-btn active" data-tab="om" onclick="Profile.switchTab('om')">Om</button>
             <button class="tab-btn" data-tab="innhold" onclick="Profile.switchTab('innhold')">${Icon('music')} Innhold</button>
-            <button class="tab-btn" data-tab="vegg" onclick="Profile.switchTab('vegg')">${Icon('message')} Vegg${wallCount ? ` (${wallCount})` : ''}</button>
+            <button class="tab-btn" data-tab="innlegg" onclick="Profile.switchTab('innlegg')">${Icon('edit')} Innlegg</button>
+            <button class="tab-btn" data-tab="vegg" onclick="Profile.switchTab('vegg')">${Icon('message')} Gjestebok${wallCount ? ` (${wallCount})` : ''}</button>
           </div>
 
           <!-- OM-fanen -->
@@ -470,7 +473,10 @@ const Profile = (() => {
             <div id="tab-media"><div class="page-loading"><div class="spinner"></div></div></div>
           </div>
 
-          <!-- VEGG-fanen -->
+          <!-- INNLEGG-fanen (eigne status-innlegg → community) -->
+          <div class="profile-tab-content hidden" data-tab="innlegg" id="tab-innlegg"></div>
+
+          <!-- GJESTEBOK-fanen (andre skriv til deg) -->
           <div class="profile-tab-content hidden" data-tab="vegg" id="tab-vegg">
             <div id="tab-wall"></div>
           </div>
@@ -491,6 +497,7 @@ const Profile = (() => {
     renderMixesSection(user, isOwner);
     renderMediaTab(user, isOwner);
     renderWallTab(username, isOwner);
+    if (window.Community) Community.renderProfilePosts(username, isOwner);
 
     if (theme.bgType === 'music') _startProfileVisualizer(theme);
   }
@@ -638,6 +645,7 @@ const Profile = (() => {
         <div class="media-item-overlay">
           <button class="btn-icon" onclick="openMediaModal('${r.id}')" title="Vis">${Icon('eye')}</button>
           ${isOwner ? `<button class="btn-icon" onclick="Profile.toggleMediaVisibility('${r.id}')" title="${isPriv ? 'Privat — kun du. Klikk for å dele med alle' : 'Offentlig — alle ser den. Klikk for å gjøre privat'}">${isPriv ? '🔒' : '🌐'}</button>` : ''}
+          ${isOwner ? `<button class="btn-icon" onclick="Profile.shareMediaToCommunity('${r.id}')" title="Del til Community-veggen">📣</button>` : ''}
           ${isOwner ? `<button class="btn-icon btn-danger" onclick="deleteMedia('${r.id}')" title="Slett">${Icon('trash')}</button>` : ''}
         </div>
       </div>`;
@@ -724,6 +732,7 @@ const Profile = (() => {
         <div class="music-item-right">
           <span class="music-dur">${dur}</span>
           ${isOwner ? `<button class="btn-icon" title="${r.visibility === 'private' ? 'Privat — kun du ser den. Klikk for å dele med alle' : 'Offentlig — alle ser den. Klikk for å gjøre privat'}" onclick="event.stopPropagation();Profile.toggleTrackVisibility('${esc(r.id)}','${esc(username)}')">${r.visibility === 'private' ? '🔒' : '🌐'}</button>` : ''}
+          ${isOwner ? `<button class="btn-icon" title="Del til Community-veggen" onclick="event.stopPropagation();Profile.shareTrackToCommunity('${esc(r.id)}','${esc(username)}')">📣</button>` : ''}
           ${isOwner ? `<button class="btn-icon music-credits-btn" title="Kreditering & kjøpslenker" onclick="event.stopPropagation();Profile.openSongCreditsModal('${esc(r.id)}')">${Icon('edit')}</button>` : ''}
           ${isOwner ? `<label class="music-cover-upload" title="Endre cover" onclick="event.stopPropagation()">${Icon('camera')}<input type="file" accept="image/*" style="display:none" onchange="Profile.uploadMusicCover('${esc(r.id)}',this.files[0])"></label>` : ''}
           ${isOwner && cat ? `
@@ -842,6 +851,7 @@ const Profile = (() => {
         .catch(() => {});
     }
 
+    if (window.Notify) Notify.emit(targetUsername, { type: 'friend_request', text: 'sendte deg en venneforespørsel', link: `#/u/${current.username}` });
     App.toast(`Venneforespørsel sendt til @${targetUsername} ${Icon('users')}`, 'success');
     App.renderNav();
     renderView(targetUsername);
@@ -852,6 +862,8 @@ const Profile = (() => {
     if (!current) return;
     const result = Auth.acceptFriendRequest(current.username, fromUsername);
     if (result.error) { App.toast(result.error, 'error'); return; }
+    if (window.Notify) Notify.emit(fromUsername, { type: 'friend_accept', text: 'godtok venneforespørselen din', link: `#/u/${current.username}` });
+    if (window.FriendChat) FriendChat.refresh();   // dukar opp no som dei har ein venn
     App.toast(`Du er nå venner med @${fromUsername}! ${Icon('party')}`, 'success');
     App.renderNav();
     renderView(current.username);
@@ -1342,6 +1354,7 @@ const Profile = (() => {
   }
 
   async function loadEditorMedia(user) {
+    if (window.Community) Community.subscribe();
     const grid = document.getElementById('editor-media-grid');
     if (!grid) return;
     const ids = user.mediaIds || [];
@@ -1352,6 +1365,7 @@ const Profile = (() => {
   }
 
   async function loadEditorMusic(user) {
+    if (window.Community) Community.subscribe();
     const list = document.getElementById('editor-music-list');
     if (!list) return;
     const ids = user.musicIds || [];
@@ -1881,6 +1895,13 @@ const Profile = (() => {
     comments.push(comment);
     localStorage.setItem(key, JSON.stringify(comments));
     input.value = '';
+    // Varsle eigaren av mixen (finn brukar som har mixId i mixIds).
+    if (window.Notify && Auth.getUsers) {
+      const owner = Object.values(Auth.getUsers()).find(u => (u.mixIds || []).includes(mixId));
+      if (owner && owner.username !== current.username) {
+        Notify.emit(owner.username, { type: 'comment', text: 'kommenterte på mixen din', link: `#/u/${owner.username}` });
+      }
+    }
     const listEl = document.getElementById(`mix-comments-${mixId}`);
     if (listEl) {
       const div = document.createElement('div');
@@ -1902,87 +1923,25 @@ const Profile = (() => {
       const u = typeof Auth !== 'undefined' ? Auth.current() : null;
       if (u && typeof App !== 'undefined') App.markWallSeen(u.username);
     }
+    if (tab === 'innlegg' && window.Community) {
+      const me = typeof Auth !== 'undefined' ? Auth.current() : null;
+      Community.renderProfilePosts(_viewUser, !!(me && me.username === _viewUser));
+    }
   }
 
-  // ── Profile wall (guestbook) ──────────────────────────────────────────
+  // ── Profile wall (gjestebok) — no Gun-basert via Social ────────────────
+  // Kryss-brukar kommentarar + 👍/👎 + emoji (same kode som vegg-innlegga).
+  // targetKey = 'profile:<username>'. Andre kan skrive på profilen din og du ser det.
   function renderWallTab(username, isOwner) {
     const el = document.getElementById('tab-wall');
     if (!el) return;
-    const current = Auth.current();
-    const key = `pv_wall_${username}`;
-    const wall = JSON.parse(localStorage.getItem(key) || '[]').reverse();
-
-    const canComment = current && current.username !== username;
-    const inputHtml = canComment ? `
-      <div class="wall-input-wrap">
-        <input class="form-input wall-input" id="wall-input-${username}" placeholder="Skriv noe på veggen til @${username}…" maxlength="500"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();Profile.addWallComment('${username}')}">
-        <button class="btn btn-primary btn-sm" onclick="Profile.addWallComment('${username}')">Send</button>
-      </div>` : !current ? `
-      <div class="wall-login-prompt"><a href="#/login" style="color:var(--accent)">Logg inn</a> for å skrive på veggen.</div>` : '';
-
-    const postsHtml = wall.length ? wall.map(p => {
-      const initial = (p.fromDisplayName || p.fromUsername || '?').charAt(0).toUpperCase();
-      const canDelete = isOwner || (current && current.username === p.fromUsername);
-      return `
-        <div class="wall-post" id="wallpost-${p.id}">
-          <a class="wall-post-avatar" href="#/u/${p.fromUsername}" style="text-decoration:none">${initial}</a>
-          <div class="wall-post-body">
-            <div class="wall-post-header">
-              <a class="wall-post-name" href="#/u/${p.fromUsername}">${esc(p.fromDisplayName)}</a>
-              <span class="wall-post-username">@${esc(p.fromUsername)}</span>
-              <span class="wall-post-time">${timeAgo(p.ts)}</span>
-              ${canDelete ? `<button class="wall-post-delete" onclick="Profile.deleteWallComment('${username}','${p.id}')" title="Slett">${Icon('x')}</button>` : ''}
-            </div>
-            <div class="wall-post-text">${esc(p.text)}</div>
-          </div>
-        </div>`;
-    }).join('') : `<div class="empty-state" style="padding:2.5rem 0"><div class="empty-icon">${Icon('message')}</div><p>Ingen innlegg ennå. Vær den første!</p></div>`;
-
-    el.innerHTML = `<div class="wall-wrap">${inputHtml}${postsHtml}</div>`;
-  }
-
-  function addWallComment(username) {
-    const current = Auth.current();
-    if (!current) { Router.go('/login'); return; }
-    const input = document.getElementById(`wall-input-${username}`);
-    const text = input?.value.trim();
-    if (!text) return;
-    const key = `pv_wall_${username}`;
-    const wall = JSON.parse(localStorage.getItem(key) || '[]');
-    wall.push({
-      id: `w_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      fromUsername: current.username,
-      fromDisplayName: current.displayName,
-      text,
-      ts: Date.now()
-    });
-    localStorage.setItem(key, JSON.stringify(wall));
-    renderWallTab(username, Auth.getUser(username)?.username === current.username);
-    // Update wall count in tab button
-    const tabBtn = document.querySelector('#profile-tabs .tab-btn[data-tab="vegg"]');
-    if (tabBtn) tabBtn.textContent = `${Icon('message')} Vegg (${wall.length})`;
-    const statEl = document.querySelector('.profile-stats .stat:last-child .stat-value');
-    if (statEl) statEl.textContent = wall.length;
-  }
-
-  function deleteWallComment(username, commentId) {
-    const current = Auth.current();
-    if (!current) return;
-    const key = `pv_wall_${username}`;
-    let wall = JSON.parse(localStorage.getItem(key) || '[]');
-    const post = wall.find(p => p.id === commentId);
-    if (!post) return;
-    const profileOwner = Auth.getUser(username);
-    const canDelete = current.username === username || current.username === post.fromUsername;
-    if (!canDelete) return;
-    wall = wall.filter(p => p.id !== commentId);
-    localStorage.setItem(key, JSON.stringify(wall));
-    document.getElementById(`wallpost-${commentId}`)?.remove();
-    const tabBtn = document.querySelector('#profile-tabs .tab-btn[data-tab="vegg"]');
-    if (tabBtn) tabBtn.textContent = wall.length ? `${Icon('message')} Vegg (${wall.length})` : '💬 Vegg';
-    const statEl = document.querySelector('.profile-stats .stat:last-child .stat-value');
-    if (statEl) statEl.textContent = wall.length;
+    if (!window.Social) { el.innerHTML = '<p class="text-muted text-sm">Lastar gjestebok…</p>'; return; }
+    Social.setNotifyTarget('profile:' + username, username);
+    el.innerHTML = `
+      <div class="wall-wrap">
+        ${Social.reactionBar('profile:' + username)}
+        ${Social.commentsBlockHtml('profile:' + username)}
+      </div>`;
   }
 
   async function loadEditorMixes(user) {
@@ -2148,12 +2107,18 @@ const Profile = (() => {
         }
       }
       if (!shared) await DB.storeFile('media', id, file, meta);
+      // Auto-del videoar til Community-veggen når dei er offentlege + delte (har URL).
+      if (shared && (file.type || '').startsWith('video/') && meta.visibility === 'public'
+          && window.Community && Community.autoShareOn()) {
+        Community.shareMedia({ kind: 'video', name: file.name, url: meta.mediaUrl, sourceId: id, audience: 'public' });
+      }
       current.mediaIds = [...(current.mediaIds || []), id];
       Auth.updateUser(current.username, { mediaIds: current.mediaIds });
       if (listEl) { row.innerHTML = `${Icon('check-circle')} ${file.name}${shared ? ' · 🌐 delt' : ''}`; setTimeout(() => row.remove(), 2500); }
     }
     loadEditorMedia(Auth.current());
     App.toast(useCloud ? 'Medier lastet opp og delt! 🌐' : 'Medier lastet opp (lokalt)!', 'success');
+    if (window.Notify) Notify.notifyFriends(current, { type: 'upload', text: 'lastet opp nytt innhold', link: `#/u/${current.username}` });
   }
 
   // Add a YouTube (or other) video link as a visual — embedded, no file upload.
@@ -2171,6 +2136,11 @@ const Profile = (() => {
     await DB.put('media', rec);
     current.mediaIds = [...(current.mediaIds || []), id];
     Auth.updateUser(current.username, { mediaIds: current.mediaIds });
+    // Auto-del URL-video/lenke til Community-veggen (alltid delbar — ingen filopplasting).
+    if (window.Community && Community.autoShareOn()) {
+      if (rec.kind === 'youtube') Community.shareMedia({ kind: 'youtube', name: 'YouTube-video', youtubeId: rec.youtubeId, sourceId: id, audience: 'public' });
+      else Community.shareMedia({ kind: 'link', name: rec.name, url: rec.url, sourceId: id, audience: 'public' });
+    }
     if (input) input.value = '';
     loadEditorMedia(Auth.current());
     App.toast(ytId ? '▶ YouTube-video lagt til!' : 'Lenke lagt til!', 'success');
@@ -2232,12 +2202,46 @@ const Profile = (() => {
       if (!shared) {
         await DB.storeFile('music', id, file, meta);   // local fallback (blob in IndexedDB)
       }
+      // Auto-del til Community-veggen når fila er offentleg + delt (har URL alle kan høyre).
+      if (shared && meta.visibility === 'public' && window.Community && Community.autoShareOn()) {
+        Community.shareMedia({ kind: 'audio', name: meta.name, url: meta.audioUrl, sourceId: id, audience: 'public' });
+      }
       current.musicIds = [...(current.musicIds || []), id];
       Auth.updateUser(current.username, { musicIds: current.musicIds });
       if (listEl) { row.innerHTML = `${Icon('check-circle')} ${file.name}${shared ? ' · 🌐 delt' : ''}`; setTimeout(() => row.remove(), 2500); }
     }
     loadEditorMusic(Auth.current());
     App.toast(useCloud ? 'Musikk lastet opp og delt! 🌐' : 'Musikk lastet opp (lokalt)!', 'success');
+    if (window.Notify) Notify.notifyFriends(current, { type: 'upload', text: 'lastet opp ny musikk', link: `#/u/${current.username}` });
+  }
+
+  // Manuell deling til Community-veggen (toggle: del / fjern). Berre delbare URL-ar.
+  async function shareTrackToCommunity(trackId, username) {
+    const current = Auth.current();
+    if (!current || !window.Community) return;
+    if (Community.isShared(trackId)) { Community.unshareMedia(trackId); App.toast('Fjernet fra Community', 'info'); return; }
+    const rec = await DB.get('music', trackId);
+    if (!rec) return;
+    if (!rec.audioUrl) { App.toast('Kan kun deles når fila ligg i skyen (offentleg). Last opp på nytt med skylagring på.', 'error'); return; }
+    Community.shareMedia({ kind: 'audio', name: rec.name || rec.title || 'Spor', url: rec.audioUrl, sourceId: trackId, audience: 'public' });
+    App.toast('Delt til Community! 📣', 'success');
+  }
+
+  async function shareMediaToCommunity(mediaId) {
+    const current = Auth.current();
+    if (!current || !window.Community) return;
+    if (Community.isShared(mediaId)) { Community.unshareMedia(mediaId); App.toast('Fjernet fra Community', 'info'); return; }
+    const rec = await DB.get('media', mediaId);
+    if (!rec) return;
+    let opts = null;
+    if (rec.kind === 'youtube')                              opts = { kind: 'youtube', name: 'YouTube-video', youtubeId: rec.youtubeId, sourceId: mediaId };
+    else if (rec.kind === 'link')                            opts = { kind: 'link', name: rec.name, url: rec.url, sourceId: mediaId };
+    else if ((rec.type || '').startsWith('video/') && rec.mediaUrl) opts = { kind: 'video', name: rec.name, url: rec.mediaUrl, sourceId: mediaId };
+    else if (rec.mediaUrl)                                   opts = { kind: 'blend', name: rec.name, url: rec.mediaUrl, sourceId: mediaId };
+    if (!opts) { App.toast('Kan ikkje delast — fila er kun lagra lokalt', 'error'); return; }
+    opts.audience = 'public';
+    Community.shareMedia(opts);
+    App.toast('Delt til Community! 📣', 'success');
   }
 
   async function uploadAvatar(input) {
@@ -3681,12 +3685,13 @@ const Profile = (() => {
   return {
     renderView, renderEditor,
     switchTab,
-    renderWallTab, addWallComment, deleteWallComment,
+    renderWallTab,
     playTrack,
     toggleProfileVisibility, setProfileVisibility,
     saveProfile, livePreview, collectTheme,
     uploadMedia, uploadMusic, uploadMusicCover, uploadAvatar, uploadBanner,
     addMediaLink, toggleMediaVisibility,
+    shareTrackToCommunity, shareMediaToCommunity,
     toggleTrackVisibility,
     openSongCreditsModal, saveSongCredits,
     uploadBgImage, uploadBgVideo, openImagePaintEditor,
