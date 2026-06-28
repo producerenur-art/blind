@@ -407,9 +407,10 @@ const Profile = (() => {
         <div class="profile-hero" style="${bannerUrl ? `background-image:url(${bannerUrl});background-size:cover;background-position:center;` : ''}">
           <div class="profile-hero-bg" style="${heroBgStyle}">${heroBgExtra}</div>
           <div class="profile-hero-overlay"></div>
-          ${isOwner ? `<div class="profile-hero-actions">
-            <button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('edit')} Rediger profil</button>
-            <span style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(0,0,0,0.4);color:#fff;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.15)">${profileVisibility === 'private' ? '🔒 Privat' : '🌐 Offentlig'}</span>
+          ${current ? `<div class="profile-hero-actions">
+            ${isOwner ? `<button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('edit')} Rediger profil</button>
+            <span style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(0,0,0,0.4);color:#fff;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.15)">${profileVisibility === 'private' ? '🔒 Privat' : '🌐 Offentlig'}</span>` : ''}
+            <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Logg ut">${Icon('log-out')} Logg ut</button>
           </div>` : ''}
         </div>
 

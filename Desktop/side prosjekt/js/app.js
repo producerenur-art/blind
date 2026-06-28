@@ -146,7 +146,8 @@ const App = (() => {
         <a href="#/edit"        class="btn btn-ghost btn-sm" title="Rediger profil">${Icon('edit')}</a>
         <a href="#/settings"    class="btn btn-ghost btn-sm" title="Innstillinger">${Icon('settings')}</a>
         <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne/lukk flytende chat-vindu">${Icon('message')} Chat-vindu</button>
-        <button class="btn btn-ghost btn-sm" onclick="App.logout()">Logg ut</button>
+        <a href="#/login"       class="btn btn-ghost btn-sm" title="Logg inn på en annen konto">${Icon('log-in')} Logg inn</a>
+        <button class="btn btn-ghost btn-sm" onclick="App.logout()">${Icon('log-out')} Logg ut</button>
       `;
     } else {
       nav.innerHTML = `
@@ -157,7 +158,8 @@ const App = (() => {
         <a href="#/shows"       class="btn btn-ghost btn-sm">${Icon('calendar')} Shows</a>
         <a href="#/world"       class="btn btn-ghost btn-sm" title="All Over The World — global psytrance & psybient">${Icon('globe')} World</a>
         <a href="#/shop"        class="btn btn-ghost btn-sm" title="Shop">${Icon('store')} Shop</a>
-        <a href="#/login"       class="btn btn-ghost btn-sm">Logg inn</a>
+        <a href="#/login"       class="btn btn-ghost btn-sm">${Icon('log-in')} Logg inn</a>
+        <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Logg ut">${Icon('log-out')} Logg ut</button>
         <a href="#/register"    class="btn btn-primary btn-sm">Registrer</a>
         <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne/lukk flytende chat-vindu">${Icon('message')} Chat-vindu</button>
       `;
@@ -165,10 +167,11 @@ const App = (() => {
   }
 
   function logout() {
+    const wasLoggedIn = !!Auth.current();
     Auth.logout();
     renderNav();
     Router.go('/');
-    toast('Du er nå logget ut.', 'info');
+    toast(wasLoggedIn ? 'Du er nå logget ut.' : 'Du er allerede logget ut.', 'info');
   }
 
   // ── Search ────────────────────────────────────────────────────────────
@@ -239,7 +242,8 @@ const App = (() => {
             <a href="#/radio" class="btn btn-primary landing-btn-big stellar-cta">${Icon('radio')} Lytt nå</a>
             <a href="#/register" class="btn btn-ghost landing-btn-big">Lag profil gratis</a>
             <a href="#/chat" class="btn btn-ghost landing-btn-big">${Icon('message')} Chat</a>
-            <a href="#/login" class="btn btn-ghost landing-btn-big">Logg inn</a>
+            <a href="#/login" class="btn btn-ghost landing-btn-big">${Icon('log-in')} Logg inn</a>
+            <button class="btn btn-ghost landing-btn-big" onclick="App.logout()">${Icon('log-out')} Logg ut</button>
           </div>
         </div>
       </div>` : `
@@ -252,6 +256,8 @@ const App = (() => {
             <a href="#/u/${user.username}" class="btn btn-ghost">${Icon('user')} Min profil</a>
             <a href="#/edit" class="btn btn-ghost">${Icon('edit')} Rediger</a>
             <a href="#/chat" class="btn btn-ghost">${Icon('message')} Chat</a>
+            <a href="#/login" class="btn btn-ghost" title="Logg inn / bytt konto">${Icon('log-in')} Logg inn</a>
+            <button class="btn btn-ghost" onclick="App.logout()">${Icon('log-out')} Logg ut</button>
           </div>
         </div>
       </div>`;
@@ -687,7 +693,13 @@ const App = (() => {
 
     document.getElementById('app').innerHTML = `
       <div class="settings-page-v2">
-        <h1>${Icon('home')} Min side</h1>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+          <h1>${Icon('home')} Min side</h1>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            <a href="#/login" class="btn btn-ghost btn-sm" title="Logg inn / bytt konto">${Icon('log-in')} Logg inn</a>
+            <button class="btn btn-danger btn-sm" onclick="App.logout()">${Icon('log-out')} Logg ut</button>
+          </div>
+        </div>
         <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
           <div class="ms-stat-card">
             <div class="ms-stat-num">${(user.musicIds || []).length}</div>
