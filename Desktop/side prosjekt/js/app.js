@@ -2261,7 +2261,7 @@ const App = (() => {
     { icon: 'sliders',    emoji: '🎛️', title: 'Studio-månad',        tag: 'Produser meir — 6 mnd med ubegrensa lagring.',           feature: 'half'    },
     { icon: 'ticket',     emoji: '🎟️', title: 'Festival-oppvarming',  tag: 'Klar for sommaren — 12 mnd til beste pris.',             feature: 'year'    },
     { icon: 'sun',        emoji: '☀️', title: 'Sommarstart',         tag: 'Lange sett heile sommaren — 6 mnd Pro.',                 feature: 'half'    },
-    { icon: 'music',      emoji: '🌞', title: 'Sommarmix',           tag: 'Mixar opptil 20 timar — heile året med Pro.',            feature: 'year'    },
+    { icon: 'music',      emoji: '🌞', title: 'Sommarmix',           tag: 'Mixar utan lengdegrense — heile året med Pro.',          feature: 'year'    },
     { icon: 'flame',      emoji: '🔥', title: 'Festival-topp',       tag: 'Ozora-sesong — prøv 3 mnd og del settet ditt.',          feature: 'quarter' },
     { icon: 'feather',    emoji: '🍂', title: 'Haust-comeback',      tag: 'Tilbake i studio — 6 mnd full tilgang.',                 feature: 'half'    },
     { icon: 'moon',       emoji: '🌙', title: 'Mørketid-lytting',     tag: 'Djupe ambient-mixar — 6 mnd ekstra verdi.',              feature: 'half'    },
