@@ -1329,6 +1329,7 @@ const Discover = (() => {
       { emoji: '🌿', name: 'Psybient Kalender', desc: 'Chill & transformasjonsfestivalar globalt', url: 'https://www.psybient.org/love/psybient-calendar/' },
       { emoji: '🎵', name: 'Events kategori', desc: 'Artiklar og omtalar av kommande events', url: 'https://www.psybient.org/love/category/events/' },
       { emoji: '🌐', name: 'Goabase', desc: 'Søk etter psytrance- og psybient-events', url: 'https://www.goabase.net/' },
+      { emoji: '📍', name: 'iT Athens', desc: 'Goa/Psytrance-klubb i Athen 🇬🇷 — eventar & nattliv', url: 'https://www.facebook.com/itathensofficialpage' },
     ];
 
     return `
