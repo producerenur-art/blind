@@ -7,11 +7,10 @@ const SC = (() => {
   // Verifiserte oppe 2026-06-28 (funksjonell relay-test). Legacy heroku/wallie
   // er sovna (Heroku free-tier borte) — haldne som fallback om dei vaknar.
   const GUN_PEERS = [
-    'https://relay.peer.ooo/gun',              // ✓ oppe
-    'https://gun.defucc.me/gun',               // ✓ oppe
-    'https://gun-vue-relay.deno.dev/gun',      // ✓ oppe
-    'https://gun-manhattan.herokuapp.com/gun', // legacy fallback
-    'https://peer.wallie.io/gun',              // legacy fallback
+    'https://relay.peer.ooo/gun',              // ✓ browser-verifisert oppe
+    'https://gun.defucc.me/gun',               // ✓ browser-verifisert oppe
+    'https://gun-manhattan.herokuapp.com/gun', // legacy fallback (kan vakne)
+    'https://peer.wallie.io/gun',              // legacy fallback (kan vakne)
   ];
 
   // Namespace-nøklar (v1). Alt P2P — ingen serverless-funksjon.

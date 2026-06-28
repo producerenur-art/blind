@@ -2,10 +2,13 @@
 const Chat = (() => {
 
   // ── Gun.js setup ──────────────────────────────────────────────────────
+  // Verifiserte oppe 2026-06-28 (funksjonell relay-test). Legacy heroku/wallie
+  // er sovna (Heroku free-tier borte) — haldne som fallback om dei vaknar.
   const GUN_PEERS = [
-    'https://gun-manhattan.herokuapp.com/gun',
-    'https://peer.wallie.io/gun',
-    'https://relay.peer.ooo/gun',
+    'https://relay.peer.ooo/gun',              // ✓ browser-verifisert oppe
+    'https://gun.defucc.me/gun',               // ✓ browser-verifisert oppe
+    'https://gun-manhattan.herokuapp.com/gun', // legacy fallback (kan vakne)
+    'https://peer.wallie.io/gun',              // legacy fallback (kan vakne)
   ];
   const CHAT_KEY  = 'profilverse_radio_chat_v1';
   const MAX_MSGS  = 120;
