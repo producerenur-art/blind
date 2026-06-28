@@ -731,6 +731,8 @@ const Discover = (() => {
           onclick="Discover.switchTab('kukan-dub')">${Icon('cloud')} Kukan Dub Lagan</button>
         <button class="disc-tab-btn ${activeTab === 'cosmic-leaf' ? 'active' : ''}"
           onclick="Discover.switchTab('cosmic-leaf')">${Icon('leaf')} Cosmic Leaf</button>
+        <button class="disc-tab-btn ${activeTab === 'cryo-chamber' ? 'active' : ''}"
+          onclick="Discover.switchTab('cryo-chamber')">${Icon('snowflake')} Cryo Chamber</button>
         <button class="disc-tab-btn ${activeTab === 'mikelabella' ? 'active' : ''}"
           onclick="Discover.switchTab('mikelabella')">${Icon('disc')} MikelaBella Records</button>
         <button class="disc-tab-btn ${activeTab === 'gagarin-project' ? 'active' : ''}"
@@ -1106,6 +1108,11 @@ const Discover = (() => {
         <div id="disc-cosmic-leaf-tab" class="hidden">
           ${renderCosmicLeafTab()}
           ${renderWeeklyMix('cosmic-leaf')}
+        </div>
+
+        <!-- CRYO CHAMBER TAB (hidden by default) -->
+        <div id="disc-cryo-chamber-tab" class="hidden">
+          ${renderCryoChamberTab()}
         </div>
 
         <!-- ULTIMAE RECORDS TAB (hidden by default) -->
@@ -2161,6 +2168,73 @@ const Discover = (() => {
         <div class="disc-psy-section-hdr">
           <span class="disc-psy-section-icon">${Icon('link')}</span>
           <span class="disc-psy-section-title">Finn Cosmic Leaf</span>
+        </div>
+        <div class="disc-psy-label-grid">
+          ${LINKS.map(psyLinkCard).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCryoChamberTab() {
+    // Fast, permanent radio-mix-video (rotere IKKJE) — vis med video og lyd.
+    const ytId = 'eTEmknjKFPk';
+    const LINKS = [
+      { emoji: '🎵', name: 'Bandcamp',  desc: 'Stream og kjøp heile katalogen direkte frå labelet', url: 'https://cryochamber.bandcamp.com/' },
+      { emoji: '▶',  name: 'YouTube',   desc: 'Fullengde dark ambient-mixes og album',             url: 'https://www.youtube.com/@CryoChamber' },
+    ];
+    return `
+      <div class="disc-psy-banner" style="background:linear-gradient(135deg,#05080f,#0b1828,#102a3a)">
+        <div class="disc-psy-banner-emoji">${Icon('snowflake')}</div>
+        <div>
+          <div class="disc-psy-banner-title">Cryo Chamber</div>
+          <div class="disc-psy-banner-sub">Dark Ambient · Cinematic · Drone — atmosfærisk mørke frå djupet</div>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('snowflake')}</span>
+          <span class="disc-psy-section-title">Om Cryo Chamber</span>
+          <span class="disc-psy-section-badge">cryochamber.bandcamp.com</span>
+        </div>
+        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
+          <a class="disc-psy-label-card" href="https://cryochamber.bandcamp.com/" target="_blank" rel="noopener noreferrer"
+             style="gap:1.2rem;align-items:flex-start;border-color:rgba(60,120,200,0.35);background:rgba(5,8,15,0.6)">
+            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('snowflake')}</div>
+            <div style="flex:1">
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Cryo Chamber</div>
+              <div class="disc-psy-label-desc" style="line-height:1.6">
+                Cryo Chamber er eit leiande dark ambient-plateselskap grunnlagt av Simon Heath
+                (Atrium Carceri). Labelet er kjend for djup, kinematisk og dronerande atmosfærisk
+                musikk — frå romlege soundscapes til mørke, nesten skremmande lydlandskap. Eit
+                samlingspunkt for sjangerens fremste artistar og store kollaborasjonsalbum.
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+                <span class="disc-psy-section-badge">${Icon('snowflake')} Dark Ambient</span>
+                <span class="disc-psy-section-badge">${Icon('moon')} Cinematic</span>
+                <span class="disc-psy-section-badge">${Icon('waves')} Drone</span>
+              </div>
+            </div>
+            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('radio')}</span>
+          <span class="disc-psy-section-title">Radio-miks</span>
+          <span class="disc-psy-section-badge">YouTube · video & lyd</span>
+        </div>
+        <iframe class="hr-yt-embed" src="https://www.youtube.com/embed/${ytId}?list=RD${ytId}"
+          allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+      </div>
+
+      <div class="disc-psy-section">
+        <div class="disc-psy-section-hdr">
+          <span class="disc-psy-section-icon">${Icon('link')}</span>
+          <span class="disc-psy-section-title">Finn Cryo Chamber</span>
         </div>
         <div class="disc-psy-label-grid">
           ${LINKS.map(psyLinkCard).join('')}
@@ -3278,7 +3352,7 @@ const Discover = (() => {
   // ── Tab / sub-tab switching ───────────────────────────────────────────
   function switchTab(tab) {
     activeTab = tab;
-    const TAB_LABELS = { music: 'Musikk', people: 'folk', 'psy-tour': 'Psytrance', 'ambient-mann': 'Ambient Mann', psybient: 'Psybient', 'altar-records': 'Altar', hadra: 'Hadra', dacru: 'DaCru', 'tip-raja': 'Raja', astral: 'Astral', shpongle: 'Shpongle', 'younger-brother': 'Younger', 'goa-gil': 'Goa Gil', shunyata: 'Shunyata', 'kukan-dub': 'Kukan', 'cosmic-leaf': 'Cosmic', ultimae: 'Ultimae', mikelabella: 'MikelaBella', 'gagarin-project': 'Gagarin', leftfield: 'Leftfield' };
+    const TAB_LABELS = { music: 'Musikk', people: 'folk', 'psy-tour': 'Psytrance', 'ambient-mann': 'Ambient Mann', psybient: 'Psybient', 'altar-records': 'Altar', hadra: 'Hadra', dacru: 'DaCru', 'tip-raja': 'Raja', astral: 'Astral', shpongle: 'Shpongle', 'younger-brother': 'Younger', 'goa-gil': 'Goa Gil', shunyata: 'Shunyata', 'kukan-dub': 'Kukan', 'cosmic-leaf': 'Cosmic', 'cryo-chamber': 'Cryo', ultimae: 'Ultimae', mikelabella: 'MikelaBella', 'gagarin-project': 'Gagarin', leftfield: 'Leftfield' };
     document.querySelectorAll('.disc-tab-btn').forEach(b => {
       const matched = Object.entries(TAB_LABELS).find(([, label]) => b.textContent.includes(label));
       b.classList.toggle('active', matched ? matched[0] === tab : false);
@@ -3299,6 +3373,7 @@ const Discover = (() => {
     document.getElementById('disc-shunyata-tab')?.classList.toggle('hidden', tab !== 'shunyata');
     document.getElementById('disc-kukan-dub-tab')?.classList.toggle('hidden', tab !== 'kukan-dub');
     document.getElementById('disc-cosmic-leaf-tab')?.classList.toggle('hidden', tab !== 'cosmic-leaf');
+    document.getElementById('disc-cryo-chamber-tab')?.classList.toggle('hidden', tab !== 'cryo-chamber');
     document.getElementById('disc-ultimae-tab')?.classList.toggle('hidden', tab !== 'ultimae');
     document.getElementById('disc-mikelabella-tab')?.classList.toggle('hidden', tab !== 'mikelabella');
     document.getElementById('disc-gagarin-project-tab')?.classList.toggle('hidden', tab !== 'gagarin-project');
