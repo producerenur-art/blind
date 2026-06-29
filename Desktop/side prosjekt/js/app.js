@@ -145,7 +145,7 @@ const App = (() => {
         <a href="#/discover"    class="btn btn-ghost btn-sm">${Icon('music')} Discover</a>
         <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">${Icon('user')} Profil</a>
         <button id="nav-more-btn" class="btn btn-ghost btn-sm nav-more-btn" onclick="App.toggleMoreMenu(this)" title="Mer — alle funksjoner" style="position:relative">${Icon('menu')} Mer ${Icon('chevron-down')}${moreBadge}</button>
-        <a href="#/login"       class="btn btn-ghost btn-sm" title="Du er online"><span class="nav-status-dot nav-status-dot--online" title="Online"></span>${Icon('log-in')} Logg inn</a>
+        <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Du er online — klikk for å logge ut"><span class="nav-status-dot nav-status-dot--online" title="Online"></span>${Icon('log-out')} Logg ut</button>
       `;
     } else {
       nav.innerHTML = `
@@ -522,7 +522,6 @@ const App = (() => {
             <a href="#/register" class="btn btn-ghost landing-btn-big">Lag profil gratis</a>
             <a href="#/chat" class="btn btn-ghost landing-btn-big">${Icon('message')} Chat</a>
             <a href="#/login" class="btn btn-ghost landing-btn-big">${Icon('log-in')} Logg inn</a>
-            <button class="btn btn-ghost landing-btn-big" onclick="App.logout()">${Icon('log-out')} Logg ut</button>
           </div>
         </div>
       </div>` : `
