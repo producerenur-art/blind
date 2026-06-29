@@ -141,14 +141,17 @@ function testActivatePage() {
   const end  = rest.indexOf('\n  function ');
   const body = src.slice(start, end === -1 ? undefined : start + 1 + end);
 
-  assert.ok(body.includes('You are now activated'), 'siden skal vise «You are now activated»');
-  ok('siden viser «You are now activated»');
+  assert.ok(body.includes('You are now activated'), 'siden skal vise «You are now activated» (kvittering)');
+  ok('siden viser «You are now activated» (kvittering)');
 
-  assert.ok(body.includes('#/login'), 'siden skal lenke til innlogging');
-  ok('siden lenker til innlogging (logg inn på nytt)');
+  assert.ok(/setItem\(\s*['"]pv_session['"]/.test(body), 'siden skal auto-logge inn');
+  ok('siden auto-logger inn');
 
-  assert.ok(!/setItem\(\s*['"]pv_session['"]/.test(body), 'siden skal IKKE auto-logge inn');
-  ok('siden auto-logger ikke inn');
+  assert.ok(/setTimeout\s*\(/.test(body), 'auto-login skal skje etter en kort forsinkelse');
+  ok('går videre etter et par sekund (kvittering + auto-login)');
+
+  assert.ok(body.includes('CANONICAL_URL'), 'siden skal sende brukeren til det kanoniske domenet');
+  ok('sender brukeren til www.soundcoredevelopment.com (CONFIG.CANONICAL_URL)');
 }
 
 (async () => {

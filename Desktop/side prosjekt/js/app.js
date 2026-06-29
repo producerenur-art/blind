@@ -1419,21 +1419,31 @@ const App = (() => {
         </div></div>`;
       return;
     }
-    // Ikke auto-innlogging — brukeren skal logge inn på nytt etter aktivering.
-    // Rydd bort en evt. eksisterende økt så «logg inn på nytt» faktisk gjelder.
-    Auth.logout();
+    // Kvittering + auto-login: vis «You are now activated» et øyeblikk, logg så
+    // automatisk inn og send brukeren til forsiden på www.soundcoredevelopment.com.
+    localStorage.setItem('pv_session', JSON.stringify({ username: result.user.username, ts: Date.now() }));
     renderNav();
-    toast(`Konto aktivert! Logg inn for å komme i gang. ${Icon('party')}`, 'success');
+    toast(`Konto aktivert! Logger deg inn … ${Icon('party')}`, 'success');
     document.getElementById('app').innerHTML = `
       <div class="auth-page"><div class="auth-card" style="text-align:center">
         <div style="font-size:4rem;margin-bottom:1rem">${Icon('check-circle')}</div>
         <h2 style="font-weight:800;margin-bottom:0.5rem">You are now activated 🎉</h2>
         <p style="color:var(--text2);margin-bottom:1.5rem">
-          Kontoen din til <strong>${result.user.displayName}</strong> er aktivert.<br>
-          Logg inn på nytt for å komme i gang på Sound Core.
+          Velkommen, <strong>${result.user.displayName}</strong>! Du blir logget inn og sendt til Sound Core …
         </p>
-        <a href="#/login" class="btn btn-primary" style="display:inline-flex">${Icon('log-in')} Logg inn</a>
+        <a href="#/" class="btn btn-primary" style="display:inline-flex">${Icon('arrow-right')} Gå til Sound Core nå</a>
       </div></div>`;
+    // Etter et par sekund: gå til forsiden på det kanoniske domenet. Økten ligger
+    // på samme origin (aktiveringslenka er kanonisk), så auto-innloggingen følger med.
+    setTimeout(() => {
+      const canonical = (CONFIG.CANONICAL_URL || window.location.origin).replace(/\/$/, '');
+      const isLocal   = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|)$/.test(location.hostname);
+      if (isLocal || window.location.origin === new URL(canonical).origin) {
+        Router.go('/');                       // samme origin → SPA-nav, bevarer økten
+      } else {
+        window.location.href = canonical + '/'; // ellers full-nav til www.soundcoredevelopment.com
+      }
+    }, 2500);
   }
 
   function renderInbox(activeTab = 'samtaler') {
