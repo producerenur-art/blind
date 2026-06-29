@@ -1,6 +1,12 @@
 const { Resend } = require('resend');
 const { getPlan, fmtKr, fmtDate, nextRenewal, PRO_BENEFITS } = require('./_plans');
 
+// Kanonisk nettadresse for ALLE e-postlenker (aktivering, tilbakestilling, kjøp).
+// Brukes som standard slik at lenkene alltid peker til det offisielle domenet —
+// aldri til ein tilfeldig Vercel-preview-host (req.headers.host). Kan overstyrast
+// med SITE_URL i miljøvariablane om domenet skulle endre seg.
+const CANONICAL_URL = 'https://www.soundcoredevelopment.com';
+
 function activationHtml(name, url, siteUrl) {
   const base       = (siteUrl || '').replace(/\/$/, '');
   const shopUrl    = `${base}/#/shop`;
@@ -273,7 +279,7 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Mangler type' });
   }
 
-  const siteUrl = (process.env.SITE_URL || `https://${req.headers.host}`).replace(/\/$/, '');
+  const siteUrl = (process.env.SITE_URL || CANONICAL_URL).replace(/\/$/, '');
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'Sound Core <onboarding@resend.dev>';
   const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -328,3 +334,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: e?.message || 'Kunne ikke sende e-post' });
   }
 };
+
+// Eksponert for testing (tools/test-activation.js) — påverkar ikkje produksjon.
+module.exports.CANONICAL_URL = CANONICAL_URL;
+module.exports.activationHtml = activationHtml;

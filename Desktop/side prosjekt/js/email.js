@@ -45,7 +45,9 @@ const Email = (() => {
 
     // 2) Fallback: EmailJS hvis konfigurert
     if (isEmailJSConfigured() && initEmailJS()) {
-      const link = `${window.location.origin}/#/activate/${token}`;
+      // Bruk det kanoniske domenet i e-postlenka — aldri den lokale/preview-hosten.
+      const base = (CONFIG.CANONICAL_URL || window.location.origin).replace(/\/$/, '');
+      const link = `${base}/#/activate/${token}`;
       try {
         await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ACTIVATION, {
           to_email:     toEmail,

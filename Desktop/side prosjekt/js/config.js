@@ -16,6 +16,10 @@ const CONFIG = {
   // Nettstedets URL (for e-postlenker)
   SITE_URL: window.location.origin + window.location.pathname.replace(/index\.html$/, ''),
 
+  // Kanonisk, offentlig domene — brukes i e-postlenker (aktivering/tilbakestilling)
+  // slik at de alltid peker hit, uansett hvilken host brukeren registrerte seg fra.
+  CANONICAL_URL: 'https://www.soundcoredevelopment.com',
+
   // Platform URLs — update these when you have real links
   PLATFORM_MOBILE_URL:   '',   // e.g. 'https://m.soundcore.app'
   PLATFORM_DESKTOP_URL:  '',   // e.g. 'https://soundcore.app'

@@ -191,6 +191,7 @@ const App = (() => {
         ${item('#/underground','moon','Underground')}
         ${item('#/shows','calendar','Shows')}
         ${item('#/world','globe','World')}
+        ${item('#/magazine','book','Magasin')}
         ${item('#/a1','sparkles','A1')}
         ${item('#/shop','store','Shop')}
         ${item('#/studio','image','Studio')}
@@ -208,6 +209,7 @@ const App = (() => {
       ${item('#/underground','moon','Underground')}
       ${item('#/shows','calendar','Shows')}
       ${item('#/world','globe','World')}
+      ${item('#/magazine','book','Magasin')}
       ${item('#/a1','sparkles','A1')}
       ${item('#/shop','store','Shop')}
       <div class="nav-more-sep"></div>
@@ -273,6 +275,7 @@ const App = (() => {
       { label: 'Underground', sub: 'Underground-scene',          icon: 'moon',     route: '/underground', kw: 'undergrunn scene' },
       { label: 'Shows',       sub: 'Konserter & arrangement',    icon: 'calendar', route: '/shows',       kw: 'konsert konserter event arrangement festival gig show' },
       { label: 'World',       sub: 'All Over The World',         icon: 'globe',    route: '/world',       kw: 'verden global psytrance psybient world' },
+      { label: 'Magasin',     sub: 'Intervjuer, utgivelser & festivaler', icon: 'book', route: '/magazine', kw: 'magasin magazine blad intervju utgivelser plateselskap label festival fester news nyheter' },
       { label: 'A1',          sub: 'AI + søk hele nettet',       icon: 'sparkles', route: '/a1',          kw: 'ai assistent søk web a1 chat' },
       { label: 'Shop',        sub: 'Abonnement & kreditt',       icon: 'store',    route: '/shop',        kw: 'butikk kjøp pro abonnement credits kreditt shop' },
     ];
@@ -1374,11 +1377,21 @@ const App = (() => {
         </div></div>`;
       return;
     }
-    toast(`Konto aktivert! Velkommen, ${result.user.displayName}! ${Icon('party')}`, 'success');
-    // Auto-login after activation
-    localStorage.setItem('pv_session', JSON.stringify({ username: result.user.username, ts: Date.now() }));
+    // Ikke auto-innlogging — brukeren skal logge inn på nytt etter aktivering.
+    // Rydd bort en evt. eksisterende økt så «logg inn på nytt» faktisk gjelder.
+    Auth.logout();
     renderNav();
-    Router.go(`/u/${result.user.username}`);
+    toast(`Konto aktivert! Logg inn for å komme i gang. ${Icon('party')}`, 'success');
+    document.getElementById('app').innerHTML = `
+      <div class="auth-page"><div class="auth-card" style="text-align:center">
+        <div style="font-size:4rem;margin-bottom:1rem">${Icon('check-circle')}</div>
+        <h2 style="font-weight:800;margin-bottom:0.5rem">You are now activated 🎉</h2>
+        <p style="color:var(--text2);margin-bottom:1.5rem">
+          Kontoen din til <strong>${result.user.displayName}</strong> er aktivert.<br>
+          Logg inn på nytt for å komme i gang på Sound Core.
+        </p>
+        <a href="#/login" class="btn btn-primary" style="display:inline-flex">${Icon('log-in')} Logg inn</a>
+      </div></div>`;
   }
 
   function renderInbox(activeTab = 'samtaler') {
@@ -2331,6 +2344,8 @@ const App = (() => {
     Router.define('/underground',        () => Underground.render());
     Router.define('/shows',              () => Shows.render());
     Router.define('/world',              () => World.render());
+    Router.define('/magazine',           () => Magazine.render());
+    Router.define('/magazine/:id',       ({ id }) => Magazine.render(id));
     Router.define('/a1',                 () => A1.render());
     Router.define('/community',          () => { if (window.Community) Community.render(); });
     Router.define('/friends',            () => { if (window.Friends) Friends.render(); });
