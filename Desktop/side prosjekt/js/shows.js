@@ -256,6 +256,15 @@ const Shows = (() => {
           ${showCard(live, true)}
         </div>` : ''}
 
+        <!-- RADIO SEARCH — every web radio on the planet -->
+        <div class="section" style="max-width:900px">
+          <div class="section-header">
+            <div class="section-title">${Icon('search')} Søk alle verdas web-radioar</div>
+            <span class="text-muted text-sm">Psytrance · EDM · House · Chillout · Psychill · Progressive · Downtempo · Ambient · Dark Drone — og alt anna</span>
+          </div>
+          ${RadioSearch.widget()}
+        </div>
+
         <!-- WEEKLY SCHEDULE -->
         <div class="section" style="max-width:1100px">
           <div class="section-header">
