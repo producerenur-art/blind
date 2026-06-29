@@ -21,8 +21,13 @@ module.exports = async (req, res) => {
 
     res.status(200).json({
       success:        true,
+      sessionId:      session.id,
       username:       session.metadata?.username || null,
       plan:           session.metadata?.plan     || null,
+      product:        session.metadata?.product  || null,
+      hours:          session.metadata?.hours ? parseInt(session.metadata.hours, 10) : null,
+      slot:           session.metadata?.slot      || null,
+      amountTotal:    session.amount_total        || null,
       subscriptionId: session.subscription      || null,
       customerEmail:  session.customer_details?.email || null,
     });

@@ -309,7 +309,7 @@ const Radio = (() => {
   let analyser = null;
   let sourceNode = null;
   let visFrame = null;
-  let visMode = 'bars'; // 'bars' | 'circle' | 'wave'
+  let visMode = 'psychedelic'; // 'psychedelic' | 'bars' | 'circle' | 'wave' | 'particles'
   let visSize = localStorage.getItem('pv_vis_size') || 'medium'; // 'small'|'medium'|'large'|'full'
   let canvas = null, visCtx = null;
   let customStreams = JSON.parse(localStorage.getItem('pv_custom_streams') || '[]');
@@ -770,7 +770,8 @@ const Radio = (() => {
               </div>
             </div>
             <div class="vis-style-row">
-              <button class="vis-btn active" onclick="Radio.setVisMode('bars',this)">Søyler</button>
+              <button class="vis-btn active" onclick="Radio.setVisMode('psychedelic',this)">🌀 Psyk</button>
+              <button class="vis-btn" onclick="Radio.setVisMode('bars',this)">Søyler</button>
               <button class="vis-btn" onclick="Radio.setVisMode('circle',this)">Sirkel</button>
               <button class="vis-btn" onclick="Radio.setVisMode('wave',this)">Bølge</button>
               <button class="vis-btn" onclick="Radio.setVisMode('particles',this)">Partikler</button>
@@ -779,6 +780,21 @@ const Radio = (() => {
               ${[['small','Liten'],['medium','Middels'],['large','Stor'],['full','⛶ Full']].map(([s,l]) =>
                 `<button class="vis-btn vis-size-btn ${visSize===s?'active':''}" data-size="${s}" onclick="Radio.setVisSize('${s}',this)">${l}</button>`).join('')}
             </div>
+            <!-- Zoom-knapper: gjør visualizeren større/mindre -->
+            <div class="vis-zoom-row">
+              <button class="vis-btn vis-zoom-btn" onclick="Radio.visZoomOut()" title="Mindre">−</button>
+              <button class="vis-btn vis-zoom-btn" onclick="Radio.visZoomIn()" title="Større">+</button>
+            </div>
+            <!-- Frie drag-håndtak — dra et hjørne/kant for å endre størrelse.
+                 Dobbeltklikk et håndtak for å gå tilbake til standardstørrelsen. -->
+            <div class="vrr n"  data-resize="n"  title="Dra for å endre størrelse"></div>
+            <div class="vrr s"  data-resize="s"  title="Dra for å endre størrelse"></div>
+            <div class="vrr e"  data-resize="e"  title="Dra for å endre størrelse"></div>
+            <div class="vrr w"  data-resize="w"  title="Dra for å endre størrelse"></div>
+            <div class="vrr ne" data-resize="ne" title="Dra for å endre størrelse"></div>
+            <div class="vrr nw" data-resize="nw" title="Dra for å endre størrelse"></div>
+            <div class="vrr se" data-resize="se" title="Dra for å endre størrelse"></div>
+            <div class="vrr sw" data-resize="sw" title="Dra for å endre størrelse"></div>
           </div>
 
           <!-- External embed area (hidden by default) -->
@@ -817,6 +833,8 @@ const Radio = (() => {
 
     canvas = document.getElementById('radio-canvas');
     applyVisSize();              // setter lagret størrelse + kaller resizeCanvas
+    restoreVisFree();            // gjenopprett evt. lagret fri størrelse (overstyrer preset)
+    initVisResize();             // koble på hjørne/kant-håndtakene
     window.removeEventListener('resize', resizeCanvas);
     window.addEventListener('resize', resizeCanvas);
     if (currentStation && isPlaying) startVisualizer();
@@ -1328,12 +1346,15 @@ const Radio = (() => {
       analyser.getByteFrequencyData(dataFreq);
       analyser.getByteTimeDomainData(dataTime);
 
-      visCtx.clearRect(0, 0, canvas.width, canvas.height);
+      // Psykedelisk-modus wipes IKKE — den maler sitt eget fade-rektangel slik
+      // at ettergløds-sporene (feedback-trails) får bygge seg opp over tid.
+      if (visMode !== 'psychedelic') visCtx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if      (visMode === 'bars')      drawBars(dataFreq, bufLen);
-      else if (visMode === 'circle')    drawCircle(dataFreq, bufLen);
-      else if (visMode === 'wave')      drawWave(dataTime, bufLen);
-      else if (visMode === 'particles') drawParticles(dataFreq, bufLen);
+      if      (visMode === 'psychedelic') drawPsychedelic(dataFreq, dataTime, bufLen);
+      else if (visMode === 'bars')        drawBars(dataFreq, bufLen);
+      else if (visMode === 'circle')      drawCircle(dataFreq, bufLen);
+      else if (visMode === 'wave')        drawWave(dataTime, bufLen);
+      else if (visMode === 'particles')   drawParticles(dataFreq, bufLen);
     }
     draw();
   }
@@ -1465,6 +1486,108 @@ const Radio = (() => {
     visCtx.fill();
   }
 
+  // ── Psykedelisk (LSD) ──────────────────────────────────────────────────
+  // Kaleidoskop-symmetri + additiv glød + ettergløds-spor + bass-drevet
+  // plasma-kjerne + levende bølgering. Drives av lyd OG tid (performance.now)
+  // slik at den fortsetter å bevege seg også når musikken er stille.
+  function drawPsychedelic(freq, time, bufLen) {
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2;
+    const t  = performance.now() / 1000;
+
+    // Ettergløds-spor: mal et svakt mørkt lag i stedet for å wipe canvasen.
+    visCtx.fillStyle = 'rgba(0,0,0,0.08)';
+    visCtx.fillRect(0, 0, W, H);
+
+    // Frekvensbånd → energi (bass / mid / diskant), normalisert 0..1.
+    let bass = 0, mid = 0, treble = 0;
+    const b1 = Math.max(1, Math.floor(bufLen * 0.10));
+    const m1 = Math.floor(bufLen * 0.45);
+    for (let i = 0;  i < b1;     i++) bass   += freq[i];
+    for (let i = b1; i < m1;     i++) mid    += freq[i];
+    for (let i = m1; i < bufLen; i++) treble += freq[i];
+    bass   /= (b1 * 255) || 1;
+    mid    /= ((m1 - b1) * 255) || 1;
+    treble /= ((bufLen - m1) * 255) || 1;
+
+    const hueBase  = (t * 25) % 360;
+    const segments = 8;                  // kaleidoskop-speilinger
+    const maxR     = Math.hypot(cx, cy); // nok til å dekke hele canvasen
+    const spin     = t * (0.25 + bass * 0.8);
+    const step     = Math.max(2, Math.floor(bufLen / 48));
+
+    // Roterende kaleidoskop av glødende stråler.
+    visCtx.save();
+    visCtx.translate(cx, cy);
+    visCtx.rotate(spin);
+    visCtx.globalCompositeOperation = 'lighter';
+    for (let s = 0; s < segments; s++) {
+      visCtx.save();
+      visCtx.rotate((Math.PI * 2 / segments) * s);
+      if (s % 2 === 1) visCtx.scale(1, -1); // speil annenhver seksjon
+      for (let i = 0; i < bufLen; i += step) {
+        const amp = freq[i] / 255;
+        if (amp < 0.04) continue;
+        const ang = (i / bufLen) * (Math.PI / segments);
+        const r0  = maxR * 0.10 + Math.sin(t * 2 + i * 0.3) * 8;
+        const r1  = r0 + amp * maxR * 0.9;
+        const hue = (hueBase + (i / bufLen) * 200 + s * 12) % 360;
+        const x0  = Math.cos(ang) * r0, y0 = Math.sin(ang) * r0;
+        const x1  = Math.cos(ang) * r1, y1 = Math.sin(ang) * r1;
+        visCtx.strokeStyle = `hsla(${hue},100%,${50 + amp * 25}%,${0.35 + amp * 0.5})`;
+        visCtx.lineWidth   = 1 + amp * 4 + treble * 3;
+        visCtx.beginPath();
+        visCtx.moveTo(x0, y0);
+        visCtx.lineTo(x1, y1);
+        visCtx.stroke();
+        // Glødende node-punkt i enden av strålen.
+        visCtx.fillStyle = `hsla(${(hue + 40) % 360},100%,70%,${amp})`;
+        visCtx.beginPath();
+        visCtx.arc(x1, y1, 1 + amp * 3, 0, Math.PI * 2);
+        visCtx.fill();
+      }
+      visCtx.restore();
+    }
+    visCtx.restore();
+
+    // Levende bølgering fra tidsdomenet (puster med lyden).
+    visCtx.save();
+    visCtx.globalCompositeOperation = 'lighter';
+    visCtx.beginPath();
+    const ringStep = Math.max(1, Math.floor(bufLen / 180));
+    for (let i = 0; i <= bufLen; i += ringStep) {
+      const idx = i % bufLen;
+      const v   = (time[idx] - 128) / 128; // -1..1
+      const ang = (i / bufLen) * Math.PI * 2 + spin * 0.5;
+      const rr  = maxR * 0.55 + v * maxR * 0.15 + mid * maxR * 0.10;
+      const x   = cx + Math.cos(ang) * rr;
+      const y   = cy + Math.sin(ang) * rr;
+      if (i === 0) visCtx.moveTo(x, y);
+      else         visCtx.lineTo(x, y);
+    }
+    visCtx.closePath();
+    visCtx.strokeStyle = `hsla(${(hueBase + 90) % 360},100%,65%,0.5)`;
+    visCtx.lineWidth   = 2;
+    visCtx.stroke();
+    visCtx.restore();
+
+    // Sentral pulserende plasma-kjerne (bass-drevet).
+    const coreR = Math.min(W, H) * (0.10 + bass * 0.30);
+    const core  = visCtx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
+    core.addColorStop(0,   `hsla(${(hueBase + 180) % 360},100%,70%,${0.25 + bass * 0.5})`);
+    core.addColorStop(0.5, `hsla(${hueBase},100%,55%,${0.15 + bass * 0.3})`);
+    core.addColorStop(1,   'transparent');
+    visCtx.globalCompositeOperation = 'lighter';
+    visCtx.fillStyle = core;
+    visCtx.beginPath();
+    visCtx.arc(cx, cy, coreR, 0, Math.PI * 2);
+    visCtx.fill();
+
+    // Nullstill tegnetilstand for de andre modusene.
+    visCtx.globalCompositeOperation = 'source-over';
+    visCtx.globalAlpha = 1;
+  }
+
   function setVisMode(mode, btn) {
     visMode = mode;
     // Bare visualiser-stil-knappene, ikke størrelse-knappene
@@ -1477,6 +1600,7 @@ const Radio = (() => {
   function setVisSize(size, btn) {
     visSize = size;
     localStorage.setItem('pv_vis_size', size);
+    clearVisFree();           // en preset overstyrer fri (drag/zoom) størrelse
     applyVisSize();
     document.querySelectorAll('.vis-size-btn').forEach(b => b.classList.toggle('active', b.dataset.size === size));
   }
@@ -1494,6 +1618,118 @@ const Radio = (() => {
 
   function _visEsc(e) {
     if (e.key === 'Escape') setVisSize('medium', document.querySelector('.vis-size-btn[data-size="medium"]'));
+  }
+
+  // ── Fri størrelse: zoom-knapper + hjørne/kant-drag ─────────────────────
+  // Gjenbruker mekanikken fra initEmbedResize(), men #radio-vis-wrap ligger i
+  // flyt (ikke position:absolute), så boksen forankres øverst-venstre og alle
+  // håndtak endrer bare width/height.
+  const VIS_MIN_W = 200, VIS_MIN_H = 120;
+  let _visResizeAbort = null;
+
+  function enterVisFree(wrap) {
+    if (wrap.classList.contains('vis-size-free')) return;
+    const w = wrap.offsetWidth, h = wrap.offsetHeight;
+    wrap.classList.add('vis-size-free');
+    wrap.style.width  = w + 'px';
+    wrap.style.height = h + 'px';
+  }
+
+  function clearVisFree() {
+    const wrap = document.getElementById('radio-vis-wrap');
+    localStorage.removeItem('pv_vis_free');
+    if (!wrap) return;
+    wrap.classList.remove('vis-size-free');
+    wrap.style.width = '';
+    wrap.style.height = '';
+  }
+
+  function saveVisFree(wrap) {
+    localStorage.setItem('pv_vis_free', JSON.stringify({ w: wrap.offsetWidth, h: wrap.offsetHeight }));
+  }
+
+  function restoreVisFree() {
+    const wrap = document.getElementById('radio-vis-wrap');
+    if (!wrap) return;
+    let saved; try { saved = JSON.parse(localStorage.getItem('pv_vis_free') || 'null'); } catch { saved = null; }
+    if (!saved || !saved.w || !saved.h) return;
+    const maxW = (wrap.parentElement?.clientWidth || saved.w);
+    wrap.classList.add('vis-size-free');
+    wrap.style.width  = Math.max(VIS_MIN_W, Math.min(saved.w, maxW)) + 'px';
+    wrap.style.height = Math.max(VIS_MIN_H, saved.h) + 'px';
+    resizeCanvas();
+  }
+
+  function visZoom(factor) {
+    const wrap = document.getElementById('radio-vis-wrap');
+    if (!wrap) return;
+    if (visSize === 'full') return;       // ingen zoom i fullskjerm
+    enterVisFree(wrap);
+    const maxW = wrap.parentElement?.clientWidth || wrap.offsetWidth;
+    const nw = Math.max(VIS_MIN_W, Math.min(wrap.offsetWidth  * factor, maxW));
+    const nh = Math.max(VIS_MIN_H, wrap.offsetHeight * factor);
+    wrap.style.width  = nw + 'px';
+    wrap.style.height = nh + 'px';
+    saveVisFree(wrap);
+    resizeCanvas();
+  }
+  function visZoomIn()  { visZoom(1.15); }
+  function visZoomOut() { visZoom(1 / 1.15); }
+
+  function initVisResize() {
+    const wrap = document.getElementById('radio-vis-wrap');
+    if (!wrap) return;
+    if (_visResizeAbort) _visResizeAbort.abort();
+    _visResizeAbort = new AbortController();
+    const sig = _visResizeAbort.signal;
+
+    let action = null;            // n|s|e|w|ne|nw|se|sw
+    let startX, startY, startW, startH;
+
+    function begin(cx, cy, dir) {
+      if (visSize === 'full') return;
+      enterVisFree(wrap);
+      action = dir;
+      startX = cx; startY = cy;
+      startW = wrap.offsetWidth; startH = wrap.offsetHeight;
+      document.body.style.userSelect = 'none';
+    }
+
+    function move(cx, cy) {
+      if (!action) return;
+      const maxW = wrap.parentElement?.clientWidth || startW;
+      const dx = cx - startX, dy = cy - startY;
+      // Forankret øverst-venstre: e/s vokser med dra-retning, w/n inverteres.
+      if (action.includes('e')) wrap.style.width  = Math.max(VIS_MIN_W, Math.min(startW + dx, maxW)) + 'px';
+      if (action.includes('w')) wrap.style.width  = Math.max(VIS_MIN_W, Math.min(startW - dx, maxW)) + 'px';
+      if (action.includes('s')) wrap.style.height = Math.max(VIS_MIN_H, startH + dy) + 'px';
+      if (action.includes('n')) wrap.style.height = Math.max(VIS_MIN_H, startH - dy) + 'px';
+      resizeCanvas();
+    }
+
+    function end() {
+      if (action) saveVisFree(wrap);
+      action = null;
+      document.body.style.userSelect = '';
+    }
+
+    wrap.querySelectorAll('.vrr').forEach(handle => {
+      handle.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        e.preventDefault(); e.stopPropagation();
+        begin(e.clientX, e.clientY, handle.dataset.resize);
+      }, { signal: sig });
+      // Dobbeltklikk = tilbake til valgt preset-størrelse.
+      handle.addEventListener('dblclick', e => {
+        e.preventDefault(); e.stopPropagation();
+        clearVisFree();
+        applyVisSize();
+      }, { signal: sig });
+    });
+
+    document.addEventListener('pointermove', e => move(e.clientX, e.clientY), { signal: sig });
+    document.addEventListener('pointerup', end, { signal: sig });
+    document.addEventListener('pointercancel', end, { signal: sig });
   }
 
   // ── Custom streams ────────────────────────────────────────────────────
@@ -1547,7 +1783,7 @@ const Radio = (() => {
 
   return {
     render, playStation, playCustom, togglePlay, stopRadio, playUrl, fetchStations,
-    setVolume, volumeUp, volumeDown, toggleMute, setVisMode, setVisSize, addCustomStream, removeCustom,
+    setVolume, volumeUp, volumeDown, toggleMute, setVisMode, setVisSize, visZoomIn, visZoomOut, addCustomStream, removeCustom,
     playSearchResult, saveSearchResult, onSearchInput, onSearchKey, aiSearch,
     toggleAiChat, sendAiMessage, onAiKeydown,
     setAsFavorite, openEmbed, closeEmbed, stopForMusicPlayer,

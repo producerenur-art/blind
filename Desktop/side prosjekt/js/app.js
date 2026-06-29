@@ -193,7 +193,6 @@ const App = (() => {
         ${item('#/world','globe','World')}
         ${item('#/magazine','book','Magasin')}
         ${item('#/a1','sparkles','A1')}
-        ${item('#/shop','store','Shop')}
         ${item('#/studio','image','Studio')}
         <div class="nav-more-sep"></div>
         ${btn("if(window.Chat)Chat.toggleFloat()",'message','Flytende chat-vindu')}
@@ -211,7 +210,6 @@ const App = (() => {
       ${item('#/world','globe','World')}
       ${item('#/magazine','book','Magasin')}
       ${item('#/a1','sparkles','A1')}
-      ${item('#/shop','store','Shop')}
       <div class="nav-more-sep"></div>
       ${btn("if(window.Chat)Chat.toggleFloat()",'message','Flytende chat-vindu')}
     `;
@@ -485,8 +483,11 @@ const App = (() => {
       items.sort((a, b) => b.ts - a.ts);
       const top = items.slice(0, 40);
       const el = document.getElementById('sc-home-feed');
-      if (el) el.innerHTML = top.length ? top.map(i => i.html).join('')
-        : `<div class="sc-feed-empty">Ingen aktivitet ennå. Bli den første til å <a href="#/discover">dele musikk</a> eller skrive et innlegg ovenfor!</div>`;
+      if (el) {
+        el.innerHTML = top.length ? top.map(i => i.html).join('')
+          : `<div class="sc-feed-empty">Ingen aktivitet ennå. Bli den første til å <a href="#/discover">dele musikk</a> eller skrive et innlegg ovenfor!</div>`;
+        if (window.LinkPreview) LinkPreview.hydrate(el);
+      }
     } finally { _feedBusy = false; }
   }
 
@@ -657,14 +658,14 @@ const App = (() => {
           <div class="cs-card">
             <div class="cs-icon">${Icon('message')}</div>
             <div class="cs-label">Kommentarer</div>
-            <div class="cs-desc">Kommenter på profiler og musikk</div>
             <div class="cs-badge">Snart</div>
           </div>
           <div class="cs-card">
-            <div class="cs-icon">${Icon('link')}</div>
+            <div class="cs-icon">${Icon('music')}</div>
             <div class="cs-label">Del musikk</div>
-            <div class="cs-desc">Del sanger og spillelister med venner</div>
-            <div class="cs-badge">Snart</div>
+            <div class="cs-desc">Last opp en låt med cover-bilde. AI vurderer om det er ditt eget verk eller allerede utgitt før du deler.</div>
+            <button class="btn btn-primary cs-cta" onclick="ShareMusic.open()">${Icon('music')} Del en låt</button>
+            <div class="cs-badge cs-badge-live">Klar</div>
           </div>
           <div class="cs-card cs-card-premium">
             <div class="cs-icon">${Icon('clock')}</div>
@@ -675,6 +676,7 @@ const App = (() => {
               <div>2 timer &nbsp;<strong>300 NOK</strong></div>
               <div>Ytterligere timer <strong>+150 NOK/t</strong></div>
             </div>
+            <button class="btn btn-primary cs-cta" onclick="LiveMix.openBooking()">${Icon('clock')} Book mikse-slot</button>
             <div class="cs-badge cs-badge-gold">Premium</div>
           </div>
         </div>
@@ -2390,14 +2392,16 @@ const App = (() => {
     Router.define('/inbox',              () => renderInbox());
     Router.define('/settings',           () => renderSettings());
     Router.define('/shop',                () => renderShop());
+    Router.define('/share',              () => { if (window.ShareMusic) ShareMusic.render(); });
     Router.define('/radio',              () => Radio.render());
     Router.define('/chat',               () => Chat.render());
     Router.define('/discover',           () => Discover.render());
     Router.define('/underground',        () => Underground.render());
     Router.define('/shows',              () => Shows.render());
     Router.define('/world',              () => World.render());
-    Router.define('/magazine',           () => Magazine.render());
-    Router.define('/magazine/:id',       ({ id }) => Magazine.render(id));
+    Router.define('/magazine',                 () => Magazine.renderGenre('alle'));
+    Router.define('/magazine/sjanger/:genre',  ({ genre }) => Magazine.renderGenre(genre));
+    Router.define('/magazine/:id',             ({ id }) => Magazine.render(id));
     Router.define('/a1',                 () => A1.render());
     Router.define('/community',          () => { if (window.Community) Community.render(); });
     Router.define('/friends',            () => { if (window.Friends) Friends.render(); });

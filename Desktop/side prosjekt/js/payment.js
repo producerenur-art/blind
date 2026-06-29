@@ -41,6 +41,11 @@ const Payment = (() => {
       const result = await verifySession(sessionId);
 
       if (result.success) {
+        // Live Mix-booking (engangsbetaling) — egen kvittering, ikke Pro-oppgradering.
+        if (result.product === 'livemix' && window.LiveMix) {
+          LiveMix.completeFromSession(Object.assign({ sessionId }, result), current.displayName || current.username);
+          return;
+        }
         const plan = result.plan || 'monthly';
         Auth.updateUser(current.username, {
           subscription:   'pro',

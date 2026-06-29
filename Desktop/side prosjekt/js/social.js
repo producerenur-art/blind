@@ -7,6 +7,17 @@ const Social = (() => {
 
   const EMOJIS = ['😄','😂','🔥','❤️','👏','🎵','🎶','🌀','💫','⚡','🌊','🚀','✨','🎉','💜','👾'];
 
+  // Reaksjoner — én per bruker. Tall-nøklene 1/-1 er de opprinnelige (👍/👎) og
+  // holder data som allerede ligger i Gun bakoverkompatibel; resten er strengkoder.
+  const REACTIONS = [
+    { k: 1,       e: '👍', t: 'Tommel opp', cls: '' },
+    { k: -1,      e: '👎', t: 'Tommel ned', cls: 'down' },
+    { k: 'angry', e: '😠', t: 'Sur',        cls: 'angry' },
+    { k: 'love',  e: '😍', t: 'Hjerte',     cls: 'love' },
+    { k: 'oops',  e: '😮', t: 'Oops',       cls: 'oops' },
+    { k: 'wow',   e: '🤩', t: 'Wow',        cls: 'wow' },
+  ];
+
   const _comments     = {};   // targetKey → { id → {id,author,authorDisplay,text,ts,_k} }
   const _reactions    = {};   // targetKey → { username → {val,ts} }
   const _cSub         = new Set();
@@ -163,7 +174,7 @@ const Social = (() => {
     renderComments(targetKey);
   }
 
-  // ── Reaksjonar (👍 / 👎) ──────────────────────────────────────────────────
+  // ── Reaksjoner (👍 👎 😠 😍 😮 🤩) ───────────────────────────────────────────
   function subReactions(targetKey) {
     if (_rSub.has(targetKey) || !window.SC) return;
     _rSub.add(targetKey);
@@ -172,7 +183,8 @@ const Social = (() => {
     if (!ref || typeof ref.map !== 'function') return;
     ref.map().on((d, user) => {
       if (!user) return;
-      _reactions[targetKey][user] = { val: (d && typeof d.val === 'number') ? d.val : 0, ts: (d && d.ts) || 0 };
+      const v = d && d.val;
+      _reactions[targetKey][user] = { val: (typeof v === 'number' || typeof v === 'string') ? v : 0, ts: (d && d.ts) || 0 };
       renderReactions(targetKey);
     });
   }
@@ -188,15 +200,18 @@ const Social = (() => {
     if (!box) return;
     const r = _reactions[targetKey] || {};
     const viewer = me();
-    let up = 0, down = 0, mine = 0;
+    const counts = {};
+    let mine = 0;
     for (const u in r) {
       const v = r[u].val;
-      if (v === 1) up++; else if (v === -1) down++;
+      if (v !== 0 && v != null) counts[v] = (counts[v] || 0) + 1;
       if (viewer && u === viewer.username) mine = v;
     }
-    box.innerHTML = `
-      <button class="sc-react-btn ${mine === 1 ? 'active' : ''}" onclick="Social.react('${jsq(targetKey)}',1)" title="Tommel opp">👍 <span>${up || ''}</span></button>
-      <button class="sc-react-btn down ${mine === -1 ? 'active' : ''}" onclick="Social.react('${jsq(targetKey)}',-1)" title="Tommel ned">👎 <span>${down || ''}</span></button>`;
+    box.innerHTML = REACTIONS.map(rx => {
+      const n   = counts[rx.k] || 0;
+      const arg = typeof rx.k === 'number' ? rx.k : `'${rx.k}'`;
+      return `<button class="sc-react-btn ${rx.cls} ${mine === rx.k ? 'active' : ''}" onclick="Social.react('${jsq(targetKey)}',${arg})" title="${rx.t}">${rx.e} <span>${n || ''}</span></button>`;
+    }).join('');
   }
 
   function react(targetKey, val) {

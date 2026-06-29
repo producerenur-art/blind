@@ -2544,8 +2544,12 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: #000;
+  background:
+    radial-gradient(130% 95% at 50% 0%, #15112d 0%, #0a0718 55%, #050310 100%);
   min-height: 200px;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px rgba(150,110,255,0.12),
+              inset 0 0 70px rgba(80,40,160,0.20);
 }
 .radio-visualizer-wrap.hidden { display: none; }
 #radio-canvas {
@@ -2602,10 +2606,64 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
 .radio-visualizer-wrap.vis-size-small  { flex: none; height: 150px; }
 .radio-visualizer-wrap.vis-size-medium { flex: none; height: 260px; }
 .radio-visualizer-wrap.vis-size-large  { flex: none; height: 460px; }
+.radio-visualizer-wrap.vis-size-custom { flex: none; }   /* fri zoom via hjørne-drag (inline height) */
 .radio-visualizer-wrap.vis-size-full {
   position: fixed; inset: 0; z-index: 3000;
   width: 100vw; height: 100vh; min-height: 0; border-radius: 0;
 }
+
+/* Zoom-håndtak i hjørnene — dra for å zoome størrelsen inn/ut */
+.vis-zoom-grip {
+  position: absolute;
+  width: 24px; height: 24px;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity .18s ease;
+  touch-action: none;
+}
+.radio-visualizer-wrap:hover .vis-zoom-grip,
+.radio-visualizer-wrap.vis-size-full .vis-zoom-grip { opacity: .85; }
+.vis-zoom-grip::after {
+  content: '';
+  position: absolute;
+  width: 13px; height: 13px;
+  border: 0 solid rgba(196,166,255,.9);
+  transition: border-color .15s, box-shadow .15s;
+}
+.vis-zoom-grip.nw { top: 7px; left: 7px;  cursor: nwse-resize; }
+.vis-zoom-grip.ne { top: 7px; right: 7px; cursor: nesw-resize; }
+.vis-zoom-grip.sw { bottom: 7px; left: 7px;  cursor: nesw-resize; }
+.vis-zoom-grip.se { bottom: 7px; right: 7px; cursor: nwse-resize; }
+.vis-zoom-grip.nw::after { top: 0; left: 0;  border-width: 2px 0 0 2px; border-radius: 4px 0 0 0; }
+.vis-zoom-grip.ne::after { top: 0; right: 0; border-width: 2px 2px 0 0; border-radius: 0 4px 0 0; }
+.vis-zoom-grip.sw::after { bottom: 0; left: 0;  border-width: 0 0 2px 2px; border-radius: 0 0 0 4px; }
+.vis-zoom-grip.se::after { bottom: 0; right: 0; border-width: 0 2px 2px 0; border-radius: 0 0 4px 0; }
+.vis-zoom-grip:hover::after {
+  border-color: #fff;
+  box-shadow: 0 0 10px rgba(168,130,255,.9);
+}
+
+/* Live px/%-indikator mens man zoomer */
+.vis-zoom-badge {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  padding: .42rem .75rem;
+  background: rgba(10,8,24,.82);
+  border: 1px solid rgba(196,166,255,.5);
+  border-radius: 10px;
+  color: #fff;
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .15s ease;
+  z-index: 5;
+  backdrop-filter: blur(4px);
+}
+.vis-zoom-badge.show { opacity: 1; }
 
 /* Search field */
 .radio-search-wrap {
@@ -5609,6 +5667,8 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
   margin-top: 0.25rem;
 }
 .cs-badge-gold { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.cs-badge-live { background: rgba(34,197,94,0.15); color: #22c55e; }
+.cs-cta { margin-top: 0.75rem; width: 100%; justify-content: center; }
 
 /* ══════════════════════════════════════════════════════════════
    PROFILE — FRIEND REQUESTS + FRIENDS LIST
@@ -8916,8 +8976,58 @@ body { top: 0 !important; }
 .community-post-del { margin-left: auto; background: none; border: none; color: var(--text3); cursor: pointer; }
 .community-post-del:hover { color: #ef4444; }
 .community-post-del .icon { width: 15px; height: 15px; }
+/* Rediger + slett samlet til høyre i kort-hodet */
+.community-post-actions { margin-left: auto; display: inline-flex; align-items: center; gap: 0.25rem; }
+.community-post-actions .community-post-del { margin-left: 0; }
+.community-post-edit { background: none; border: none; color: var(--text3); cursor: pointer; padding: 0; display: inline-flex; }
+.community-post-edit:hover { color: var(--accent); }
+.community-post-edit .icon { width: 15px; height: 15px; }
+.community-edited { font-size: 0.7rem; color: var(--text3); font-style: italic; }
+.community-edit-box { margin: 0.4rem 0; }
+.community-edit-row { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
+.community-composer-note { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; color: var(--text3); }
+.community-composer-note .icon { width: 14px; height: 14px; }
 .community-post-text { margin-top: 0.25rem; color: var(--text); font-size: 0.92rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
 .community-empty { padding: 2.5rem 1rem; text-align: center; color: var(--text3); }
+
+/* ── Lenke-forhåndsvisning: klikkbar lenke + cover-bilde + play-knapp ─────── */
+.cp-link { color: var(--accent); text-decoration: none; word-break: break-all; }
+.cp-link:hover { text-decoration: underline; }
+.cp-prev { margin-top: 0.55rem; }
+.cp-prev-card {
+  display: flex; gap: 0; text-decoration: none; color: inherit;
+  background: var(--surface2, #14141f); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; transition: border-color 0.15s, transform 0.15s;
+}
+.cp-prev-card:hover { border-color: var(--border2, var(--accent)); }
+.cp-prev-thumb {
+  position: relative; width: 132px; min-width: 132px; aspect-ratio: 1;
+  background: linear-gradient(135deg,#0f0f1a,#1a0a2e); flex-shrink: 0;
+}
+.cp-prev-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cp-prev-noimg { display: flex; align-items: center; justify-content: center; }
+.cp-prev-play {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+  width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(124,58,237,0.92); color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+  display: inline-flex; align-items: center; justify-content: center; transition: transform 0.12s, background 0.12s;
+}
+.cp-prev-play:hover { transform: translate(-50%,-50%) scale(1.08); background: #7c3aed; }
+.cp-prev-play svg { width: 24px; height: 24px; margin-left: 2px; }
+.cp-prev-info { min-width: 0; padding: 0.65rem 0.85rem; display: flex; flex-direction: column; justify-content: center; gap: 0.25rem; }
+.cp-prev-site { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+.cp-prev-title {
+  font-size: 0.9rem; font-weight: 600; color: var(--text); line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* Når play er trykt blir kortet til selve spilleren */
+.cp-prev.cp-playing .cp-prev-card { flex-direction: column; }
+.cp-prev.cp-playing .cp-prev-thumb { width: 100%; min-width: 0; aspect-ratio: 16 / 9; }
+.cp-prev.cp-playing .cp-prev-info { display: none; }
+.cp-prev-thumb iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+@media (max-width: 480px) {
+  .cp-prev-thumb { width: 104px; min-width: 104px; }
+}
 
 /* ── Community 2.0: filter, auto-del, media, kommentarar, reaksjonar ─────── */
 .community-autoshare { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.74rem; color: var(--text2); cursor: pointer; }
@@ -8940,7 +9050,7 @@ a.community-link { display: inline-flex; align-items: center; gap: 0.4rem; paddi
 a.community-link .icon { width: 15px; height: 15px; }
 
 /* Reaksjonar (👍/👎) */
-.sc-react { display: flex; gap: 0.4rem; margin-top: 0.55rem; }
+.sc-react { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.55rem; }
 .sc-react-btn { display: inline-flex; align-items: center; gap: 0.3rem; background: var(--surface); border: 1px solid var(--border); color: var(--text2); border-radius: 9999px; padding: 0.18rem 0.6rem; font-size: 0.82rem; cursor: pointer; transition: all 0.15s; }
 .sc-react-btn:hover { color: var(--text); border-color: var(--accent); }
 .sc-react-btn.active { background: rgba(124,58,237,0.18); border-color: var(--accent); color: var(--text); }
@@ -9469,6 +9579,7 @@ a.community-link .icon { width: 15px; height: 15px; }
 /* Sjanger-chips */
 .mag-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; margin-bottom: 2rem; }
 .mag-chip {
+  display: inline-block; text-decoration: none;
   padding: 0.4rem 0.95rem; border-radius: 99px;
   border: 1px solid var(--border); background: var(--surface);
   color: var(--text2); font-size: 0.78rem; font-weight: 600;

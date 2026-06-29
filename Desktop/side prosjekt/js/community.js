@@ -11,9 +11,15 @@ const Community = (() => {
   let _profileUser = null;
   let _filter = 'alt';
   let _pendingImage = null;     // { url, name } — bilde vedlagt composeren
+  let _publicOnly = false;      // true på /community-veggen: alle innlegg blir offentlige
   const _sessionStart = Date.now();
 
   const esc = (s) => (window.SC ? SC.esc(s) : String(s || ''));
+
+  // En http(s)-URL som peker rett på en bildefil → vises inline i innlegget.
+  function isImageUrl(u) {
+    return /^https?:\/\/\S+\.(?:jpe?g|png|gif|webp|avif|bmp|svg)(?:[?#]\S*)?$/i.test(String(u || ''));
+  }
 
   function timeAgo(ts) {
     const s = Math.floor((Date.now() - ts) / 1000);
@@ -181,17 +187,22 @@ const Community = (() => {
   function composerHtml() {
     const me = Auth.current();
     const vis = me.wallVisibility || 'public';
+    // På Community-veggen er alt offentlig for alle innloggede — da skjuler vi
+    // synlighetsvelgeren og viser bare en rolig påminnelse i stedet.
+    const visControl = _publicOnly
+      ? `<span class="community-composer-note">${Icon('globe')} Synlig for alle innloggede</span>`
+      : `<label class="community-vis">${Icon('eye')} Synlig for:
+            <select id="sc-post-vis" onchange="Community.setWallVisibility(this.value)">
+              <option value="public"  ${vis === 'public'  ? 'selected' : ''}>🌐 Alle (offentlig)</option>
+              <option value="friends" ${vis === 'friends' ? 'selected' : ''}>👥 Bare venner</option>
+            </select>
+          </label>`;
     return `
       <div class="community-composer">
         <textarea id="sc-post-input" class="community-input" placeholder="Del noe med fellesskapet…" maxlength="1000"></textarea>
         <div id="sc-post-img-preview"></div>
         <div class="community-composer-row">
-          <label class="community-vis">${Icon('eye')} Synlig for:
-            <select id="sc-post-vis" onchange="Community.setWallVisibility(this.value)">
-              <option value="public"  ${vis === 'public'  ? 'selected' : ''}>🌐 Alle (offentlig)</option>
-              <option value="friends" ${vis === 'friends' ? 'selected' : ''}>👥 Bare venner</option>
-            </select>
-          </label>
+          ${visControl}
           <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0" title="Legg ved et bilde">
             <input type="file" id="sc-post-img-input" accept="image/*" style="display:none" onchange="Community.addImage(this.files)">
             ${Icon('image')} Bilde
@@ -211,7 +222,8 @@ const Community = (() => {
     const text = (inp && inp.value.trim()) || '';
     if (!text && !_pendingImage) return;     // ingenting å dele
     if (!window.SC) return;
-    const vis = me.wallVisibility || 'public';
+    // På Community-veggen er alt offentlig for alle innloggede.
+    const vis = _publicOnly ? 'public' : (me.wallVisibility || 'public');
     const p = {
       id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
       author: me.username, authorDisplay: me.displayName,
@@ -249,6 +261,49 @@ const Community = (() => {
     renderFeedList(); renderProfileList();
   }
 
+  // ── Redigering (kun forfatteren, hvis man har skrevet noe feil) ────────
+  // Bytter teksten i kortet med et redigeringsfelt + Lagre/Avbryt — uten å
+  // re-rendre hele lista, så de andre feltene (kommentarer m.m.) står i ro.
+  function editPost(id) {
+    const me = Auth.current(); const p = _posts[id];
+    if (!me || !p || p.author !== me.username) return;
+    const card = document.getElementById('cpost-' + id); if (!card) return;
+    if (card.querySelector('.community-edit-box')) return;     // redigerer alt
+    const body = card.querySelector('.community-post-body'); if (!body) return;
+    const textEl = body.querySelector('.community-post-text');
+    const box = document.createElement('div');
+    box.className = 'community-edit-box';
+    box.innerHTML =
+      `<textarea class="community-input community-edit-input" maxlength="1000">${esc(p.text || '')}</textarea>
+       <div class="community-edit-row">
+         <button class="btn btn-primary btn-sm" onclick="Community.saveEdit('${esc(id)}')">${Icon('check')} Lagre</button>
+         <button class="btn btn-ghost btn-sm" onclick="Community.cancelEdit('${esc(id)}')">${Icon('x')} Avbryt</button>
+       </div>`;
+    if (textEl) { textEl.style.display = 'none'; textEl.insertAdjacentElement('afterend', box); }
+    else { card.querySelector('.community-post-head').insertAdjacentElement('afterend', box); }
+    const ta = box.querySelector('textarea');
+    ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+  }
+
+  function saveEdit(id) {
+    const me = Auth.current(); const p = _posts[id];
+    if (!me || !p || p.author !== me.username) return;
+    const card = document.getElementById('cpost-' + id);
+    const ta = card && card.querySelector('.community-edit-input'); if (!ta) return;
+    const text = ta.value.trim();
+    p.text = text; p.edited = true; p.editedTs = Date.now();
+    try { if (p._k) SC.gun().get(SC.NS.posts).get('posts').get(p._k).put({ text, edited: true, editedTs: p.editedTs }); } catch {}
+    _posts[id] = p;
+    renderFeedList(); renderProfileList();
+    if (typeof App !== 'undefined') App.toast('Innlegg oppdatert', 'success', 2000);
+  }
+
+  function cancelEdit(id) {
+    const card = document.getElementById('cpost-' + id); if (!card) return;
+    const box = card.querySelector('.community-edit-box'); if (box) box.remove();
+    const textEl = card.querySelector('.community-post-text'); if (textEl) textEl.style.display = '';
+  }
+
   // ── Media-render ──────────────────────────────────────────────────────
   function mediaBodyHtml(p) {
     const name = esc(p.name || '');
@@ -281,7 +336,19 @@ const Community = (() => {
     const canDel = me && me.username === p.author;
     const aud = p.audience === 'friends' ? `<span class="community-aud">👥 venner</span>` : '';
     const media = (p.kind && p.kind !== 'text') ? mediaBodyHtml(p) : '';
-    const textHtml = p.text ? `<div class="community-post-text">${esc(p.text)}</div>` : '';
+    // Gjør delte lenker i teksten klikkbare, og sett opp et forhåndsvisnings-kort
+    // (cover-bilde + play-knapp) under teksten for den første lenka — men bare når
+    // innlegget ikke alt har eget media.
+    const linked = (p.text && window.LinkPreview) ? LinkPreview.linkify(p.text) : { html: esc(p.text || ''), urls: [] };
+    const textHtml = p.text ? `<div class="community-post-text">${linked.html}</div>` : '';
+    // Bilde-URL-er i teksten vises som faktiske bilder; den første ikke-bilde-lenka
+    // får forhåndsvisnings-kortet (som før).
+    const inlineImgs = linked.urls.filter(isImageUrl).map(u =>
+      `<div class="community-media community-blend"><img src="${esc(u)}" alt="" loading="lazy"></div>`).join('');
+    const firstLink = linked.urls.find(u => !isImageUrl(u));
+    const linkPrev = (!media && window.LinkPreview && firstLink)
+      ? LinkPreview.cardHtml(firstLink, p.id) : '';
+    const editedMark = p.edited ? `<span class="community-edited" title="Redigert">· redigert</span>` : '';
     if (window.Social) Social.setNotifyTarget('post:' + p.id, p.author);
     return `
       <div class="community-post" id="cpost-${esc(p.id)}">
@@ -290,11 +357,17 @@ const Community = (() => {
           <div class="community-post-head">
             <a class="community-post-name" href="#/u/${esc(p.author)}">${esc(p.authorDisplay || p.author)}</a>
             <span class="community-post-time">${timeAgo(p.ts)}</span>
+            ${editedMark}
             ${aud}
             ${window.Social ? Social.friendBtn(p.author, { mini: true }) : ''}
-            ${canDel ? `<button class="community-post-del" onclick="Community.deletePost('${esc(p.id)}')" title="Slett">${Icon('trash')}</button>` : ''}
+            ${canDel ? `<span class="community-post-actions">
+              <button class="community-post-edit" onclick="Community.editPost('${esc(p.id)}')" title="Rediger">${Icon('edit')}</button>
+              <button class="community-post-del" onclick="Community.deletePost('${esc(p.id)}')" title="Slett">${Icon('trash')}</button>
+            </span>` : ''}
           </div>
           ${textHtml}
+          ${inlineImgs}
+          ${linkPrev}
           ${media}
           ${window.Social ? Social.reactionBar('post:' + p.id) : ''}
           ${window.Social ? Social.commentsBlockHtml('post:' + p.id) : ''}
@@ -330,6 +403,7 @@ const Community = (() => {
     const arr = Object.values(_posts).filter(p => canSee(p, me) && matchesFilter(p)).sort((a, b) => b.ts - a.ts);
     list.innerHTML = arr.length ? arr.map(postCardHtml).join('')
       : '<div class="community-empty">Ingen innlegg her ennå. Bli den første som deler noe!</div>';
+    if (window.LinkPreview) LinkPreview.hydrate(list);
   }
 
   function renderProfileList() {
@@ -340,11 +414,13 @@ const Community = (() => {
       .sort((a, b) => b.ts - a.ts);
     list.innerHTML = arr.length ? arr.map(postCardHtml).join('')
       : '<div class="community-empty">Ingen innlegg ennå.</div>';
+    if (window.LinkPreview) LinkPreview.hydrate(list);
   }
 
   // ── Visninger ─────────────────────────────────────────────────────────
   function render() {
     subscribe();
+    _publicOnly = true;          // Community-veggen: alt synlig for alle innloggede
     const app = document.getElementById('app'); if (!app) return;
     const me = Auth.current();
     app.innerHTML = `
@@ -362,6 +438,7 @@ const Community = (() => {
 
   function renderProfilePosts(username, isOwner) {
     subscribe();
+    _publicOnly = false;         // profilveggen beholder venner/offentlig-valget
     _profileUser = username;
     const el = document.getElementById('tab-innlegg'); if (!el) return;
     const me = Auth.current();
@@ -372,6 +449,7 @@ const Community = (() => {
 
   return {
     render, renderProfilePosts, post, setWallVisibility, deletePost, subscribe,
+    editPost, saveEdit, cancelEdit,
     shareMedia, unshareMedia, isShared, autoShareOn, setAutoShare, setFilter,
     addImage, clearImage, visiblePosts, postCardHtml,
   };
