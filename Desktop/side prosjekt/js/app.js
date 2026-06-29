@@ -190,7 +190,121 @@ const App = (() => {
     toast(wasLoggedIn ? 'Du er nå logget ut.' : 'Du er allerede logget ut.', 'info');
   }
 
-  // ── Search ────────────────────────────────────────────────────────────
+  // ── Search (site-wide: pages, users, radio stations) ─────────────────────
+  // Accent-insensitive so «søk» matches «sok» and «U-Recken» matches «recken».
+  function _searchNorm(s) {
+    return (s || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+
+  // The navigable pages/tabs. `kw` = extra keywords (synonyms, EN/NO) to match on.
+  function _searchPages() {
+    const me = (Auth.current && Auth.current()) || null;
+    const pages = [
+      { label: 'Hjem',        sub: 'Forsida',                    icon: 'home',     route: '/',            kw: 'home forside front start hovudside' },
+      { label: 'Radio',       sub: 'Live psy/ambient-stasjonar', icon: 'radio',    route: '/radio',       kw: 'stream stasjon station live lyd musikk lytt' },
+      { label: 'Chat',        sub: 'Fellesskap-chat',            icon: 'message',  route: '/chat',        kw: 'prat melding samtale community' },
+      { label: 'Discover',    sub: 'Finn folk & musikk',         icon: 'music',    route: '/discover',    kw: 'oppdage utforsk finn folk artistar discover' },
+      { label: 'Underground', sub: 'Underground-scene',          icon: 'moon',     route: '/underground', kw: 'undergrunn scene' },
+      { label: 'Shows',       sub: 'Konsertar & arrangement',    icon: 'calendar', route: '/shows',       kw: 'konsert event arrangement festival gig show' },
+      { label: 'World',       sub: 'All Over The World',         icon: 'globe',    route: '/world',       kw: 'verden global psytrance psybient world' },
+      { label: 'A1',          sub: 'AI + søk heile nettet',      icon: 'sparkles', route: '/a1',          kw: 'ai assistent søk web a1 chat' },
+      { label: 'Shop',        sub: 'Abonnement & kreditt',       icon: 'store',    route: '/shop',        kw: 'butikk kjøp pro abonnement credits kreditt shop' },
+    ];
+    // Berre tilby desse når modulen faktisk er lasta (elles blir ruta blank).
+    if (typeof window.Friends !== 'undefined')
+      pages.push({ label: 'Friends',   sub: 'Online & venene dine', icon: 'users', route: '/friends',   kw: 'venner vener online friends' });
+    if (typeof window.Community !== 'undefined')
+      pages.push({ label: 'Community', sub: 'Community-vegg',        icon: 'users', route: '/community', kw: 'fellesskap vegg wall community' });
+    if (me) {
+      pages.push(
+        { label: 'Min side',       sub: 'Oversikta di',         icon: 'home',     route: '/minside',          kw: 'minside dashboard oversikt' },
+        { label: 'Min profil',     sub: '@' + me.username,      icon: 'user',     route: '/u/' + me.username, kw: 'profil meg min profile' },
+        { label: 'Rediger profil', sub: 'Endre profilen din',   icon: 'edit',     route: '/edit',             kw: 'rediger endre profil edit' },
+        { label: 'Studio',         sub: 'Blend Studio',         icon: 'image',    route: '/studio',           kw: 'studio blend bilde' },
+        { label: 'Innboks',        sub: 'Meldingane dine',      icon: 'mail',     route: '/inbox',            kw: 'innboks inbox meldingar' },
+        { label: 'Innstillingar',  sub: 'Konto & preferansar',  icon: 'settings', route: '/settings',         kw: 'innstillingar settings konto preferansar' },
+      );
+    } else {
+      pages.push(
+        { label: 'Logg inn',  sub: 'Få tilgang', icon: 'log-in', route: '/login',    kw: 'logg inn login' },
+        { label: 'Registrer', sub: 'Lag konto',  icon: 'user',   route: '/register', kw: 'registrer signup konto ny' },
+      );
+    }
+    return pages;
+  }
+
+  function _searchRun(input, drop) {
+    const raw = input.value.trim();
+    const q = _searchNorm(raw);
+    if (!q) { drop.classList.add('hidden'); drop.innerHTML = ''; return; }
+
+    const groups = [];
+
+    // Sider / faner
+    const pages = _searchPages().filter(p =>
+      _searchNorm(p.label).includes(q) || _searchNorm(p.sub).includes(q) || _searchNorm(p.kw).includes(q)
+    ).slice(0, 6);
+    if (pages.length) groups.push({ title: 'Sider', items: pages.map(p => ({
+      icon: p.icon, title: p.label, sub: p.sub, go: () => Router.go(p.route)
+    })) });
+
+    // Brukarar
+    let users = [];
+    try { users = Auth.getAllPublicUsers() || []; } catch (e) {}
+    users = users.filter(u =>
+      _searchNorm(u.username).includes(q) || _searchNorm(u.displayName).includes(q)
+    ).slice(0, 6);
+    if (users.length) groups.push({ title: 'Brukarar', items: users.map(u => ({
+      avatar: (u.displayName || u.username || '?').charAt(0).toUpperCase(),
+      title: u.displayName || u.username, sub: '@' + u.username, go: () => Router.go('/u/' + u.username)
+    })) });
+
+    // Radiostasjonar — gå til Radio og spel av valt stasjon
+    if (typeof Radio !== 'undefined' && Array.isArray(Radio.STATIONS)) {
+      const st = Radio.STATIONS.filter(s =>
+        _searchNorm(s.name).includes(q) || _searchNorm(s.cat).includes(q)
+      ).slice(0, 5);
+      if (st.length) groups.push({ title: 'Radiostasjonar', items: st.map(s => ({
+        icon: 'radio', title: s.name, sub: s.cat || 'Radio',
+        go: () => { Router.go('/radio'); setTimeout(() => { try { Radio.playStation(s.id); } catch (e) {} }, 80); }
+      })) });
+    }
+
+    drop.innerHTML = '';
+    if (!groups.length) {
+      const empty = document.createElement('div');
+      empty.className = 'search-empty';
+      empty.textContent = 'Ingen treff på «' + raw + '»';
+      drop.appendChild(empty);
+      drop.classList.remove('hidden');
+      return;
+    }
+
+    const close = () => { input.value = ''; drop.classList.add('hidden'); drop.innerHTML = ''; };
+    groups.forEach(g => {
+      const head = document.createElement('div');
+      head.className = 'search-group-title';
+      head.textContent = g.title;
+      drop.appendChild(head);
+      g.items.forEach(it => {
+        const row = document.createElement('div');
+        row.className = 'search-item';
+        const left = document.createElement('div');
+        if (it.avatar) { left.className = 'search-item-avatar'; left.textContent = it.avatar; }
+        else { left.className = 'search-item-icon'; left.innerHTML = Icon(it.icon); }
+        const body = document.createElement('div');
+        body.style.minWidth = '0';
+        const t = document.createElement('div'); t.className = 'search-item-title'; t.textContent = it.title;
+        const sub = document.createElement('div'); sub.className = 'search-item-sub'; sub.textContent = it.sub;
+        body.appendChild(t); body.appendChild(sub);
+        row.appendChild(left); row.appendChild(body);
+        row.addEventListener('click', () => { it.go(); close(); });
+        drop.appendChild(row);
+      });
+    });
+    drop.classList.remove('hidden');
+  }
+
   function initSearch() {
     const input = document.getElementById('nav-search');
     const drop  = document.getElementById('search-results');
@@ -199,23 +313,16 @@ const App = (() => {
     let debounce;
     input.addEventListener('input', () => {
       clearTimeout(debounce);
-      debounce = setTimeout(() => {
-        const q = input.value.trim().toLowerCase();
-        if (!q) { drop.classList.add('hidden'); return; }
-        const users = Auth.getAllPublicUsers().filter(u =>
-          u.username.toLowerCase().includes(q) || u.displayName.toLowerCase().includes(q)
-        ).slice(0, 8);
-        if (!users.length) { drop.classList.add('hidden'); return; }
-        drop.innerHTML = users.map(u => `
-          <div class="search-item" onclick="Router.go('/u/${u.username}');document.getElementById('nav-search').value='';document.getElementById('search-results').classList.add('hidden')">
-            <div class="search-item-avatar">${u.displayName.charAt(0).toUpperCase()}</div>
-            <div>
-              <div style="font-size:0.85rem;font-weight:600">${u.displayName}</div>
-              <div style="font-size:0.75rem;color:var(--text2)">@${u.username}</div>
-            </div>
-          </div>`).join('');
-        drop.classList.remove('hidden');
-      }, 200);
+      debounce = setTimeout(() => _searchRun(input, drop), 160);
+    });
+    input.addEventListener('focus', () => { if (input.value.trim()) _searchRun(input, drop); });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const first = drop.querySelector('.search-item');
+        if (first) { e.preventDefault(); first.click(); }
+      } else if (e.key === 'Escape') {
+        drop.classList.add('hidden');
+      }
     });
 
     document.addEventListener('click', e => {
