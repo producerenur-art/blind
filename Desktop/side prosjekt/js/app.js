@@ -104,7 +104,8 @@ const App = (() => {
   function updateNavBadge() {
     const user = Auth.current();
     if (!user) return;
-    const link = document.querySelector('#nav-links a[href="#/inbox"]');
+    // Innboks bor no i «Mer»-menyen, så vis det samla merket på Mer-knappen.
+    const link = document.getElementById('nav-more-btn');
     if (!link) return;
     const pendingFriend = Auth.getPendingRequestsCount(user.username);
     const unreadPMs     = getUnreadPMTotal(user.username);
@@ -136,41 +137,24 @@ const App = (() => {
       const pending    = Auth.getPendingRequestsCount(user.username);
       const unreadPMs  = getUnreadPMTotal(user.username);
       const totalBadge = pending + unreadPMs;
-      const inboxBadge = totalBadge > 0 ? `<span class="nav-badge">${totalBadge}</span>` : '';
+      const moreBadge  = totalBadge > 0 ? `<span class="nav-badge">${totalBadge}</span>` : '';
+      // Forenkla meny: berre kjernen er synleg. Resten ligg i «Mer ▾».
       nav.innerHTML = `
-        <a href="#/minside"     class="btn btn-ghost btn-sm">${Icon('home')} Min side</a>
+        <a href="#/"            class="btn btn-ghost btn-sm">${Icon('home')} Feed</a>
         <a href="#/radio"       class="btn btn-ghost btn-sm">${Icon('radio')} Radio</a>
-        <a href="#/chat"        class="btn btn-ghost btn-sm">${Icon('message')} Chat</a>
         <a href="#/discover"    class="btn btn-ghost btn-sm">${Icon('music')} Discover</a>
-        <a href="#/underground" class="btn btn-ghost btn-sm">${Icon('moon')} Underground</a>
-        <a href="#/shows"       class="btn btn-ghost btn-sm">${Icon('calendar')} Shows</a>
-        <a href="#/world"       class="btn btn-ghost btn-sm" title="All Over The World — global psytrance & psybient">${Icon('globe')} World</a>
-        <a href="#/a1"          class="btn btn-ghost btn-sm a1-nav-link" title="A1 — AI + søk heile nettet + ukas lenker & videoar">${Icon('sparkles')} A1</a>
-        <a href="#/shop"        class="btn btn-ghost btn-sm" title="Shop">${Icon('store')} Shop</a>
-        <a href="#/inbox"       class="btn btn-ghost btn-sm" style="position:relative">${Icon('mail')} Innboks${inboxBadge}</a>
-        <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">${Icon('user')} ${user.displayName}</a>
-        <a href="#/edit"        class="btn btn-ghost btn-sm" title="Rediger profil">${Icon('edit')}</a>
-        <a href="#/settings"    class="btn btn-ghost btn-sm" title="Innstillinger">${Icon('settings')}</a>
-        <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne/lukk flytende chat-vindu">${Icon('message')} Chat-vindu</button>
-        <a href="#/friends" class="btn btn-ghost btn-sm" title="Friends — sjå kven som er online og venene dine">${Icon('users')} Friends</a>
-        <button id="nav-bell" class="btn btn-ghost btn-sm nav-bell-btn" onclick="if(window.Notify)Notify.togglePanel()" title="Varsler" style="position:relative">${Icon('bell')}</button>
+        <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">${Icon('user')} Profil</a>
+        <button id="nav-more-btn" class="btn btn-ghost btn-sm nav-more-btn" onclick="App.toggleMoreMenu(this)" title="Mer — alle funksjoner" style="position:relative">${Icon('menu')} Mer ${Icon('chevron-down')}${moreBadge}</button>
         <a href="#/login"       class="btn btn-ghost btn-sm" title="Du er online"><span class="nav-status-dot nav-status-dot--online" title="Online"></span>${Icon('log-in')} Logg inn</a>
-        <button class="btn btn-ghost btn-sm" onclick="App.logout()">${Icon('log-out')} Logg ut</button>
       `;
     } else {
       nav.innerHTML = `
+        <a href="#/"            class="btn btn-ghost btn-sm">${Icon('home')} Feed</a>
         <a href="#/radio"       class="btn btn-ghost btn-sm">${Icon('radio')} Radio</a>
-        <a href="#/chat"        class="btn btn-ghost btn-sm">${Icon('message')} Chat</a>
         <a href="#/discover"    class="btn btn-ghost btn-sm">${Icon('music')} Discover</a>
-        <a href="#/underground" class="btn btn-ghost btn-sm">${Icon('moon')} Underground</a>
-        <a href="#/shows"       class="btn btn-ghost btn-sm">${Icon('calendar')} Shows</a>
-        <a href="#/world"       class="btn btn-ghost btn-sm" title="All Over The World — global psytrance & psybient">${Icon('globe')} World</a>
-        <a href="#/a1"          class="btn btn-ghost btn-sm a1-nav-link" title="A1 — AI + søk heile nettet + ukas lenker & videoar">${Icon('sparkles')} A1</a>
-        <a href="#/shop"        class="btn btn-ghost btn-sm" title="Shop">${Icon('store')} Shop</a>
+        <button id="nav-more-btn" class="btn btn-ghost btn-sm nav-more-btn" onclick="App.toggleMoreMenu(this)" title="Mer — alle funksjoner">${Icon('menu')} Mer ${Icon('chevron-down')}</button>
         <a href="#/login"       class="btn btn-ghost btn-sm">${Icon('log-in')} Logg inn</a>
-        <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Du er offline"><span class="nav-status-dot nav-status-dot--offline" title="Offline"></span>${Icon('log-out')} Logg ut</button>
         <a href="#/register"    class="btn btn-primary btn-sm">Registrer</a>
-        <button id="nav-chat-bubble" class="btn btn-ghost btn-sm nav-chat-bubble-btn" onclick="if(window.Chat)Chat.toggleFloat()" title="Åpne/lukk flytende chat-vindu">${Icon('message')} Chat-vindu</button>
       `;
     }
     // Sosialt sanntidslag: start nærvær + varsel-innboks + vennechat (idempotent).
@@ -180,6 +164,88 @@ const App = (() => {
     if (window.FriendChat) FriendChat.refresh();
     if (window.Friends)    Friends.init();      // held test-admin online medan appen er open
     if (window.NavDrag)    NavDrag.refresh();   // oppdater grab-markør for nytt fane-antal
+  }
+
+  // ── «Mer»-meny (samler alt som ikkje er kjernefaner) ─────────────────────
+  // Panelet festast til <body> med position:fixed så nav-ens horisontale scroll
+  // (NavDrag) ikkje klipper det.
+  let _moreEl = null;
+  function _moreMenuHTML() {
+    const user = Auth.current();
+    const item = (href, icon, label, extra = '') =>
+      `<a class="nav-more-item" href="${href}" onclick="App.closeMoreMenu()">${Icon(icon)}<span>${label}</span>${extra}</a>`;
+    const btn = (onclick, icon, label) =>
+      `<button class="nav-more-item" onclick="App.closeMoreMenu();${onclick}">${Icon(icon)}<span>${label}</span></button>`;
+    if (user) {
+      const pending   = Auth.getPendingRequestsCount(user.username);
+      const unreadPMs = getUnreadPMTotal(user.username);
+      const tot       = pending + unreadPMs;
+      const inboxBadge = tot > 0 ? `<span class="nav-more-badge">${tot}</span>` : '';
+      return `
+        ${item('#/minside','home','Min side')}
+        ${item('#/inbox','mail','Innboks',inboxBadge)}
+        ${item('#/chat','message','Chat')}
+        ${item('#/friends','users','Friends')}
+        ${item('#/community','users','Community')}
+        ${item('#/discover','music','Discover')}
+        ${item('#/underground','moon','Underground')}
+        ${item('#/shows','calendar','Shows')}
+        ${item('#/world','globe','World')}
+        ${item('#/a1','sparkles','A1')}
+        ${item('#/shop','store','Shop')}
+        ${item('#/studio','image','Studio')}
+        <div class="nav-more-sep"></div>
+        ${btn("if(window.Chat)Chat.toggleFloat()",'message','Flytende chat-vindu')}
+        ${btn("if(window.Notify)Notify.togglePanel()",'bell','Varsler')}
+        ${item('#/edit','edit','Rediger profil')}
+        ${item('#/settings','settings','Innstillinger')}
+        <div class="nav-more-sep"></div>
+        ${btn("App.logout()",'log-out','Logg ut')}
+      `;
+    }
+    return `
+      ${item('#/chat','message','Chat')}
+      ${item('#/underground','moon','Underground')}
+      ${item('#/shows','calendar','Shows')}
+      ${item('#/world','globe','World')}
+      ${item('#/a1','sparkles','A1')}
+      ${item('#/shop','store','Shop')}
+      <div class="nav-more-sep"></div>
+      ${btn("if(window.Chat)Chat.toggleFloat()",'message','Flytende chat-vindu')}
+    `;
+  }
+  function closeMoreMenu() {
+    if (_moreEl) { _moreEl.remove(); _moreEl = null; }
+    document.removeEventListener('click', _moreOutside, true);
+    window.removeEventListener('hashchange', closeMoreMenu);
+    const b = document.getElementById('nav-more-btn');
+    if (b) b.classList.remove('active');
+  }
+  function _moreOutside(e) {
+    if (!_moreEl) return;
+    if (_moreEl.contains(e.target)) return;
+    const b = document.getElementById('nav-more-btn');
+    if (b && b.contains(e.target)) return;
+    closeMoreMenu();
+  }
+  function toggleMoreMenu(btn) {
+    if (_moreEl) { closeMoreMenu(); return; }
+    const panel = document.createElement('div');
+    panel.className = 'nav-more-panel';
+    panel.id = 'nav-more-panel';
+    panel.innerHTML = _moreMenuHTML();
+    document.body.appendChild(panel);
+    _moreEl = panel;
+    const r  = btn.getBoundingClientRect();
+    const pw = panel.offsetWidth || 240;
+    let left = r.right - pw;
+    if (left < 8) left = 8;
+    if (left + pw > window.innerWidth - 8) left = window.innerWidth - 8 - pw;
+    panel.style.top  = (r.bottom + 6) + 'px';
+    panel.style.left = left + 'px';
+    btn.classList.add('active');
+    setTimeout(() => document.addEventListener('click', _moreOutside, true), 0);
+    window.addEventListener('hashchange', closeMoreMenu);
   }
 
   function logout() {
@@ -331,6 +397,96 @@ const App = (() => {
   }
 
   // ── Pages ─────────────────────────────────────────────────────────────
+  // ── Forside-feed: hjelparar ───────────────────────────────────────────────
+  function _esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  function dismissOnboard() {
+    localStorage.setItem('sc_onboard_dismissed', '1');
+    const el = document.getElementById('sc-onboard');
+    if (el) el.remove();
+  }
+
+  function composerPost() {
+    const ta = document.getElementById('sc-home-post');
+    const text = ta && ta.value.trim();
+    if (!text) return;
+    if (!Auth.current()) { Router.go('/login'); return; }
+    if (window.Community && Community.post) {
+      // Community.post() leser #sc-post-input — speil verdien inn i et midlertidig felt.
+      let proxy = document.getElementById('sc-post-input');
+      let temp = false;
+      if (!proxy) { proxy = document.createElement('textarea'); proxy.id = 'sc-post-input'; proxy.style.display = 'none'; document.body.appendChild(proxy); temp = true; }
+      proxy.value = text;
+      Community.post();
+      if (temp) proxy.remove();
+      ta.value = '';
+      setTimeout(refreshHomeFeed, 300);
+    }
+  }
+
+  function _feedTrackHtml(t) {
+    const art = t.coverUrl
+      ? `background-image:url(${t.coverUrl});background-size:cover;background-position:center`
+      : 'background:linear-gradient(135deg,#7c3aed,#2563eb)';
+    return `
+      <div class="feed-card feed-track">
+        <div class="feed-track-art" style="${art}">
+          <button class="feed-track-play" onclick="Discover.playTrack('${t.id}')" title="Spill av">${Icon('play')}</button>
+        </div>
+        <div class="feed-track-body">
+          <div class="feed-card-kind">${Icon('music')} ${t.isMix ? 'Ny miks' : 'Nytt spor'}</div>
+          <div class="feed-track-title">${_esc(t.title)}</div>
+          <a class="feed-track-artist" href="#/u/${_esc(t.username)}">${_esc(t.artist || t.username)}</a>
+        </div>
+        <button class="feed-track-go" onclick="Discover.playTrack('${t.id}')">${Icon('play')} Spill</button>
+      </div>`;
+  }
+
+  function _feedMemberHtml(u) {
+    const t = u.theme || {};
+    const bg = t.bgType === 'gradient' ? (t.bgGradient || 'linear-gradient(135deg,#7c3aed,#2563eb)')
+      : `linear-gradient(135deg,${t.primaryColor || '#7c3aed'},${t.secondaryColor || '#2563eb'})`;
+    return `
+      <div class="feed-card feed-member">
+        <a class="feed-member-av" href="#/u/${_esc(u.username)}" style="background:${bg}">${_esc((u.displayName || '?').charAt(0).toUpperCase())}</a>
+        <div class="feed-member-body">
+          <div class="feed-card-kind">${Icon('user')} Ny på SoundCore</div>
+          <a class="feed-member-name" href="#/u/${_esc(u.username)}">${_esc(u.displayName)}</a>
+          <div class="feed-member-sub">@${_esc(u.username)}</div>
+        </div>
+        <a class="feed-member-go" href="#/u/${_esc(u.username)}">Se profil</a>
+      </div>`;
+  }
+
+  // Bygger den samla feeden: innlegg + nye spor/mikser + nye medlemmer, nyeste først.
+  let _feedBusy = false;
+  async function refreshHomeFeed() {
+    if (!document.getElementById('sc-home-feed') || _feedBusy) return;
+    _feedBusy = true;
+    try {
+      const items = [];
+      if (window.Community && Community.visiblePosts) {
+        try { for (const p of Community.visiblePosts()) items.push({ ts: p.ts || 0, html: Community.postCardHtml(p) }); } catch (e) {}
+      }
+      let tracks = [];
+      try { if (window.Discover && Discover.loadAllTracks) tracks = await Discover.loadAllTracks(); } catch (e) {}
+      for (const t of tracks) items.push({ ts: t.uploadedAt || 0, html: _feedTrackHtml(t) });
+      const THIRTY = 30 * 864e5;   // nye medlemmer siste 30 dagar (eldre finst i bruker-grid lenger ned)
+      try {
+        for (const u of Auth.getAllPublicUsers()) {
+          if (Date.now() - (u.createdAt || 0) < THIRTY) items.push({ ts: u.createdAt || 0, html: _feedMemberHtml(u) });
+        }
+      } catch (e) {}
+      items.sort((a, b) => b.ts - a.ts);
+      const top = items.slice(0, 40);
+      const el = document.getElementById('sc-home-feed');
+      if (el) el.innerHTML = top.length ? top.map(i => i.html).join('')
+        : `<div class="sc-feed-empty">Ingen aktivitet ennå. Bli den første til å <a href="#/discover">dele musikk</a> eller skrive et innlegg ovenfor!</div>`;
+    } finally { _feedBusy = false; }
+  }
+
   async function renderHome() {
     const user  = Auth.current();
     const users = Auth.getAllPublicUsers()
@@ -377,10 +533,7 @@ const App = (() => {
           <div class="stellar-hero-actions">
             <a href="#/radio" class="btn btn-primary">${Icon('radio')} Radio</a>
             <a href="#/u/${user.username}" class="btn btn-ghost">${Icon('user')} Min profil</a>
-            <a href="#/edit" class="btn btn-ghost">${Icon('edit')} Rediger</a>
-            <a href="#/chat" class="btn btn-ghost">${Icon('message')} Chat</a>
-            <a href="#/login" class="btn btn-ghost" title="Logg inn / bytt konto">${Icon('log-in')} Logg inn</a>
-            <button class="btn btn-ghost" onclick="App.logout()">${Icon('log-out')} Logg ut</button>
+            <a href="#/discover" class="btn btn-ghost">${Icon('music')} Discover</a>
           </div>
         </div>
       </div>`;
@@ -388,87 +541,82 @@ const App = (() => {
     const radioUsers    = users.filter(u => u.favoriteRadio?.url);
     const liveEventUsers = users.filter(u => u.liveEvent);
 
-    const liveEventsSection = liveEventUsers.length ? `
-      <div class="section np-section">
-        <div class="section-header">
-          <div class="section-title" style="display:flex;align-items:center;gap:0.5rem"><span class="event-live-dot" style="width:8px;height:8px"></span> Live Events <span>${liveEventUsers.length} live nå</span></div>
-          <div class="section-sub">Klikk ${Icon('play')} for å lytte direkte</div>
+    // ── Onboarding — kort, avvisbar velkomst for nye brukere ────────────────
+    const onboardDismissed = localStorage.getItem('sc_onboard_dismissed') === '1';
+    const onboardHtml = onboardDismissed ? '' : `
+      <div class="sc-onboard" id="sc-onboard">
+        <button class="sc-onboard-close" onclick="App.dismissOnboard()" title="Skjul" aria-label="Skjul velkomst">${Icon('x')}</button>
+        <div class="sc-onboard-title">${Icon('sparkles')} Velkommen til SoundCore</div>
+        <p class="sc-onboard-lead">Et sosialt sted for musikk — som Facebook møter SoundCloud, oppå live web-radio. Slik kommer du i gang:</p>
+        <div class="sc-onboard-steps">
+          <a class="sc-onboard-step" href="#/radio"><span class="sc-onboard-ic">${Icon('radio')}</span><span class="sc-onboard-tx"><strong>Hør på radio</strong>Live psy- & ambient-kanaler — trykk og lytt.</span></a>
+          <a class="sc-onboard-step" href="${user ? '#/discover' : '#/register'}"><span class="sc-onboard-ic">${Icon('user')}</span><span class="sc-onboard-tx"><strong>${user ? 'Del musikken din' : 'Lag profil & del musikk'}</strong>${user ? 'Last opp spor og mikser med cover.' : 'Gratis profil — last opp spor og mikser.'}</span></a>
+          <a class="sc-onboard-step" href="#/discover"><span class="sc-onboard-ic">${Icon('users')}</span><span class="sc-onboard-tx"><strong>Følg folk</strong>Finn artister og venner i Discover.</span></a>
+          <a class="sc-onboard-step" href="#/community"><span class="sc-onboard-ic">${Icon('message')}</span><span class="sc-onboard-tx"><strong>Skriv et innlegg</strong>Del tanker, musikk og bilder i feeden.</span></a>
         </div>
-        <div class="np-grid">
-          ${liveEventUsers.map(u => {
-            const ev = u.liveEvent;
-            const t  = u.theme || {};
-            const bg = t.bgType === 'gradient' ? (t.bgGradient || 'linear-gradient(135deg,#ef4444,#b91c1c)')
-                     : `linear-gradient(135deg,${t.primaryColor || '#ef4444'},${t.secondaryColor || '#b91c1c'})`;
-            const safeTitle = (ev.title || '').replace(/'/g,"\\'");
-            const safeUrl   = (ev.liveUrl || '').replace(/'/g,"\\'");
-            return `
-              <div class="np-card" style="border-color:rgba(239,68,68,0.3)">
-                <div class="np-card-glow" style="background:#ef4444;opacity:0.12"></div>
-                <a class="np-card-user" href="#/u/${u.username}">
-                  <div class="np-card-avatar" style="background:${bg}" id="live-av-${u.username}">
-                    ${u.displayName.charAt(0).toUpperCase()}
-                  </div>
-                  <div class="np-card-meta">
-                    <div class="np-card-name">${u.displayName}</div>
-                    <div class="np-card-username">@${u.username}</div>
-                  </div>
-                </a>
-                <div class="np-card-station">
-                  <span class="event-live-dot" style="width:7px;height:7px;margin-right:0.25rem"></span>
-                  <div class="np-card-station-name">${ev.title}</div>
-                </div>
-                ${ev.liveUrl ? `<button class="np-play-btn" style="background:#ef4444" onclick="Radio.playUrl('${safeUrl}','${safeTitle}','🔴');event.preventDefault()">${Icon('play')} Lytt live</button>` : `<a class="np-play-btn" href="#/u/${u.username}" style="background:#ef4444;text-decoration:none">Se profil</a>`}
-              </div>`;
-          }).join('')}
-        </div>
-      </div>` : '';
+      </div>`;
 
-    const nowPlayingSection = radioUsers.length ? `
-      <div class="section np-section">
-        <div class="section-header">
-          <div class="section-title">${Icon('radio')} Now Playing <span>${radioUsers.length} kanaler</span></div>
-          <div class="np-mini-player" id="np-mini-player">
-            <button class="np-mini-btn" id="np-mini-btn" onclick="NpMiniPlayer.toggle()" title="Spill av / Pause">${Icon('play')}</button>
-            <div class="np-mini-meta">
-              <div class="np-mini-name" id="np-mini-name">${iconForEmoji(radioUsers[0]?.favoriteRadio?.emoji, 'radio')} ${radioUsers[0]?.favoriteRadio?.name || 'Radio'}</div>
-              <div class="np-mini-live">
-                <span class="np-mini-dot" id="np-mini-dot"></span>
-                <span id="np-mini-status">Live</span>
-              </div>
-            </div>
-            <div class="np-mini-eq" id="np-mini-eq"><span></span><span></span><span></span><span></span></div>
+    // ── Komponer-boks — del et innlegg rett fra forsiden ───────────────────
+    const composerHtml = user ? `
+      <div class="sc-composer">
+        <div class="sc-composer-av">${_esc((user.displayName || '?').charAt(0).toUpperCase())}</div>
+        <div class="sc-composer-main">
+          <textarea id="sc-home-post" class="sc-composer-input" maxlength="1000"
+            placeholder="Hva tenker du på, ${_esc(user.displayName)}? Del noe med fellesskapet…"></textarea>
+          <div class="sc-composer-row">
+            <a class="sc-composer-media" href="#/discover" title="Last opp musikk med cover-bilde">${Icon('music')} Del musikk / bilde</a>
+            <button class="btn btn-primary btn-sm sc-composer-send" onclick="App.composerPost()">${Icon('send')} Del</button>
           </div>
         </div>
-        <div class="np-grid" id="np-grid">
-          ${radioUsers.map(u => {
-            const r = u.favoriteRadio;
-            const t = u.theme || {};
-            const bg = t.bgType === 'gradient' ? (t.bgGradient || 'linear-gradient(135deg,#7c3aed,#2563eb)')
-                     : `linear-gradient(135deg,${t.primaryColor || '#7c3aed'},${t.secondaryColor || '#2563eb'})`;
-            return `
-              <div class="np-card">
-                <div class="np-card-glow" style="background:${bg}"></div>
-                <a class="np-card-user" href="#/u/${u.username}">
-                  <div class="np-card-avatar" style="background:${bg}" id="np-av-${u.username}">
-                    ${u.displayName.charAt(0).toUpperCase()}
-                  </div>
-                  <div class="np-card-meta">
-                    <div class="np-card-name">${u.displayName}</div>
-                    <div class="np-card-username">@${u.username}</div>
-                  </div>
-                </a>
-                <div class="np-card-station">
-                  <span class="np-card-emoji">${psychedelicCover(r.name || r.url, { size: 26 })}</span>
-                  <div class="np-card-station-name">${r.name || 'Radio'}</div>
-                </div>
-                <button class="np-play-btn" onclick="Radio.playUrl('${r.url}','${(r.name||'Radio').replace(/'/g,"\\'")}','${r.emoji||'📻'}');event.preventDefault()">
-                  ${Icon('play')} Lytt
-                </button>
-              </div>`;
-          }).join('')}
-        </div>
+      </div>` : `
+      <div class="sc-composer sc-composer-guest">
+        <span class="sc-composer-guest-ic">${Icon('edit')}</span>
+        <span>Vil du dele musikk og innlegg? <a href="#/register">Lag en gratis profil</a> eller <a href="#/login">logg inn</a>.</span>
+      </div>`;
+
+    // ── «Live & spiller nå» — samlet stripe (live events + now playing) ─────
+    const _liveCardBg = u => {
+      const t = u.theme || {};
+      return t.bgType === 'gradient' ? (t.bgGradient || 'linear-gradient(135deg,#7c3aed,#2563eb)')
+        : `linear-gradient(135deg,${t.primaryColor || '#7c3aed'},${t.secondaryColor || '#2563eb'})`;
+    };
+    const _liveCards = []
+      .concat(liveEventUsers.map(u => {
+        const ev = u.liveEvent;
+        const url = (ev.liveUrl || '').replace(/'/g, "\\'");
+        const ti  = (ev.title || 'Live').replace(/'/g, "\\'");
+        const play = ev.liveUrl
+          ? `<button class="sc-live-play" onclick="Radio.playUrl('${url}','${ti}','🔴')" title="Lytt live">${Icon('play')}</button>`
+          : `<a class="sc-live-play" href="#/u/${u.username}" title="Se profil">${Icon('arrow-right')}</a>`;
+        return `<div class="sc-live-card sc-live-card--live">
+          <a class="sc-live-av" href="#/u/${u.username}" style="background:${_liveCardBg(u)}" id="live-av-${u.username}">${_esc(u.displayName.charAt(0).toUpperCase())}</a>
+          <div class="sc-live-meta"><div class="sc-live-name">${_esc(u.displayName)}</div><div class="sc-live-sub"><span class="event-live-dot"></span> ${_esc(ev.title || 'Live')}</div></div>
+          ${play}</div>`;
+      }))
+      .concat(radioUsers.map(u => {
+        const r = u.favoriteRadio;
+        const url = (r.url || '').replace(/'/g, "\\'");
+        const nm  = (r.name || 'Radio').replace(/'/g, "\\'");
+        return `<div class="sc-live-card">
+          <a class="sc-live-av" href="#/u/${u.username}" style="background:${_liveCardBg(u)}" id="np-av-${u.username}">${_esc(u.displayName.charAt(0).toUpperCase())}</a>
+          <div class="sc-live-meta"><div class="sc-live-name">${_esc(u.displayName)}</div><div class="sc-live-sub">${Icon('radio')} ${_esc(r.name || 'Radio')}</div></div>
+          <button class="sc-live-play" onclick="Radio.playUrl('${url}','${nm}','${r.emoji || '📻'}')" title="Lytt">${Icon('play')}</button></div>`;
+      }));
+    const liveStripHtml = _liveCards.length ? `
+      <div class="sc-livestrip-wrap">
+        <div class="sc-livestrip-head"><span class="event-live-dot"></span> Live & spiller nå <span class="sc-livestrip-count">${_liveCards.length}</span></div>
+        <div class="sc-livestrip">${_liveCards.join('')}</div>
       </div>` : '';
+
+    // ── Samlet feed (fylles asynkront av App.refreshHomeFeed) ──────────────
+    const feedHtml = `
+      <div class="section sc-feed-section">
+        <div class="section-header">
+          <div class="section-title">${Icon('home')} Feed</div>
+          <div class="section-sub">Det nyeste fra fellesskapet — innlegg, spor og nye folk</div>
+        </div>
+        <div id="sc-home-feed" class="sc-feed"><div class="page-loading"><div class="spinner"></div></div></div>
+      </div>`;
 
     // ── Public DJ mixes from all users ─────────────────────────────────
     const allUsers = Auth.getUsers();
@@ -543,7 +691,7 @@ const App = (() => {
       </div>`;
 
     const app = document.getElementById('app');
-    app.innerHTML = pendingBanner + heroHtml + homeRadioHtml + liveEventsSection + nowPlayingSection + publicMixesSection + comingSoonHtml + `
+    app.innerHTML = pendingBanner + onboardHtml + heroHtml + composerHtml + liveStripHtml + feedHtml + homeRadioHtml + publicMixesSection + comingSoonHtml + `
       <div class="section">
         <div class="section-header">
           <div class="section-title">Brukere på Sound Core <span>${users.length} profiler</span></div>
@@ -567,6 +715,10 @@ const App = (() => {
       <button class="footer-restore-btn" id="footer-restore-btn" onclick="FooterWidget.show()" title="Vis footer igjen">${Icon('chevron-up')} Footer</button>`;
 
     if (window.FooterWidget) FooterWidget.init();
+
+    // Samla feed: start Gun-abonnement på innlegg + fyll feeden (asynkront).
+    if (window.Community && Community.subscribe) Community.subscribe();
+    refreshHomeFeed();
 
     // Home radio widget controller
     window.HomeRadio = (() => {
@@ -759,24 +911,12 @@ const App = (() => {
 
     const allUsers = Auth.getUsers();
 
-    // Hent musikk fra IndexedDB
+    // Hent musikk fra IndexedDB (riktig database/store via DB-wrapperen).
+    // Var tidligere ProfilverseDB v1 + 'media'-store — feil navn/versjon/store, så
+    // lista ble alltid tom. Musikk lever i 'music'-store i ProfilVerse v4.
     let tracks = [];
     try {
-      const db = await new Promise((res, rej) => {
-        const r = indexedDB.open('ProfilverseDB', 1);
-        r.onsuccess = () => res(r.result);
-        r.onerror   = () => rej(r.error);
-      });
-      tracks = await new Promise((res, rej) => {
-        const tx   = db.transaction('media', 'readonly');
-        const store = tx.objectStore('media');
-        const items = [];
-        store.openCursor().onsuccess = e => {
-          const cur = e.target.result;
-          if (cur) { if ((user.musicIds || []).includes(cur.key)) items.push(cur.value); cur.continue(); }
-          else res(items);
-        };
-      });
+      tracks = await DB.getAllByIds('music', user.musicIds || []);
     } catch {}
 
     // Mixes
@@ -906,19 +1046,12 @@ const App = (() => {
         </div>
       </div>`;
 
-    // Last inn mix-titler fra IndexedDB
+    // Last inn mix-titler fra IndexedDB (riktig store: 'mixes' via DB-wrapperen).
     for (const id of (user.mixIds || [])) {
       try {
-        const db = await new Promise((res, rej) => {
-          const r = indexedDB.open('ProfilverseDB', 1);
-          r.onsuccess = () => res(r.result); r.onerror = () => rej();
-        });
-        const item = await new Promise((res, rej) => {
-          const tx = db.transaction('media', 'readonly');
-          tx.objectStore('media').get(id).onsuccess = e => res(e.target.result);
-        });
+        const item = await DB.get('mixes', id);
         const el = document.getElementById(`ms-mix-label-${id}`);
-        if (el && item) el.textContent = item.name || id;
+        if (el) el.textContent = (item && item.name) || 'DJ Mix';
       } catch {}
     }
   }
@@ -2516,6 +2649,8 @@ const App = (() => {
     init, toast, openModal, closeModal, showInfo,
     renderShop, shopPlans: SHOP_PLANS, proBenefits: PRO_BENEFITS,
     logout, renderNav, updateNavBadge, markWallSeen,
+    toggleMoreMenu, closeMoreMenu,
+    dismissOnboard, refreshHomeFeed, composerPost,
     doLogin, doRegister, doForgotPassword, doResetPassword,
     resendActivationByEmail,
     saveSettings, testEmailJS,

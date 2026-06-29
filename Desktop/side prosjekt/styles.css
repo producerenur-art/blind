@@ -9102,3 +9102,183 @@ a.community-link .icon { width: 15px; height: 15px; }
 }
 .rsx-play:hover { background: var(--accent); border-color: transparent; color: #fff; }
 .rsx-save:hover { background: var(--surface); color: var(--text); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FORENKLA FORSIDE — Facebook + SoundCloud-aktig feed (2026-06-29)
+   Nav «Mer»-meny · onboarding · komponer · live-stripe · samla feed · cover
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Nav: «Mer ▾»-dropdown ─────────────────────────────────────────────── */
+.nav-more-btn .icon { vertical-align: middle; }
+.nav-more-btn.active { background: var(--surface2); color: var(--text); }
+.nav-more-panel {
+  position: fixed; z-index: 4000; min-width: 232px; max-width: 280px;
+  max-height: 78vh; overflow-y: auto; padding: 0.4rem;
+  background: #14141c; border: 1px solid var(--border); border-radius: var(--radius, 14px);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55); animation: scMoreIn 0.13s ease;
+}
+@keyframes scMoreIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.nav-more-item {
+  display: flex; align-items: center; gap: 0.65rem; width: 100%;
+  padding: 0.6rem 0.7rem; border-radius: 9px; border: none; background: transparent;
+  color: var(--text); font-size: 0.9rem; font-weight: 500; text-align: left;
+  text-decoration: none; cursor: pointer; transition: background 0.12s;
+}
+.nav-more-item:hover { background: var(--surface2); }
+.nav-more-item .icon { width: 18px; height: 18px; flex: 0 0 18px; color: var(--text2); }
+.nav-more-item span { flex: 1 1 auto; }
+.nav-more-sep { height: 1px; margin: 0.35rem 0.4rem; background: var(--border); }
+.nav-more-badge {
+  margin-left: auto; background: #ef4444; color: #fff; font-size: 0.7rem; font-weight: 700;
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* ── Onboarding-kort ───────────────────────────────────────────────────── */
+.sc-onboard {
+  position: relative; margin: 1rem auto 1.25rem; max-width: 1000px;
+  padding: 1.25rem 1.4rem; border-radius: 18px;
+  background: linear-gradient(135deg, rgba(124,58,237,0.16), rgba(37,99,235,0.12));
+  border: 1px solid rgba(124,58,237,0.32);
+}
+.sc-onboard-close {
+  position: absolute; top: 0.7rem; right: 0.7rem; width: 30px; height: 30px;
+  border-radius: 50%; border: 1px solid var(--border); background: rgba(0,0,0,0.25);
+  color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.sc-onboard-close:hover { color: var(--text); background: rgba(0,0,0,0.45); }
+.sc-onboard-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; }
+.sc-onboard-title .icon { color: var(--accent); }
+.sc-onboard-lead { color: var(--text2); margin: 0.35rem 0 1rem; font-size: 0.92rem; max-width: 70ch; }
+.sc-onboard-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.7rem; }
+.sc-onboard-step {
+  display: flex; gap: 0.7rem; align-items: flex-start; padding: 0.8rem 0.9rem;
+  border-radius: 13px; background: var(--surface); border: 1px solid var(--border);
+  text-decoration: none; color: var(--text); transition: transform 0.12s, border-color 0.12s;
+}
+.sc-onboard-step:hover { transform: translateY(-2px); border-color: var(--accent); }
+.sc-onboard-ic {
+  flex: 0 0 38px; width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+}
+.sc-onboard-ic .icon { width: 20px; height: 20px; }
+.sc-onboard-tx { display: flex; flex-direction: column; font-size: 0.82rem; color: var(--text2); line-height: 1.35; }
+.sc-onboard-tx strong { color: var(--text); font-size: 0.95rem; margin-bottom: 0.15rem; }
+
+/* ── Komponer-boks ─────────────────────────────────────────────────────── */
+.sc-composer {
+  display: flex; gap: 0.8rem; align-items: flex-start; max-width: 1000px;
+  margin: 0 auto 1.25rem; padding: 1rem 1.1rem; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--border);
+}
+.sc-composer-av {
+  flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+}
+.sc-composer-main { flex: 1 1 auto; min-width: 0; }
+.sc-composer-input {
+  width: 100%; min-height: 54px; resize: vertical; padding: 0.6rem 0.75rem;
+  border-radius: 12px; border: 1px solid var(--border); background: var(--bg);
+  color: var(--text); font-family: inherit; font-size: 0.95rem;
+}
+.sc-composer-input:focus { outline: none; border-color: var(--accent); }
+.sc-composer-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-top: 0.6rem; flex-wrap: wrap; }
+.sc-composer-media {
+  display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 600;
+  color: var(--text2); text-decoration: none; padding: 0.4rem 0.55rem; border-radius: 9px;
+}
+.sc-composer-media:hover { color: var(--text); background: var(--surface2); }
+.sc-composer-guest { align-items: center; color: var(--text2); font-size: 0.92rem; }
+.sc-composer-guest a { color: var(--accent); font-weight: 600; }
+.sc-composer-guest-ic { color: var(--accent); display: inline-flex; }
+
+/* ── «Live & spiller nå»-stripe ────────────────────────────────────────── */
+.sc-livestrip-wrap { max-width: 1000px; margin: 0 auto 1.4rem; }
+.sc-livestrip-head { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; margin-bottom: 0.6rem; }
+.sc-livestrip-count {
+  font-size: 0.72rem; color: var(--text2); background: var(--surface2);
+  padding: 0.1rem 0.5rem; border-radius: 999px;
+}
+.sc-livestrip { display: flex; gap: 0.7rem; overflow-x: auto; padding-bottom: 0.4rem; scrollbar-width: thin; }
+.sc-live-card {
+  flex: 0 0 230px; display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.6rem 0.7rem; border-radius: 13px; background: var(--surface); border: 1px solid var(--border);
+}
+.sc-live-card--live { border-color: rgba(239,68,68,0.4); }
+.sc-live-av {
+  flex: 0 0 40px; width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; text-decoration: none;
+}
+.sc-live-meta { flex: 1 1 auto; min-width: 0; }
+.sc-live-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-live-sub { font-size: 0.76rem; color: var(--text2); display: flex; align-items: center; gap: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-live-sub .icon { width: 13px; height: 13px; }
+.sc-live-play {
+  flex: 0 0 36px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+  border: none; color: #fff; display: flex; align-items: center; justify-content: center; text-decoration: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+}
+.sc-live-card--live .sc-live-play { background: #ef4444; }
+.sc-live-play .icon { width: 17px; height: 17px; }
+
+/* ── Samla feed ────────────────────────────────────────────────────────── */
+.sc-feed { display: flex; flex-direction: column; gap: 0.9rem; }
+.sc-feed-empty { padding: 2.5rem 1rem; text-align: center; color: var(--text2); }
+.sc-feed-empty a { color: var(--accent); font-weight: 600; }
+.feed-card {
+  display: flex; align-items: center; gap: 0.85rem; padding: 0.8rem 0.9rem;
+  border-radius: 14px; background: var(--surface); border: 1px solid var(--border);
+}
+.feed-card-kind { font-size: 0.72rem; color: var(--text2); font-weight: 600; display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.15rem; }
+.feed-card-kind .icon { width: 13px; height: 13px; }
+.feed-track-art {
+  position: relative; flex: 0 0 60px; width: 60px; height: 60px; border-radius: 11px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.feed-track-play {
+  position: absolute; inset: 0; border: none; background: rgba(0,0,0,0.28); color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s;
+}
+.feed-track-art:hover .feed-track-play { opacity: 1; }
+.feed-track-body { flex: 1 1 auto; min-width: 0; }
+.feed-track-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed-track-artist { font-size: 0.82rem; color: var(--text2); text-decoration: none; }
+.feed-track-artist:hover { color: var(--accent); }
+.feed-track-go, .feed-member-go {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer;
+  padding: 0.45rem 0.75rem; border-radius: 9px; font-size: 0.82rem; font-weight: 600; text-decoration: none;
+  border: 1px solid var(--border); background: var(--surface2); color: var(--text);
+}
+.feed-track-go:hover, .feed-member-go:hover { background: var(--accent); border-color: transparent; color: #fff; }
+.feed-track-go .icon { width: 15px; height: 15px; }
+.feed-member-av {
+  flex: 0 0 48px; width: 48px; height: 48px; border-radius: 50%; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; text-decoration: none;
+}
+.feed-member-body { flex: 1 1 auto; min-width: 0; }
+.feed-member-name { font-weight: 600; text-decoration: none; color: var(--text); }
+.feed-member-name:hover { color: var(--accent); }
+.feed-member-sub { font-size: 0.8rem; color: var(--text2); }
+
+/* ── Cover-bilde i Discover-opplasting ─────────────────────────────────── */
+.disc-up-cover-row { display: flex; align-items: center; gap: 0.85rem; margin: 0.4rem 0 0.2rem; }
+.disc-up-cover-drop {
+  flex: 0 0 64px; width: 64px; height: 64px; border-radius: 12px; cursor: pointer; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface2); border: 1px dashed var(--border); transition: border-color 0.15s;
+}
+.disc-up-cover-drop:hover { border-color: var(--accent); }
+.disc-up-cover-preview { width: 100%; height: 100%; object-fit: cover; }
+.disc-up-cover-placeholder { color: var(--text2); display: flex; }
+.disc-up-cover-placeholder .icon { width: 26px; height: 26px; }
+.disc-up-cover-info { flex: 1 1 auto; min-width: 0; }
+.disc-up-cover-label { font-weight: 600; font-size: 0.92rem; }
+.disc-up-cover-opt { color: var(--text3, var(--text2)); font-weight: 400; font-size: 0.8rem; }
+.disc-up-cover-sub { font-size: 0.78rem; color: var(--text2); margin-top: 0.15rem; }
+
+@media (max-width: 640px) {
+  .sc-composer { flex-wrap: wrap; }
+  .sc-live-card { flex-basis: 200px; }
+}

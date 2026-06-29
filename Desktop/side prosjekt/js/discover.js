@@ -497,8 +497,8 @@ const Discover = (() => {
         try {
           const rec = await DB.get('music', mid);
           if (!rec) continue;
-          let coverUrl = null;
-          if (rec.coverId) {
+          let coverUrl = rec.coverUrl || null;
+          if (!coverUrl && rec.coverId) {
             coverUrl = await DB.getBlobUrl('media', rec.coverId).catch(() => null);
           }
           results.push({
@@ -581,6 +581,20 @@ const Discover = (() => {
           </div>
           <input type="file" id="disc-up-file" accept="audio/*" style="display:none"
             onchange="Discover.onUploadFileChange(this)">
+
+          <div class="disc-up-cover-row">
+            <div class="disc-up-cover-drop" id="disc-up-cover-drop"
+                 onclick="document.getElementById('disc-up-cover').click()" title="Velg cover-bilde">
+              <img id="disc-up-cover-preview" class="disc-up-cover-preview" alt="" style="display:none">
+              <span class="disc-up-cover-placeholder" id="disc-up-cover-placeholder">${Icon('image')}</span>
+            </div>
+            <div class="disc-up-cover-info">
+              <div class="disc-up-cover-label">Cover-bilde <span class="disc-up-cover-opt">(valgfritt)</span></div>
+              <div class="disc-up-cover-sub">Klikk for å velge et bilde som vises på sporet (JPG · PNG · WEBP)</div>
+            </div>
+          </div>
+          <input type="file" id="disc-up-cover" accept="image/*" style="display:none"
+            onchange="Discover.onCoverFileChange(this)">
 
           <div class="disc-upload-fields">
             <div class="form-group">
@@ -3655,6 +3669,17 @@ const Discover = (() => {
     }
   }
 
+  // Cover-bilde — vis forhåndsvisning straks brukaren vel ein fil.
+  function onCoverFileChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const img = document.getElementById('disc-up-cover-preview');
+    const ph  = document.getElementById('disc-up-cover-placeholder');
+    const url = URL.createObjectURL(file);
+    if (img) { img.src = url; img.style.display = 'block'; }
+    if (ph)  ph.style.display = 'none';
+  }
+
   function getAudioDuration(file) {
     return new Promise(resolve => {
       const url = URL.createObjectURL(file);
@@ -3673,6 +3698,8 @@ const Discover = (() => {
     const file = fileInput?.files[0];
     if (!file) { App.toast('Velg en lydfil først', 'error'); return; }
 
+    const coverFile = document.getElementById('disc-up-cover')?.files[0] || null;
+
     const title    = document.getElementById('disc-up-title')?.value.trim()
                       || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
     const artist   = document.getElementById('disc-up-artist')?.value.trim() || user.displayName;
@@ -3688,11 +3715,27 @@ const Discover = (() => {
     try {
       const duration = await getAudioDuration(file);
       const id = 'music_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+
+      // Cover-bilde (valgfritt): del til Supabase når konfigurert, elles lokalt.
+      let coverUrl = null, coverId = null;
+      if (coverFile) {
+        if ((typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured()) {
+          try { const cr = await SC_Storage.upload(coverFile, { prefix: 'covers' }); coverUrl = cr.url; }
+          catch (e) { if (e && e.message !== 'not-configured') console.warn('Cover-skylagring feilet:', e.message); }
+        }
+        if (!coverUrl) {
+          coverId = 'cover_' + id;
+          try { await DB.storeFile('media', coverId, coverFile); }
+          catch (e) { console.warn('Cover lokal lagring feilet:', e); coverId = null; }
+        }
+      }
+
       const meta = {
         name: title, title, artist, genre,
         description: desc, mainCategory: category,
         duration, uploadedAt: Date.now(), isMix,
         visibility: 'public', audioUrl: null, storagePath: null,
+        coverUrl, coverId,
       };
 
       // Del store filer til Supabase når konfigurert, så alle kan høyre dei. Elles lokalt.
@@ -3752,7 +3795,8 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    playTrack, wishlist, uploadDiscTrack, onUploadFileChange,
+    playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
+    loadAllTracks,
     onCategoryChange, setDiscGenreRadio, clearGenreRadio,
     downloadTrack, closeDownloadModal, confirmDownloadPayment,
     openDroneZone, closeDroneZone,
