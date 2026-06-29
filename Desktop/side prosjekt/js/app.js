@@ -667,6 +667,7 @@ const App = (() => {
           <div class="cs-card cs-card-premium">
             <div class="cs-icon">${Icon('clock')}</div>
             <div class="cs-label">Live Mix Tid</div>
+            <div class="cs-desc">Book ditt eget direktesendte mikse-slot: et reservert tidsrom der du mikser live for lytterne på Sound Core. Opptaket lagres automatisk på profilen din etterpå, så settet ditt lever videre. Du betaler kun for timene du booker — ingen abonnement, ingen binding.</div>
             <div class="cs-desc cs-price">
               <div>1 time &nbsp;<strong>150 NOK</strong></div>
               <div>2 timer &nbsp;<strong>300 NOK</strong></div>
