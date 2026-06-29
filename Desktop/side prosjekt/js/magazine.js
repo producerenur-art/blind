@@ -277,6 +277,7 @@ const Magazine = (() => {
   const byId = (id) => MAGAZINE.find(a => a.id === id);
 
   let _genre = 'alle';
+  let _liveSeq = 0;   // ignorerer utdaterte live-svar når brukeren bytter sjanger
 
   // ── Visning: listevisning ────────────────────────────────────────────
   function _chipsHTML() {
@@ -331,6 +332,7 @@ const Magazine = (() => {
             elektroniske scenen verden over — psybient, psytrance, house, trance, dub, goa og downtempo.</p>
         </div>
         <div class="mag-chips">${_chipsHTML()}</div>
+        <div id="mag-live"></div>
         <div id="mag-sections">${_sectionsHTML()}</div>
       </div>`;
   }
@@ -372,6 +374,52 @@ const Magazine = (() => {
       </div>`;
   }
 
+  // ── Live AI-saker (Fase 2): hentes fra /api/magazine, flettes inn øverst ──
+  function _liveCard(a) {
+    return `
+      <a class="mag-card mag-card--live" href="${esc(a.kilde.url)}" target="_blank" rel="noopener">
+        <div class="mag-card-art" style="background:linear-gradient(135deg,#0a2540,#11324f,#0d3a5e)">
+          <span class="mag-card-emoji">🛰️</span>
+          <span class="mag-card-cat">Fersk fra nettet</span>
+        </div>
+        <div class="mag-card-body">
+          <div class="mag-card-title notranslate">${esc(a.tittel)}</div>
+          <div class="mag-card-ingress">${esc(a.ingress)}</div>
+          <div class="mag-card-meta">
+            <span class="notranslate">${esc(a.kilde.navn || 'Kilde')}</span>
+            <span class="mag-card-cta">Åpne ↗</span>
+          </div>
+        </div>
+      </a>`;
+  }
+
+  async function _loadLive(genre) {
+    const box = document.getElementById('mag-live');
+    if (!box) return;
+    const seq = ++_liveSeq;
+    box.style.display = '';
+    box.innerHTML = `
+      <div class="mag-section">
+        <div class="mag-section-head">${Icon('sparkles')} <span>Fersk fra nettet</span></div>
+        <div style="color:var(--text3);padding:0.5rem 0 1rem;font-size:0.85rem">Henter ferske saker fra nettet …</div>
+      </div>`;
+    try {
+      const r = await fetch('/api/magazine?genre=' + encodeURIComponent(genre || 'alle'));
+      const data = await r.json().catch(() => ({}));
+      if (seq !== _liveSeq) return; // bruker byttet sjanger imens
+      const arts = (data && data.articles) || [];
+      if (!arts.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+      box.innerHTML = `
+        <div class="mag-section">
+          <div class="mag-section-head">${Icon('sparkles')} <span>Fersk fra nettet</span></div>
+          <div class="mag-grid">${arts.map(_liveCard).join('')}</div>
+        </div>`;
+    } catch (e) {
+      if (seq !== _liveSeq) return;
+      box.style.display = 'none'; box.innerHTML = '';
+    }
+  }
+
   // ── Interaksjon ──────────────────────────────────────────────────────
   function filterGenre(key) {
     _genre = key;
@@ -379,6 +427,7 @@ const Magazine = (() => {
     if (body) body.innerHTML = _sectionsHTML();
     document.querySelectorAll('.mag-chip').forEach(el =>
       el.classList.toggle('active', el.dataset.g === key));
+    _loadLive(key);
   }
 
   // Valgfritt AI-sammendrag via eksisterende /api/chat (gratis Haiku).
@@ -421,6 +470,7 @@ const Magazine = (() => {
       window.scrollTo(0, 0);
     } else {
       app.innerHTML = _listHTML();
+      _loadLive(_genre);
     }
   }
 
