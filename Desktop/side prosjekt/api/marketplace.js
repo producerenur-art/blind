@@ -236,7 +236,7 @@ async function storeProducts(req, res, db) {
   const username = req.query.username;
   if (!username) return res.status(400).json({ error: 'Mangler brukernavn' });
   const { data, error } = await db.from('products')
-    .select('id,title,artist,label,producer,mixing,mastering,buy_links,price_ore,is_free,duration_sec,created_at')
+    .select('id,title,artist,label,producer,mixing,mastering,buy_links,price_ore,is_free,duration_sec,cover_path,created_at')
     .eq('seller_username', username).eq('is_published', true)
     .order('created_at', { ascending: false });
   if (error) throw error;

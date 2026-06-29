@@ -825,8 +825,12 @@ const Profile = (() => {
     const btn   = p.is_free
       ? `<button class="btn btn-primary btn-sm" onclick="Marketplace.buySong('${esc(p.id)}')">⬇ Gratis nedlasting</button>`
       : `<button class="btn btn-gold btn-sm" onclick="Marketplace.buySong('${esc(p.id)}')">🛒 Kjøp · ${price}</button>`;
+    const cover = p.cover_path
+      ? `<img src="${esc(p.cover_path)}" alt="" loading="lazy" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0">`
+      : '';
     return `
       <div class="store-card">
+        ${cover}
         <div class="store-card-meta">
           <div class="store-card-title">${esc(p.title)}</div>
           <div class="store-card-sub">${esc(p.artist || '')}${dur ? ' · ' + dur : ''}</div>
@@ -1430,6 +1434,15 @@ const Profile = (() => {
           </div>`).join('')}
 
         <div class="mix-edit-section-title">Selg denne sangen</div>
+        <div class="form-group">
+          <label class="form-label">Omslagsbilde <span style="color:var(--text3);font-weight:400;font-size:0.8rem">(valgfritt)</span></label>
+          <div class="upload-zone" style="padding:1rem" onclick="document.getElementById('sc-cover-input').click()">
+            <div class="upload-icon">${Icon('image')}</div>
+            <div style="font-size:0.82rem">Klikk for å laste opp omslag</div>
+          </div>
+          <input type="file" id="sc-cover-input" accept="image/*" style="display:none" onchange="Profile.uploadSaleCover('${esc(trackId)}', this.files)">
+          <div id="sc-cover-preview" style="margin-top:0.5rem">${rec.coverUrl ? `<img src="${esc(rec.coverUrl)}" alt="" style="max-width:120px;max-height:120px;border-radius:8px;display:block">` : ''}</div>
+        </div>
         <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;margin-bottom:0.5rem">
           <input type="checkbox" id="sc-sale-free" ${rec.saleFree ? 'checked' : ''}
             onchange="document.getElementById('sc-price-wrap').style.display=this.checked?'none':'block'">
@@ -2290,6 +2303,56 @@ const Profile = (() => {
       if (el) el.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px;pointer-events:none">`;
     }
     App.toast('Cover oppdatert! 🖼️', 'success');
+  }
+
+  // Omslagsbilde for en sang lagt ut i butikken. Lagres som delbar URL (skylagring
+  // når konfigurert, ellers nedskalert data-URL) slik at KJØPERE også ser omslaget.
+  async function uploadSaleCover(trackId, files) {
+    const file = files && files[0];
+    if (!file || !/^image\//.test(file.type)) { App.toast('Velg en bildefil', 'error'); return; }
+    const rec = await DB.get('music', trackId);
+    if (!rec) { App.toast('Fant ikke sporet', 'error'); return; }
+    const preview = document.getElementById('sc-cover-preview');
+    if (preview) preview.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> Behandler omslag…`;
+    try {
+      const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
+      let url;
+      if (useCloud) {
+        try { url = (await SC_Storage.upload(file, { prefix: 'cover' })).url; }
+        catch (e) { url = await _imageToDataUrl(file); }
+      } else {
+        url = await _imageToDataUrl(file);
+      }
+      rec.coverUrl = url;
+      await DB.put('music', rec);
+      if (preview) preview.innerHTML = `<img src="${url}" alt="" style="max-width:120px;max-height:120px;border-radius:8px;display:block">`;
+      App.toast('Omslag lagret! 🖼️', 'success');
+    } catch (e) {
+      if (preview) preview.innerHTML = '';
+      App.toast('Omslag feilet: ' + e.message, 'error');
+    }
+  }
+
+  // Les en bildefil, skaler ned og returner en kompakt JPEG data-URL.
+  function _imageToDataUrl(file, maxDim = 800, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const s = maxDim / Math.max(width, height);
+          width = Math.round(width * s); height = Math.round(height * s);
+        }
+        const c = document.createElement('canvas');
+        c.width = width; c.height = height;
+        c.getContext('2d').drawImage(img, 0, 0, width, height);
+        try { resolve(c.toDataURL('image/jpeg', quality)); } catch (e) { reject(e); }
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Kunne ikke lese bildet')); };
+      img.src = url;
+    });
   }
 
   async function uploadBgImage(input) {
@@ -3689,7 +3752,7 @@ const Profile = (() => {
     playTrack,
     toggleProfileVisibility, setProfileVisibility,
     saveProfile, livePreview, collectTheme,
-    uploadMedia, uploadMusic, uploadMusicCover, uploadAvatar, uploadBanner,
+    uploadMedia, uploadMusic, uploadMusicCover, uploadSaleCover, uploadAvatar, uploadBanner,
     addMediaLink, toggleMediaVisibility,
     shareTrackToCommunity, shareMediaToCommunity,
     toggleTrackVisibility,

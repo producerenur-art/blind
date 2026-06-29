@@ -96,7 +96,7 @@ const Marketplace = (() => {
           title: rec.name || rec.title || 'Untitled', artist: rec.artist || '',
           credits: rec.credits || {}, buyLinks: rec.buyLinks || {},
           price_ore: Math.round((parseFloat(priceNok) || 0) * 100), is_free: !!isFree,
-          audio_path: upd.path, duration_sec: rec.duration || null,
+          audio_path: upd.path, cover_path: rec.coverUrl || null, duration_sec: rec.duration || null,
         }),
       });
       const d = await r.json();
