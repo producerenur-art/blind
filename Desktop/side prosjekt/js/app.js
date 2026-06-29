@@ -200,29 +200,29 @@ const App = (() => {
   function _searchPages() {
     const me = (Auth.current && Auth.current()) || null;
     const pages = [
-      { label: 'Hjem',        sub: 'Forsida',                    icon: 'home',     route: '/',            kw: 'home forside front start hovudside' },
-      { label: 'Radio',       sub: 'Live psy/ambient-stasjonar', icon: 'radio',    route: '/radio',       kw: 'stream stasjon station live lyd musikk lytt' },
+      { label: 'Hjem',        sub: 'Forsiden',                   icon: 'home',     route: '/',            kw: 'home forside front start hovedside' },
+      { label: 'Radio',       sub: 'Live psy/ambient-stasjoner', icon: 'radio',    route: '/radio',       kw: 'stream stasjon stasjoner station live lyd musikk lytt' },
       { label: 'Chat',        sub: 'Fellesskap-chat',            icon: 'message',  route: '/chat',        kw: 'prat melding samtale community' },
-      { label: 'Discover',    sub: 'Finn folk & musikk',         icon: 'music',    route: '/discover',    kw: 'oppdage utforsk finn folk artistar discover' },
+      { label: 'Discover',    sub: 'Finn folk & musikk',         icon: 'music',    route: '/discover',    kw: 'oppdage utforsk finn folk artister discover' },
       { label: 'Underground', sub: 'Underground-scene',          icon: 'moon',     route: '/underground', kw: 'undergrunn scene' },
-      { label: 'Shows',       sub: 'Konsertar & arrangement',    icon: 'calendar', route: '/shows',       kw: 'konsert event arrangement festival gig show' },
+      { label: 'Shows',       sub: 'Konserter & arrangement',    icon: 'calendar', route: '/shows',       kw: 'konsert konserter event arrangement festival gig show' },
       { label: 'World',       sub: 'All Over The World',         icon: 'globe',    route: '/world',       kw: 'verden global psytrance psybient world' },
-      { label: 'A1',          sub: 'AI + søk heile nettet',      icon: 'sparkles', route: '/a1',          kw: 'ai assistent søk web a1 chat' },
+      { label: 'A1',          sub: 'AI + søk hele nettet',       icon: 'sparkles', route: '/a1',          kw: 'ai assistent søk web a1 chat' },
       { label: 'Shop',        sub: 'Abonnement & kreditt',       icon: 'store',    route: '/shop',        kw: 'butikk kjøp pro abonnement credits kreditt shop' },
     ];
-    // Berre tilby desse når modulen faktisk er lasta (elles blir ruta blank).
+    // Bare tilby disse når modulen faktisk er lastet (ellers blir ruta blank).
     if (typeof window.Friends !== 'undefined')
-      pages.push({ label: 'Friends',   sub: 'Online & venene dine', icon: 'users', route: '/friends',   kw: 'venner vener online friends' });
+      pages.push({ label: 'Friends',   sub: 'Online & vennene dine', icon: 'users', route: '/friends',   kw: 'venner online friends' });
     if (typeof window.Community !== 'undefined')
-      pages.push({ label: 'Community', sub: 'Community-vegg',        icon: 'users', route: '/community', kw: 'fellesskap vegg wall community' });
+      pages.push({ label: 'Community', sub: 'Community-vegg',         icon: 'users', route: '/community', kw: 'fellesskap vegg wall community' });
     if (me) {
       pages.push(
-        { label: 'Min side',       sub: 'Oversikta di',         icon: 'home',     route: '/minside',          kw: 'minside dashboard oversikt' },
+        { label: 'Min side',       sub: 'Oversikten din',       icon: 'home',     route: '/minside',          kw: 'minside dashboard oversikt' },
         { label: 'Min profil',     sub: '@' + me.username,      icon: 'user',     route: '/u/' + me.username, kw: 'profil meg min profile' },
         { label: 'Rediger profil', sub: 'Endre profilen din',   icon: 'edit',     route: '/edit',             kw: 'rediger endre profil edit' },
         { label: 'Studio',         sub: 'Blend Studio',         icon: 'image',    route: '/studio',           kw: 'studio blend bilde' },
-        { label: 'Innboks',        sub: 'Meldingane dine',      icon: 'mail',     route: '/inbox',            kw: 'innboks inbox meldingar' },
-        { label: 'Innstillingar',  sub: 'Konto & preferansar',  icon: 'settings', route: '/settings',         kw: 'innstillingar settings konto preferansar' },
+        { label: 'Innboks',        sub: 'Meldingene dine',      icon: 'mail',     route: '/inbox',            kw: 'innboks inbox meldinger' },
+        { label: 'Innstillinger',  sub: 'Konto & preferanser',  icon: 'settings', route: '/settings',         kw: 'innstillinger settings konto preferanser' },
       );
     } else {
       pages.push(
@@ -248,23 +248,23 @@ const App = (() => {
       icon: p.icon, title: p.label, sub: p.sub, go: () => Router.go(p.route)
     })) });
 
-    // Brukarar
+    // Brukere
     let users = [];
     try { users = Auth.getAllPublicUsers() || []; } catch (e) {}
     users = users.filter(u =>
       _searchNorm(u.username).includes(q) || _searchNorm(u.displayName).includes(q)
     ).slice(0, 6);
-    if (users.length) groups.push({ title: 'Brukarar', items: users.map(u => ({
+    if (users.length) groups.push({ title: 'Brukere', items: users.map(u => ({
       avatar: (u.displayName || u.username || '?').charAt(0).toUpperCase(),
       title: u.displayName || u.username, sub: '@' + u.username, go: () => Router.go('/u/' + u.username)
     })) });
 
-    // Radiostasjonar — gå til Radio og spel av valt stasjon
+    // Radiostasjoner — gå til Radio og spill av valgt stasjon
     if (typeof Radio !== 'undefined' && Array.isArray(Radio.STATIONS)) {
       const st = Radio.STATIONS.filter(s =>
         _searchNorm(s.name).includes(q) || _searchNorm(s.cat).includes(q)
       ).slice(0, 5);
-      if (st.length) groups.push({ title: 'Radiostasjonar', items: st.map(s => ({
+      if (st.length) groups.push({ title: 'Radiostasjoner', items: st.map(s => ({
         icon: 'radio', title: s.name, sub: s.cat || 'Radio',
         go: () => { Router.go('/radio'); setTimeout(() => { try { Radio.playStation(s.id); } catch (e) {} }, 80); }
       })) });
