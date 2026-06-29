@@ -1099,8 +1099,26 @@ const App = (() => {
       renderNav();
       toast(`Konto opprettet! Velkommen, ${displayName || username}! ${Icon('party')}`, 'success');
       Router.go(`/u/${username}`);
+    } else if (emailRes.error) {
+      // E-posten gikk IKKE ut (f.eks. Resend avviste mottakeren / domenet er ikke verifisert).
+      // Vær ærlig — ikke be brukeren «sjekke e-posten» når ingenting ble sendt.
+      document.getElementById('app').innerHTML = `
+        <div class="auth-page">
+          <div class="auth-card" style="text-align:center">
+            <div style="font-size:4rem;margin-bottom:1rem">${Icon('alert')}</div>
+            <h2 style="font-weight:800;margin-bottom:0.5rem">Kontoen ble opprettet</h2>
+            <p style="color:var(--text2);margin-bottom:1rem">
+              Men vi klarte dessverre ikke å sende aktiveringslenken til <strong>${email}</strong> akkurat nå.
+            </p>
+            <div class="badge badge-red" style="margin-bottom:1.25rem">${emailRes.error}</div>
+            <div style="margin-bottom:0.75rem">
+              <button class="btn btn-primary" id="resend-confirm-btn" onclick="App.resendActivationByEmail('${username}')">${Icon('mail')} Prøv å sende aktiveringslenken igjen</button>
+            </div>
+            <a href="#/login" class="btn btn-ghost btn-sm" style="display:inline-flex">Gå til innlogging</a>
+          </div>
+        </div>`;
     } else {
-      // Show confirmation page
+      // Show confirmation page (e-posten ble sendt OK)
       document.getElementById('app').innerHTML = `
         <div class="auth-page">
           <div class="auth-card" style="text-align:center">
@@ -1110,7 +1128,6 @@ const App = (() => {
               Vi har sendt en aktiveringslenke til <strong>${email}</strong>.<br>
               Klikk på lenken i e-posten for å aktivere kontoen din.
             </p>
-            ${emailRes.error ? `<div class="badge badge-red" style="margin-bottom:1rem">${emailRes.error}</div>` : ''}
             <a href="#/login" class="btn btn-primary" style="margin-bottom:0.75rem;display:inline-flex">Gå til innlogging</a>
             <div style="margin-top:0.75rem">
               <button class="btn btn-ghost btn-sm" id="resend-confirm-btn" onclick="App.resendActivationByEmail('${username}')">${Icon('mail')} Send aktiveringslenke på nytt</button>
