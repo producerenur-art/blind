@@ -75,6 +75,7 @@ const A1 = (() => {
   const MIN_KEY = 'a1_chat_min';
   let chatHistory = [];
   let chatBusy = false;
+  let voiceCtrl = null;   // delt stemme-lag (snakk inn / les opp / ta opp)
 
   function loadPos() { try { return JSON.parse(localStorage.getItem(POS_KEY)) || null; } catch { return null; } }
   function savePos(p) { try { localStorage.setItem(POS_KEY, JSON.stringify(p)); } catch {} }
@@ -122,15 +123,18 @@ const A1 = (() => {
   async function chatSend(text) {
     if (!text || chatBusy) return;
     chatAddMsg('user', text);
+    if (voiceCtrl) voiceCtrl.log('user', text);
     chatBusy = true;
     const typing = chatTyping();
     try {
       const user = (typeof Auth !== 'undefined' && Auth.current && Auth.current()) || null;
       const ctxNote = `bruker er på A1-fana (#/a1)${user ? `, innlogget som @${user.username}` : ', ikke innlogget'}`;
-      const langName = (typeof Assistant !== 'undefined' && Assistant.langName) ? Assistant.langName() : null;
+      const langName = voiceCtrl ? voiceCtrl.langName() : null;   // svar på valt språk
       const reply = await AI.assistantChat(chatHistory, { langName, contextNote: ctxNote });
       if (typing) typing.remove();
-      chatAddMsg('assistant', reply || '…');
+      const answer = reply || '…';
+      chatAddMsg('assistant', answer);
+      if (voiceCtrl) { voiceCtrl.log('assistant', answer); voiceCtrl.speak(answer); }
     } catch (e) {
       if (typing) typing.remove();
       const soon = /not configured|konfigurert|503|credit|balance|billing|kreditt/i.test(String(e && e.message));
@@ -305,6 +309,20 @@ const A1 = (() => {
       applyChatPos(Math.max(12, window.innerWidth - w - 28), Math.max(80, window.innerHeight - h - 120));
     }
     initChatDrag();
+
+    // Stemme-lag: mikrofon (snakk inn, alle språk) + AI les opp + opptak
+    if (typeof Voice !== 'undefined') {
+      voiceCtrl = Voice.create({
+        ns: 'a1',
+        withLang: true,                                            // eigen språkveljar i panelet
+        defaultLang: () => localStorage.getItem('stellar-lang') || 'no',
+        onText: (text) => chatAsk(text),
+      });
+      const chat = chatEl();
+      const f = document.getElementById('a1-chat-form');
+      if (chat && f) chat.insertBefore(voiceCtrl.el, f);
+    }
+
     applyCollapsed(loadCollapsed());
     const form = document.getElementById('a1-chat-form');
     if (form) form.addEventListener('submit', e => { e.preventDefault();

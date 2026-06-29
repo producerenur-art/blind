@@ -11,6 +11,7 @@ const Assistant = (() => {
   let built = false;
   let history = [];
   let busy = false;
+  let voiceCtrl = null;   // delt stemme-lag (snakk inn / les opp / ta opp)
 
   // ── Persistent position / state ──────────────────────────────────────
   function loadState() {
@@ -86,6 +87,18 @@ const Assistant = (() => {
       addMsg('assistant', greeting(), false);
     });
 
+    // ── Stemme-lag: mikrofon (snakk inn) + AI les opp + opptak ──────────
+    if (typeof Voice !== 'undefined') {
+      voiceCtrl = Voice.create({
+        ns: 'core',
+        getLangCode: currentLangCode,            // følgjer Core sin eigen språkveljar
+        onText: (text) => { inputEl.value = text; send(); },
+      });
+      const body = win.querySelector('.ai-asst-body');
+      const form = win.querySelector('#ai-asst-form');
+      if (body && form) body.insertBefore(voiceCtrl.el, form);
+    }
+
     initDrag();
     built = true;
 
@@ -133,6 +146,7 @@ const Assistant = (() => {
     if (!text || busy) return;
     inputEl.value = '';
     addMsg('user', text);
+    if (voiceCtrl) voiceCtrl.log('user', text);
     busy = true;
     const typing = showTyping();
 
@@ -144,7 +158,9 @@ const Assistant = (() => {
         contextNote,
       });
       typing.remove();
-      addMsg('assistant', reply || '…');
+      const answer = reply || '…';
+      addMsg('assistant', answer);
+      if (voiceCtrl) { voiceCtrl.log('assistant', answer); voiceCtrl.speak(answer); }
     } catch (e) {
       typing.remove();
       const code = currentLangCode();
