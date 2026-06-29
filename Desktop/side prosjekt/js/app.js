@@ -756,8 +756,7 @@ const App = (() => {
         const ids = GENRE_IDS[genre] || [];
         const stations = ids.map(id => (Radio.stations || []).find(s => s.id === id)).filter(Boolean);
         const extraHtml = genre === 'psytrance'
-          ? `<iframe class="hr-radio-embed" src="https://www.diceradio.gr/" loading="lazy" allow="autoplay; encrypted-media"></iframe>`
-            + `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/Y7p8r1avQLQ?list=RDY7p8r1avQLQ" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
+          ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/Y7p8r1avQLQ?list=RDY7p8r1avQLQ" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
           : genre === 'downtempo'
           ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/YgiFnQZvGTU?list=RDYgiFnQZvGTU" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
           : genre === 'progressive'
