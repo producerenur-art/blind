@@ -79,7 +79,7 @@ const Voice = (() => {
     el.innerHTML = `
       ${langSelHtml}
       <button type="button" class="voice-btn voice-mic" title="Snakk – trykk og snakk (alle språk)">${ic('mic')}</button>
-      <button type="button" class="voice-btn voice-spk${speakerOn ? ' is-on' : ''}" title="AI les opp svara">${ic(speakerOn ? 'volume' : 'volume-x')}</button>
+      <button type="button" class="voice-btn voice-spk${speakerOn ? ' is-on' : ''}" title="AI leser opp svarene">${ic(speakerOn ? 'volume' : 'volume-x')}</button>
       <button type="button" class="voice-btn voice-rec" title="Ta opp samtale (tekst + lyd)">${ic('circle-dot')}</button>
       <button type="button" class="voice-btn voice-dl voice-dl-txt hidden" title="Last ned tekst-logg">${ic('download')}</button>
       <button type="button" class="voice-btn voice-dl voice-dl-aud hidden" title="Last ned lydopptak">${ic('music')}</button>
@@ -133,7 +133,7 @@ const Voice = (() => {
     function setListening(on) {
       ctrl.listening = on;
       micBtn.classList.toggle('is-listening', on);
-      setStatus(on ? 'Lyttar…' : (ctrl.recording ? 'Tek opp' : ''));
+      setStatus(on ? 'Lytter…' : (ctrl.recording ? 'Tar opp' : ''));
     }
     function startListening() {
       if (!SR || ctrl.listening) return;
@@ -195,7 +195,7 @@ const Voice = (() => {
     function setRecording(on) {
       ctrl.recording = on;
       recBtn.classList.toggle('is-on', on);
-      if (on) { saveLog(); startAudio(); setStatus('Tek opp'); }
+      if (on) { saveLog(); startAudio(); setStatus('Tar opp'); }
       else { stopAudio(); setStatus(''); }
       updateExports();
     }
