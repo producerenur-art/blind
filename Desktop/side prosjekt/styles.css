@@ -4365,6 +4365,24 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
   border-color: var(--pick-color, var(--accent));
   background: rgba(124,58,237,0.06);
 }
+/* Flyttbart kort: grip-håndtak + flyt-tilstander */
+.disc-radio-pick-grip {
+  flex-shrink: 0; width: 22px; height: 28px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; color: var(--text3);
+  cursor: grab; touch-action: none; border-radius: 6px;
+  transition: color var(--trans), background var(--trans);
+}
+.disc-radio-pick-grip:hover { color: var(--text); background: rgba(124,58,237,0.10); }
+.disc-radio-pick-grip:active { cursor: grabbing; }
+.disc-radio-pick-grip .icon { width: 16px; height: 16px; }
+.disc-radio-pick-item.moved { position: relative; z-index: 5; }
+.disc-radio-pick-item.dragging {
+  z-index: 30; cursor: grabbing; opacity: 0.97;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+  border-color: var(--pick-color, var(--accent));
+  transition: none;
+}
 .disc-radio-pick-emoji { font-size: 1.4rem; flex-shrink: 0; width: 2rem; text-align: center; }
 .disc-radio-pick-info { flex: 1; min-width: 0; }
 .disc-radio-pick-name { font-size: 0.85rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

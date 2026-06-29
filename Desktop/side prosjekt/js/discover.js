@@ -649,6 +649,7 @@ const Discover = (() => {
     const savedId    = discGenreRadios[activeGenre];
     const saved      = Radio.stations.find(s => s.id === savedId);
     const genreLabel = GENRES.find(g => g.tag === activeGenre)?.label || 'Alle sjangere';
+    const pickPos    = (window.PicksDrag && PicksDrag.positions()) || {};
 
     return `
       <div class="disc-radio-fav-wrap">
@@ -682,9 +683,15 @@ const Discover = (() => {
         </div>
 
         <div class="disc-radio-pick-list">
-          ${stations.map(s => `
-            <div class="disc-radio-pick-item ${savedId === s.id ? 'active' : ''}"
-                 style="--pick-color:${s.color}">
+          ${stations.map(s => {
+            const pp  = pickPos[s.id];
+            const ptf = pp ? `transform:translate(${pp.x}px,${pp.y}px);` : '';
+            return `
+            <div class="disc-radio-pick-item ${savedId === s.id ? 'active' : ''}${pp ? ' moved' : ''}"
+                 data-pick-id="${s.id}"
+                 style="--pick-color:${s.color};${ptf}">
+              <button class="disc-radio-pick-grip" type="button" title="Dra for å flytte (dobbeltklikk = nullstill)"
+                aria-label="Flytt kortet" onclick="event.stopPropagation()">${Icon('grip')}</button>
               <div class="disc-radio-pick-emoji">${iconForEmoji(s.emoji)}</div>
               <div class="disc-radio-pick-info">
                 <div class="disc-radio-pick-name">${escHtml(s.name)}</div>
@@ -699,7 +706,8 @@ const Discover = (() => {
                   ${savedId === s.id ? '⭐' : '☆'}
                 </button>
               </div>
-            </div>`).join('')}
+            </div>`;
+          }).join('')}
         </div>
       </div>`;
   }
