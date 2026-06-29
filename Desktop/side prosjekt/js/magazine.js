@@ -280,11 +280,17 @@ const Magazine = (() => {
   let _liveSeq = 0;   // ignorerer utdaterte live-svar når brukeren bytter sjanger
 
   // ── Visning: listevisning ────────────────────────────────────────────
+  // Hver sjanger-fane har sin egen delbare URL:
+  //   Alle      → #/magazine
+  //   <sjanger> → #/magazine/sjanger/<key>
+  function genreHref(key) {
+    return (!key || key === 'alle') ? '#/magazine' : '#/magazine/sjanger/' + key;
+  }
   function _chipsHTML() {
     const all = [{ key: 'alle', label: 'Alle' }].concat(GENRES);
     return all.map(g =>
-      `<button class="mag-chip${g.key === _genre ? ' active' : ''}" data-g="${g.key}"
-        onclick="Magazine.filterGenre('${g.key}')">${esc(g.label)}</button>`
+      `<a class="mag-chip${g.key === _genre ? ' active' : ''}" data-g="${g.key}"
+        href="${genreHref(g.key)}">${esc(g.label)}</a>`
     ).join('');
   }
 
@@ -421,13 +427,10 @@ const Magazine = (() => {
   }
 
   // ── Interaksjon ──────────────────────────────────────────────────────
+  // Beholdes for bakoverkompatibilitet / programmatiske kall: navigerer til
+  // sjangerens egen URL, så ruteren gjør selve filtreringen og rendringen.
   function filterGenre(key) {
-    _genre = key;
-    const body = document.getElementById('mag-sections');
-    if (body) body.innerHTML = _sectionsHTML();
-    document.querySelectorAll('.mag-chip').forEach(el =>
-      el.classList.toggle('active', el.dataset.g === key));
-    _loadLive(key);
+    window.location.hash = genreHref(key);
   }
 
   // Valgfritt AI-sammendrag via eksisterende /api/chat (gratis Haiku).
@@ -474,5 +477,16 @@ const Magazine = (() => {
     }
   }
 
-  return { render, filterGenre, askCore };
+  // Listevisning for én sjanger-fane (egen URL: #/magazine/sjanger/<genre>).
+  // Ukjent/utelatt sjanger faller tilbake til «Alle».
+  function renderGenre(genre) {
+    _genre = (genre && GENRES.some(g => g.key === genre)) ? genre : 'alle';
+    const app = document.getElementById('app');
+    if (!app) return;
+    app.innerHTML = _listHTML();
+    window.scrollTo(0, 0);
+    _loadLive(_genre);
+  }
+
+  return { render, renderGenre, filterGenre, genreHref, askCore };
 })();
