@@ -315,49 +315,174 @@ const Radio = (() => {
   let customStreams = JSON.parse(localStorage.getItem('pv_custom_streams') || '[]');
   let searchTimer = null;
   let searchResults = [];
+  let searchSeq = 0;        // guards against a slow earlier search overwriting a newer one
   let aiHistory = [];
   let aiOpen = false;
   let embedAbort = null; // AbortController for the resizable embed-pane drag listeners
 
-  // ── Radio Browser API search ──────────────────────────────────────────
+  // ── Electronic lock ───────────────────────────────────────────────────
+  // The whole site is locked to electronic music, so the radio search is too.
+  // A web result only passes if it carries one of these genre tags (exact tag
+  // token) or its name hints at electronic — everything else is filtered out.
+  const RB    = 'https://de1.api.radio-browser.info/json/stations';
+  const QOPTS = 'limit=40&order=votes&reverse=true&hidebroken=true';
+  const ELECTRONIC_TAGS = new Set([
+    'electronic','electronica','edm','dance','psytrance','goa','trance','progressive',
+    'progressive trance','progressive house','house','deep house','tech house','techno',
+    'minimal','minimal techno','melodic techno','acid','acid house','ambient','psybient',
+    'psychill','chillout','chill out','chill','downtempo','dub','dub techno','dubstep',
+    'drum and bass','drum n bass','dnb','jungle','breakbeat','breaks','idm','drone',
+    'dark ambient','synthwave','synthpop','electro','electro house','trip-hop','trip hop',
+    'lounge','nu disco','disco','club','rave','hardstyle','hardcore','gabber','future bass',
+    'garage','uk garage','big room','organic house','glitch','bass','dancehall electronic',
+  ]);
+  const ELECTRONIC_NAME_HINTS = [
+    'psy','trance','goa','techno','house','electro','ambient','edm','dnb','dub','chill',
+    'downtempo','progressive','rave','synth','electronic','dance','club','beats','deep',
+  ];
+
+  function normStr(str) {
+    return String(str || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+  function isElectronicStation(s) {
+    const tags = (s.tags || '').toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
+    if (tags.some(t => ELECTRONIC_TAGS.has(t))) return true;
+    const name = (s.name || '').toLowerCase();
+    return ELECTRONIC_NAME_HINTS.some(t => name.includes(t));
+  }
+
+  // Curated on-site stations matching the query ("alt som er på siden fra før").
+  function matchLocalStations(query) {
+    const q = normStr(query);
+    if (q.length < 2) return [];
+    return STATIONS.filter(s => normStr(`${s.name} ${s.desc} ${s.cat}`).includes(q));
+  }
+
+  function toLocalResult(s) {
+    return { rk: 'local', id: s.id, name: s.name, url: s.url, emoji: s.emoji, color: s.color, meta: s.cat };
+  }
+  function toWebResult(s) {
+    const meta = [s.country, (s.tags || '').split(',').slice(0, 2).map(t => t.trim()).filter(Boolean).join(', ')]
+      .filter(Boolean).join(' · ') || 'Nettradio';
+    return { rk: 'web', uuid: s.stationuuid, name: s.name, url: s.url_resolved, meta };
+  }
+
+  // Search the whole web of radio (Radio Browser) but LOCKED to electronic.
+  // Queries both name + tag in parallel so "psy" finds psytrance-tagged stations
+  // too, then keeps only electronic ones.
+  async function fetchElectronic(term) {
+    const q = encodeURIComponent(term);
+    const [byTag, byName] = await Promise.all([
+      fetch(`${RB}/search?tag=${q}&${QOPTS}`).then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch(`${RB}/search?name=${q}&${QOPTS}`).then(r => r.ok ? r.json() : []).catch(() => []),
+    ]);
+    const seen = new Set(); const out = [];
+    for (const s of [...byTag, ...byName]) {
+      if (!s.url_resolved || seen.has(s.stationuuid) || !isElectronicStation(s)) continue;
+      seen.add(s.stationuuid);
+      out.push(s);
+    }
+    out.sort((a, b) => (b.votes || 0) - (a.votes || 0));
+    return out.slice(0, 30);
+  }
+
+  // ── Live search (debounced typing) — electronic only + on-site stations ──
   async function searchRadio(query) {
-    const el = document.getElementById('radio-search-results');
-    if (!query || query.length < 2) {
+    const el   = document.getElementById('radio-search-results');
+    const note = document.getElementById('radio-search-ai-note');
+    query = (query || '').trim();
+    if (query.length < 2) {
       searchResults = [];
-      if (el) el.classList.add('hidden');
+      if (el) { el.classList.add('hidden'); el.innerHTML = ''; }
+      if (note) note.classList.add('hidden');
       return;
     }
-    if (el) { el.classList.remove('hidden'); el.innerHTML = '<div class="radio-search-loading">Søker…</div>'; }
+    if (note) note.classList.add('hidden');  // plain typing → no AI note
+    const mySeq = ++searchSeq;
+    if (el) { el.classList.remove('hidden'); el.innerHTML = '<div class="radio-search-loading">Søker i elektroniske kanaler…</div>'; }
+    const local = matchLocalStations(query).map(toLocalResult);
     try {
-      const res = await fetch(
-        `https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(query)}&limit=20&order=votes&reverse=true&hidebroken=true`,
-        { headers: { 'User-Agent': 'ProfilVerse/1.0' } }
-      );
-      if (!res.ok) throw new Error('API feil');
-      searchResults = await res.json();
+      const web = (await fetchElectronic(query)).map(toWebResult);
+      if (mySeq !== searchSeq) return;
+      searchResults = [...local, ...web];
       renderSearchResults(searchResults);
     } catch (e) {
-      const el2 = document.getElementById('radio-search-results');
-      if (el2) el2.innerHTML = '<div class="radio-search-empty">Kunne ikke hente resultater</div>';
+      if (mySeq !== searchSeq) return;
+      searchResults = local;
+      if (local.length) renderSearchResults(searchResults);
+      else if (el) el.innerHTML = '<div class="radio-search-empty">Kunne ikke hente resultater</div>';
     }
+  }
+
+  // ── AI-powered search (Enter / ✨-knapp) ─────────────────────────────────
+  // The AI reads the free-text request in any language, turns it into electronic
+  // genre terms, then we search the whole web locked to electronic + on-site.
+  async function aiSearch() {
+    const input = document.getElementById('radio-search-input');
+    const query = (input?.value || '').trim();
+    if (query.length < 2) return;
+    const el   = document.getElementById('radio-search-results');
+    const note = document.getElementById('radio-search-ai-note');
+    if (el) { el.classList.remove('hidden'); el.innerHTML = '<div class="radio-search-loading">Søker i elektroniske web-radioer…</div>'; }
+    if (note) { note.classList.remove('hidden'); note.innerHTML = `${Icon('sparkles')} <span>Tolker søket med AI…</span>`; }
+
+    let terms = [query], msg = '';
+    try {
+      const r = await AI.radioSearch(query);
+      if (r) { if (r.terms && r.terms.length) terms = r.terms; msg = r.note || ''; }
+    } catch (e) { /* no key / no credits → fall back to plain electronic search */ }
+
+    const mySeq = ++searchSeq;
+    try {
+      const local = matchLocalStations(query).map(toLocalResult);
+      const lists = await Promise.all(terms.slice(0, 3).map(t => fetchElectronic(t)));
+      if (mySeq !== searchSeq) return;
+      const seen = new Set(); const web = [];
+      for (const list of lists) for (const s of list) {
+        if (seen.has(s.stationuuid)) continue;
+        seen.add(s.stationuuid); web.push(toWebResult(s));
+      }
+      searchResults = [...local, ...web];
+      if (note) {
+        if (msg) { note.classList.remove('hidden'); note.innerHTML = `${Icon('sparkles')} <span>${escHtml(msg)}</span>`; }
+        else note.classList.add('hidden');
+      }
+      renderSearchResults(searchResults);
+    } catch (e) {
+      if (mySeq !== searchSeq) return;
+      if (el) el.innerHTML = '<div class="radio-search-empty">Kunne ikke hente resultater</div>';
+    }
+  }
+
+  function onSearchKey(e) {
+    if (e.key === 'Enter') { clearTimeout(searchTimer); aiSearch(); }
   }
 
   function renderSearchResults(results) {
     const el = document.getElementById('radio-search-results');
     if (!el) return;
     if (!results.length) {
-      el.innerHTML = '<div class="radio-search-empty">Ingen kanaler funnet</div>';
+      el.innerHTML = '<div class="radio-search-empty">Ingen elektroniske kanaler funnet</div>';
       return;
     }
-    el.innerHTML = results.map((s, i) => `
-      <div class="radio-search-item" onclick="Radio.playSearchResult(${i})">
+    el.innerHTML = `<div class="radio-search-count">${results.length} kanaler</div>` + results.map((s, i) => {
+      const active  = (s.rk === 'local' && currentStation?.id === s.id) ||
+                      (s.rk === 'web'   && currentStation?.id === 'search_' + s.uuid);
+      const playing = active && isPlaying;
+      return `
+      <div class="radio-search-item ${active ? 'active' : ''}" onclick="Radio.playSearchResult(${i})">
+        <span class="radio-search-item-emoji">${s.rk === 'local' ? iconForEmoji(s.emoji) : '📡'}</span>
         <div class="radio-search-item-info">
-          <div class="radio-search-item-name">${escHtml(s.name)}</div>
-          <div class="radio-search-item-meta">${escHtml(s.country || '')}${s.tags ? ' · ' + escHtml(s.tags.split(',').slice(0,3).join(', ')) : ''}</div>
+          <div class="radio-search-item-name">${escHtml(s.name)}${s.rk === 'local' ? ' <span class="radio-search-onsite">på siden</span>' : ''}</div>
+          <div class="radio-search-item-meta">${escHtml(s.meta || 'Nettradio')}</div>
         </div>
-        <button class="radio-search-save-btn" title="Lagre til egne strømmer" onclick="Radio.saveSearchResult(${i}, event)">＋</button>
-      </div>
-    `).join('');
+        <div class="radio-search-item-actions">
+          <button class="station-play-btn" title="Spill av / Stopp" onclick="event.stopPropagation();Radio.playSearchResult(${i})">${playing ? '⏸' : '▶'}</button>
+          <button class="station-vol-btn" title="Lyd av/på" onclick="event.stopPropagation();Radio.toggleMute()">${muted ? '🔇' : '🔊'}</button>
+          ${s.rk === 'web' ? `<button class="radio-search-save-btn" title="Lagre til egne strømmer" onclick="event.stopPropagation();Radio.saveSearchResult(${i}, event)">＋</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
   }
 
   function escHtml(str) {
@@ -366,31 +491,26 @@ const Radio = (() => {
 
   function playSearchResult(i) {
     const s = searchResults[i];
-    if (!s || !s.url_resolved) { App.toast('Ingen gyldig stream-URL', 'error'); return; }
-    const station = {
-      id: 'search_' + s.stationuuid,
-      name: s.name,
-      url: s.url_resolved,
-      emoji: '📡',
-      color: '#7c3aed',
-      desc: [s.country, s.tags?.split(',')[0]].filter(Boolean).join(' · ') || 'Nettradio',
-    };
+    if (!s) return;
+    if (s.rk === 'local') { playStation(s.id); return; }   // on-site station → normal flow
+    if (!s.url) { App.toast('Ingen gyldig stream-URL', 'error'); return; }
+    const station = { id: 'search_' + s.uuid, name: s.name, url: s.url, emoji: '📡', color: '#7c3aed', desc: s.meta || 'Nettradio' };
     currentStation = station;
     _playUrl(station.url, station);
     updateSidebarActiveState(station.id);
     updateNowPlaying(station);
+    renderSearchResults(searchResults);   // refresh play/pause state in the list
   }
 
   function saveSearchResult(i, e) {
-    e.stopPropagation();
+    e?.stopPropagation();
     const s = searchResults[i];
-    if (!s || !s.url_resolved) { App.toast('Ingen gyldig stream-URL', 'error'); return; }
-    const already = customStreams.some(c => c.url === s.url_resolved);
-    if (already) { App.toast('Allerede lagret', 'info'); return; }
-    customStreams.push({ name: s.name, url: s.url_resolved });
+    if (!s || !s.url) { App.toast('Ingen gyldig stream-URL', 'error'); return; }
+    if (customStreams.some(c => c.url === s.url)) { App.toast('Allerede lagret', 'info'); return; }
+    customStreams.push({ name: s.name, url: s.url });
     localStorage.setItem('pv_custom_streams', JSON.stringify(customStreams));
-    App.toast(`"${s.name}" lagret`, 'success');
-    render();
+    App.toast(`"${s.name}" lagret i Egne strømmer`, 'success');
+    // keep search results visible — don't re-render the whole page
   }
 
   function onSearchInput(val) {
@@ -470,7 +590,7 @@ const Radio = (() => {
             ${Icon('radio')} Radiokanaler
           </div>
 
-          <!-- Search -->
+          <!-- Search — AI-drevet, låst til elektronisk + kanalene på siden -->
           <div class="radio-search-wrap">
             <div class="radio-search-box">
               <span class="radio-search-icon">${Icon('search')}</span>
@@ -478,11 +598,14 @@ const Radio = (() => {
                 type="text"
                 id="radio-search-input"
                 class="radio-search-input"
-                placeholder="Søk etter radiokanal…"
+                placeholder="Søk elektronisk radio – eller spør AI…"
                 autocomplete="off"
                 oninput="Radio.onSearchInput(this.value)"
+                onkeydown="Radio.onSearchKey(event)"
               >
+              <button class="radio-ai-search-btn" title="AI-søk (spør på hvilket som helst språk)" onclick="Radio.aiSearch()">${Icon('sparkles')}</button>
             </div>
+            <div id="radio-search-ai-note" class="radio-search-ai-note hidden"></div>
             <div id="radio-search-results" class="radio-search-results hidden"></div>
           </div>
           ${(() => {
@@ -1425,7 +1548,7 @@ const Radio = (() => {
   return {
     render, playStation, playCustom, togglePlay, stopRadio, playUrl, fetchStations,
     setVolume, volumeUp, volumeDown, toggleMute, setVisMode, setVisSize, addCustomStream, removeCustom,
-    playSearchResult, saveSearchResult, onSearchInput,
+    playSearchResult, saveSearchResult, onSearchInput, onSearchKey, aiSearch,
     toggleAiChat, sendAiMessage, onAiKeydown,
     setAsFavorite, openEmbed, closeEmbed, stopForMusicPlayer,
     get isPlaying() { return isPlaying; },

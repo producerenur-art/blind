@@ -178,5 +178,26 @@ ${SITE_KNOWLEDGE}`;
       const system = `You are a friendly radio assistant helping users find the perfect radio channel on this site. Always respond in the exact same language the user writes in. Be concise (2-3 sentences max). Available channels on this site:\n${stationsCtx}\nWhen you recommend a channel, mention its exact name. If no channel on the list fits, suggest using the search box to find more stations.`;
       return proxyCall(system, history, 300);
     },
+
+    // AI radio SEARCH — turns a free-text request (any language) into electronic
+    // genre search terms. The whole site is LOCKED to electronic music, so terms
+    // must be electronic. Returns { terms:[...], note:"..." }.
+    async radioSearch(query) {
+      const system = `You convert a user's free-text request into an ELECTRONIC-music radio search. This site only has electronic music: psytrance, goa, trance, progressive, house, deep house, tech house, techno, minimal, acid, ambient, psybient, psychill, chillout, downtempo, dub, dubstep, drum and bass, breakbeat, idm, drone, dark ambient, synthwave, electro, trip-hop, nu disco, rave, hardstyle and related styles.
+Reply with ONLY compact JSON, no markdown: {"terms":["genre1","genre2"],"note":"one short friendly sentence"}.
+- "terms": 1-3 lowercase ENGLISH electronic genre/tag words that best match the request. They MUST be electronic genres. If the request is non-electronic, pick the closest electronic vibe instead.
+- "note": one short helpful sentence (max ~16 words) in the SAME language the user wrote in.`;
+      const txt = await proxyCall(system, [{ role: 'user', content: query }], 200);
+      try {
+        const m   = txt.match(/\{[\s\S]*\}/);
+        const obj = JSON.parse(m ? m[0] : txt);
+        const terms = Array.isArray(obj.terms)
+          ? obj.terms.filter(t => typeof t === 'string' && t.trim()).map(t => t.trim()).slice(0, 3)
+          : [];
+        return { terms, note: (obj.note || '').trim() };
+      } catch (e) {
+        return { terms: [], note: txt.slice(0, 160) };
+      }
+    },
   };
 })();
