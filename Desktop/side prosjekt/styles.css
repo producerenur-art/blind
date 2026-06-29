@@ -2606,64 +2606,64 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
 .radio-visualizer-wrap.vis-size-small  { flex: none; height: 150px; }
 .radio-visualizer-wrap.vis-size-medium { flex: none; height: 260px; }
 .radio-visualizer-wrap.vis-size-large  { flex: none; height: 460px; }
-.radio-visualizer-wrap.vis-size-custom { flex: none; }   /* fri zoom via hjørne-drag (inline height) */
 .radio-visualizer-wrap.vis-size-full {
   position: fixed; inset: 0; z-index: 3000;
   width: 100vw; height: 100vh; min-height: 0; border-radius: 0;
 }
-
-/* Zoom-håndtak i hjørnene — dra for å zoome størrelsen inn/ut */
-.vis-zoom-grip {
-  position: absolute;
-  width: 24px; height: 24px;
-  z-index: 4;
-  opacity: 0;
-  transition: opacity .18s ease;
-  touch-action: none;
+/* Fri zoom-størrelse (satt via hjørne/kant-drag + ±-knappene).
+   align-self hindrer at kolonne-flex strekker bredden og overstyrer inline-bredde. */
+.radio-visualizer-wrap.vis-size-free {
+  flex: none;
+  align-self: center;
+  min-height: 0;
+  max-width: 100%;
 }
-.radio-visualizer-wrap:hover .vis-zoom-grip,
-.radio-visualizer-wrap.vis-size-full .vis-zoom-grip { opacity: .85; }
-.vis-zoom-grip::after {
+
+/* ±-zoomknapper (nederst til venstre) */
+.vis-zoom-row {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  display: flex;
+  gap: 0.35rem;
+  z-index: 2;
+}
+.vis-zoom-btn {
+  width: 30px;
+  padding: 0.3rem 0;
+  text-align: center;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+/* Frie drag-/zoom-håndtak på visualizeren (kanter + hjørner) */
+.vrr { position: absolute; z-index: 4; touch-action: none; }
+.vrr.n  { top: 0;    left: 16px; right: 16px; height: 7px; cursor: n-resize; }
+.vrr.s  { bottom: 0; left: 16px; right: 16px; height: 7px; cursor: s-resize; }
+.vrr.e  { right: 0;  top: 16px; bottom: 16px; width: 7px;  cursor: e-resize; }
+.vrr.w  { left: 0;   top: 16px; bottom: 16px; width: 7px;  cursor: w-resize; }
+.vrr.ne { top: 0;    right: 0;  width: 24px; height: 24px; cursor: nesw-resize; }
+.vrr.nw { top: 0;    left: 0;   width: 24px; height: 24px; cursor: nwse-resize; }
+.vrr.se { bottom: 0; right: 0;  width: 24px; height: 24px; cursor: nwse-resize; }
+.vrr.sw { bottom: 0; left: 0;   width: 24px; height: 24px; cursor: nesw-resize; }
+/* Synlig hjørne-grep — toner inn når man holder over visualizeren */
+.vrr.ne, .vrr.nw, .vrr.se, .vrr.sw { opacity: 0; transition: opacity .18s ease; }
+.radio-visualizer-wrap:hover .vrr.ne,
+.radio-visualizer-wrap:hover .vrr.nw,
+.radio-visualizer-wrap:hover .vrr.se,
+.radio-visualizer-wrap:hover .vrr.sw { opacity: .9; }
+.vrr.ne::after, .vrr.nw::after, .vrr.se::after, .vrr.sw::after {
   content: '';
   position: absolute;
   width: 13px; height: 13px;
   border: 0 solid rgba(196,166,255,.9);
   transition: border-color .15s, box-shadow .15s;
 }
-.vis-zoom-grip.nw { top: 7px; left: 7px;  cursor: nwse-resize; }
-.vis-zoom-grip.ne { top: 7px; right: 7px; cursor: nesw-resize; }
-.vis-zoom-grip.sw { bottom: 7px; left: 7px;  cursor: nesw-resize; }
-.vis-zoom-grip.se { bottom: 7px; right: 7px; cursor: nwse-resize; }
-.vis-zoom-grip.nw::after { top: 0; left: 0;  border-width: 2px 0 0 2px; border-radius: 4px 0 0 0; }
-.vis-zoom-grip.ne::after { top: 0; right: 0; border-width: 2px 2px 0 0; border-radius: 0 4px 0 0; }
-.vis-zoom-grip.sw::after { bottom: 0; left: 0;  border-width: 0 0 2px 2px; border-radius: 0 0 0 4px; }
-.vis-zoom-grip.se::after { bottom: 0; right: 0; border-width: 0 2px 2px 0; border-radius: 0 0 4px 0; }
-.vis-zoom-grip:hover::after {
-  border-color: #fff;
-  box-shadow: 0 0 10px rgba(168,130,255,.9);
-}
-
-/* Live px/%-indikator mens man zoomer */
-.vis-zoom-badge {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  padding: .42rem .75rem;
-  background: rgba(10,8,24,.82);
-  border: 1px solid rgba(196,166,255,.5);
-  border-radius: 10px;
-  color: #fff;
-  font-size: .82rem;
-  font-weight: 700;
-  letter-spacing: .02em;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .15s ease;
-  z-index: 5;
-  backdrop-filter: blur(4px);
-}
-.vis-zoom-badge.show { opacity: 1; }
+.vrr.nw::after { top: 6px; left: 6px;  border-width: 2px 0 0 2px; border-radius: 4px 0 0 0; }
+.vrr.ne::after { top: 6px; right: 6px; border-width: 2px 2px 0 0; border-radius: 0 4px 0 0; }
+.vrr.sw::after { bottom: 6px; left: 6px;  border-width: 0 0 2px 2px; border-radius: 0 0 0 4px; }
+.vrr.se::after { bottom: 6px; right: 6px; border-width: 0 2px 2px 0; border-radius: 0 0 4px 0; }
+.vrr:hover::after { border-color: #fff; box-shadow: 0 0 10px rgba(168,130,255,.9); }
 
 /* Search field */
 .radio-search-wrap {
