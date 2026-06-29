@@ -4,16 +4,7 @@ node_modules
 .env.*
 .DS_Store
 
-# Marketplace-backend holdt ute av deploy inntil Supabase/Stripe er satt opp
-# (Vercel Hobby tillater maks 12 serverless-funksjoner). Koden blir i repoet.
-# Wire inn igjen ved å fjerne disse linjene når MARKETPLACE-SETUP.md er gjort.
-api/_hmac.js
-api/connect-onboard.js
-api/connect-status.js
-api/create-song-checkout.js
-api/download-song.js
-api/list-product.js
-api/my-purchases.js
-api/song-upload-url.js
-api/store-products.js
+# Stripe-kjøpswebhook holdt ute av deploy inntil STRIPE_WEBHOOK_SECRET og et
+# Stripe-endepunkt mot /api/stripe-webhook er satt opp. Fjern linja under for å
+# aktivere automatisk kjøps-fullføring (registrering av kjøp i Supabase).
 api/stripe-webhook.js
