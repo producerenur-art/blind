@@ -736,6 +736,43 @@ const App = (() => {
       let _currentId = null;
       let _playing = false;
 
+      // Persisted size for the resizable Dice Radio web-radio frame (psytrance tab)
+      const RADIO_SIZE_KEY = 'pv_hr_radio_size';
+      function _loadRadioSize() {
+        try { return JSON.parse(localStorage.getItem(RADIO_SIZE_KEY) || 'null'); }
+        catch { return null; }
+      }
+      function _saveRadioSize(w, h) {
+        try { localStorage.setItem(RADIO_SIZE_KEY, JSON.stringify({ w, h })); } catch {}
+      }
+
+      // Wire corner drag-resize on the web-radio frame. Native CSS `resize: both`
+      // gives the bottom-right grip; the cross-origin iframe would otherwise
+      // swallow the pointer mid-drag, so we disable its pointer-events while the
+      // grip is held and persist the chosen size on release.
+      function _wireRadioFrame() {
+        const frame = document.getElementById('hr-radio-frame');
+        if (!frame) return;
+        const iframe = frame.querySelector('.hr-radio-embed');
+        const saved = _loadRadioSize();
+        if (saved) {
+          frame.style.width  = saved.w + 'px';
+          frame.style.height = saved.h + 'px';
+        }
+        frame.addEventListener('pointerdown', (e) => {
+          const r = frame.getBoundingClientRect();
+          const inGrip = (e.clientX > r.right - 26) && (e.clientY > r.bottom - 26);
+          if (!inGrip) return;
+          if (iframe) iframe.style.pointerEvents = 'none';
+          const up = () => {
+            if (iframe) iframe.style.pointerEvents = '';
+            _saveRadioSize(frame.offsetWidth, frame.offsetHeight);
+            window.removeEventListener('pointerup', up);
+          };
+          window.addEventListener('pointerup', up);
+        });
+      }
+
       function _updateDisplay(stationId) {
         const s = (Radio.stations || []).find(x => x.id === stationId);
         if (!s) return;
@@ -759,7 +796,11 @@ const App = (() => {
         const ids = GENRE_IDS[genre] || [];
         const stations = ids.map(id => (Radio.stations || []).find(s => s.id === id)).filter(Boolean);
         const extraHtml = genre === 'psytrance'
-          ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/Y7p8r1avQLQ?list=RDY7p8r1avQLQ" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
+          ? `<div class="hr-radio-frame" id="hr-radio-frame" title="Dra nederste høyre hjørne for å endre størrelse — smal ↔ stor">
+               <div class="hr-radio-frame-bar">${Icon('radio')} Dice Radio — live web-radio</div>
+               <iframe class="hr-radio-embed" src="https://www.diceradio.gr/" loading="lazy" allow="autoplay; encrypted-media"></iframe>
+             </div>`
+            + `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/Y7p8r1avQLQ?list=RDY7p8r1avQLQ" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
           : genre === 'downtempo'
           ? `<iframe class="hr-yt-embed" src="https://www.youtube.com/embed/YgiFnQZvGTU?list=RDYgiFnQZvGTU" allow="autoplay; encrypted-media" allowfullscreen></iframe>`
           : genre === 'progressive'
@@ -777,6 +818,7 @@ const App = (() => {
 
             <button class="hr-channel-play" onclick="event.stopPropagation();HomeRadio.play('${s.id}')">${Icon('play')}</button>
           </div>`).join('') + extraHtml;
+        _wireRadioFrame();
       }
 
       function play(id) {

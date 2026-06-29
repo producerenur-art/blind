@@ -7950,6 +7950,61 @@ body { top: 0 !important; }
   border-radius: 12px;
   margin-top: 0.75rem;
 }
+/* Resizable web-radio frame (Dice Radio, psytrance tab).
+   Solid background + overflow:hidden contain the cross-origin page so the
+   host «vegas» bakgrunn ikke lekker gjennom. `resize: both` gir hjørne-drag. */
+.hr-radio-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 520px;
+  min-width: 260px;
+  min-height: 220px;
+  max-width: 100%;
+  margin-top: 0.75rem;
+  border-radius: 12px;
+  overflow: hidden;
+  resize: both;
+  background: #0b0d10;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.hr-radio-frame-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text2, #cbd5e1);
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.hr-radio-frame .hr-radio-embed {
+  flex: 1 1 auto;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  display: block;
+  background: #0b0d10;
+}
+/* Diagonal grip hint over the native bottom-right resizer */
+.hr-radio-frame::after {
+  content: "";
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 14px;
+  height: 14px;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(135deg,
+    transparent 0 45%, rgba(255,255,255,0.45) 45% 55%,
+    transparent 55% 70%, rgba(255,255,255,0.45) 70% 80%, transparent 80%);
+}
 .hr-channel-card {
   display: flex;
   align-items: center;
