@@ -1367,126 +1367,205 @@ const Radio = (() => {
     if (visCtx && canvas) visCtx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
+  // Avrundet rektangel-sti (faller tilbake til arcTo om ctx.roundRect mangler).
+  function visRoundRect(x, y, w, h, r) {
+    if (h < 0) { y += h; h = -h; }
+    r = Math.max(0, Math.min(r, w / 2, h / 2));
+    visCtx.beginPath();
+    if (visCtx.roundRect) { visCtx.roundRect(x, y, w, h, r); return; }
+    visCtx.moveTo(x + r, y);
+    visCtx.arcTo(x + w, y,     x + w, y + h, r);
+    visCtx.arcTo(x + w, y + h, x,     y + h, r);
+    visCtx.arcTo(x,     y + h, x,     y,     r);
+    visCtx.arcTo(x,     y,     x + w, y,     r);
+    visCtx.closePath();
+  }
+
   function drawBars(data, bufLen) {
     const W = canvas.width, H = canvas.height;
-    visCtx.fillStyle = 'rgba(0,0,0,0.15)';
+    visCtx.fillStyle = 'rgba(8,6,20,0.22)';
     visCtx.fillRect(0, 0, W, H);
-    const barW = (W / bufLen) * 2.8;
-    let x = 0;
-    for (let i = 0; i < bufLen; i++) {
-      const h = (data[i] / 255) * H * 0.9;
-      const hue = (i / bufLen) * 280 + 200; // blue → purple → pink
-      const grad = visCtx.createLinearGradient(0, H - h, 0, H);
-      grad.addColorStop(0, `hsla(${hue},90%,70%,0.9)`);
-      grad.addColorStop(1, `hsla(${hue},70%,40%,0.4)`);
+    const baseline = H * 0.80;
+    const count = Math.min(bufLen, 80);           // færre, breiere søyler = renere look
+    const stepI = Math.floor(bufLen / count) || 1;
+    const slot  = W / count;
+    const barW  = slot * 0.7;
+    let avg = 0;
+    for (let c = 0; c < count; c++) {
+      const v = data[c * stepI] / 255;
+      avg += v;
+      const h = v * baseline * 0.95;
+      const x = c * slot + (slot - barW) / 2;
+      const hue = 250 + (c / count) * 110;        // lilla → rosa
+      // Glød
+      visCtx.shadowBlur  = 16 * v;
+      visCtx.shadowColor = `hsla(${hue},90%,60%,${0.7 * v})`;
+      const grad = visCtx.createLinearGradient(0, baseline - h, 0, baseline);
+      grad.addColorStop(0, `hsla(${hue},95%,72%,1)`);
+      grad.addColorStop(1, `hsla(${hue},85%,46%,0.85)`);
       visCtx.fillStyle = grad;
-      visCtx.fillRect(x, H - h, barW - 1, h);
-      // Mirror
-      const hMirror = h * 0.4;
-      visCtx.globalAlpha = 0.25;
-      visCtx.fillRect(x, 0, barW - 1, hMirror);
-      visCtx.globalAlpha = 1;
-      x += barW;
+      visRoundRect(x, baseline - h, barW, h, Math.min(barW / 2, 6));
+      visCtx.fill();
+      // Refleksjon under grunnlinjen
+      visCtx.shadowBlur = 0;
+      const refl = visCtx.createLinearGradient(0, baseline, 0, baseline + h * 0.5);
+      refl.addColorStop(0, `hsla(${hue},85%,58%,0.30)`);
+      refl.addColorStop(1, 'hsla(0,0%,0%,0)');
+      visCtx.fillStyle = refl;
+      visRoundRect(x, baseline, barW, h * 0.5, Math.min(barW / 2, 6));
+      visCtx.fill();
     }
+    visCtx.shadowBlur = 0;
+    // Glødende grunnlinje
+    avg /= count;
+    const base = visCtx.createLinearGradient(0, 0, W, 0);
+    base.addColorStop(0,   'rgba(168,130,255,0)');
+    base.addColorStop(0.5, `rgba(196,150,255,${0.45 + avg * 0.4})`);
+    base.addColorStop(1,   'rgba(168,130,255,0)');
+    visCtx.fillStyle = base;
+    visCtx.fillRect(0, baseline - 1.5, W, 3);
   }
 
   function drawCircle(data, bufLen) {
     const W = canvas.width, H = canvas.height;
     const cx = W / 2, cy = H / 2;
-    const r  = Math.min(W, H) * 0.25;
-    visCtx.fillStyle = 'rgba(0,0,0,0.2)';
+    const baseR = Math.min(W, H) * 0.20;
+    const t = performance.now() / 1000;
+    visCtx.fillStyle = 'rgba(8,6,20,0.28)';
     visCtx.fillRect(0, 0, W, H);
-    for (let i = 0; i < bufLen; i++) {
-      const angle = (i / bufLen) * Math.PI * 2 - Math.PI / 2;
-      const amp   = (data[i] / 255) * r * 1.5;
-      const x1 = cx + Math.cos(angle) * r;
-      const y1 = cy + Math.sin(angle) * r;
-      const x2 = cx + Math.cos(angle) * (r + amp);
-      const y2 = cy + Math.sin(angle) * (r + amp);
-      const hue = (i / bufLen) * 360;
-      visCtx.strokeStyle = `hsla(${hue},90%,65%,0.9)`;
-      visCtx.lineWidth   = 2;
+    const count = Math.min(bufLen, 120);
+    const stepI = Math.floor(bufLen / count) || 1;
+    const segW  = Math.max(1.5, (Math.PI * 2 * baseR / count) * 0.6);
+    let bass = 0;
+    visCtx.lineCap = 'round';
+    for (let c = 0; c < count; c++) {
+      const v = data[c * stepI] / 255;
+      if (c < 10) bass += v / 10;
+      const ang = (c / count) * Math.PI * 2 + t * 0.15;   // sakte rotasjon
+      const amp = v * baseR * 1.7;
+      const ca = Math.cos(ang), sa = Math.sin(ang);
+      const hue = (c / count) * 300 + 220;
+      visCtx.strokeStyle = `hsla(${hue},95%,${52 + v * 18}%,0.92)`;
+      visCtx.lineWidth   = segW;
+      visCtx.shadowBlur  = 14 * v;
+      visCtx.shadowColor = `hsla(${hue},95%,60%,0.9)`;
       visCtx.beginPath();
-      visCtx.moveTo(x1, y1);
-      visCtx.lineTo(x2, y2);
+      visCtx.moveTo(cx + ca * baseR, cy + sa * baseR);
+      visCtx.lineTo(cx + ca * (baseR + amp), cy + sa * (baseR + amp));
       visCtx.stroke();
     }
-    // Inner circle
-    visCtx.strokeStyle = 'rgba(124,58,237,0.3)';
-    visCtx.lineWidth   = 1;
+    visCtx.shadowBlur = 0;
+    // Pulserende kjerne (bass-drevet)
+    const coreR = baseR * (0.7 + bass * 0.5);
+    const core  = visCtx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
+    core.addColorStop(0,   `rgba(196,150,255,${0.45 + bass * 0.4})`);
+    core.addColorStop(0.6, `rgba(124,58,237,${0.16 + bass * 0.2})`);
+    core.addColorStop(1,   'rgba(124,58,237,0)');
+    visCtx.fillStyle = core;
     visCtx.beginPath();
-    visCtx.arc(cx, cy, r, 0, Math.PI * 2);
+    visCtx.arc(cx, cy, coreR, 0, Math.PI * 2);
+    visCtx.fill();
+    // Indre ring
+    visCtx.strokeStyle = `rgba(196,160,255,${0.3 + bass * 0.3})`;
+    visCtx.lineWidth   = 1.5;
+    visCtx.beginPath();
+    visCtx.arc(cx, cy, baseR, 0, Math.PI * 2);
     visCtx.stroke();
   }
 
   function drawWave(data, bufLen) {
     const W = canvas.width, H = canvas.height;
-    visCtx.fillStyle = 'rgba(0,0,0,0.25)';
+    const mid = H / 2;
+    visCtx.fillStyle = 'rgba(8,6,20,0.30)';
     visCtx.fillRect(0, 0, W, H);
     const sliceW = W / bufLen;
+    visCtx.lineCap  = 'round';
+    visCtx.lineJoin = 'round';
+    // Fylt glød-område under hovedbølgen
+    visCtx.beginPath();
     let x = 0;
-    visCtx.lineWidth   = 3;
-    // Multi-layer wave
-    for (let layer = 0; layer < 3; layer++) {
+    for (let i = 0; i < bufLen; i++) {
+      const y = (data[i] / 128 - 1) * (H * 0.42) + mid;
+      i === 0 ? visCtx.moveTo(x, y) : visCtx.lineTo(x, y);
+      x += sliceW;
+    }
+    visCtx.lineTo(W, H); visCtx.lineTo(0, H); visCtx.closePath();
+    const fill = visCtx.createLinearGradient(0, 0, 0, H);
+    fill.addColorStop(0,   'rgba(124,58,237,0)');
+    fill.addColorStop(0.5, 'rgba(150,90,255,0.22)');
+    fill.addColorStop(1,   'rgba(80,40,180,0.04)');
+    visCtx.fillStyle = fill;
+    visCtx.fill();
+    // Flerlags glødende linjer (bakerst lag først)
+    for (let layer = 2; layer >= 0; layer--) {
+      const hue = 250 + layer * 35;
+      const amp = (H * 0.42) * (1 - layer * 0.22);
       visCtx.beginPath();
-      visCtx.strokeStyle = `hsla(${200 + layer * 60},90%,65%,${0.9 - layer * 0.25})`;
       x = 0;
       for (let i = 0; i < bufLen; i++) {
-        const v  = data[i] / 128.0;
-        const y  = (v * H / 2) + (H * 0.1 * layer);
-        if (i === 0) visCtx.moveTo(x, y);
-        else         visCtx.lineTo(x, y);
+        const y = (data[i] / 128 - 1) * amp + mid;
+        i === 0 ? visCtx.moveTo(x, y) : visCtx.lineTo(x, y);
         x += sliceW;
       }
+      visCtx.strokeStyle = `hsla(${hue},95%,70%,${0.9 - layer * 0.22})`;
+      visCtx.lineWidth   = (2 - layer) + 1.5;
+      visCtx.shadowBlur  = layer === 0 ? 16 : 6;
+      visCtx.shadowColor = `hsla(${hue},95%,65%,0.8)`;
       visCtx.stroke();
     }
+    visCtx.shadowBlur = 0;
   }
 
   function drawParticles(data, bufLen) {
     const W = canvas.width, H = canvas.height;
-    visCtx.fillStyle = 'rgba(0,0,0,0.12)';
+    visCtx.fillStyle = 'rgba(8,6,20,0.16)';
     visCtx.fillRect(0, 0, W, H);
     // Bass energy
     let bass = 0;
     for (let i = 0; i < 16; i++) bass += data[i];
     bass /= (16 * 255);
 
-    // Spawn particles on bass hit
-    if (bass > 0.5 && particles.length < 200) {
-      for (let i = 0; i < Math.floor(bass * 8); i++) {
+    // Spawn particles on bass hit (radielt utbrudd)
+    if (bass > 0.45 && particles.length < 260) {
+      const n = Math.floor(bass * 10);
+      for (let i = 0; i < n; i++) {
+        const a  = Math.random() * Math.PI * 2;
+        const sp = bass * (4 + Math.random() * 10);
         particles.push({
-          x: W / 2 + (Math.random() - 0.5) * 60,
-          y: H / 2 + (Math.random() - 0.5) * 60,
-          vx: (Math.random() - 0.5) * bass * 12,
-          vy: (Math.random() - 0.5) * bass * 12 - bass * 4,
-          r:  2 + Math.random() * 4 * bass,
-          hue: 220 + Math.random() * 140,
+          x: W / 2, y: H / 2,
+          vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - bass * 2,
+          r:  1.5 + Math.random() * 4 * bass,
+          hue: 230 + Math.random() * 130,
           life: 1,
         });
       }
     }
-    // Update + draw particles
+    // Additiv glød for et lysende, proft uttrykk
+    visCtx.globalCompositeOperation = 'lighter';
     particles = particles.filter(p => p.life > 0.02);
     particles.forEach(p => {
-      p.x    += p.vx;
-      p.y    += p.vy;
-      p.vy   += 0.1;
-      p.life -= 0.015;
-      p.r    *= 0.99;
+      p.x += p.vx; p.y += p.vy; p.vy += 0.06;
+      p.vx *= 0.99; p.vy *= 0.99;
+      p.life -= 0.012; p.r *= 0.995;
+      const rr = p.r * 3;
+      const g = visCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rr);
+      g.addColorStop(0, `hsla(${p.hue},95%,72%,${p.life})`);
+      g.addColorStop(1, `hsla(${p.hue},95%,60%,0)`);
+      visCtx.fillStyle = g;
       visCtx.beginPath();
-      visCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      visCtx.fillStyle = `hsla(${p.hue},90%,70%,${p.life})`;
+      visCtx.arc(p.x, p.y, rr, 0, Math.PI * 2);
       visCtx.fill();
     });
-    // Central beat circle
-    const beatR = 40 + bass * 60;
-    const g = visCtx.createRadialGradient(W/2, H/2, 0, W/2, H/2, beatR);
-    g.addColorStop(0, `rgba(124,58,237,${0.3 * bass})`);
-    g.addColorStop(1, 'transparent');
-    visCtx.fillStyle = g;
+    // Sentral beat-glød
+    const beatR = Math.min(W, H) * (0.06 + bass * 0.18);
+    const bg = visCtx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, beatR);
+    bg.addColorStop(0, `rgba(170,120,255,${0.5 * bass})`);
+    bg.addColorStop(1, 'rgba(124,58,237,0)');
+    visCtx.fillStyle = bg;
     visCtx.beginPath();
-    visCtx.arc(W/2, H/2, beatR, 0, Math.PI * 2);
+    visCtx.arc(W / 2, H / 2, beatR, 0, Math.PI * 2);
     visCtx.fill();
+    visCtx.globalCompositeOperation = 'source-over';
   }
 
   // ── Psykedelisk (LSD) ──────────────────────────────────────────────────

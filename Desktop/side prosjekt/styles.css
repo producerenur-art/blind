@@ -609,10 +609,41 @@ body[data-bg-effect="cosmos"] #bg-vignette {
   font-weight: 700;
   font-size: 0.875rem;
   cursor: pointer;
-  margin-bottom: 0.9rem;
+  margin-bottom: 0.6rem;
   transition: opacity 0.2s;
 }
 .picker-upload-btn:hover { opacity: 0.85; }
+.picker-bg-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+}
+.picker-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.4rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 9px;
+  color: var(--text2);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.picker-action-btn:hover { border-color: var(--border2); color: var(--text); }
+.picker-action-btn .icon { width: 14px; height: 14px; }
+.picker-action-post {
+  grid-column: 1 / -1;
+  background: rgba(124,58,237,0.18);
+  border-color: var(--accent);
+  color: #c4b5fd;
+}
+.picker-action-post:hover { background: rgba(124,58,237,0.28); color: #ddd6fe; }
+.picker-action-reset { color: var(--text3); }
 .effect-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2646,12 +2677,13 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
 .vrr.nw { top: 0;    left: 0;   width: 24px; height: 24px; cursor: nwse-resize; }
 .vrr.se { bottom: 0; right: 0;  width: 24px; height: 24px; cursor: nwse-resize; }
 .vrr.sw { bottom: 0; left: 0;   width: 24px; height: 24px; cursor: nesw-resize; }
-/* Synlig hjørne-grep — toner inn når man holder over visualizeren */
-.vrr.ne, .vrr.nw, .vrr.se, .vrr.sw { opacity: 0; transition: opacity .18s ease; }
+/* Synlig hjørne-grep — alltid synlig så håndtakene er lette å oppdage,
+   sterkere ved hover. (Tidligere skjult til hover, da fant ingen draget.) */
+.vrr.ne, .vrr.nw, .vrr.se, .vrr.sw { opacity: .6; transition: opacity .18s ease; }
 .radio-visualizer-wrap:hover .vrr.ne,
 .radio-visualizer-wrap:hover .vrr.nw,
 .radio-visualizer-wrap:hover .vrr.se,
-.radio-visualizer-wrap:hover .vrr.sw { opacity: .9; }
+.radio-visualizer-wrap:hover .vrr.sw { opacity: 1; }
 .vrr.ne::after, .vrr.nw::after, .vrr.se::after, .vrr.sw::after {
   content: '';
   position: absolute;
