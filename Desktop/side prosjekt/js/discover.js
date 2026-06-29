@@ -706,7 +706,7 @@ const Discover = (() => {
         <button class="disc-tab-btn ${activeTab === 'psy-tour' ? 'active' : ''}"
           onclick="Discover.switchTab('psy-tour')">${Icon('wind')} Psytrance Peak Tour</button>
         <button class="disc-tab-btn ${activeTab === 'ambient-mann' ? 'active' : ''}"
-          onclick="Discover.switchTab('ambient-mann')">${Icon('waves')} Ambient Mann</button>
+          onclick="Discover.switchTab('ambient-mann')">${Icon('waves')} <span class="notranslate" translate="no">Ambient Mann</span></button>
         <button class="disc-tab-btn ${activeTab === 'psybient' ? 'active' : ''}"
           onclick="Discover.switchTab('psybient')">${Icon('leaf')} Psybient Events</button>
         <button class="disc-tab-btn ${activeTab === 'altar-records' ? 'active' : ''}"
@@ -1178,7 +1178,7 @@ const Discover = (() => {
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0f2027,#203a43,#2c5364)">
         <div class="disc-psy-banner-emoji">${Icon('waves')}</div>
         <div>
-          <div class="disc-psy-banner-title">Ambient Mann</div>
+          <div class="disc-psy-banner-title"><span class="notranslate" translate="no">Ambient Mann</span></div>
           <div class="disc-psy-banner-sub">Psychill · Downtempo · Experimental — atmosfærisk elektronika frå undergrunnen</div>
         </div>
       </div>
@@ -1194,7 +1194,7 @@ const Discover = (() => {
              style="gap:1.2rem;align-items:flex-start">
             <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('waves')}</div>
             <div style="flex:1">
-              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">Ambient Mann</div>
+              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem"><span class="notranslate" translate="no">Ambient Mann</span></div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
                 Djup, dronerande og atmosfærisk elektronika i skjæringspunktet mellom psychill,
                 downtempo og eksperimentell elektronika. Utforsk heile artisten på radioq37.com.
