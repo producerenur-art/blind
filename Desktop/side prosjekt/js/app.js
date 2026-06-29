@@ -2537,25 +2537,25 @@ const App = (() => {
     'Prioritert støtte',
   ];
 
-  // Månadens tilbod — roterer automatisk per kalendermånad. Reint display/marknadsføring:
-  // framhevar éin plan med eit tema, men endrar ALDRI pris (autoritativ pris i api/create-checkout.js).
-  // Indeks = månad (0 = januar … 11 = desember). Desember = eige juletilbod (holiday: true).
+  // Månedens tilbud — roterer automatisk per kalendermåned. Rent display/markedsføring:
+  // framhever én plan med et tema, men endrer ALDRI pris (autoritativ pris i api/create-checkout.js).
+  // Indeks = måned (0 = januar … 11 = desember). Desember = eget juletilbud (holiday: true).
   const SHOP_OFFERS = [
-    { icon: 'sparkles',   emoji: '✨', title: 'Nytt år, ny lyd',     tag: 'Start året med Pro — 12 månader full tilgang.',          feature: 'year'    },
-    { icon: 'headphones', emoji: '🎧', title: 'Vinterlytting',       tag: 'Lange mixar for kalde kveldar — 6 mnd ekstra verdi.',    feature: 'half'    },
-    { icon: 'leaf',       emoji: '🌱', title: 'Vårslepp',            tag: 'Frisk start på sesongen — prøv 3 månader Pro.',          feature: 'quarter' },
-    { icon: 'sliders',    emoji: '🎛️', title: 'Studio-månad',        tag: 'Produser meir — 6 mnd med ubegrensa lagring.',           feature: 'half'    },
-    { icon: 'ticket',     emoji: '🎟️', title: 'Festival-oppvarming',  tag: 'Klar for sommaren — 12 mnd til beste pris.',             feature: 'year'    },
-    { icon: 'sun',        emoji: '☀️', title: 'Sommarstart',         tag: 'Lange sett heile sommaren — 6 mnd Pro.',                 feature: 'half'    },
-    { icon: 'music',      emoji: '🌞', title: 'Sommarmix',           tag: 'Mixar utan lengdegrense — heile året med Pro.',          feature: 'year'    },
+    { icon: 'sparkles',   emoji: '✨', title: 'Nytt år, ny lyd',     tag: 'Start året med Pro — 12 måneder full tilgang.',          feature: 'year'    },
+    { icon: 'headphones', emoji: '🎧', title: 'Vinterlytting',       tag: 'Lange mixer for kalde kvelder — 6 mnd ekstra verdi.',    feature: 'half'    },
+    { icon: 'leaf',       emoji: '🌱', title: 'Vårslipp',            tag: 'Frisk start på sesongen — prøv 3 måneder Pro.',          feature: 'quarter' },
+    { icon: 'sliders',    emoji: '🎛️', title: 'Studio-måned',        tag: 'Produser mer — 6 mnd med ubegrenset lagring.',           feature: 'half'    },
+    { icon: 'ticket',     emoji: '🎟️', title: 'Festival-oppvarming',  tag: 'Klar for sommeren — 12 mnd til beste pris.',             feature: 'year'    },
+    { icon: 'sun',        emoji: '☀️', title: 'Sommerstart',         tag: 'Lange sett hele sommeren — 6 mnd Pro.',                  feature: 'half'    },
+    { icon: 'music',      emoji: '🌞', title: 'Sommermix',           tag: 'Mixer uten lengdegrense — hele året med Pro.',           feature: 'year'    },
     { icon: 'flame',      emoji: '🔥', title: 'Festival-topp',       tag: 'Ozora-sesong — prøv 3 mnd og del settet ditt.',          feature: 'quarter' },
-    { icon: 'feather',    emoji: '🍂', title: 'Haust-comeback',      tag: 'Tilbake i studio — 6 mnd full tilgang.',                 feature: 'half'    },
-    { icon: 'moon',       emoji: '🌙', title: 'Mørketid-lytting',     tag: 'Djupe ambient-mixar — 6 mnd ekstra verdi.',              feature: 'half'    },
-    { icon: 'tag',        emoji: '🏷️', title: 'Haust-tilbod',        tag: 'Beste verdi før jul — 12 månader Pro.',                  feature: 'year'    },
-    { icon: 'snowflake',  emoji: '🎄', title: 'Juletilbod',          tag: 'Gje deg sjølv eit heilt år med Pro — berre 108 kr/mnd.', feature: 'year', holiday: true },
+    { icon: 'feather',    emoji: '🍂', title: 'Høst-comeback',       tag: 'Tilbake i studio — 6 mnd full tilgang.',                 feature: 'half'    },
+    { icon: 'moon',       emoji: '🌙', title: 'Mørketid-lytting',     tag: 'Dype ambient-mixer — 6 mnd ekstra verdi.',               feature: 'half'    },
+    { icon: 'tag',        emoji: '🏷️', title: 'Høst-tilbud',         tag: 'Beste verdi før jul — 12 måneder Pro.',                  feature: 'year'    },
+    { icon: 'snowflake',  emoji: '🎄', title: 'Juletilbud',          tag: 'Gi deg selv et helt år med Pro — bare 108 kr/mnd.',      feature: 'year', holiday: true },
   ];
 
-  // Tilbodet for inneverande kalendermånad (lokal tid).
+  // Tilbudet for inneværende kalendermåned (lokal tid).
   function currentShopOffer() {
     return SHOP_OFFERS[new Date().getMonth()] || SHOP_OFFERS[0];
   }
