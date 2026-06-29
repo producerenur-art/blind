@@ -490,8 +490,19 @@ const BgManager = (() => {
     panel.innerHTML = `
       <div class="picker-section-label">Ditt bakgrunnsbilde</div>
       <button class="picker-upload-btn" onclick="document.getElementById('bg-file-input').click()">
-        ${Icon('camera')} Last opp bilde
+        ${Icon('camera')} Last opp / bytt bilde
       </button>
+      <div class="picker-bg-actions">
+        <button id="bg-post-btn" class="picker-action-btn picker-action-post" onclick="BgManager.postBackground()">
+          ${Icon('send')} Post bakgrunnen
+        </button>
+        <button class="picker-action-btn" onclick="BgManager.openCommunity()">
+          ${Icon('users')} Fellesskapet
+        </button>
+        <button class="picker-action-btn picker-action-reset" onclick="BgManager.resetBackground()">
+          ${Icon('rotate-cw')} Tilbakestill bilde
+        </button>
+      </div>
 
       <div class="picker-section-label">Psykedelisk effekt</div>
       <div class="effect-grid">
@@ -539,5 +550,74 @@ const BgManager = (() => {
     }, 50);
   }
 
-  return { init, uploadImage, openPicker, setEffect, setParticleStyle, setUfoSize };
+  // ── Del bakgrunnen i fellesskapet ─────────────────────────────────────
+  // Tegn det gjeldende bakgrunnsbildet ned til en delbar data-URL (blob- og
+  // standard-bilder er same-origin, så canvas blir ikke «tainted»).
+  function _bgDataUrl(maxDim = 1280, quality = 0.72) {
+    return new Promise((resolve, reject) => {
+      const base = document.getElementById('bg-img');
+      const src  = base && base.getAttribute('src');
+      if (!src) { resolve(null); return; }
+      const im = new Image();
+      im.crossOrigin = 'anonymous';
+      im.onload = () => {
+        let w = im.naturalWidth, h = im.naturalHeight;
+        if (!w || !h) { resolve(null); return; }
+        if (w > maxDim || h > maxDim) {
+          const s = maxDim / Math.max(w, h);
+          w = Math.round(w * s); h = Math.round(h * s);
+        }
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(im, 0, 0, w, h);
+        try { resolve(c.toDataURL('image/jpeg', quality)); }
+        catch (e) { reject(e); }
+      };
+      im.onerror = () => reject(new Error('Kunne ikke lese bakgrunnsbildet'));
+      im.src = src;
+    });
+  }
+
+  // Post bakgrunnen din som et bilde-innlegg i fellesskaps-veggen (offentlig —
+  // alle innloggede kan se og kommentere), og ta brukeren med dit etterpå.
+  async function postBackground() {
+    const me = (typeof Auth !== 'undefined') && Auth.current();
+    if (!me) { if (typeof Router !== 'undefined') Router.go('/login'); return; }
+    if (typeof Community === 'undefined' || !Community.shareMedia) {
+      if (typeof App !== 'undefined') App.toast('Fellesskapet er ikke klart ennå', 'error');
+      return;
+    }
+    const btn = document.getElementById('bg-post-btn');
+    if (btn) { btn.dataset.html = btn.innerHTML; btn.textContent = '⏳ Deler…'; btn.style.pointerEvents = 'none'; }
+    try {
+      const url = await _bgDataUrl();
+      if (!url) throw new Error('Fant ingen bakgrunn å dele');
+      Community.shareMedia({ kind: 'image', url, name: 'Bakgrunnen min',
+                             caption: '🌌 Bakgrunnen min', audience: 'public' });
+      if (typeof App !== 'undefined') App.toast('📷 Bakgrunnen din er delt i fellesskapet!', 'success');
+      const panel = document.getElementById('bg-picker-panel'); if (panel) panel.remove();
+      if (typeof Router !== 'undefined') Router.go('/community');
+    } catch (e) {
+      if (typeof App !== 'undefined') App.toast('Kunne ikke dele: ' + e.message, 'error');
+    } finally {
+      if (btn) { if (btn.dataset.html) btn.innerHTML = btn.dataset.html; btn.style.pointerEvents = ''; }
+    }
+  }
+
+  // Lukk velgeren og gå til fellesskaps-veggen.
+  function openCommunity() {
+    const panel = document.getElementById('bg-picker-panel'); if (panel) panel.remove();
+    if (typeof Router !== 'undefined') Router.go('/community');
+  }
+
+  // Fjern det opplastede bildet og gå tilbake til standard-bakgrunnen.
+  async function resetBackground() {
+    try { await DB.delete('media', BG_ID); } catch {}
+    clearInterval(_slideTimer);
+    _startDefaultSlideshow();
+    if (typeof App !== 'undefined') App.toast('Bakgrunn tilbakestilt', 'success', 2000);
+  }
+
+  return { init, uploadImage, openPicker, setEffect, setParticleStyle, setUfoSize,
+           postBackground, openCommunity, resetBackground };
 })();

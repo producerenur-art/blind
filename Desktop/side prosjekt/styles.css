@@ -1568,15 +1568,32 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 .music-item:hover { background: var(--surface2); border-color: var(--border2); }
 .music-item.playing { border-color: var(--accent); background: rgba(124,58,237,0.1); }
 .music-thumb {
-  width: 44px; height: 44px;
+  position: relative;
+  width: 56px; height: 56px;
   border-radius: 8px;
   background: var(--accentG);
+  background-size: cover; background-position: center;
   display: flex; align-items: center; justify-content: center;
   font-size: 1.2rem;
   flex-shrink: 0;
   overflow: hidden;
 }
 .music-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.music-thumb-fallback { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.music-thumb.has-cover .music-thumb-fallback { display: none; }
+/* Play-knapp-overlegg over coveret — alltid synlig når det finnes et cover,
+   ellers vist ved hover, så det alltid er tydelig at sporet kan spilles av. */
+.music-thumb-play {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.38); color: #fff;
+  opacity: 0; transition: opacity var(--trans);
+  pointer-events: none;
+}
+.music-thumb-play svg { width: 22px; height: 22px; }
+.music-thumb:hover .music-thumb-play,
+.music-thumb.has-cover .music-thumb-play { opacity: 1; }
+.music-thumb.has-cover:hover .music-thumb-play { background: rgba(0,0,0,0.5); }
 .music-meta { flex: 1; min-width: 0; }
 .music-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .music-artist { color: var(--text2); font-size: 0.8rem; }
