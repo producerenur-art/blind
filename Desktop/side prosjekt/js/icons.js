@@ -162,7 +162,7 @@
     '🍄':'sparkles','🍎':'circle','🎉':'party','🎊':'party','🎐':'sparkles','🎓':'graduation','🎙':'mic',
     '🎚':'sliders','🎛':'sliders','🎟':'ticket','🎡':'sparkles','🎤':'mic','🎧':'headphones','🎨':'palette',
     '🎪':'star','🎬':'film','🎭':'film','🎲':'dice','🎵':'music','🎶':'music','🎷':'music','🎸':'music',
-    '🎹':'music','🎺':'music','🎼':'music','🏔':'mountain','🏖':'sun','🏠':'home','🏪':'store','🏭':'factory',
+    '🎹':'music','🎺':'music','🎼':'music','🏔':'mountain','🏖':'sun','🏛':'map-pin','🏠':'home','🏪':'store','🏭':'factory',
     '🏷':'tag','👁':'eye','👂':'eye','👋':'smile','👏':'sparkles','👑':'crown','👤':'user','👥':'users',
     '👾':'rocket','👽':'rocket','💀':'skull','💊':'pill','💛':'heart','💜':'heart','💚':'heart','💙':'heart',
     '💡':'lightbulb','💧':'droplet','💫':'sparkles','💬':'message','💳':'credit-card','💻':'laptop','💾':'save',

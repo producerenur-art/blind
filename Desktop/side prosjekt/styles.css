@@ -7576,6 +7576,26 @@ body { top: 0 !important; }
   color: #fff; background: var(--accent); border-color: var(--accent);
 }
 .world-link--play:hover { background: var(--accent2, #f472b6); border-color: var(--accent2, #f472b6); color: #fff; }
+.world-events { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.2rem; }
+.world-events-title {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text2); margin-bottom: 0.05rem;
+}
+.world-events-title svg { width: 13px; height: 13px; color: var(--accent); }
+.world-event {
+  display: flex; align-items: center; gap: 0.5rem; text-decoration: none;
+  color: var(--text2); background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border); border-radius: 10px; padding: 0.4rem 0.6rem;
+  transition: background 0.16s, color 0.16s, border-color 0.16s, transform 0.12s;
+}
+.world-event:hover { color: var(--text1); background: rgba(124,58,237,0.16); border-color: rgba(124,58,237,0.45); transform: translateY(-1px); }
+.world-event-date {
+  flex-shrink: 0; font-size: 0.68rem; font-weight: 700; color: var(--accent);
+  font-family: 'Space Grotesk', sans-serif;
+}
+.world-event-name { flex: 1; font-size: 0.74rem; line-height: 1.3; }
+.world-event svg { width: 12px; height: 12px; flex-shrink: 0; }
 .world-hero-stats {
   display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1rem;
 }
@@ -8263,6 +8283,66 @@ body { top: 0 !important; }
   .ai-asst { width: calc(100vw - 24px); height: 70vh; }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   STEMME-LAG — mikrofon (snakk inn) + AI les opp + opptak
+   Delt verktøylinje for Core (#ai-asst) og A1-chat (.a1-chat).
+   Mikrofon/opptak: GRØN = på/aktiv, RAUD = av.
+══════════════════════════════════════════════════════════════ */
+.voice-tb {
+  display: flex; align-items: center; gap: 0.35rem;
+  padding: 0.4rem 0.6rem;
+  border-top: 1px solid var(--border2);
+  background: rgba(0,0,0,0.18);
+  flex-wrap: wrap;
+}
+.voice-lang {
+  max-width: 120px; flex: 0 1 auto;
+  background: rgba(255,255,255,0.06); color: #fff;
+  border: 1px solid var(--border2); border-radius: 8px;
+  font-size: 0.7rem; padding: 3px 5px; cursor: pointer; outline: none;
+}
+.voice-lang option { color: #111; }
+.voice-btn {
+  width: 32px; height: 32px; flex: none; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.15s, color 0.15s, box-shadow 0.15s, border-color 0.15s;
+  color: var(--text2);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border2);
+}
+.voice-btn:hover { color: #fff; background: rgba(255,255,255,0.14); }
+.voice-btn .icon { width: 17px; height: 17px; }
+.voice-btn.hidden { display: none; }
+
+/* Mikrofon: raud i ro, GRØN + pulserande medan den lyttar */
+.voice-mic { color: #f87171; border-color: rgba(248,113,113,0.45); }
+.voice-mic.is-listening {
+  color: #fff; background: #16a34a; border-color: #16a34a;
+  box-shadow: 0 0 0 0 rgba(34,197,94,0.6);
+  animation: voicePulse 1.2s infinite;
+}
+/* Opptak: raud-tint i ro, GRØN + pulserande medan det tek opp */
+.voice-rec { color: #f87171; border-color: rgba(248,113,113,0.45); }
+.voice-rec.is-on {
+  color: #fff; background: #16a34a; border-color: #16a34a;
+  box-shadow: 0 0 0 0 rgba(34,197,94,0.6);
+  animation: voicePulse 1.4s infinite;
+}
+/* Høgtalar: lyser opp når AI les opp svara */
+.voice-spk.is-on { color: #fff; background: rgba(124,58,237,0.55); border-color: rgba(124,58,237,0.7); }
+.voice-dl { color: #93c5fd; border-color: rgba(147,197,253,0.4); }
+.voice-status {
+  margin-left: auto; font-size: 0.68rem; color: var(--text2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50%;
+}
+@keyframes voicePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
+  70%  { box-shadow: 0 0 0 7px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+/* Skjul verktøylinja når A1-chatten er minimert */
+.a1-chat.is-collapsed .voice-tb { display: none; }
+
 /* ═══ About SoundCore side tab + extra brand links ═══ */
 .social-link[title="iTunes"]   { color:#ff5e9c; border-color: rgba(255,94,156,0.35); }
 .social-link[title="iTunes"]:hover   { background: linear-gradient(135deg,#fa57c1,#b14dff,#5a6bff); color:#fff; border-color: transparent; }
@@ -8918,3 +8998,86 @@ a.community-link .icon { width: 15px; height: 15px; }
 @media (max-width: 520px) {
   .radio-dock { right: 10px; bottom: 84px; width: 200px; }
 }
+
+/* ── RadioSearch — global web-radio search (World + Shows pages) ──────────── */
+.rsx { width: 100%; }
+
+.rsx-box {
+  display: flex; align-items: center; gap: 0.6rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 0.7rem 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.rsx-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.18);
+}
+.rsx-icon { color: var(--text3); display: flex; flex-shrink: 0; }
+.rsx-input {
+  flex: 1; min-width: 0; background: none; border: none; outline: none;
+  color: var(--text); font-size: 0.95rem;
+}
+.rsx-input::placeholder { color: var(--text3); }
+.rsx-clear {
+  background: none; border: none; color: var(--text3); cursor: pointer;
+  display: flex; padding: 2px; border-radius: 6px;
+}
+.rsx-clear:hover { color: var(--text); background: var(--surface2); }
+
+.rsx-genres { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.8rem; }
+.rsx-genre {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text2); border-radius: 999px;
+  padding: 0.4rem 0.85rem; font-size: 0.82rem; cursor: pointer;
+  white-space: nowrap; transition: all 0.15s;
+}
+.rsx-genre:hover { border-color: var(--accent); color: var(--text); }
+.rsx-genre.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-color: transparent; color: #fff;
+}
+
+.rsx-results {
+  margin-top: 1rem; border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; background: var(--bg);
+}
+.rsx-results.hidden { display: none; }
+.rsx-loading, .rsx-empty {
+  padding: 1.1rem; text-align: center; color: var(--text3); font-size: 0.9rem;
+}
+.rsx-count {
+  padding: 0.55rem 1rem; font-size: 0.76rem; color: var(--text3);
+  letter-spacing: 0.04em; text-transform: uppercase;
+  border-bottom: 1px solid var(--border); background: var(--surface);
+}
+.rsx-item {
+  display: flex; align-items: center; gap: 0.8rem;
+  padding: 0.7rem 1rem; cursor: pointer;
+  border-bottom: 1px solid var(--border); transition: background 0.15s;
+}
+.rsx-item:last-child { border-bottom: none; }
+.rsx-item:hover { background: var(--surface); }
+.rsx-item-fav {
+  width: 34px; height: 34px; flex-shrink: 0; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface2); font-size: 1.1rem; overflow: hidden;
+}
+.rsx-item-fav img { width: 100%; height: 100%; object-fit: cover; }
+.rsx-item-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.rsx-item-name {
+  font-weight: 600; color: var(--text); font-size: 0.92rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rsx-item-meta {
+  font-size: 0.78rem; color: var(--text3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rsx-item-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.rsx-play, .rsx-save {
+  width: 34px; height: 34px; border-radius: 8px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text2); font-size: 1rem; transition: all 0.15s;
+}
+.rsx-play:hover { background: var(--accent); border-color: transparent; color: #fff; }
+.rsx-save:hover { background: var(--surface); color: var(--text); }

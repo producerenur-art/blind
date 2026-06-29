@@ -84,6 +84,25 @@ const World = (() => {
     },
   ];
 
+  // ── Klubbar & scener ──────────────────────────────────────────────────
+  // `events` = kommande planar (vert vist som «Planar framover» med RA-lenkjer).
+  const CLUBS = [
+    {
+      emoji: '🏛️', name: 'IT Athens', loc: 'Exarcheia, Athens, Greece 🇬🇷',
+      grad: 'linear-gradient(135deg,#0a0a14,#1a1030,#2a0d3e)',
+      theme: '2 rom i Solomou 30 & Mpotasi 9, midt i Exarcheia — ein av Athens mest aktive underground-klubbar med 58 arrangement i 2026. Residentar: Plagger, MOSHBEAT, TYPEO, Human Cruelty & Brazi.',
+      tags: ['Underground', '2 Rooms', 'Athens', 'Live'],
+      events: [
+        { name: 'Community Night III', date: '3. jul 2026', url: 'https://ra.co/events/2477945' },
+        { name: 'IT Athens Closing Season — TYPEO · MOSHBEAT · Plagger', date: '11. jul 2026', url: 'https://ra.co/events/2477950' },
+      ],
+      links: [
+        { label: 'RA-profil', kind: 'web', url: 'https://ra.co/clubs/212119' },
+        { label: 'Instagram', kind: 'web', url: 'https://www.instagram.com/itathensexarcheia/' },
+      ],
+    },
+  ];
+
   // ── Record labels ─────────────────────────────────────────────────────
   const LABELS = [
     {
@@ -263,6 +282,19 @@ const World = (() => {
     }).join('')}</div>`;
   }
 
+  function eventsRow(events) {
+    if (!events || !events.length) return '';
+    return `<div class="world-events">
+      <div class="world-events-title">${Icon('calendar')} Planar framover</div>
+      ${events.map(e => `
+        <a class="world-event" href="${e.url}" target="_blank" rel="noopener noreferrer">
+          <span class="world-event-date">${esc(e.date)}</span>
+          <span class="world-event-name">${esc(e.name)}</span>
+          ${Icon('arrow-up-right')}
+        </a>`).join('')}
+    </div>`;
+  }
+
   function card(c) {
     return `
       <div class="shows-festival-card world-card">
@@ -275,6 +307,7 @@ const World = (() => {
           <div class="shows-festival-loc">${Icon('map-pin')} ${esc(c.loc)}</div>
           ${c.theme ? `<div class="shows-festival-theme">${esc(c.theme)}</div>` : ''}
           ${c.tags ? `<div class="shows-festival-tags">${c.tags.map(t => `<span class="shows-festival-tag">${esc(t)}</span>`).join('')}</div>` : ''}
+          ${eventsRow(c.events)}
           ${linkRow(c.links)}
         </div>
       </div>`;
@@ -300,6 +333,7 @@ const World = (() => {
           <div class="shows-hero-live">
             <div class="world-hero-stats">
               <div class="world-stat"><span>${FESTIVALS.length}</span> festivalar</div>
+              <div class="world-stat"><span>${CLUBS.length}</span> klubbar</div>
               <div class="world-stat"><span>${LABELS.length}</span> plateselskap</div>
               <div class="world-stat"><span>${ARTISTS.length}</span> artistar</div>
               <div class="world-stat"><span>${RADIOS.length}</span> radioar</div>
@@ -315,6 +349,15 @@ const World = (() => {
             <span class="text-muted text-sm">Immersive scener · visionær kunst · campingkultur</span>
           </div>
           ${grid(FESTIVALS)}
+        </div>
+
+        <!-- CLUBS -->
+        <div class="section" style="max-width:1100px">
+          <div class="section-header">
+            <div class="section-title">${Icon('map-pin')} Klubbar & scener</div>
+            <span class="text-muted text-sm">Underground-klubbar verda rundt — med planar framover frå Resident Advisor</span>
+          </div>
+          ${grid(CLUBS)}
         </div>
 
         <!-- LABELS -->
@@ -335,10 +378,19 @@ const World = (() => {
           ${grid(ARTISTS)}
         </div>
 
+        <!-- RADIO SEARCH — every web radio on the planet -->
+        <div class="section" style="max-width:1100px">
+          <div class="section-header">
+            <div class="section-title">${Icon('search')} Søk alle verdas web-radioar</div>
+            <span class="text-muted text-sm">Psytrance · EDM · House · Chillout · Psychill · Progressive · Downtempo · Ambient · Dark Drone — og alt anna</span>
+          </div>
+          ${RadioSearch.widget()}
+        </div>
+
         <!-- RADIOS -->
         <div class="section" style="max-width:1100px">
           <div class="section-header">
-            <div class="section-title">${Icon('radio')} Web-radioar verda rundt</div>
+            <div class="section-title">${Icon('radio')} Utvalde web-radioar</div>
             <span class="text-muted text-sm">Klikk ${Icon('play')} «Spill her» for å lytte direkte i SoundCore</span>
           </div>
           ${grid(RADIOS)}
