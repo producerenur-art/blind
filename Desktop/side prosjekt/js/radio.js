@@ -844,8 +844,11 @@ const Radio = (() => {
     if (!canvas) return;
     const wrap = document.getElementById('radio-vis-wrap');
     if (!wrap) return;
-    canvas.width  = wrap.clientWidth;
-    canvas.height = wrap.clientHeight;
+    // Tegn i enhets-piksler (Retina-skarpt), maks 2× for ytelse. Alle tegne-
+    // funksjonene bruker canvas.width/height, så de skalerer skarpt automatisk.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width  = Math.round(wrap.clientWidth  * dpr);
+    canvas.height = Math.round(wrap.clientHeight * dpr);
     visCtx = canvas.getContext('2d');
   }
 
