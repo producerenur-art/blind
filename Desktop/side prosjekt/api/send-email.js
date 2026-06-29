@@ -47,7 +47,8 @@ function activationHtml(name, url, siteUrl) {
     </div>
     <div style="padding:2rem;color:#e2e8f0">
       <h2 style="color:#fff;margin:0 0 1rem;font-size:1.25rem">Hei, ${escHtml(name)}! 👋</h2>
-      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1.5rem">Takk for at du registrerte deg på Sound Core! Klikk på knappen nedenfor for å aktivere kontoen din og komme i gang:</p>
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1rem">Takk for at du registrerte deg på Sound Core! Klikk på knappen nedenfor for å aktivere kontoen din og komme i gang:</p>
+      <p style="color:#7c8aa5;line-height:1.6;margin:0 0 1.5rem;font-size:0.9rem"><em>In English:</em> Welcome to Sound Core — a music &amp; audio social platform where you can upload DJ mixes, stream genre-based radio, message friends, and buy &amp; sell tracks. Just tap the button above to activate your account and start exploring.</p>
       <div style="text-align:center;margin:2rem 0">
         <a href="${url}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;text-decoration:none;padding:0.875rem 2rem;border-radius:8px;font-weight:700;font-size:1rem">Aktiver kontoen min</a>
       </div>
@@ -78,8 +79,8 @@ function activationHtml(name, url, siteUrl) {
 
       <div style="border-top:1px solid rgba(255,255,255,0.08);margin:1.75rem 0 1.5rem"></div>
 
-      <h3 style="color:#fff;margin:0 0 0.5rem;font-size:1.05rem">❓ Trenger du hjelp?</h3>
-      <p style="color:#94a3b8;line-height:1.6;margin:0">Kontakt oss på <a href="mailto:producerenur@gmail.com" style="color:#c4b5fd;font-weight:600">producerenur@gmail.com</a> — vi svarer så fort vi kan.</p>
+      <h3 style="color:#fff;margin:0 0 0.5rem;font-size:1.05rem">❓ Trenger du hjelp? / Need help?</h3>
+      <p style="color:#94a3b8;line-height:1.6;margin:0">Kontakt oss på / Contact us at <a href="mailto:producerenur@gmail.com" style="color:#c4b5fd;font-weight:600">producerenur@gmail.com</a> — vi svarer så fort vi kan / we'll reply as soon as we can.</p>
     </div>
     <div style="padding:1.5rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
       <p style="color:#94a3b8;font-size:0.9rem;margin:0 0 0.35rem">Hilsen,<br><strong style="color:#fff">Sound Core</strong></p>
@@ -102,12 +103,18 @@ function resetHtml(name, url) {
     </div>
     <div style="padding:2rem;color:#e2e8f0">
       <h2 style="color:#fff;margin:0 0 1rem;font-size:1.25rem">Tilbakestill passord 🔑</h2>
-      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1.5rem">Hei ${escHtml(name)}! Vi mottok en forespørsel om å tilbakestille passordet ditt på Sound Core. Klikk på knappen nedenfor:</p>
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1rem">Hei ${escHtml(name)}! Vi mottok en forespørsel om å tilbakestille passordet ditt på Sound Core. Klikk på knappen nedenfor:</p>
+      <p style="color:#7c8aa5;line-height:1.6;margin:0 0 1.5rem;font-size:0.9rem"><em>In English:</em> We received a request to reset your Sound Core password. Tap the button below to choose a new one. The link is valid for 1 hour — if you didn't request this, you can safely ignore this email.</p>
       <div style="text-align:center;margin:2rem 0">
         <a href="${url}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;text-decoration:none;padding:0.875rem 2rem;border-radius:8px;font-weight:700;font-size:1rem">Sett nytt passord</a>
       </div>
       <p style="color:#64748b;font-size:0.85rem;line-height:1.5;margin:0 0 0.75rem">Knappen virker ikke? Kopier denne lenken:<br><a href="${url}" style="color:#7c3aed;word-break:break-all">${url}</a></p>
       <p style="color:#64748b;font-size:0.85rem;margin:0">Lenken er gyldig i 1 time. Hvis du ikke ba om tilbakestilling, kan du ignorere denne e-posten.</p>
+
+      <div style="border-top:1px solid rgba(255,255,255,0.08);margin:1.75rem 0 1.25rem"></div>
+
+      <h3 style="color:#fff;margin:0 0 0.5rem;font-size:1.05rem">❓ Trenger du hjelp? / Need help?</h3>
+      <p style="color:#94a3b8;line-height:1.6;margin:0">Kontakt oss på / Contact us at <a href="mailto:producerenur@gmail.com" style="color:#c4b5fd;font-weight:600">producerenur@gmail.com</a> — vi svarer så fort vi kan / we'll reply as soon as we can.</p>
     </div>
     <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
       <p style="color:#475569;font-size:0.75rem;margin:0">© ${new Date().getFullYear()} Sound Core</p>
