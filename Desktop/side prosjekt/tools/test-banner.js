@@ -132,31 +132,34 @@ function heroOf(html) { return html.split('profile-body')[0]; }
 
 // ── 1) renderView: bilde-knappene i hero-overlayet ──────────────────────────
 async function testRender() {
-  console.log('\nrenderView (js/profile.js) — bilde-knapper i hero');
+  console.log('\nrenderView (js/profile.js) — tom hero-overlay + bytt/slett bakgrunn i header');
 
-  // Eier → alle tre knappene alltid synlige (uavhengig av om banner finnes)
+  // Eier → tom hero-overlay, bytt/slett-bakgrunn flyttet opp til profil-headeren
   for (const [label, banner] of [['uten banner', null], ['med banner', 'bn_existing']]) {
-    const hero = heroOf(await renderHtml({ username: 'dj_test' }, baseUser({ bannerMediaId: banner })));
-    assert.ok(hero.includes('profile-hero-banner-actions'), `[${label}] eier får banner-handlingsfelt`);
-    assert.ok(hero.includes('Legg til bilde'), `[${label}] «Legg til bilde» synlig`);
-    assert.ok(hero.includes('Endre bilde'), `[${label}] «Endre bilde» synlig`);
-    assert.ok(hero.includes('Slett bilde'), `[${label}] «Slett bilde» synlig`);
-    assert.ok(hero.includes('id="profile-banner-input"'), `[${label}] skjult fil-input finnes`);
-    assert.ok(hero.includes("Profile.setBannerFromProfile(this,'dj_test')"), `[${label}] add/endre kaller setBannerFromProfile`);
-    assert.ok(hero.includes("Profile.deleteBanner('dj_test')"), `[${label}] slett kaller deleteBanner`);
-    ok(`eier ${label} → alle tre knappene + fil-input + riktige onclick`);
+    const html = await renderHtml({ username: 'dj_test' }, baseUser({ bannerMediaId: banner }));
+    const hero = heroOf(html);
+    // Hero-overlayet skal nå være tomt (ikke lenger klikkbart/handlingsfelt)
+    assert.ok(!hero.includes('profile-hero-banner-actions'), `[${label}] hero har ikke lenger handlingsfelt`);
+    assert.ok(!hero.includes('profile-hero-overlay--editable'), `[${label}] hero-overlay er ikke klikkbart`);
+    // Knappene ligger nå i profil-headeren (profile-body)
+    assert.ok(html.includes('Bytt bakgrunn'), `[${label}] «Bytt bakgrunn» synlig i header`);
+    assert.ok(html.includes('Slett bakgrunn'), `[${label}] «Slett bakgrunn» synlig i header`);
+    assert.ok(html.includes('id="profile-banner-input"'), `[${label}] skjult fil-input finnes`);
+    assert.ok(html.includes("Profile.setBannerFromProfile(this,'dj_test')"), `[${label}] bytt kaller setBannerFromProfile`);
+    assert.ok(html.includes("Profile.deleteBanner('dj_test')"), `[${label}] slett kaller deleteBanner`);
+    ok(`eier ${label} → tom hero-overlay + bytt/slett bakgrunn i header`);
   }
 
   // Ikke-eier → ingen banner-knapper
-  let hero = heroOf(await renderHtml({ username: 'someone_else' }, baseUser({ bannerMediaId: 'bn_existing' })));
-  assert.ok(!hero.includes('profile-hero-banner-actions'), 'fremmed ser ikke banner-handlingsfeltet');
-  assert.ok(!hero.includes('profile-banner-input') && !hero.includes('setBannerFromProfile') && !hero.includes('deleteBanner'), 'ingen banner-markører for fremmed');
-  ok('ikke-eier → ingen bilde-knapper (kun eier kan endre)');
+  let html = await renderHtml({ username: 'someone_else' }, baseUser({ bannerMediaId: 'bn_existing' }));
+  assert.ok(!html.includes('profile-banner-input') && !html.includes('setBannerFromProfile') && !html.includes('deleteBanner'), 'ingen banner-markører for fremmed');
+  assert.ok(!html.includes('Bytt bakgrunn') && !html.includes('Slett bakgrunn'), 'fremmed ser ikke bakgrunns-knappene');
+  ok('ikke-eier → ingen bakgrunns-knapper (kun eier kan endre)');
 
   // Utlogget → ingen banner-knapper
-  hero = heroOf(await renderHtml(null, baseUser({ bannerMediaId: 'bn_existing' })));
-  assert.ok(!hero.includes('profile-hero-banner-actions'), 'utlogget ser ikke banner-handlingsfeltet');
-  ok('utlogget → ingen bilde-knapper');
+  html = await renderHtml(null, baseUser({ bannerMediaId: 'bn_existing' }));
+  assert.ok(!html.includes('setBannerFromProfile') && !html.includes('deleteBanner'), 'utlogget ser ikke bakgrunns-knappene');
+  ok('utlogget → ingen bakgrunns-knapper');
 }
 
 // ── 2) setBannerFromProfile ─────────────────────────────────────────────────

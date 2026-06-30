@@ -408,14 +408,7 @@ const Profile = (() => {
         <!-- Hero -->
         <div class="profile-hero" style="${bannerUrl ? `background-image:url(${bannerUrl});background-size:cover;background-position:center;` : ''}">
           <div class="profile-hero-bg" style="${heroBgStyle}">${heroBgExtra}</div>
-          <div class="profile-hero-overlay${isOwner ? ' profile-hero-overlay--editable' : ''}"${isOwner ? ` onclick="document.getElementById('profile-banner-input').click()" title="Bytt bakgrunnsbilde"` : ''}>${isOwner ? `<span class="profile-hero-overlay-hint">${Icon('camera')} Bytt bakgrunnsbilde</span>` : ''}</div>
-          ${isOwner ? `<!-- Bakgrunnsbilde-handlinger (kun eier) — alltid alle tre synlige -->
-          <div class="profile-hero-banner-actions">
-            <input type="file" id="profile-banner-input" accept="image/*" style="display:none" onchange="Profile.setBannerFromProfile(this,'${username}')">
-            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-banner-input').click()" title="Legg til bakgrunnsbilde">${Icon('plus')} Legg til bilde</button>
-            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-banner-input').click()" title="Endre bakgrunnsbilde">${Icon('camera')} Endre bilde</button>
-            <button class="btn btn-ghost btn-sm" onclick="Profile.deleteBanner('${username}')" title="Slett bakgrunnsbilde">${Icon('trash')} Slett bilde</button>
-          </div>` : ''}
+          <div class="profile-hero-overlay"></div>
           ${current ? `<div class="profile-hero-actions">
             ${isOwner ? `<button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('edit')} Rediger profil</button>
             <span style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(0,0,0,0.4);color:#fff;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.15)">${profileVisibility === 'private' ? '🔒 Privat' : '🌐 Offentlig'}</span>` : ''}
@@ -438,6 +431,9 @@ const Profile = (() => {
             <div class="profile-actions">
               ${friendBtn}
               ${isOwner ? `
+                <input type="file" id="profile-banner-input" accept="image/*" style="display:none" onchange="Profile.setBannerFromProfile(this,'${username}')">
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-banner-input').click()" title="Bytt bakgrunnsbilde">${Icon('camera')} Bytt bakgrunn</button>
+                <button class="btn btn-ghost btn-sm" onclick="Profile.deleteBanner('${username}')" title="Slett bakgrunnsbilde">${Icon('trash')} Slett bakgrunn</button>
                 <button class="btn btn-sm ${profileVisibility === 'private' ? 'btn-primary' : 'btn-ghost'}" onclick="Profile.toggleProfileVisibility('${username}')" title="${profileVisibility === 'private' ? 'Gjør profilen offentlig' : 'Gjør profilen privat'}">${profileVisibility === 'private' ? '🔒 Kun meg' : '🌐 Offentlig'}</button>
                 <button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('settings')} Rediger</button>` : ''}
             </div>
