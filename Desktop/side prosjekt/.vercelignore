@@ -4,7 +4,6 @@ node_modules
 .env.*
 .DS_Store
 
-# Stripe-kjøpswebhook holdt ute av deploy inntil STRIPE_WEBHOOK_SECRET og et
-# Stripe-endepunkt mot /api/stripe-webhook er satt opp. Fjern linja under for å
-# aktivere automatisk kjøps-fullføring (registrering av kjøp i Supabase).
-api/stripe-webhook.js
+# Stripe-kjøpswebhook (api/stripe-webhook.js) deployes nå — automatisk
+# kjøps-fullføring + selger-status-synk. Krever STRIPE_WEBHOOK_SECRET i Vercel
+# (settes når Stripe-endepunktet mot /api/stripe-webhook er opprettet).
