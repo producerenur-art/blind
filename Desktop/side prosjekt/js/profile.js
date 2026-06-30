@@ -409,6 +409,13 @@ const Profile = (() => {
         <div class="profile-hero" style="${bannerUrl ? `background-image:url(${bannerUrl});background-size:cover;background-position:center;` : ''}">
           <div class="profile-hero-bg" style="${heroBgStyle}">${heroBgExtra}</div>
           <div class="profile-hero-overlay"></div>
+          ${isOwner ? `<div class="profile-hero-banner-actions">
+            <input type="file" id="profile-banner-input" accept="image/*" style="display:none" onchange="Profile.setBannerFromProfile(this,'${username}')">
+            ${user.bannerMediaId
+              ? `<button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-banner-input').click()" title="Endre bakgrunnsbilde">${Icon('camera')} Endre bilde</button>
+                 <button class="btn btn-ghost btn-sm" onclick="Profile.deleteBanner('${username}')" title="Slett bakgrunnsbilde">${Icon('trash')} Slett bilde</button>`
+              : `<button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-banner-input').click()" title="Legg til bakgrunnsbilde">${Icon('image')} Legg til bilde</button>`}
+          </div>` : ''}
           ${current ? `<div class="profile-hero-actions">
             ${isOwner ? `<button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('edit')} Rediger profil</button>
             <span style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(0,0,0,0.4);color:#fff;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.15)">${profileVisibility === 'private' ? '🔒 Privat' : '🌐 Offentlig'}</span>` : ''}
@@ -437,12 +444,11 @@ const Profile = (() => {
           </div>
 
           ${isOwner ? `
-          <!-- Profilbilde-handlinger (kun eier) -->
+          <!-- Profilbilde-handlinger (kun eier) — alltid alle tre synlige -->
           <div class="profile-avatar-actions" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem">
-            ${user.avatarMediaId
-              ? `<button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-avatar-input').click()">${Icon('camera')} Endre bilde</button>
-                 <button class="btn btn-ghost btn-sm" onclick="Profile.deleteAvatar('${username}')">${Icon('trash')} Slett bilde</button>`
-              : `<button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-avatar-input').click()">${Icon('plus')} Legg til bilde</button>`}
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-avatar-input').click()">${Icon('plus')} Legg til bilde</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-avatar-input').click()">${Icon('camera')} Endre bilde</button>
+            <button class="btn btn-ghost btn-sm" onclick="Profile.deleteAvatar('${username}')">${Icon('trash')} Slett bilde</button>
           </div>` : ''}
 
           <!-- Stats -->
@@ -2315,12 +2321,45 @@ const Profile = (() => {
     const current = Auth.current();
     if (!current || current.username !== username) return;
     const user = Auth.getUser(username);
-    if (!user || !user.avatarMediaId) return;
+    if (!user || !user.avatarMediaId) { App.toast('Du har ikke noe profilbilde å slette', 'info'); return; }
     if (!confirm('Vil du slette profilbildet?')) return;
     DB.invalidateBlobCache('media', user.avatarMediaId);
     await DB.delete('media', user.avatarMediaId).catch(() => {});
     Auth.updateUser(username, { avatarMediaId: null });
     App.toast('Profilbilde slettet', 'success');
+    renderView(username);
+  }
+
+  // Sett/endre bakgrunnsbildet (banneren) direkte fra profilen.
+  async function setBannerFromProfile(input, username) {
+    const file = input.files[0];
+    if (!file) return;
+    const current = Auth.current();
+    if (!current || current.username !== username) return;
+    const user = Auth.getUser(username);
+    // Rydd opp gammelt banner så vi ikke samler foreldreløse blober.
+    if (user && user.bannerMediaId) {
+      DB.invalidateBlobCache('media', user.bannerMediaId);
+      await DB.delete('media', user.bannerMediaId).catch(() => {});
+    }
+    const id = `bn_${Date.now()}`;
+    await DB.storeFile('media', id, file);
+    Auth.updateUser(username, { bannerMediaId: id });
+    App.toast('Bakgrunnsbilde oppdatert!', 'success');
+    renderView(username);
+  }
+
+  // Slett bakgrunnsbildet — faller tilbake til standard-bakgrunn.
+  async function deleteBanner(username) {
+    const current = Auth.current();
+    if (!current || current.username !== username) return;
+    const user = Auth.getUser(username);
+    if (!user || !user.bannerMediaId) return;
+    if (!confirm('Vil du slette bakgrunnsbildet?')) return;
+    DB.invalidateBlobCache('media', user.bannerMediaId);
+    await DB.delete('media', user.bannerMediaId).catch(() => {});
+    Auth.updateUser(username, { bannerMediaId: null });
+    App.toast('Bakgrunnsbilde slettet', 'success');
     renderView(username);
   }
 
@@ -3814,6 +3853,7 @@ const Profile = (() => {
     saveProfile, livePreview, collectTheme,
     uploadMedia, uploadMusic, uploadMusicCover, uploadSaleCover, uploadAvatar, uploadBanner,
     setAvatarFromProfile, deleteAvatar,
+    setBannerFromProfile, deleteBanner,
     addMediaLink, toggleMediaVisibility,
     shareTrackToCommunity, shareMediaToCommunity,
     toggleTrackVisibility,
