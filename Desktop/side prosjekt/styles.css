@@ -691,7 +691,10 @@ body[data-bg-effect="cosmos"] #bg-vignette {
 }
 #main-nav        { z-index: var(--z-nav); }
 #player-bar      { z-index: var(--z-player); }
-#modal-overlay   { z-index: var(--z-modal); }
+/* position:fixed må gjenopprettes her — ID-regelen over setter position:relative,
+   som (høyere spesifisitet) ellers slår .modal-overlay{position:fixed} og dytter
+   overlegget ned i sideflyten, så modalen havner under skjermen og ikke kan dras. */
+#modal-overlay   { z-index: var(--z-modal); position: fixed; }
 #toast-container { z-index: var(--z-toast); }
 #bg-picker-panel { z-index: var(--z-panel); position: fixed; }
 
