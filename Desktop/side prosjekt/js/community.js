@@ -10,8 +10,10 @@ const Community = (() => {
   let _subbed = false;
   let _profileUser = null;
   let _filter = 'alt';
+  let _section = 'vegg';        // topp-fane: 'vegg' | 'musikk' | 'video'
   let _pendingImage = null;     // { url, name } — bilde vedlagt composeren
   let _publicOnly = false;      // true på /community-veggen: alle innlegg blir offentlige
+  let _zoom = 1;                // visnings-zoom for Community-veggen (0.6–2.0)
   const _sessionStart = Date.now();
 
   const esc = (s) => (window.SC ? SC.esc(s) : String(s || ''));
@@ -419,23 +421,192 @@ const Community = (() => {
     if (window.LinkPreview) LinkPreview.hydrate(list);
   }
 
+  // ── Topp-faner: Vegg · Last opp musikk · Last opp video ───────────────
+  function sectionTabsHtml() {
+    const tabs = [['vegg', 'users', 'Vegg'], ['musikk', 'music', 'Last opp musikk'], ['video', 'film', 'Last opp video']];
+    return `<div class="community-sections">${tabs.map(([k, ic, l]) =>
+      `<button class="community-section-btn ${_section === k ? 'active' : ''}" data-s="${k}" onclick="Community.setSection('${k}')">${Icon(ic)} ${l}</button>`).join('')}</div>`;
+  }
+
+  function setSection(s) {
+    _section = s;
+    document.querySelectorAll('.community-section-btn').forEach(b => b.classList.toggle('active', b.dataset.s === s));
+    renderSection();
+  }
+
+  function loginPromptHtml(what) {
+    return `<div class="community-uploader" style="text-align:center">
+      <p style="color:var(--text2);margin:0 0 1rem">Du må være innlogget for å ${what}.</p>
+      <a href="#/login" class="btn btn-primary" style="display:inline-flex">${Icon('users')} Logg inn</a>
+    </div>`;
+  }
+
+  function uploaderHtml(kind) {
+    const isAudio = kind === 'audio';
+    const accept  = isAudio ? 'audio/*' : 'video/*';
+    const icon    = isAudio ? 'music' : 'film';
+    const head    = isAudio ? 'Last opp musikk' : 'Last opp video';
+    const sub     = isAudio
+      ? 'Velg en lydfil — den deles til veggen og legges på profilen din.'
+      : 'Velg en videofil — den deles til veggen og legges på profilen din.';
+    const hint    = isAudio ? 'Klikk for å velge en lydfil (mp3, wav, m4a …)' : 'Klikk for å velge en videofil (mp4, mov, webm …)';
+    const fn      = isAudio ? 'Community.uploadMusic()' : 'Community.uploadVideo()';
+    return `
+      <div class="community-uploader">
+        <div class="community-uploader-head">${Icon(icon)} ${head}</div>
+        <p class="community-uploader-sub">${sub}</p>
+        <label class="community-uploader-drop" for="cu-${kind}-file">
+          ${Icon(icon)}
+          <span id="cu-${kind}-name">${hint}</span>
+          <input type="file" id="cu-${kind}-file" accept="${accept}" style="display:none" onchange="Community.pickedFile('${kind}', this)">
+        </label>
+        <input type="text" id="cu-${kind}-title" class="community-uploader-input" placeholder="Tittel (valgfritt)" maxlength="120">
+        <button class="btn btn-primary w-full" onclick="${fn}">${Icon('send')} Last opp og del</button>
+        <div id="cu-${kind}-status" class="community-uploader-status"></div>
+      </div>`;
+  }
+
+  function pickedFile(kind, input) {
+    const f = input.files && input.files[0];
+    const el = document.getElementById('cu-' + kind + '-name');
+    if (el && f) el.textContent = f.name;
+  }
+
+  // Last opp til delt skylagring (Supabase) når den er satt opp, ellers signaliser
+  // lokal lagring så kalleren kan legge fila i IndexedDB (DB.*) i stedet.
+  async function _uploadToStorage(file, prefix) {
+    const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
+    if (useCloud) {
+      try { const res = await SC_Storage.upload(file, { prefix }); return { url: res.url, path: res.path, shared: true }; }
+      catch (e) { if (e && e.message !== 'not-configured') console.warn('[Community] skylagring feilet:', e.message); }
+    }
+    return { url: null, path: null, shared: false };
+  }
+
+  async function uploadMusic() {
+    const me = Auth.current();
+    if (!me) { if (typeof Router !== 'undefined') Router.go('/login'); return; }
+    const input  = document.getElementById('cu-audio-file');
+    const status = document.getElementById('cu-audio-status');
+    const titleEl = document.getElementById('cu-audio-title');
+    const file = input && input.files && input.files[0];
+    if (!file) { if (typeof App !== 'undefined') App.toast('Velg en lydfil først.', 'info'); return; }
+    if (!/^audio\//.test(file.type)) { if (typeof App !== 'undefined') App.toast('Det der ser ikke ut som en lydfil.', 'error'); return; }
+    const title = (titleEl && titleEl.value.trim()) || file.name.replace(/\.[^.]+$/, '');
+    if (status) status.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:2px"></span> Laster opp…`;
+    try {
+      const id = `mus_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const up = await _uploadToStorage(file, 'shared-audio');
+      const meta = {
+        name: title, artist: me.displayName || me.username, visibility: 'public',
+        mime: file.type, fileSize: file.size, createdAt: Date.now(),
+        audioUrl: up.url, storagePath: up.path, source: 'community',
+      };
+      if (up.shared) await DB.put('music', { id, ...meta });
+      else           await DB.storeFile('music', id, file, meta);
+      me.musicIds = [...(me.musicIds || []), id];
+      Auth.updateUser(me.username, { musicIds: me.musicIds });
+      if (up.shared) shareMedia({ kind: 'audio', name: title, url: up.url, sourceId: id, audience: 'public' });
+      if (window.Notify) Notify.notifyFriends(me, { type: 'upload', text: 'lastet opp ny musikk', link: '#/community' });
+      if (typeof App !== 'undefined') App.toast(up.shared ? '🎵 Musikk lastet opp og delt!' : '🎵 Lagret lokalt på denne enheten.', 'success');
+      setSection('vegg');
+    } catch (e) {
+      if (status) status.innerHTML = `<span style="color:var(--danger,#f87171)">Opplasting feilet: ${esc(e.message || 'ukjent feil')}</span>`;
+    }
+  }
+
+  async function uploadVideo() {
+    const me = Auth.current();
+    if (!me) { if (typeof Router !== 'undefined') Router.go('/login'); return; }
+    const input  = document.getElementById('cu-video-file');
+    const status = document.getElementById('cu-video-status');
+    const titleEl = document.getElementById('cu-video-title');
+    const file = input && input.files && input.files[0];
+    if (!file) { if (typeof App !== 'undefined') App.toast('Velg en videofil først.', 'info'); return; }
+    if (!/^video\//.test(file.type)) { if (typeof App !== 'undefined') App.toast('Det der ser ikke ut som en videofil.', 'error'); return; }
+    const title = (titleEl && titleEl.value.trim()) || file.name.replace(/\.[^.]+$/, '');
+    if (status) status.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:2px"></span> Laster opp…`;
+    try {
+      const id = `m_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const up = await _uploadToStorage(file, 'video');
+      const meta = {
+        kind: 'file', type: file.type, name: title, visibility: 'public',
+        mediaUrl: up.url, storagePath: up.path, fileSize: file.size, createdAt: Date.now(),
+      };
+      if (up.shared) await DB.put('media', { id, ...meta });
+      else           await DB.storeFile('media', id, file, meta);
+      me.mediaIds = [...(me.mediaIds || []), id];
+      Auth.updateUser(me.username, { mediaIds: me.mediaIds });
+      if (up.shared) shareMedia({ kind: 'video', name: title, url: up.url, sourceId: id, audience: 'public' });
+      if (window.Notify) Notify.notifyFriends(me, { type: 'upload', text: 'lastet opp en ny video', link: '#/community' });
+      if (typeof App !== 'undefined') App.toast(up.shared ? '🎬 Video lastet opp og delt!' : '🎬 Lagret lokalt på denne enheten.', 'success');
+      setSection('vegg');
+    } catch (e) {
+      if (status) status.innerHTML = `<span style="color:var(--danger,#f87171)">Opplasting feilet: ${esc(e.message || 'ukjent feil')}</span>`;
+    }
+  }
+
   // ── Visninger ─────────────────────────────────────────────────────────
+  // Fyller seksjons-kroppen ut fra valgt topp-fane (uten å bygge om hele siden).
+  function renderSection() {
+    const body = document.getElementById('community-section-body'); if (!body) return;
+    const me = Auth.current();
+    if (_section === 'musikk') { body.innerHTML = me ? uploaderHtml('audio') : loginPromptHtml('laste opp og dele musikk'); return; }
+    if (_section === 'video')  { body.innerHTML = me ? uploaderHtml('video') : loginPromptHtml('laste opp og dele video'); return; }
+    // 'vegg' — komponer + filter + feed (som før)
+    body.innerHTML = `
+      ${me ? composerHtml() : `<div class="community-login"><a href="#/login">Logg inn</a> for å dele noe med fellesskapet.</div>`}
+      ${filterTabsHtml()}
+      <div id="community-feed-list" class="community-feed"></div>`;
+    renderFeedList();
+  }
+
+  // ── Zoom ──────────────────────────────────────────────────────────────
+  // Skalerer hele Community-veggen. Knappene ligger fast i hjørnene (utenfor
+  // .community-wrap, så de zoomer ikke med innholdet).
+  function applyZoom() {
+    const wrap = document.querySelector('.community-wrap');
+    if (!wrap) return;
+    wrap.style.transformOrigin = 'top center';
+    wrap.style.transform = `scale(${_zoom})`;
+    const lbl = document.getElementById('community-zoom-lvl');
+    if (lbl) lbl.textContent = Math.round(_zoom * 100) + '%';
+  }
+
+  function zoom(delta) {
+    _zoom = Math.min(2, Math.max(0.6, +(_zoom + delta).toFixed(2)));
+    applyZoom();
+  }
+
+  function zoomReset() { _zoom = 1; applyZoom(); }
+
+  function zoomControlsHtml() {
+    return `
+      <div class="community-zoom community-zoom-out" role="group" aria-label="Zoom ut">
+        <button type="button" class="community-zoom-btn" onclick="Community.zoom(-0.1)" title="Zoom ut" aria-label="Zoom ut">${Icon('minus')}</button>
+      </div>
+      <button type="button" id="community-zoom-lvl" class="community-zoom-lvl" onclick="Community.zoomReset()" title="Tilbakestill zoom (100 %)">100%</button>
+      <div class="community-zoom community-zoom-in" role="group" aria-label="Zoom inn">
+        <button type="button" class="community-zoom-btn" onclick="Community.zoom(0.1)" title="Zoom inn" aria-label="Zoom inn">${Icon('plus')}</button>
+      </div>`;
+  }
+
   function render() {
     subscribe();
     _publicOnly = true;          // Community-veggen: alt synlig for alle innloggede
     const app = document.getElementById('app'); if (!app) return;
-    const me = Auth.current();
     app.innerHTML = `
       <div class="community-wrap">
         <div class="community-head">
           <h1>${Icon('users')} Community</h1>
           <p>Det som skjer i SoundCore akkurat nå — musikk, video og folk, vegg til vegg.</p>
         </div>
-        ${me ? composerHtml() : `<div class="community-login"><a href="#/login">Logg inn</a> for å dele noe med fellesskapet.</div>`}
-        ${filterTabsHtml()}
-        <div id="community-feed-list" class="community-feed"></div>
-      </div>`;
-    renderFeedList();
+        ${sectionTabsHtml()}
+        <div id="community-section-body"></div>
+      </div>
+      ${zoomControlsHtml()}`;
+    renderSection();
+    applyZoom();                 // gjenopprett gjeldende zoom-nivå
   }
 
   function renderProfilePosts(username, isOwner) {
@@ -454,6 +625,8 @@ const Community = (() => {
     editPost, saveEdit, cancelEdit,
     shareMedia, unshareMedia, isShared, autoShareOn, setAutoShare, setFilter,
     addImage, clearImage, visiblePosts, postCardHtml,
+    setSection, pickedFile, uploadMusic, uploadVideo,
+    zoom, zoomReset,
   };
 })();
 window.Community = Community;
