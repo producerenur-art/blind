@@ -10,7 +10,7 @@
 <script src="../js/livebroadcast.js?v=20260629-toolgate"></script>
 <!-- Auth + LiveMix lastes for booking-gaten (samme regel som i appen) -->
 <script src="../js/auth.js"></script>
-<script src="../js/livemix.js?v=20260629-toolgate"></script>
+<script src="../js/livemix.js?v=20260629-devbypass"></script>
 <style>
   :root { --bg:#0b0d12; --card:#141821; --line:rgba(255,255,255,.1); --text:#e8eaf0; --text2:#9aa3b2; --accent:#f59e0b; --green:#22c55e; --red:#ef4444; }
   * { box-sizing:border-box; }
@@ -78,7 +78,28 @@
 
   if (!window.LiveBroadcast) log('FEIL: livebroadcast.js lastet ikke.');
 
+  // Gjør getUserMedia-feil forståelige i stedet for rå «Permission denied».
+  function explainMediaError(e){
+    const n = (e && e.name) || '';
+    if (n==='NotAllowedError' || n==='SecurityError' || /denied|permission/i.test(e&&e.message||'')) {
+      return 'Tilgang til lyd ble blokkert.\n'
+        + '  • Nettleser: klikk hengelås-/info-ikonet i adressefeltet → Mikrofon → «Tillat», og last siden på nytt.\n'
+        + '  • macOS: Systeminnstillinger → Personvern og sikkerhet → Mikrofon → slå på for nettleseren, og start den på nytt.';
+    }
+    if (n==='NotFoundError' || n==='DevicesNotFoundError' || n==='OverconstrainedError')
+      return 'Fant ingen lyd-inngang. Rut Traktors master til BlackHole/Aggregate Device (eller lydkortet) først, og prøv igjen.';
+    if (n==='NotReadableError' || n==='TrackStartError')
+      return 'Lyd-inngangen er opptatt av et annet program. Lukk det som bruker lydkortet, og prøv igjen.';
+    return (e && e.message) || 'Ukjent feil.';
+  }
+
   $('perm').onclick = async () => {
+    // Lyd-tilgang krever sikker kontekst (https:// eller http://localhost).
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      log('FEIL: Nettleseren gir ikke lyd-tilgang her. Åpne siden via https:// eller http://localhost — ikke file:// eller en ren IP-adresse.');
+      return;
+    }
+    log('Ber om tilgang til lyd …');
     try {
       const tmp = await navigator.mediaDevices.getUserMedia({ audio:true });
       tmp.getTracks().forEach(t=>t.stop());
@@ -88,8 +109,8 @@
       const pref = devs.find(d=>/blackhole|loopback|soundflower|air 192|aggregate/i.test(d.label));
       if (pref) sel.value = pref.deviceId;
       $('go').disabled=false;
-      log(devs.length+' inngang(er).'+(pref?'  Foreslår: '+pref.label:''));
-    } catch(e){ log('FEIL tilgang: '+e.message); }
+      log('✅ Tilgang gitt — '+devs.length+' inngang(er).'+(pref?'  Foreslår: '+pref.label:''));
+    } catch(e){ log('FEIL tilgang: '+explainMediaError(e)); }
   };
 
   $('go').onclick = async () => {
@@ -108,6 +129,7 @@
       alert('Live-sending krever en aktiv Live Mix-tid. Se loggen for detaljer.');
       return;
     }
+    if (gate.devBypass && !gate.active) log('🧪 Lokal test: booking-gate forbigått (gjelder kun på localhost).');
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio:{
         deviceId:{ exact:$('dev').value }, echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:2,
@@ -124,7 +146,7 @@
       $('go').disabled=true; $('stop').disabled=false; $('perm').disabled=true; $('dev').disabled=true; $('room').disabled=true;
       $('dot').classList.add('live'); $('status').textContent='LIVE — sender';
       log('Du er LIVE i rom «'+($('room').value.trim()||'test')+'». Spill i Traktor.');
-    } catch(e){ log('FEIL gå live: '+e.message); }
+    } catch(e){ log('FEIL gå live: '+explainMediaError(e)); }
   };
 
   $('stop').onclick = () => {
