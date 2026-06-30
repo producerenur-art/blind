@@ -456,9 +456,12 @@ module.exports = async (req, res) => {
     subject = 'Kvittering — Sound Core Pro er aktivert ⭐';
     html = purchaseHtml(toName, `${siteUrl}/`, plan, orderRef);
   } else if (type === 'promo') {
-    // Markedsførings-/«bli medlem»-e-post. Unsubscribe-lenka kan overstyrast av klienten.
+    // Markedsførings-/«bli medlem»-e-post. Unsubscribe-lenka bærer mottakerens e-post
+    // (#/unsubscribe/<email>) så ett klikk identifiserer hvem som melder seg av; kan
+    // overstyrast av klienten via unsubscribeUrl.
     subject = 'Bli med på Sound Core — nye fester, artister & AI live ⚡';
-    html = promoHtml(toName, siteUrl, req.body?.unsubscribeUrl);
+    const unsubUrl = req.body?.unsubscribeUrl || `${siteUrl}/#/unsubscribe/${encodeURIComponent(toEmail)}`;
+    html = promoHtml(toName, siteUrl, unsubUrl);
   } else {
     return res.status(400).json({ error: 'Ukjent e-posttype' });
   }

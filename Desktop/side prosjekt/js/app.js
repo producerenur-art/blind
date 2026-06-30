@@ -2574,6 +2574,8 @@ const App = (() => {
     Router.define('/a1',                 () => A1.render());
     Router.define('/community',          () => { if (window.Community) Community.render(); });
     Router.define('/friends',            () => { if (window.Friends) Friends.render(); });
+    Router.define('/unsubscribe',        () => { if (window.Unsubscribe) Unsubscribe.render(); });
+    Router.define('/unsubscribe/:email', ({ email }) => { if (window.Unsubscribe) Unsubscribe.render(email); });
     Router.define('/studio',             () => {
       if (!Auth.current()) { toast('Logg inn for å bruke Studio', 'error'); Router.go('/login'); return; }
       Studio.render();
