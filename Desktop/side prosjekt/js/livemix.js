@@ -224,9 +224,211 @@ const LiveMix = (() => {
     App.openModal();
   }
 
+  // ── Live-kringkasting (DJ sender · lytter hører) ────────────────────
+  // Bruker den delte modulen js/livebroadcast.js (WebRTC + Supabase Realtime
+  // som signaling). State er modul-scopet så sendingen/lyden overlever at
+  // modalen lukkes (App.closeModal() skjuler bare overlayet, tømmer ikke DOM).
+  const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test' };
+
+  function _esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+  function _byId(id) { return document.getElementById(id); }
+  function _bcLog(m) { const l = _byId('bc-log'); if (!l) return; l.textContent += '\n' + new Date().toLocaleTimeString('nb-NO') + '  ' + m; l.scrollTop = l.scrollHeight; }
+
+  // ── DJ: gå live ─────────────────────────────────────────────────────
+  function goLive() {
+    const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
+    if (!cur) {
+      if (typeof App !== 'undefined') App.toast('Logg inn eller lag en gratis profil for å sende live.', 'info', 4000);
+      location.hash = '#/login';
+      return;
+    }
+    if (typeof App === 'undefined') return;
+    if (!window.LiveBroadcast) { App.toast('Kringkasting kunne ikke lastes (livebroadcast.js mangler).', 'error'); return; }
+    _renderDJ();
+  }
+
+  function _renderDJ() {
+    const box = _byId('modal-box'); if (!box) return;
+    const live = !!_bc.dj;
+    const inp = 'width:100%;box-sizing:border-box;padding:0.6rem 0.7rem;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:var(--text);font:inherit';
+    const lbl = 'display:block;font-weight:700;font-size:0.78rem;margin:0 0 0.35rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.04em';
+    const meter = 'height:18px;border-radius:6px;background:rgba(0,0,0,0.35);overflow:hidden;position:relative';
+    const fill = 'position:absolute;inset:0 auto 0 0;width:0%;background:linear-gradient(90deg,#22c55e,#22c55e 60%,#f59e0b 80%,#ef4444);transition:width .05s';
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2>${_I('radio')} Gå live — send settet ditt</h2>
+        <button class="btn-icon" onclick="App.closeModal()" aria-label="Lukk">${_I('x')}</button>
+      </div>
+      <div style="padding:0.25rem 0">
+        <p style="color:var(--text2);font-size:0.85rem;line-height:1.5;margin:0 0 1rem">
+          Rut DJ-programmets master til en virtuell lydkabel (f.eks. BlackHole) og velg den under.
+          Lytterne åpner «Hør live» med samme rom-navn. Signaling går over Supabase — funker over internett.
+        </p>
+        <label style="${lbl}">Rom-navn</label>
+        <input id="bc-room" value="${_esc(_bc.room || 'test')}" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
+        <label style="${lbl}">Lyd-inngang (DJ-ruting)</label>
+        <div style="display:flex;gap:0.6rem;margin:0 0 1rem">
+          <select id="bc-dev" ${live ? 'disabled' : ''} style="${inp};flex:1">${live ? '' : '<option>Trykk «Gi tilgang» først…</option>'}</select>
+          <button class="btn btn-ghost" id="bc-perm" onclick="LiveMix.bcPerm()" ${live ? 'disabled' : ''}>Gi tilgang</button>
+        </div>
+        <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin:0 0 1.1rem">
+          <button class="btn btn-primary" id="bc-go" onclick="LiveMix.bcGo()" ${live ? 'disabled' : ''}>📡 Gå live</button>
+          <button class="btn" id="bc-stop" onclick="LiveMix.bcStop()" ${live ? '' : 'disabled'} style="background:#ef4444;color:#fff">■ Stopp</button>
+          <span style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.8rem;font-weight:700;padding:0.25rem 0.7rem;border-radius:999px;background:rgba(255,255,255,0.06)">
+            <span id="bc-dot" style="width:9px;height:9px;border-radius:50%;background:${live ? '#ef4444' : '#9aa3b2'}"></span>
+            <span id="bc-status">${live ? 'LIVE — sender' : 'Inaktiv'}</span>
+          </span>
+        </div>
+        <div style="font-size:1.5rem;font-weight:800;margin:0 0 0.75rem"><span id="bc-count">${live ? _bc.dj.listeners : 0}</span> <span style="font-size:0.85rem;font-weight:400;color:var(--text2)">lyttere koblet til</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text2);margin:0 0 0.2rem"><span>Sendt (L)</span><span id="bc-ldb">−∞ dB</span></div>
+        <div style="${meter}"><i id="bc-lmeter" style="${fill}"></i></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text2);margin:0.5rem 0 0.2rem"><span>Sendt (R)</span><span id="bc-rdb">−∞ dB</span></div>
+        <div style="${meter}"><i id="bc-rmeter" style="${fill}"></i></div>
+        <div id="bc-log" style="font:12px/1.5 ui-monospace,monospace;background:rgba(0,0,0,0.3);border-radius:10px;padding:0.6rem 0.7rem;max-height:120px;overflow:auto;color:var(--text2);white-space:pre-wrap;margin-top:0.9rem">Klar.</div>
+      </div>`;
+    App.openModal();
+    if (live && _bc.analL) _bcStartMeter();   // gjenoppta målere når konsollen åpnes på nytt
+  }
+
+  async function bcPerm() {
+    try {
+      const tmp = await navigator.mediaDevices.getUserMedia({ audio: true });
+      tmp.getTracks().forEach(t => t.stop());
+      const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
+      const sel = _byId('bc-dev'); if (!sel) return;
+      sel.innerHTML = '';
+      devs.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || ('Inngang ' + (sel.length + 1)); sel.appendChild(o); });
+      const pref = devs.find(d => /blackhole|loopback|soundflower|air 192|aggregate/i.test(d.label));
+      if (pref) sel.value = pref.deviceId;
+      const go = _byId('bc-go'); if (go) go.disabled = false;
+      _bcLog(devs.length + ' inngang(er).' + (pref ? '  Foreslår: ' + pref.label : ''));
+    } catch (e) { _bcLog('FEIL tilgang: ' + e.message); }
+  }
+
+  async function bcGo() {
+    try {
+      const sel = _byId('bc-dev'), roomEl = _byId('bc-room');
+      const room = (roomEl && roomEl.value.trim()) || 'test'; _bc.room = room;
+      _bc.stream = await navigator.mediaDevices.getUserMedia({ audio: {
+        deviceId: { exact: sel.value }, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2,
+      } });
+      _bc.ctx = new (window.AudioContext || window.webkitAudioContext)(); await _bc.ctx.resume();
+      const src = _bc.ctx.createMediaStreamSource(_bc.stream), sp = _bc.ctx.createChannelSplitter(2);
+      _bc.analL = _bc.ctx.createAnalyser(); _bc.analR = _bc.ctx.createAnalyser(); _bc.analL.fftSize = _bc.analR.fftSize = 1024;
+      src.connect(sp); sp.connect(_bc.analL, 0); sp.connect(_bc.analR, 1);
+      _bcStartMeter();
+      _bc.dj = LiveBroadcast.broadcaster(room, _bc.stream, {
+        onPeerCount: n => { const el = _byId('bc-count'); if (el) el.textContent = n; },
+        onLog: _bcLog,
+      });
+      _bcSetLive(true);
+      _bcLog('Du er LIVE i rom «' + room + '». Spill i DJ-programmet.');
+    } catch (e) { _bcLog('FEIL gå live: ' + e.message); if (typeof App !== 'undefined') App.toast('Kunne ikke gå live: ' + e.message, 'error'); }
+  }
+
+  function bcStop() {
+    if (_bc.raf) cancelAnimationFrame(_bc.raf); _bc.raf = null;
+    if (_bc.dj) { _bc.dj.stop(); _bc.dj = null; }
+    if (_bc.stream) { _bc.stream.getTracks().forEach(t => t.stop()); _bc.stream = null; }
+    if (_bc.ctx) { try { _bc.ctx.close(); } catch (e) {} _bc.ctx = null; }
+    _bc.analL = _bc.analR = null;
+    _bcSetLive(false);
+    const c = _byId('bc-count'); if (c) c.textContent = '0';
+    _bcLog('Stoppet.');
+  }
+
+  function _bcSetLive(live) {
+    const go = _byId('bc-go'), stop = _byId('bc-stop'), perm = _byId('bc-perm'), dev = _byId('bc-dev'), room = _byId('bc-room'), dot = _byId('bc-dot'), st = _byId('bc-status');
+    if (go) go.disabled = live; if (stop) stop.disabled = !live; if (perm) perm.disabled = live;
+    if (dev) dev.disabled = live; if (room) room.disabled = live;
+    if (dot) dot.style.background = live ? '#ef4444' : '#9aa3b2';
+    if (st) st.textContent = live ? 'LIVE — sender' : 'Inaktiv';
+  }
+
+  function _bcStartMeter() {
+    if (_bc.raf) cancelAnimationFrame(_bc.raf);
+    const toDb = r => r > 0 ? 20 * Math.log10(r) : -Infinity;
+    const fmt = d => d === -Infinity ? '−∞ dB' : d.toFixed(1) + ' dB';
+    const pct = d => d === -Infinity ? 0 : Math.max(0, Math.min(100, (d + 60) / 60 * 100));
+    const bL = new Float32Array(_bc.analL.fftSize), bR = new Float32Array(_bc.analR.fftSize);
+    (function loop() {
+      if (!_bc.analL || !_bc.analR) { _bc.raf = null; return; }
+      _bc.analL.getFloatTimeDomainData(bL); _bc.analR.getFloatTimeDomainData(bR);
+      let sL = 0, sR = 0; for (let i = 0; i < bL.length; i++) { sL += bL[i] * bL[i]; sR += bR[i] * bR[i]; }
+      const dL = toDb(Math.sqrt(sL / bL.length)), dR = toDb(Math.sqrt(sR / bR.length));
+      const lm = _byId('bc-lmeter'), rm = _byId('bc-rmeter'), ld = _byId('bc-ldb'), rd = _byId('bc-rdb');
+      if (lm) lm.style.width = pct(dL) + '%'; if (rm) rm.style.width = pct(dR) + '%';
+      if (ld) ld.textContent = fmt(dL); if (rd) rd.textContent = fmt(dR);
+      _bc.raf = requestAnimationFrame(loop);
+    })();
+  }
+
+  // ── Lytter: hør live ────────────────────────────────────────────────
+  function tuneIn() {
+    if (typeof App === 'undefined') return;
+    if (!window.LiveBroadcast) { App.toast('Kringkasting kunne ikke lastes (livebroadcast.js mangler).', 'error'); return; }
+    _renderListener();
+  }
+
+  function _renderListener() {
+    const box = _byId('modal-box'); if (!box) return;
+    const joined = !!_bc.ln;
+    const inp = 'width:100%;box-sizing:border-box;padding:0.7rem;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:var(--text);font:inherit;text-align:center';
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2>${_I('headphones')} Hør live</h2>
+        <button class="btn-icon" onclick="App.closeModal()" aria-label="Lukk">${_I('x')}</button>
+      </div>
+      <div style="padding:0.5rem 0;text-align:center">
+        <span style="display:inline-flex;align-items:center;gap:0.45rem;font-size:0.82rem;font-weight:700;padding:0.3rem 0.8rem;border-radius:999px;background:rgba(255,255,255,0.06);margin-bottom:0.5rem">
+          <span id="ln-dot" style="width:10px;height:10px;border-radius:50%;background:#9aa3b2"></span>
+          <span id="ln-status">${joined ? 'Kobler til…' : 'Ikke tilkoblet'}</span>
+        </span>
+        <p style="color:var(--text2);font-size:0.9rem;margin:0.4rem 0 1rem">Skriv samme rom-navn som DJ-en og trykk for å høre settet live.</p>
+        <input id="ln-room" value="${_esc(_bc.room || 'test')}" ${joined ? 'disabled' : ''} aria-label="Rom-navn" style="${inp};margin:0 0 0.8rem">
+        <button class="btn btn-primary w-full" id="ln-join" onclick="LiveMix.tuneInJoin()" ${joined ? 'disabled' : ''}>▶︎ Hør live</button>
+        <audio id="ln-audio" autoplay playsinline></audio>
+        <div id="ln-info" style="font-size:0.78rem;color:var(--text3);margin-top:0.9rem"></div>
+        ${joined ? `<button class="btn btn-ghost w-full" onclick="LiveMix.tuneOut()" style="margin-top:0.8rem">Koble fra</button>` : ''}
+      </div>`;
+    App.openModal();
+  }
+
+  function _lnStatus(t, live) {
+    const s = _byId('ln-status'), d = _byId('ln-dot');
+    if (s) s.textContent = t; if (d) d.style.background = live ? '#22c55e' : '#9aa3b2';
+  }
+
+  function tuneInJoin() {
+    const roomEl = _byId('ln-room');
+    const room = (roomEl && roomEl.value.trim()) || 'test'; _bc.room = room;
+    const join = _byId('ln-join'); if (join) join.disabled = true;
+    _lnStatus('Kobler til…', false);
+    _bc.ln = LiveBroadcast.listener(room, {
+      onState: s => {
+        if (s === 'connected') _lnStatus('LIVE — hører settet', true);
+        else if (s === 'dj-offline') _lnStatus('DJ-en avsluttet', false);
+        else if (['failed', 'disconnected', 'closed'].includes(s)) _lnStatus('Frakoblet', false);
+      },
+      onTrack: stream => {
+        const a = _byId('ln-audio'); if (a) { a.srcObject = stream; a.play().catch(() => {}); }
+        const i = _byId('ln-info'); if (i) i.textContent = 'Lyd mottatt 🎶';
+      },
+      onLog: m => { const i = _byId('ln-info'); if (i) i.textContent = m; },
+    });
+  }
+
+  function tuneOut() {
+    if (_bc.ln) { _bc.ln.leave(); _bc.ln = null; }
+    const a = _byId('ln-audio'); if (a) { try { a.pause(); } catch (e) {} a.srcObject = null; }
+    _lnStatus('Frakoblet', false);
+    if (typeof App !== 'undefined') App.closeModal();
+  }
+
   return {
     openBooking, step, startCheckout, testPurchase, completeFromSession, showReceipt,
     priceFor, _makeBooking, RATE_KR, RATE_ORE,
+    goLive, bcPerm, bcGo, bcStop, tuneIn, tuneInJoin, tuneOut,
   };
 })();
 

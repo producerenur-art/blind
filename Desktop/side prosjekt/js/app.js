@@ -677,6 +677,10 @@ const App = (() => {
               <div>Ytterligere timer <strong>+150 NOK/t</strong></div>
             </div>
             <button class="btn btn-primary cs-cta" onclick="LiveMix.openBooking()">${Icon('clock')} Book mikse-slot</button>
+            <div class="cs-live-actions" style="display:flex;gap:0.5rem;margin-top:0.5rem">
+              <button class="btn btn-ghost" onclick="LiveMix.goLive()" style="flex:1">${Icon('radio')} Gå live nå</button>
+              <button class="btn btn-ghost" onclick="LiveMix.tuneIn()" style="flex:1">${Icon('headphones')} Hør live</button>
+            </div>
             <div class="cs-badge cs-badge-gold">Premium</div>
           </div>
         </div>
