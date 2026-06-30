@@ -261,6 +261,15 @@ const LiveMix = (() => {
     return best;
   }
 
+  // Offentlig gate-sjekk — gjenbrukes av den frittstående DJ-verktøy-siden
+  // (tools/broadcast-cloud.html) så NØYAKTIG samme regel gjelder begge steder.
+  // Returnerer { user, active, next, ok }.
+  function canGoLive() {
+    const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
+    const active = cur ? _activeBooking(cur) : null;
+    return { user: cur, active, next: cur ? _nextBooking(cur) : null, ok: !!active };
+  }
+
   function _esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
   function _byId(id) { return document.getElementById(id); }
   function _bcLog(m) { const l = _byId('bc-log'); if (!l) return; l.textContent += '\n' + new Date().toLocaleTimeString('nb-NO') + '  ' + m; l.scrollTop = l.scrollHeight; }
@@ -489,6 +498,7 @@ const LiveMix = (() => {
     openBooking, step, startCheckout, testPurchase, completeFromSession, showReceipt,
     priceFor, _makeBooking, RATE_KR, RATE_ORE,
     goLive, bcPerm, bcGo, bcStop, tuneIn, tuneInJoin, tuneOut,
+    canGoLive,
   };
 })();
 
