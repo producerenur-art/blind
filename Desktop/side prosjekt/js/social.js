@@ -43,9 +43,11 @@ const Social = (() => {
   // ── Kommentarar ─────────────────────────────────────────────────────────
   function subComments(targetKey) {
     if (_cSub.has(targetKey) || !window.SC) return;
+    const g = SC.gun();
+    if (!g) return;                 // Gun.js ikke lastet — ikke marker som abonnert, så vi kan prøve igjen
     _cSub.add(targetKey);
     _comments[targetKey] = _comments[targetKey] || {};
-    const ref = SC.gun().get(SC.NS.comments).get(targetKey);
+    const ref = g.get(SC.NS.comments).get(targetKey);
     if (!ref || typeof ref.map !== 'function') return;
     const isProfile = targetKey.indexOf('profile:') === 0;
     const bump = () => {
@@ -177,9 +179,11 @@ const Social = (() => {
   // ── Reaksjoner (👍 👎 😠 😍 😮 🤩) ───────────────────────────────────────────
   function subReactions(targetKey) {
     if (_rSub.has(targetKey) || !window.SC) return;
+    const g = SC.gun();
+    if (!g) return;                 // Gun.js ikke lastet — ikke marker som abonnert, så vi kan prøve igjen
     _rSub.add(targetKey);
     _reactions[targetKey] = _reactions[targetKey] || {};
-    const ref = SC.gun().get(SC.NS.reactions).get(targetKey);
+    const ref = g.get(SC.NS.reactions).get(targetKey);
     if (!ref || typeof ref.map !== 'function') return;
     ref.map().on((d, user) => {
       if (!user) return;

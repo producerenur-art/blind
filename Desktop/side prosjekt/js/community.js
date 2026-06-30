@@ -37,8 +37,10 @@ const Community = (() => {
   // ── Abonnement ────────────────────────────────────────────────────────
   function subscribe() {
     if (_subbed || !window.SC) return;
+    const g = SC.gun();
+    if (!g) return;                 // Gun.js ikke lastet ennå — la _subbed stå så vi kan prøve igjen senere
     _subbed = true;
-    SC.sub(SC.gun().get(SC.NS.posts).get('posts'), (p, key) => {
+    SC.sub(g.get(SC.NS.posts).get('posts'), (p, key) => {
       if (!p || !p.id || !p.author || (!p.text && !p.kind)) return;
       _posts[p.id] = { ...p, _k: key };
       // «Pling» når ny LYD lander på veggen (ikke min egen, ikke historikk).

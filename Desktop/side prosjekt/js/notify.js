@@ -49,7 +49,7 @@ const Notify = (() => {
       _items.sort((a, b) => b.ts - a.ts);
       _subbed = false;
     }
-    if (!_subbed && window.SC) {
+    if (!_subbed && window.SC && SC.gun()) {
       _subbed = true;
       SC.sub(SC.gun().get(SC.NS.notif).get(_user), (n, key) => onIncoming(n, key));
     }

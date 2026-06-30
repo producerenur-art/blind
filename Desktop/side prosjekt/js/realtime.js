@@ -27,7 +27,7 @@ const SC = (() => {
   let _gun = null;
   function gun() {
     if (_gun) return _gun;
-    if (typeof Gun === 'undefined') { console.warn('[SC] Gun.js ikkje lasta'); return null; }
+    if (typeof Gun === 'undefined') { console.warn('[SC] Gun.js ikke lastet'); return null; }
     try { _gun = Gun({ peers: GUN_PEERS, localStorage: false }); }
     catch (e) { console.warn('[SC] Gun-init feila', e); _gun = null; }
     return _gun;
