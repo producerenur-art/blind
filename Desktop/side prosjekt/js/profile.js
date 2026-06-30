@@ -409,12 +409,12 @@ const Profile = (() => {
         <div class="profile-hero" style="${bannerUrl ? `background-image:url(${bannerUrl});background-size:cover;background-position:center;` : ''}">
           <div class="profile-hero-bg" style="${heroBgStyle}">${heroBgExtra}</div>
           <div class="profile-hero-overlay"></div>
-          ${isOwner ? `<div class="profile-hero-banner-actions">
+          ${isOwner ? `<!-- Bakgrunnsbilde-handlinger (kun eier) — alltid alle tre synlige -->
+          <div class="profile-hero-banner-actions">
             <input type="file" id="profile-banner-input" accept="image/*" style="display:none" onchange="Profile.setBannerFromProfile(this,'${username}')">
-            ${user.bannerMediaId
-              ? `<button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-banner-input').click()" title="Endre bakgrunnsbilde">${Icon('camera')} Endre bilde</button>
-                 <button class="btn btn-ghost btn-sm" onclick="Profile.deleteBanner('${username}')" title="Slett bakgrunnsbilde">${Icon('trash')} Slett bilde</button>`
-              : `<button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-banner-input').click()" title="Legg til bakgrunnsbilde">${Icon('image')} Legg til bilde</button>`}
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-banner-input').click()" title="Legg til bakgrunnsbilde">${Icon('plus')} Legg til bilde</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-banner-input').click()" title="Endre bakgrunnsbilde">${Icon('camera')} Endre bilde</button>
+            <button class="btn btn-ghost btn-sm" onclick="Profile.deleteBanner('${username}')" title="Slett bakgrunnsbilde">${Icon('trash')} Slett bilde</button>
           </div>` : ''}
           ${current ? `<div class="profile-hero-actions">
             ${isOwner ? `<button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('edit')} Rediger profil</button>
