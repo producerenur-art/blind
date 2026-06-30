@@ -268,10 +268,10 @@
   }
   ensurePsyStyles();
 
-  // ── Profil "Butikk"-fane (trygg placeholder) ─────────────────────────
-  // Injiseres her i stedet for profile.js, som er under samtidig omskriving.
-  // switchTab er generisk (toggler paa data-tab), saa fanen virker. Ingen
-  // kall til marketplace-endepunkter — ren "kommer snart"-placeholder.
+  // ── Profil "Butikk"-fane ─────────────────────────────────────────────
+  // Tab-knapp + panel injiseres her (profile.js skrives om samtidig). Selve
+  // innholdet — ekte kjøp/salg for ALLE brukere — rendres av window.ProfileShop
+  // (js/profileshop.js). switchTab er generisk (toggler paa data-tab).
   function injectShopTab() {
     if (typeof document === 'undefined') return;
     var tabs = document.getElementById('profile-tabs');
@@ -279,7 +279,8 @@
       var btn = document.createElement('button');
       btn.className = 'tab-btn';
       btn.setAttribute('data-tab', 'butikk');
-      btn.setAttribute('onclick', "Profile.switchTab('butikk')");
+      // Bytt fane OG render butikk-innholdet (lazy + frisk hver gang).
+      btn.setAttribute('onclick', "Profile.switchTab('butikk');window.ProfileShop&&ProfileShop.render()");
       btn.innerHTML = svg('store') + ' Butikk';
       tabs.appendChild(btn);
     }
@@ -292,11 +293,10 @@
       panel.innerHTML =
         '<div style="text-align:center;padding:2.75rem 1.25rem;color:var(--text2)">'
         + '<div style="font-size:2.6rem;color:var(--accent,#7c3aed);margin-bottom:.6rem">' + svg('store') + '</div>'
-        + '<h3 style="margin:0 0 .5rem;color:var(--text)">Butikk</h3>'
-        + '<p style="max-width:380px;margin:0 auto 1rem;font-size:.9rem;line-height:1.5">Snart kan du kjøpe og selge låter direkte fra profilen.</p>'
-        + '<span style="display:inline-block;font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:.35rem .8rem;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--text2)">Kommer snart</span>'
-        + '</div>';
+        + '<p style="font-size:.9rem">Laster butikk…</p></div>';
       vegg.parentNode.insertBefore(panel, vegg.nextSibling);
+      // Render det ekte innholdet med en gang panelet finnes.
+      if (window.ProfileShop) { try { ProfileShop.render(); } catch (e) {} }
     }
   }
   function watchForProfile() {
