@@ -22,7 +22,10 @@ const App = (() => {
     // `body { top:0 !important }` Google-Translate hack a position:fixed lock hits.
     document.documentElement.classList.add('modal-open');
     // Gjør modal-boksen flyttbar (dra i tittellinja, opp/ned/venstre/høyre) + zoombar.
+    // Hjørne-håndtakene må legges til på nytt hver gang, fordi innholdet (box.innerHTML)
+    // settes av den som åpner modalen rett før openModal() og dermed fjerner dem.
     _ensureModalTools();
+    _ensureCornerHandles();
     _bindModalDrag();
     _resetModalView();
   }
@@ -78,17 +81,33 @@ const App = (() => {
     ov.appendChild(bar);
   }
 
+  // Fire hjørne-håndtak: dra et hjørne for å zoome modalen (zoom fra hjørnene).
+  function _ensureCornerHandles() {
+    const box = document.getElementById('modal-box');
+    if (!box) return;
+    box.querySelectorAll('.modal-resize-handle').forEach(h => h.remove());
+    ['nw', 'ne', 'sw', 'se'].forEach(pos => {
+      const h = document.createElement('div');
+      h.className = 'modal-resize-handle mrh-' + pos;
+      h.dataset.pos = pos;
+      h.title = 'Dra hjørnet for å zoome';
+      box.appendChild(h);
+    });
+  }
+
   function _bindModalDrag() {
     const box = document.getElementById('modal-box');
     if (!box || box.dataset.dzBound) return;
     box.dataset.dzBound = '1';
 
     const pts = new Map();              // aktive pekere (mus/finger)
-    let mode = null;                    // 'drag' | 'pinch'
+    let mode = null;                    // 'drag' | 'pinch' | 'zoom'
     let sx = 0, sy = 0, ox = 0, oy = 0; // dra-start
     let pinchDist = 0, pinchScale = 1;  // klyp-start
+    let cx = 0, cy = 0, zDist = 0, zScale = 1; // hjørne-zoom-start (avstand fra senter)
 
     box.addEventListener('pointerdown', e => {
+      const handle  = e.target.closest('.modal-resize-handle');
       const onHeader = e.target.closest('.modal-header') && !e.target.closest('button');
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pts.size === 2) {
@@ -97,6 +116,17 @@ const App = (() => {
         pinchDist = Math.hypot(a.x - b.x, a.y - b.y);
         pinchScale = _mz.scale;
         box.style.transition = 'none';
+      } else if (handle) {
+        // Zoom fra hjørnet: skaler ut fra modalens senter etter hvor langt
+        // pekeren dras fra senter — utover = inn, innover = ut.
+        mode = 'zoom';
+        const r = box.getBoundingClientRect();
+        cx = r.left + r.width / 2; cy = r.top + r.height / 2;
+        zDist = Math.hypot(e.clientX - cx, e.clientY - cy) || 1;
+        zScale = _mz.scale;
+        box.style.transition = 'none';
+        try { box.setPointerCapture(e.pointerId); } catch (_) {}
+        e.preventDefault();
       } else if (onHeader) {
         mode = 'drag';
         sx = e.clientX; sy = e.clientY; ox = _mz.tx; oy = _mz.ty;
@@ -113,6 +143,10 @@ const App = (() => {
         const [a, b] = [...pts.values()];
         const d = Math.hypot(a.x - b.x, a.y - b.y);
         if (pinchDist > 0) _setModalZoom(pinchScale * (d / pinchDist));
+        e.preventDefault();
+      } else if (mode === 'zoom') {
+        const d = Math.hypot(e.clientX - cx, e.clientY - cy);
+        _setModalZoom(zScale * (d / zDist));
         e.preventDefault();
       } else if (mode === 'drag') {
         _mz.tx = ox + (e.clientX - sx);

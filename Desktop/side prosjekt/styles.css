@@ -1013,7 +1013,37 @@ img, video { display: block; max-width: 100%; }
   transform-origin: center center;
   transition: transform 0.14s ease;
   will-change: transform;
+  /* Posisjonskontekst for hjørne-håndtakene (zoom fra hjørnene). */
+  position: relative;
 }
+
+/* Hjørne-håndtak: dra et hjørne for å zoome modalen. */
+.modal-resize-handle {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  z-index: 3;
+  touch-action: none;
+  opacity: 0.55;
+  transition: opacity 0.12s ease;
+}
+.modal-resize-handle::before {
+  content: "";
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--accent);
+  border-radius: 2px;
+}
+.modal-resize-handle:hover { opacity: 1; }
+.mrh-nw { top: 4px;    left: 4px;    cursor: nwse-resize; }
+.mrh-ne { top: 4px;    right: 4px;   cursor: nesw-resize; }
+.mrh-sw { bottom: 4px; left: 4px;    cursor: nesw-resize; }
+.mrh-se { bottom: 4px; right: 4px;   cursor: nwse-resize; }
+.mrh-nw::before { top: 0;    left: 0;    border-right: none;  border-bottom: none; }
+.mrh-ne::before { top: 0;    right: 0;   border-left: none;   border-bottom: none; }
+.mrh-sw::before { bottom: 0; left: 0;    border-right: none;  border-top: none; }
+.mrh-se::before { bottom: 0; right: 0;   border-left: none;   border-top: none; }
 .modal-header {
   display: flex;
   align-items: center;
