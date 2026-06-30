@@ -497,9 +497,13 @@ const Discover = (() => {
         try {
           const rec = await DB.get('music', mid);
           if (!rec) continue;
+          // Respekter per-spor offentlig/privat: privatmerkede spor skal IKKE
+          // vises i den offentlige Discover-fanen, kun på eierens egen profil.
+          if (rec.visibility === 'private') continue;
           let coverUrl = rec.coverUrl || null;
-          if (!coverUrl && rec.coverId) {
-            coverUrl = await DB.getBlobUrl('media', rec.coverId).catch(() => null);
+          const coverBlobId = rec.coverMediaId || rec.coverId;
+          if (!coverUrl && coverBlobId) {
+            coverUrl = await DB.getBlobUrl('media', coverBlobId).catch(() => null);
           }
           results.push({
             id:        mid,

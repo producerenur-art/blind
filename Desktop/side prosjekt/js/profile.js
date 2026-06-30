@@ -720,7 +720,10 @@ const Profile = (() => {
     const title  = r.name || r.title || 'Untitled';
     return `
       <div class="music-item" id="mitem-${esc(r.id)}">
-        <div class="music-thumb" id="mthumb-${esc(r.id)}" onclick="Profile.playTrack('${esc(username)}', ${index})" style="cursor:pointer">${Icon('music')}</div>
+        <div class="music-thumb" id="mthumb-${esc(r.id)}" onclick="Profile.playTrack('${esc(username)}', ${index})" style="cursor:pointer" title="Spill av">
+          <span class="music-thumb-fallback">${Icon('music')}</span>
+          <span class="music-thumb-play">${Icon('play')}</span>
+        </div>
         <div class="music-meta" onclick="Profile.playTrack('${esc(username)}', ${index})" style="cursor:pointer;flex:1;min-width:0">
           <div class="music-name">${esc(title)}</div>
           <div class="music-artist">${esc(r.artist || 'Ukjent artist')}</div>
@@ -731,7 +734,7 @@ const Profile = (() => {
         </div>
         <div class="music-item-right">
           <span class="music-dur">${dur}</span>
-          ${isOwner ? `<button class="btn-icon" title="${r.visibility === 'private' ? 'Privat — kun du ser den. Klikk for å dele med alle' : 'Offentlig — alle ser den. Klikk for å gjøre privat'}" onclick="event.stopPropagation();Profile.toggleTrackVisibility('${esc(r.id)}','${esc(username)}')">${r.visibility === 'private' ? '🔒' : '🌐'}</button>` : ''}
+          ${isOwner ? `<button class="btn-icon" title="${r.visibility === 'private' ? 'Privat — kun du ser den. Klikk for å gjøre offentlig (vises i Discover for alle)' : 'Offentlig — vises i Discover for alle. Klikk for å gjøre privat'}" onclick="event.stopPropagation();Profile.toggleTrackVisibility('${esc(r.id)}','${esc(username)}')">${r.visibility === 'private' ? '🔒' : '🌐'}</button>` : ''}
           ${isOwner ? `<button class="btn-icon" title="Del til Community-veggen" onclick="event.stopPropagation();Profile.shareTrackToCommunity('${esc(r.id)}','${esc(username)}')">📣</button>` : ''}
           ${isOwner ? `<button class="btn-icon music-credits-btn" title="Kreditering & kjøpslenker" onclick="event.stopPropagation();Profile.openSongCreditsModal('${esc(r.id)}')">${Icon('edit')}</button>` : ''}
           ${isOwner ? `<label class="music-cover-upload" title="Endre cover" onclick="event.stopPropagation()">${Icon('camera')}<input type="file" accept="image/*" style="display:none" onchange="Profile.uploadMusicCover('${esc(r.id)}',this.files[0])"></label>` : ''}
@@ -763,11 +766,18 @@ const Profile = (() => {
 
   function loadMusicCoverArts(recs) {
     recs.forEach(async r => {
-      if (!r.coverMediaId) return;
-      const url = await DB.getBlobUrl('media', r.coverMediaId).catch(() => null);
+      // Skydelt musikk (sharemusic.js / cloud) lagrer cover som direkte URL;
+      // lokal opplasting lagrer en blob under coverMediaId. Støtt begge.
+      let url = r.coverUrl || null;
+      if (!url && r.coverMediaId) url = await DB.getBlobUrl('media', r.coverMediaId).catch(() => null);
       if (!url) return;
       const el = document.getElementById(`mthumb-${r.id}`);
-      if (el) el.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px;pointer-events:none">`;
+      if (!el) return;
+      // Sett som bakgrunn så play-knapp-overlegget blir liggende oppå coveret.
+      el.style.backgroundImage = `url("${String(url).replace(/"/g, '%22')}")`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.classList.add('has-cover');
     });
   }
 
@@ -2300,7 +2310,13 @@ const Profile = (() => {
     const url = await DB.getBlobUrl('media', id).catch(() => null);
     if (url) {
       const el = document.getElementById(`mthumb-${trackId}`);
-      if (el) el.innerHTML = `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px;pointer-events:none">`;
+      if (el) {
+        // Sett som bakgrunn så play-knapp-overlegget blir liggende oppå coveret.
+        el.style.backgroundImage = `url("${String(url).replace(/"/g, '%22')}")`;
+        el.style.backgroundSize = 'cover';
+        el.style.backgroundPosition = 'center';
+        el.classList.add('has-cover');
+      }
     }
     App.toast('Cover oppdatert! 🖼️', 'success');
   }
