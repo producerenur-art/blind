@@ -228,7 +228,7 @@ const LiveMix = (() => {
   // Bruker den delte modulen js/livebroadcast.js (WebRTC + Supabase Realtime
   // som signaling). State er modul-scopet så sendingen/lyden overlever at
   // modalen lukkes (App.closeModal() skjuler bare overlayet, tømmer ikke DOM).
-  const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null, devBypass: false };
+  const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null, devBypass: false, ownerBypass: false };
 
   // Finn en booking hvis tidsvindu dekker nå (10 min slingringsmonn før start).
   // Booking uten slot («avtales senere») regnes som alltid aktiv. Både betalte
@@ -274,11 +274,20 @@ const LiveMix = (() => {
     } catch (e) { return false; }
   }
 
+  // Stasjons-eier/admin kan alltid gå live — uavhengig av booking. Identifiseres
+  // på e-post, så det følger kontoen uansett nettleser når man er logget inn.
+  const OWNER_EMAILS = ['producerenur@gmail.com'];
+  function _isOwner(cur) {
+    try { return !!cur && OWNER_EMAILS.includes(String(cur.email || '').toLowerCase().trim()); }
+    catch (e) { return false; }
+  }
+
   function canGoLive() {
     const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
     const active = cur ? _activeBooking(cur) : null;
     const devBypass = _isLocalDev();
-    return { user: cur, active, next: cur ? _nextBooking(cur) : null, devBypass, ok: !!active || devBypass };
+    const owner = _isOwner(cur);
+    return { user: cur, active, next: cur ? _nextBooking(cur) : null, devBypass, owner, ok: !!active || devBypass || owner };
   }
 
   function _esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
@@ -302,8 +311,9 @@ const LiveMix = (() => {
         }
         return;
       }
-      _bc.activeBooking = gate.active;                 // null ved localhost-bypass
+      _bc.activeBooking = gate.active;                 // null ved localhost-/eier-bypass
       _bc.devBypass = gate.devBypass && !gate.active;  // vis «lokal test»-merke da
+      _bc.ownerBypass = gate.owner && !gate.active && !gate.devBypass; // «eier»-merke da
     }
     _renderDJ();
   }
@@ -348,7 +358,8 @@ const LiveMix = (() => {
         </p>
         ${_bc.activeBooking
           ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(34,197,94,0.12);color:#22c55e;margin:0 0 1rem">${_I('clock')} Aktiv tid: ${_bc.activeBooking.slot ? _fmtDateTime(_bc.activeBooking.slot) : 'avtales senere'}${_bc.activeBooking.test ? ' · TEST' : ''}</div>`
-          : (_bc.devBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">🧪 Lokal test — booking-gate forbigått</div>` : '')}
+          : (_bc.devBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">🧪 Lokal test — booking-gate forbigått</div>`
+              : (_bc.ownerBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">${_I('radio')} Eier — sender uten booking</div>` : ''))}
         <label style="${lbl}">Rom-navn</label>
         <input id="bc-room" value="${_esc(_bc.room || 'test')}" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
         <label style="${lbl}">Lyd-inngang (DJ-ruting)</label>
