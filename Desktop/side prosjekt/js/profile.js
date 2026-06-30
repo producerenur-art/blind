@@ -330,9 +330,10 @@ const Profile = (() => {
     // Avatar
     const avHtml = await avatarEl(user);
 
-    // Banner
-    let bannerUrl = null;
-    if (user.bannerMediaId) bannerUrl = await DB.getBlobUrl('media', user.bannerMediaId).catch(() => null);
+    // Banner — foretrekk delbar URL (sky/Supabase) som ALLE som har profilen ser;
+    // fall tilbake til lokal IndexedDB-blob for eldre opplastinger.
+    let bannerUrl = user.bannerUrl || null;
+    if (!bannerUrl && user.bannerMediaId) bannerUrl = await DB.getBlobUrl('media', user.bannerMediaId).catch(() => null);
 
     // ── Friend request / status button ───────────────────────────────────
     let friendBtn = '';
@@ -2339,15 +2340,33 @@ const Profile = (() => {
     if (!file) return;
     const current = Auth.current();
     if (!current || current.username !== username) return;
+    if (file.type && !/^image\//.test(file.type)) { App.toast('Velg en bildefil', 'error'); return; }
     const user = Auth.getUser(username);
-    // Rydd opp gammelt banner så vi ikke samler foreldreløse blober.
+    // Rydd opp gammel LOKAL blob så vi ikke samler foreldreløse blober.
     if (user && user.bannerMediaId) {
       DB.invalidateBlobCache('media', user.bannerMediaId);
       await DB.delete('media', user.bannerMediaId).catch(() => {});
     }
+    // Foretrekk skylagring (Supabase) → offentlig delbar URL som ALLE som har
+    // profilen kan se, også på tvers av enheter. Faller pent tilbake til lokal
+    // IndexedDB-blob når Supabase ikke er konfigurert (samme som før).
+    const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
+    if (useCloud) {
+      App.toast('Laster opp banner…', 'info');
+      try {
+        const res = await SC_Storage.upload(file, { prefix: 'banner' });
+        Auth.updateUser(username, { bannerUrl: res.url, bannerPath: res.path || null, bannerMediaId: null });
+        App.toast('Bakgrunnsbilde oppdatert!', 'success');
+        renderView(username);
+        return;
+      } catch (e) {
+        // Sky feilet → fall gjennom til lokal lagring under.
+        App.toast('Sky utilgjengelig — lagrer lokalt', 'info');
+      }
+    }
     const id = `bn_${Date.now()}`;
     await DB.storeFile('media', id, file);
-    Auth.updateUser(username, { bannerMediaId: id });
+    Auth.updateUser(username, { bannerMediaId: id, bannerUrl: null, bannerPath: null });
     App.toast('Bakgrunnsbilde oppdatert!', 'success');
     renderView(username);
   }
@@ -2357,11 +2376,13 @@ const Profile = (() => {
     const current = Auth.current();
     if (!current || current.username !== username) return;
     const user = Auth.getUser(username);
-    if (!user || !user.bannerMediaId) return;
+    if (!user || !(user.bannerMediaId || user.bannerUrl)) return;
     if (!confirm('Vil du slette bakgrunnsbildet?')) return;
-    DB.invalidateBlobCache('media', user.bannerMediaId);
-    await DB.delete('media', user.bannerMediaId).catch(() => {});
-    Auth.updateUser(username, { bannerMediaId: null });
+    if (user.bannerMediaId) {
+      DB.invalidateBlobCache('media', user.bannerMediaId);
+      await DB.delete('media', user.bannerMediaId).catch(() => {});
+    }
+    Auth.updateUser(username, { bannerMediaId: null, bannerUrl: null, bannerPath: null });
     App.toast('Bakgrunnsbilde slettet', 'success');
     renderView(username);
   }

@@ -38,7 +38,9 @@ let storeCalls = [];               // DB.storeFile(store, id, file)
 let deleteCalls = [];              // DB.delete(store, id)
 let updateCalls = [];              // Auth.updateUser(username, patch)
 let toasts = [];                   // App.toast(msg, type)
-function resetSpies() { captures = []; storeCalls = []; deleteCalls = []; updateCalls = []; toasts = []; }
+let cloudOn = false;               // SC_Storage.isConfigured()
+let cloudUploads = [];             // SC_Storage.upload(file, opts)
+function resetSpies() { captures = []; storeCalls = []; deleteCalls = []; updateCalls = []; toasts = []; cloudUploads = []; }
 
 // ── Falskt DOM-element (nok til at renderView kjører til innerHTML-tilordning) ─
 const elCache = {};
@@ -97,6 +99,15 @@ const sandbox = {
     storeFile: async (store, id, file) => { storeCalls.push({ store, id, file }); },
     delete: async (store, id) => { deleteCalls.push({ store, id }); },
     invalidateBlobCache() {},
+  },
+  // Sky-lagring (Supabase). Av som standard → testene treffer lokal-fallbacken;
+  // skrus på i den dedikerte sky-testen via cloudOn = true.
+  SC_Storage: {
+    isConfigured: () => cloudOn,
+    upload: async (file, opts) => {
+      cloudUploads.push({ file, opts });
+      return { url: 'https://cloud.example/banner/abc.jpg', path: (opts && opts.prefix || 'banner') + '/abc.jpg' };
+    },
   },
 };
 sandbox.window = sandbox;           // klassisk script: window === global
@@ -158,6 +169,15 @@ async function testRender() {
     ok('eier med banner → «Bytt/Slett bakgrunn» på forsidebildet');
   }
 
+  // Eier med SKY-banner (bannerUrl, ingen lokal blob) → bildet vises for ALLE
+  {
+    const html = await renderHtml({ username: 'dj_test' }, baseUser({ bannerUrl: 'https://cloud.example/banner/abc.jpg' }));
+    const hero = heroOf(html);
+    assert.ok(hero.includes('https://cloud.example/banner/abc.jpg'), 'sky-banner: hero bruker den delbare URL-en');
+    assert.ok(hero.includes('Bytt bakgrunn') && hero.includes('Slett bakgrunn'), 'sky-banner: bytt/slett vises');
+    ok('eier med sky-banner → forsidebildet bruker delbar URL (synlig for alle)');
+  }
+
   // Ikke-eier → ingen banner-knapper
   let html = await renderHtml({ username: 'someone_else' }, baseUser({ bannerMediaId: 'bn_existing' }));
   assert.ok(!html.includes('profile-banner-input') && !html.includes('setBannerFromProfile') && !html.includes('deleteBanner'), 'ingen banner-markører for fremmed');
@@ -205,6 +225,22 @@ async function testSetBanner() {
   await Profile.setBannerFromProfile({ files: [] }, 'dj_test');
   assert.strictEqual(storeCalls.length, 0, 'ingen fil → ingenting lagres');
   ok('uten valgt fil: no-op');
+
+  // Sky konfigurert → lastes opp til Supabase, bannerUrl settes, INGEN lokal blob
+  resetSpies();
+  cloudOn = true;
+  currentUser = { username: 'dj_test' };
+  usersById.dj_test = baseUser({ bannerMediaId: 'bn_old' });
+  await Profile.setBannerFromProfile({ files: [{ name: 'b.jpg', type: 'image/jpeg' }] }, 'dj_test');
+  assert.strictEqual(cloudUploads.length, 1, 'sky: nøyaktig én opplasting til SC_Storage');
+  assert.strictEqual(cloudUploads[0].opts.prefix, 'banner', 'sky: lastes opp under banner/-prefiks');
+  assert.strictEqual(storeCalls.length, 0, 'sky: ingen lokal blob lagres');
+  const cu = updateCalls.find(c => 'bannerUrl' in c.patch);
+  assert.ok(cu && /^https:\/\//.test(cu.patch.bannerUrl), 'sky: bannerUrl settes til offentlig URL');
+  assert.strictEqual(cu.patch.bannerMediaId, null, 'sky: lokal bannerMediaId nulles');
+  assert.ok(deleteCalls.some(d => d.id === 'bn_old'), 'sky: gammel lokal blob ryddes');
+  ok('sky konfigurert: opplasting til Supabase, bannerUrl satt, ingen lokal blob');
+  cloudOn = false;
 }
 
 // ── 3) deleteBanner ─────────────────────────────────────────────────────────
