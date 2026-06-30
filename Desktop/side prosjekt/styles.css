@@ -1458,6 +1458,29 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   position: absolute; inset: 0;
   background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.8));
 }
+/* Eier kan klikke hvor som helst på banneren for å laste opp / bytte bilde */
+.profile-hero-overlay--editable {
+  cursor: pointer;
+}
+.profile-hero-overlay-hint {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 0.82rem; font-weight: 600;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.25);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+.profile-hero-overlay--editable:hover .profile-hero-overlay-hint {
+  opacity: 1;
+}
 .profile-hero-actions {
   position: absolute;
   top: 1rem; right: 1rem;

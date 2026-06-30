@@ -408,7 +408,7 @@ const Profile = (() => {
         <!-- Hero -->
         <div class="profile-hero" style="${bannerUrl ? `background-image:url(${bannerUrl});background-size:cover;background-position:center;` : ''}">
           <div class="profile-hero-bg" style="${heroBgStyle}">${heroBgExtra}</div>
-          <div class="profile-hero-overlay"></div>
+          <div class="profile-hero-overlay${isOwner ? ' profile-hero-overlay--editable' : ''}"${isOwner ? ` onclick="document.getElementById('profile-banner-input').click()" title="Bytt bakgrunnsbilde"` : ''}>${isOwner ? `<span class="profile-hero-overlay-hint">${Icon('camera')} Bytt bakgrunnsbilde</span>` : ''}</div>
           ${isOwner ? `<!-- Bakgrunnsbilde-handlinger (kun eier) — alltid alle tre synlige -->
           <div class="profile-hero-banner-actions">
             <input type="file" id="profile-banner-input" accept="image/*" style="display:none" onchange="Profile.setBannerFromProfile(this,'${username}')">
