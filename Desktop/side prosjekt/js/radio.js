@@ -311,6 +311,11 @@ const Radio = (() => {
   let visFrame = null;
   let visMode = 'psychedelic'; // 'psychedelic' | 'bars' | 'circle' | 'wave' | 'particles'
   let visSize = localStorage.getItem('pv_vis_size') || 'medium'; // 'small'|'medium'|'large'|'full'
+  // Egen farge (felles for ALLE modusene): null = regnbue/auto, ellers en fast hue 0..359.
+  let visHue = localStorage.getItem('pv_vis_hue');
+  visHue = (visHue === null || visHue === '') ? null : (parseInt(visHue, 10) || 0);
+  // Fart: skalerer tids-/bevegelses-tempoet i alle modusene (0.15× sakte → 3× rask).
+  let visSpeed = parseFloat(localStorage.getItem('pv_vis_speed')) || 1;
   let canvas = null, visCtx = null;
   let customStreams = JSON.parse(localStorage.getItem('pv_custom_streams') || '[]');
   let searchTimer = null;
@@ -779,6 +784,27 @@ const Radio = (() => {
             <div class="vis-size-row">
               ${[['small','Liten'],['medium','Middels'],['large','Stor'],['full','⛶ Full']].map(([s,l]) =>
                 `<button class="vis-btn vis-size-btn ${visSize===s?'active':''}" data-size="${s}" onclick="Radio.setVisSize('${s}',this)">${l}</button>`).join('')}
+            </div>
+            <!-- Stil-fane: velg egen farge + fart for ALLE visualiserings-modusene -->
+            <div class="vis-tune-row">
+              <button class="vis-btn vis-tune-toggle" id="vis-tune-toggle" onclick="Radio.toggleVisTune(this)" title="Farge & fart">🎨 Stil</button>
+              <div class="vis-tune-panel" id="vis-tune-panel" hidden>
+                <div class="vis-tune-group">
+                  <label>🎨 Egen farge</label>
+                  <div class="vis-tune-color">
+                    <input type="color" id="vis-hue-input" value="${hslHueToHex(visHue == null ? 268 : visHue)}" oninput="Radio.setVisColor(this.value)" title="Velg farge">
+                    <button class="vis-btn vis-hue-auto ${visHue == null ? 'active' : ''}" id="vis-hue-auto" onclick="Radio.setVisColorAuto(this)" title="Regnbue / auto">🌈 Auto</button>
+                  </div>
+                </div>
+                <div class="vis-tune-group">
+                  <label>⚡ Fart <span id="vis-speed-val">${visSpeed.toFixed(2)}×</span></label>
+                  <div class="vis-tune-speed">
+                    <span class="vis-tune-end" title="Sakte">🐢</span>
+                    <input type="range" id="vis-speed-input" min="0.15" max="3" step="0.05" value="${visSpeed}" oninput="Radio.setVisSpeed(this.value)">
+                    <span class="vis-tune-end" title="Rask">🐇</span>
+                  </div>
+                </div>
+              </div>
             </div>
             <!-- Zoom-knapper: gjør visualizeren større/mindre -->
             <div class="vis-zoom-row">
@@ -1335,16 +1361,39 @@ const Radio = (() => {
 
   // ── Visualizer ────────────────────────────────────────────────────────
   let particles = [];
+  // Fart-styrt klokke: akkumulerer skalert tid slik at fartsendring ikke gir
+  // hopp, og animasjonen fortsetter jevnt på tvers av modus-bytter.
+  let visClock = 0, visLastTs = 0;
+  function visT() { return visClock / 1000; }
+
+  // Egen-farge: mapper en «auto-regnbue»-hue (0..360) til brukerens valgte palett.
+  // visHue == null → opprinnelig full-spektrum-oppførsel. Ellers presses
+  // variasjonen inn i et smalt bånd rundt den valgte fargen, så ALLE modusene
+  // følger fargevalget men fortsatt lever litt.
+  function visHueOf(autoHue) {
+    if (visHue == null) return autoHue;
+    const band = 60;
+    const frac = ((((autoHue % 360) + 360) % 360)) / 360; // 0..1
+    return (visHue - band / 2 + frac * band + 360) % 360;
+  }
+  // Dominant hue for de rolige glød-/kjerne-elementene (default merkevare-lilla).
+  function visBaseHue() { return visHue == null ? 268 : visHue; }
 
   function startVisualizer() {
     stopVisualizer();
     if (!canvas || !analyser) return;
     visCtx = canvas.getContext('2d');
     particles = [];
+    visLastTs = 0;
 
     function draw() {
       visFrame = requestAnimationFrame(draw);
       if (!visCtx || !canvas.width) return;
+      // Oppdater fart-klokka før vi tegner.
+      const now = performance.now();
+      if (!visLastTs) visLastTs = now;
+      visClock += (now - visLastTs) * visSpeed;
+      visLastTs = now;
       const bufLen = analyser.frequencyBinCount;
       const dataFreq = new Uint8Array(bufLen);
       const dataTime = new Uint8Array(bufLen);
@@ -1398,7 +1447,7 @@ const Radio = (() => {
       avg += v;
       const h = v * baseline * 0.95;
       const x = c * slot + (slot - barW) / 2;
-      const hue = 250 + (c / count) * 110;        // lilla → rosa
+      const hue = visHueOf(250 + (c / count) * 110); // lilla → rosa (el. egen farge)
       // Glød
       visCtx.shadowBlur  = 16 * v;
       visCtx.shadowColor = `hsla(${hue},90%,60%,${0.7 * v})`;
@@ -1420,10 +1469,11 @@ const Radio = (() => {
     visCtx.shadowBlur = 0;
     // Glødende grunnlinje
     avg /= count;
+    const bbh = visBaseHue();
     const base = visCtx.createLinearGradient(0, 0, W, 0);
-    base.addColorStop(0,   'rgba(168,130,255,0)');
-    base.addColorStop(0.5, `rgba(196,150,255,${0.45 + avg * 0.4})`);
-    base.addColorStop(1,   'rgba(168,130,255,0)');
+    base.addColorStop(0,   `hsla(${bbh},85%,76%,0)`);
+    base.addColorStop(0.5, `hsla(${bbh},90%,80%,${0.45 + avg * 0.4})`);
+    base.addColorStop(1,   `hsla(${bbh},85%,76%,0)`);
     visCtx.fillStyle = base;
     visCtx.fillRect(0, baseline - 1.5, W, 3);
   }
@@ -1432,7 +1482,7 @@ const Radio = (() => {
     const W = canvas.width, H = canvas.height;
     const cx = W / 2, cy = H / 2;
     const baseR = Math.min(W, H) * 0.20;
-    const t = performance.now() / 1000;
+    const t = visT();
     visCtx.fillStyle = 'rgba(8,6,20,0.28)';
     visCtx.fillRect(0, 0, W, H);
     const count = Math.min(bufLen, 120);
@@ -1446,7 +1496,7 @@ const Radio = (() => {
       const ang = (c / count) * Math.PI * 2 + t * 0.15;   // sakte rotasjon
       const amp = v * baseR * 1.7;
       const ca = Math.cos(ang), sa = Math.sin(ang);
-      const hue = (c / count) * 300 + 220;
+      const hue = visHueOf((c / count) * 300 + 220);
       visCtx.strokeStyle = `hsla(${hue},95%,${52 + v * 18}%,0.92)`;
       visCtx.lineWidth   = segW;
       visCtx.shadowBlur  = 14 * v;
@@ -1458,17 +1508,18 @@ const Radio = (() => {
     }
     visCtx.shadowBlur = 0;
     // Pulserende kjerne (bass-drevet)
+    const cbh = visBaseHue();
     const coreR = baseR * (0.7 + bass * 0.5);
     const core  = visCtx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
-    core.addColorStop(0,   `rgba(196,150,255,${0.45 + bass * 0.4})`);
-    core.addColorStop(0.6, `rgba(124,58,237,${0.16 + bass * 0.2})`);
-    core.addColorStop(1,   'rgba(124,58,237,0)');
+    core.addColorStop(0,   `hsla(${cbh},90%,78%,${0.45 + bass * 0.4})`);
+    core.addColorStop(0.6, `hsla(${cbh},83%,58%,${0.16 + bass * 0.2})`);
+    core.addColorStop(1,   `hsla(${cbh},83%,58%,0)`);
     visCtx.fillStyle = core;
     visCtx.beginPath();
     visCtx.arc(cx, cy, coreR, 0, Math.PI * 2);
     visCtx.fill();
     // Indre ring
-    visCtx.strokeStyle = `rgba(196,160,255,${0.3 + bass * 0.3})`;
+    visCtx.strokeStyle = `hsla(${cbh},80%,81%,${0.3 + bass * 0.3})`;
     visCtx.lineWidth   = 1.5;
     visCtx.beginPath();
     visCtx.arc(cx, cy, baseR, 0, Math.PI * 2);
@@ -1492,15 +1543,16 @@ const Radio = (() => {
       x += sliceW;
     }
     visCtx.lineTo(W, H); visCtx.lineTo(0, H); visCtx.closePath();
+    const wbh = visBaseHue();
     const fill = visCtx.createLinearGradient(0, 0, 0, H);
-    fill.addColorStop(0,   'rgba(124,58,237,0)');
-    fill.addColorStop(0.5, 'rgba(150,90,255,0.22)');
-    fill.addColorStop(1,   'rgba(80,40,180,0.04)');
+    fill.addColorStop(0,   `hsla(${wbh},83%,57%,0)`);
+    fill.addColorStop(0.5, `hsla(${wbh},90%,67%,0.22)`);
+    fill.addColorStop(1,   `hsla(${wbh},78%,43%,0.04)`);
     visCtx.fillStyle = fill;
     visCtx.fill();
     // Flerlags glødende linjer (bakerst lag først)
     for (let layer = 2; layer >= 0; layer--) {
-      const hue = 250 + layer * 35;
+      const hue = visHueOf(250 + layer * 35);
       const amp = (H * 0.42) * (1 - layer * 0.22);
       visCtx.beginPath();
       x = 0;
@@ -1537,7 +1589,7 @@ const Radio = (() => {
           x: W / 2, y: H / 2,
           vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - bass * 2,
           r:  1.5 + Math.random() * 4 * bass,
-          hue: 230 + Math.random() * 130,
+          hue: visHueOf(230 + Math.random() * 130),
           life: 1,
         });
       }
@@ -1545,10 +1597,11 @@ const Radio = (() => {
     // Additiv glød for et lysende, proft uttrykk
     visCtx.globalCompositeOperation = 'lighter';
     particles = particles.filter(p => p.life > 0.02);
+    const spd = visSpeed;                     // fart styrer hvor raskt de flyr/dør
     particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.vy += 0.06;
+      p.x += p.vx * spd; p.y += p.vy * spd; p.vy += 0.06 * spd;
       p.vx *= 0.99; p.vy *= 0.99;
-      p.life -= 0.012; p.r *= 0.995;
+      p.life -= 0.012 * spd; p.r *= 0.995;
       const rr = p.r * 3;
       const g = visCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rr);
       g.addColorStop(0, `hsla(${p.hue},95%,72%,${p.life})`);
@@ -1559,10 +1612,11 @@ const Radio = (() => {
       visCtx.fill();
     });
     // Sentral beat-glød
+    const pbh = visBaseHue();
     const beatR = Math.min(W, H) * (0.06 + bass * 0.18);
     const bg = visCtx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, beatR);
-    bg.addColorStop(0, `rgba(170,120,255,${0.5 * bass})`);
-    bg.addColorStop(1, 'rgba(124,58,237,0)');
+    bg.addColorStop(0, `hsla(${pbh},90%,73%,${0.5 * bass})`);
+    bg.addColorStop(1, `hsla(${pbh},83%,58%,0)`);
     visCtx.fillStyle = bg;
     visCtx.beginPath();
     visCtx.arc(W / 2, H / 2, beatR, 0, Math.PI * 2);
@@ -1577,7 +1631,7 @@ const Radio = (() => {
   function drawPsychedelic(freq, time, bufLen) {
     const W = canvas.width, H = canvas.height;
     const cx = W / 2, cy = H / 2;
-    const t  = performance.now() / 1000;
+    const t  = visT();
 
     // Ettergløds-spor: mal et svakt mørkt lag i stedet for å wipe canvasen.
     visCtx.fillStyle = 'rgba(0,0,0,0.08)';
@@ -1615,7 +1669,8 @@ const Radio = (() => {
         const ang = (i / bufLen) * (Math.PI / segments);
         const r0  = maxR * 0.10 + Math.sin(t * 2 + i * 0.3) * 8;
         const r1  = r0 + amp * maxR * 0.9;
-        const hue = (hueBase + (i / bufLen) * 200 + s * 12) % 360;
+        const rawHue = (hueBase + (i / bufLen) * 200 + s * 12) % 360;
+        const hue = visHueOf(rawHue);
         const x0  = Math.cos(ang) * r0, y0 = Math.sin(ang) * r0;
         const x1  = Math.cos(ang) * r1, y1 = Math.sin(ang) * r1;
         visCtx.strokeStyle = `hsla(${hue},100%,${50 + amp * 25}%,${0.35 + amp * 0.5})`;
@@ -1625,7 +1680,7 @@ const Radio = (() => {
         visCtx.lineTo(x1, y1);
         visCtx.stroke();
         // Glødende node-punkt i enden av strålen.
-        visCtx.fillStyle = `hsla(${(hue + 40) % 360},100%,70%,${amp})`;
+        visCtx.fillStyle = `hsla(${visHueOf(rawHue + 40)},100%,70%,${amp})`;
         visCtx.beginPath();
         visCtx.arc(x1, y1, 1 + amp * 3, 0, Math.PI * 2);
         visCtx.fill();
@@ -1650,7 +1705,7 @@ const Radio = (() => {
       else         visCtx.lineTo(x, y);
     }
     visCtx.closePath();
-    visCtx.strokeStyle = `hsla(${(hueBase + 90) % 360},100%,65%,0.5)`;
+    visCtx.strokeStyle = `hsla(${visHueOf((hueBase + 90) % 360)},100%,65%,0.5)`;
     visCtx.lineWidth   = 2;
     visCtx.stroke();
     visCtx.restore();
@@ -1658,8 +1713,8 @@ const Radio = (() => {
     // Sentral pulserende plasma-kjerne (bass-drevet).
     const coreR = Math.min(W, H) * (0.10 + bass * 0.30);
     const core  = visCtx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
-    core.addColorStop(0,   `hsla(${(hueBase + 180) % 360},100%,70%,${0.25 + bass * 0.5})`);
-    core.addColorStop(0.5, `hsla(${hueBase},100%,55%,${0.15 + bass * 0.3})`);
+    core.addColorStop(0,   `hsla(${visHueOf((hueBase + 180) % 360)},100%,70%,${0.25 + bass * 0.5})`);
+    core.addColorStop(0.5, `hsla(${visHueOf(hueBase)},100%,55%,${0.15 + bass * 0.3})`);
     core.addColorStop(1,   'transparent');
     visCtx.globalCompositeOperation = 'lighter';
     visCtx.fillStyle = core;
@@ -1678,6 +1733,58 @@ const Radio = (() => {
     document.querySelectorAll('.vis-style-row .vis-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     particles = [];
+  }
+
+  // ── Egen farge + fart («Stil»-fanen) ───────────────────────────────────
+  // Konverter en full-mettet hue (0..360) → hex, for å forhåndsutfylle fargevelgeren.
+  function hslHueToHex(h, s = 100, l = 60) {
+    s /= 100; l /= 100;
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+    const to = x => Math.round(x * 255).toString(16).padStart(2, '0');
+    return `#${to(f(0))}${to(f(8))}${to(f(4))}`;
+  }
+  // Konverter en valgt hex-farge → hue (0..359).
+  function hexToHue(hex) {
+    const m = String(hex).replace('#', '');
+    const r = parseInt(m.slice(0, 2), 16) / 255;
+    const g = parseInt(m.slice(2, 4), 16) / 255;
+    const b = parseInt(m.slice(4, 6), 16) / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    let h = 0;
+    if (d !== 0) {
+      if      (mx === r) h = ((g - b) / d) % 6;
+      else if (mx === g) h = (b - r) / d + 2;
+      else               h = (r - g) / d + 4;
+      h = h * 60; if (h < 0) h += 360;
+    }
+    return Math.round(h);
+  }
+
+  function setVisColor(hex) {
+    visHue = hexToHue(hex);
+    localStorage.setItem('pv_vis_hue', String(visHue));
+    document.getElementById('vis-hue-auto')?.classList.remove('active');
+  }
+  function setVisColorAuto(btn) {
+    visHue = null;
+    localStorage.removeItem('pv_vis_hue');
+    document.getElementById('vis-hue-auto')?.classList.add('active');
+    if (btn) btn.classList.add('active');
+  }
+  function setVisSpeed(v) {
+    visSpeed = parseFloat(v) || 1;
+    localStorage.setItem('pv_vis_speed', String(visSpeed));
+    const lab = document.getElementById('vis-speed-val');
+    if (lab) lab.textContent = visSpeed.toFixed(2) + '×';
+  }
+  function toggleVisTune(btn) {
+    const panel = document.getElementById('vis-tune-panel');
+    if (!panel) return;
+    const show = panel.hidden;
+    panel.hidden = !show;
+    btn.classList.toggle('active', show);
   }
 
   // ── Visualizer-størrelse (Liten · Middels · Stor · Fullskjerm) ─────────
@@ -1881,6 +1988,7 @@ const Radio = (() => {
   return {
     render, playStation, playCustom, togglePlay, stopRadio, playUrl, fetchStations,
     setVolume, volumeUp, volumeDown, toggleMute, setVisMode, setVisSize, visZoomIn, visZoomOut, addCustomStream, removeCustom,
+    setVisColor, setVisColorAuto, setVisSpeed, toggleVisTune,
     playSearchResult, saveSearchResult, onSearchInput, onSearchKey, aiSearch,
     toggleAiChat, sendAiMessage, onAiKeydown,
     setAsFavorite, openEmbed, closeEmbed, stopForMusicPlayer,

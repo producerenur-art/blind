@@ -2642,6 +2642,56 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(124
 }
 .vis-btn.active, .vis-btn:hover { background: rgba(124,58,237,0.4); border-color: var(--accent); color: #fff; }
 
+/* Stil-fane: egen farge + fart (oppe til høyre) */
+.vis-tune-row {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+.vis-tune-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.7rem 0.8rem;
+  min-width: 196px;
+  background: rgba(10,8,24,0.86);
+  border: 1px solid rgba(196,166,255,0.4);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+}
+.vis-tune-panel[hidden] { display: none; }
+.vis-tune-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.vis-tune-group > label {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.82);
+}
+.vis-tune-color { display: flex; align-items: center; gap: 0.5rem; }
+.vis-tune-color input[type=color] {
+  width: 40px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+.vis-hue-auto { flex: 1; text-align: center; }
+.vis-tune-speed { display: flex; align-items: center; gap: 0.5rem; }
+.vis-tune-speed input[type=range] { flex: 1; accent-color: var(--accent); cursor: pointer; }
+.vis-tune-end { font-size: 0.95rem; line-height: 1; }
+#vis-speed-val { color: var(--accent2, #c9a6ff); font-weight: 700; }
+
 /* Visualizer size control (top-left) + size presets */
 .vis-size-row {
   position: absolute;
