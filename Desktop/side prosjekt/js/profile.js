@@ -422,6 +422,7 @@ const Profile = (() => {
             <div class="profile-avatar" style="position:relative">
               ${avHtml}
               ${Auth.isOnline(username) && !isOwner ? '<div class="profile-online-dot" title="Online nå"></div>' : ''}
+              ${isOwner ? `<label class="profile-avatar-cam" title="${user.avatarMediaId ? 'Endre profilbilde' : 'Legg til profilbilde'}" style="position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:var(--accent,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.4);border:2px solid #0f0f1a">${Icon('camera')}<input type="file" id="profile-avatar-input" accept="image/*" style="display:none" onchange="Profile.setAvatarFromProfile(this,'${username}')"></label>` : ''}
             </div>
             <div class="profile-info">
               <div class="profile-display-name" style="font-family:${theme.fontFamily || 'Inter'},sans-serif">${user.displayName}</div>
@@ -434,6 +435,15 @@ const Profile = (() => {
                 <button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('settings')} Rediger</button>` : ''}
             </div>
           </div>
+
+          ${isOwner ? `
+          <!-- Profilbilde-handlinger (kun eier) -->
+          <div class="profile-avatar-actions" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem">
+            ${user.avatarMediaId
+              ? `<button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-avatar-input').click()">${Icon('camera')} Endre bilde</button>
+                 <button class="btn btn-ghost btn-sm" onclick="Profile.deleteAvatar('${username}')">${Icon('trash')} Slett bilde</button>`
+              : `<button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-avatar-input').click()">${Icon('plus')} Legg til bilde</button>`}
+          </div>` : ''}
 
           <!-- Stats -->
           <div class="profile-stats" style="border-color:${theme.textColor}22">
@@ -2281,6 +2291,39 @@ const Profile = (() => {
     App.toast('Profilbilde oppdatert!', 'success');
   }
 
+  // Legg til / endre profilbilde direkte fra profilsiden (ikke editoren).
+  async function setAvatarFromProfile(input, username) {
+    const file = input.files[0];
+    if (!file) return;
+    const current = Auth.current();
+    if (!current || current.username !== username) return;
+    const user = Auth.getUser(username);
+    // Rydd opp gammelt bilde så vi ikke samler foreldreløse blober.
+    if (user && user.avatarMediaId) {
+      DB.invalidateBlobCache('media', user.avatarMediaId);
+      await DB.delete('media', user.avatarMediaId).catch(() => {});
+    }
+    const id = `av_${Date.now()}`;
+    await DB.storeFile('media', id, file);
+    Auth.updateUser(username, { avatarMediaId: id });
+    App.toast('Profilbilde oppdatert!', 'success');
+    renderView(username);
+  }
+
+  // Slett profilbildet — faller tilbake til initialer.
+  async function deleteAvatar(username) {
+    const current = Auth.current();
+    if (!current || current.username !== username) return;
+    const user = Auth.getUser(username);
+    if (!user || !user.avatarMediaId) return;
+    if (!confirm('Vil du slette profilbildet?')) return;
+    DB.invalidateBlobCache('media', user.avatarMediaId);
+    await DB.delete('media', user.avatarMediaId).catch(() => {});
+    Auth.updateUser(username, { avatarMediaId: null });
+    App.toast('Profilbilde slettet', 'success');
+    renderView(username);
+  }
+
   async function uploadBanner(input) {
     const file = input.files[0];
     if (!file) return;
@@ -3770,6 +3813,7 @@ const Profile = (() => {
     toggleProfileVisibility, setProfileVisibility,
     saveProfile, livePreview, collectTheme,
     uploadMedia, uploadMusic, uploadMusicCover, uploadSaleCover, uploadAvatar, uploadBanner,
+    setAvatarFromProfile, deleteAvatar,
     addMediaLink, toggleMediaVisibility,
     shareTrackToCommunity, shareMediaToCommunity,
     toggleTrackVisibility,
