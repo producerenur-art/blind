@@ -130,30 +130,38 @@ async function renderHtml(viewer, profileUser) {
 // bor i profile-body, så vi isolerer hero-delen for å teste banner-knappene rent.
 function heroOf(html) { return html.split('profile-body')[0]; }
 
-// ── 1) renderView: bilde-knappene i hero-overlayet ──────────────────────────
+// ── 1) renderView: banner-knappene på forsidebildet (hero) ──────────────────
 async function testRender() {
-  console.log('\nrenderView (js/profile.js) — tom hero-overlay + bytt/slett bakgrunn i header');
+  console.log('\nrenderView (js/profile.js) — opplast/bytt/slett bakgrunn på forsidebildet (hero)');
 
-  // Eier → tom hero-overlay, bytt/slett-bakgrunn flyttet opp til profil-headeren
-  for (const [label, banner] of [['uten banner', null], ['med banner', 'bn_existing']]) {
-    const html = await renderHtml({ username: 'dj_test' }, baseUser({ bannerMediaId: banner }));
+  // Eier UTEN banner → «Last opp banner» på hero, ingen slett
+  {
+    const html = await renderHtml({ username: 'dj_test' }, baseUser({ bannerMediaId: null }));
     const hero = heroOf(html);
-    // Hero-overlayet skal nå være tomt (ikke lenger klikkbart/handlingsfelt)
-    assert.ok(!hero.includes('profile-hero-banner-actions'), `[${label}] hero har ikke lenger handlingsfelt`);
-    assert.ok(!hero.includes('profile-hero-overlay--editable'), `[${label}] hero-overlay er ikke klikkbart`);
-    // Knappene ligger nå i profil-headeren (profile-body)
-    assert.ok(html.includes('Bytt bakgrunn'), `[${label}] «Bytt bakgrunn» synlig i header`);
-    assert.ok(html.includes('Slett bakgrunn'), `[${label}] «Slett bakgrunn» synlig i header`);
-    assert.ok(html.includes('id="profile-banner-input"'), `[${label}] skjult fil-input finnes`);
-    assert.ok(html.includes("Profile.setBannerFromProfile(this,'dj_test')"), `[${label}] bytt kaller setBannerFromProfile`);
-    assert.ok(html.includes("Profile.deleteBanner('dj_test')"), `[${label}] slett kaller deleteBanner`);
-    ok(`eier ${label} → tom hero-overlay + bytt/slett bakgrunn i header`);
+    assert.ok(hero.includes('profile-hero-banner-actions'), 'uten banner: hero har banner-handlingsfelt');
+    assert.ok(hero.includes('id="profile-banner-input"'), 'uten banner: skjult fil-input på hero');
+    assert.ok(hero.includes("Profile.setBannerFromProfile(this,'dj_test')"), 'uten banner: opplasting kaller setBannerFromProfile');
+    assert.ok(hero.includes('Last opp banner'), 'uten banner: «Last opp banner» vises');
+    assert.ok(!hero.includes('Slett bakgrunn'), 'uten banner: ingen slett-knapp');
+    ok('eier uten banner → «Last opp banner» på forsidebildet');
+  }
+
+  // Eier MED banner → «Bytt bakgrunn» + «Slett bakgrunn» på hero
+  {
+    const html = await renderHtml({ username: 'dj_test' }, baseUser({ bannerMediaId: 'bn_existing' }));
+    const hero = heroOf(html);
+    assert.ok(hero.includes('profile-hero-banner-actions'), 'med banner: hero har banner-handlingsfelt');
+    assert.ok(hero.includes('Bytt bakgrunn'), 'med banner: «Bytt bakgrunn» på hero');
+    assert.ok(hero.includes('Slett bakgrunn'), 'med banner: «Slett bakgrunn» på hero');
+    assert.ok(hero.includes("Profile.setBannerFromProfile(this,'dj_test')"), 'med banner: bytt kaller setBannerFromProfile');
+    assert.ok(hero.includes("Profile.deleteBanner('dj_test')"), 'med banner: slett kaller deleteBanner');
+    ok('eier med banner → «Bytt/Slett bakgrunn» på forsidebildet');
   }
 
   // Ikke-eier → ingen banner-knapper
   let html = await renderHtml({ username: 'someone_else' }, baseUser({ bannerMediaId: 'bn_existing' }));
   assert.ok(!html.includes('profile-banner-input') && !html.includes('setBannerFromProfile') && !html.includes('deleteBanner'), 'ingen banner-markører for fremmed');
-  assert.ok(!html.includes('Bytt bakgrunn') && !html.includes('Slett bakgrunn'), 'fremmed ser ikke bakgrunns-knappene');
+  assert.ok(!html.includes('Bytt bakgrunn') && !html.includes('Slett bakgrunn') && !html.includes('Last opp banner'), 'fremmed ser ikke bakgrunns-knappene');
   ok('ikke-eier → ingen bakgrunns-knapper (kun eier kan endre)');
 
   // Utlogget → ingen banner-knapper

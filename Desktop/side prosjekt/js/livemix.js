@@ -228,7 +228,8 @@ const LiveMix = (() => {
   // Bruker den delte modulen js/livebroadcast.js (WebRTC + Supabase Realtime
   // som signaling). State er modul-scopet så sendingen/lyden overlever at
   // modalen lukkes (App.closeModal() skjuler bare overlayet, tømmer ikke DOM).
-  const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null, devBypass: false, ownerBypass: false };
+  const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null, devBypass: false, ownerBypass: false,
+    visual: 'image', coverUrl: '', coverImg: null, canvas: null, canvasRaf: null, camStream: null, outStream: null };
 
   // Finn en booking hvis tidsvindu dekker nå (10 min slingringsmonn før start).
   // Booking uten slot («avtales senere») regnes som alltid aktiv. Både betalte
@@ -370,6 +371,17 @@ const LiveMix = (() => {
           <select id="bc-dev" ${live ? 'disabled' : ''} style="${inp};flex:1">${live ? '' : '<option>Trykk «Gi tilgang» først…</option>'}</select>
           <button class="btn btn-ghost" id="bc-perm" onclick="LiveMix.bcPerm()" ${live ? 'disabled' : ''}>Gi tilgang</button>
         </div>
+        <label style="${lbl}">Visning under sending</label>
+        <div style="display:flex;gap:0.5rem;margin:0 0 0.6rem">
+          <button type="button" class="btn ${_bc.visual === 'image' ? 'btn-primary' : 'btn-ghost'}" id="bc-vis-image" onclick="LiveMix.bcSetVisual('image')" ${live ? 'disabled' : ''} style="flex:1">🖼️ Bilde (kun lyd)</button>
+          <button type="button" class="btn ${_bc.visual === 'camera' ? 'btn-primary' : 'btn-ghost'}" id="bc-vis-camera" onclick="LiveMix.bcSetVisual('camera')" ${live ? 'disabled' : ''} style="flex:1">🎥 Laptop-kamera</button>
+        </div>
+        <div id="bc-image-row" style="display:${_bc.visual === 'image' ? 'flex' : 'none'};gap:0.6rem;align-items:center;flex-wrap:wrap;margin:0 0 1rem">
+          <button class="btn btn-ghost" id="bc-image-btn" onclick="document.getElementById('bc-image-input').click()" ${live ? 'disabled' : ''}>${_I('camera')} Last opp bilde</button>
+          <input type="file" id="bc-image-input" accept="image/*" style="display:none" onchange="LiveMix.bcSetImage(this)">
+          <img id="bc-image-prev" src="${_esc(_bc.coverUrl || '')}" alt="" style="height:42px;border-radius:8px;${_bc.coverUrl ? '' : 'display:none'}">
+          <span style="font-size:0.74rem;color:var(--text3)">Kamera er av — bildet vises mens musikken spilles.</span>
+        </div>
         <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin:0 0 1.1rem">
           <button class="btn btn-primary" id="bc-go" onclick="LiveMix.bcGo()" ${live ? 'disabled' : ''}>📡 Gå live</button>
           <button class="btn" id="bc-stop" onclick="LiveMix.bcStop()" ${live ? '' : 'disabled'} style="background:#ef4444;color:#fff">■ Stopp</button>
@@ -404,6 +416,55 @@ const LiveMix = (() => {
     } catch (e) { _bcLog('FEIL tilgang: ' + e.message); }
   }
 
+  // Velg visning: stillbilde (kun lyd, kamera av) eller laptop-kamera.
+  function bcSetVisual(mode) {
+    if (_bc.dj) return;                        // ikke bytt mens live
+    _bc.visual = (mode === 'camera') ? 'camera' : 'image';
+    const bi = _byId('bc-vis-image'), bc = _byId('bc-vis-camera'), row = _byId('bc-image-row');
+    if (bi) bi.className = 'btn ' + (_bc.visual === 'image' ? 'btn-primary' : 'btn-ghost');
+    if (bc) bc.className = 'btn ' + (_bc.visual === 'camera' ? 'btn-primary' : 'btn-ghost');
+    if (row) row.style.display = _bc.visual === 'image' ? 'flex' : 'none';
+  }
+
+  function bcSetImage(input) {
+    const f = input && input.files && input.files[0]; if (!f) return;
+    if (_bc.coverUrl) { try { URL.revokeObjectURL(_bc.coverUrl); } catch (e) {} }
+    _bc.coverUrl = URL.createObjectURL(f);
+    const img = new Image(); img.onload = () => { _bc.coverImg = img; }; img.src = _bc.coverUrl;
+    const prev = _byId('bc-image-prev'); if (prev) { prev.src = _bc.coverUrl; prev.style.display = ''; }
+  }
+
+  // Bygg et video-spor for sendingen: laptop-kamera, eller et stillbilde-/«LIVE»-
+  // canvas (kamera av). Returnerer null hvis ingen video skal sendes.
+  async function _bcVisualTrack(room) {
+    if (_bc.visual === 'camera') {
+      _bc.camStream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: false });
+      return _bc.camStream.getVideoTracks()[0] || null;
+    }
+    const cv = document.createElement('canvas'); cv.width = 1280; cv.height = 720;
+    const ctx = cv.getContext('2d'); _bc.canvas = cv;
+    const draw = () => {
+      ctx.fillStyle = '#0f0f1a'; ctx.fillRect(0, 0, 1280, 720);
+      const img = _bc.coverImg;
+      if (img && img.width) {
+        const r = Math.max(1280 / img.width, 720 / img.height);
+        const w = img.width * r, h = img.height * r;
+        ctx.drawImage(img, (1280 - w) / 2, (720 - h) / 2, w, h);
+      } else {
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#7c3aed'; ctx.font = 'bold 72px Inter, sans-serif';
+        ctx.fillText('🔴 LIVE', 640, 330);
+        ctx.fillStyle = '#fff'; ctx.font = '600 36px Inter, sans-serif';
+        ctx.fillText('rom: ' + room, 640, 400);
+      }
+    };
+    draw();
+    // Hold sporet i live med jevne re-tegninger (noen nettlesere fryser et stille canvas-spor).
+    _bc.canvasRaf = setInterval(draw, 1000);
+    const cs = cv.captureStream(2);
+    return cs.getVideoTracks()[0] || null;
+  }
+
   async function bcGo() {
     try {
       const sel = _byId('bc-dev'), roomEl = _byId('bc-room');
@@ -416,21 +477,30 @@ const LiveMix = (() => {
       _bc.analL = _bc.ctx.createAnalyser(); _bc.analR = _bc.ctx.createAnalyser(); _bc.analL.fftSize = _bc.analR.fftSize = 1024;
       src.connect(sp); sp.connect(_bc.analL, 0); sp.connect(_bc.analR, 1);
       _bcStartMeter();
-      _bc.dj = LiveBroadcast.broadcaster(room, _bc.stream, {
+      // Utgående strøm: lyd + valgt video (stillbilde eller laptop-kamera).
+      const outTracks = [..._bc.stream.getAudioTracks()];
+      let vTrack = null;
+      try { vTrack = await _bcVisualTrack(room); } catch (e) { _bcLog('Video av (' + e.message + ') — sender kun lyd.'); }
+      if (vTrack) outTracks.push(vTrack);
+      _bc.outStream = new MediaStream(outTracks);
+      _bc.dj = LiveBroadcast.broadcaster(room, _bc.outStream, {
         onPeerCount: n => { const el = _byId('bc-count'); if (el) el.textContent = n; },
         onLog: _bcLog,
       });
       _bcSetLive(true);
-      _bcLog('Du er LIVE i rom «' + room + '». Spill i DJ-programmet.');
+      _bcLog('Du er LIVE i rom «' + room + '» (' + (vTrack ? (_bc.visual === 'camera' ? 'kamera' : 'bilde') : 'kun lyd') + '). Spill i DJ-programmet.');
     } catch (e) { _bcLog('FEIL gå live: ' + e.message); if (typeof App !== 'undefined') App.toast('Kunne ikke gå live: ' + e.message, 'error'); }
   }
 
   function bcStop() {
     if (_bc.raf) cancelAnimationFrame(_bc.raf); _bc.raf = null;
+    if (_bc.canvasRaf) { clearInterval(_bc.canvasRaf); _bc.canvasRaf = null; }
     if (_bc.dj) { _bc.dj.stop(); _bc.dj = null; }
+    if (_bc.camStream) { _bc.camStream.getTracks().forEach(t => t.stop()); _bc.camStream = null; }
+    if (_bc.outStream) { _bc.outStream.getVideoTracks().forEach(t => t.stop()); _bc.outStream = null; }
     if (_bc.stream) { _bc.stream.getTracks().forEach(t => t.stop()); _bc.stream = null; }
     if (_bc.ctx) { try { _bc.ctx.close(); } catch (e) {} _bc.ctx = null; }
-    _bc.analL = _bc.analR = null;
+    _bc.analL = _bc.analR = null; _bc.canvas = null;
     _bcSetLive(false);
     const c = _byId('bc-count'); if (c) c.textContent = '0';
     _bcLog('Stoppet.');
@@ -490,6 +560,7 @@ const LiveMix = (() => {
         <input id="ln-room" value="${_esc(_bc.room || 'test')}" ${joined ? 'disabled' : ''} aria-label="Rom-navn" style="${inp};margin:0 0 0.8rem">
         <button class="btn btn-primary w-full" id="ln-join" onclick="LiveMix.tuneInJoin()" ${joined ? 'disabled' : ''}>▶︎ Hør live</button>
         <audio id="ln-audio" autoplay playsinline></audio>
+        <video id="ln-video" autoplay playsinline muted style="display:none;width:100%;border-radius:12px;margin-top:0.7rem;background:#000"></video>
         <div id="ln-info" style="font-size:0.78rem;color:var(--text3);margin-top:0.9rem"></div>
         ${joined ? `<button class="btn btn-ghost w-full" onclick="LiveMix.tuneOut()" style="margin-top:0.8rem">Koble fra</button>` : ''}
       </div>`;
@@ -514,7 +585,10 @@ const LiveMix = (() => {
       },
       onTrack: stream => {
         const a = _byId('ln-audio'); if (a) { a.srcObject = stream; a.play().catch(() => {}); }
-        const i = _byId('ln-info'); if (i) i.textContent = 'Lyd mottatt 🎶';
+        const hasVideo = stream.getVideoTracks().length > 0;
+        const v = _byId('ln-video');
+        if (v && hasVideo) { v.srcObject = stream; v.muted = true; v.style.display = ''; v.play().catch(() => {}); }
+        const i = _byId('ln-info'); if (i) i.textContent = hasVideo ? 'Live 🎬🎶' : 'Lyd mottatt 🎶';
       },
       onLog: m => { const i = _byId('ln-info'); if (i) i.textContent = m; },
     });
@@ -523,6 +597,7 @@ const LiveMix = (() => {
   function tuneOut() {
     if (_bc.ln) { _bc.ln.leave(); _bc.ln = null; }
     const a = _byId('ln-audio'); if (a) { try { a.pause(); } catch (e) {} a.srcObject = null; }
+    const v = _byId('ln-video'); if (v) { try { v.pause(); } catch (e) {} v.srcObject = null; v.style.display = 'none'; }
     _lnStatus('Frakoblet', false);
     if (typeof App !== 'undefined') App.closeModal();
   }
@@ -530,7 +605,7 @@ const LiveMix = (() => {
   return {
     openBooking, step, startCheckout, testPurchase, completeFromSession, showReceipt,
     priceFor, _makeBooking, RATE_KR, RATE_ORE,
-    goLive, bcPerm, bcGo, bcStop, tuneIn, tuneInJoin, tuneOut,
+    goLive, bcPerm, bcGo, bcStop, bcSetVisual, bcSetImage, tuneIn, tuneInJoin, tuneOut,
     canGoLive,
   };
 })();

@@ -13,7 +13,8 @@
 // og på localhost forbigås gaten for testing. Uten booking ser eieren en
 // «Book mikse-slot»-oppfordring; for andre vises sendingen ikke som live.
 const BroadcastSchedule = (() => {
-  const KEY   = 'broadcasts';        // user.broadcasts = [{ id, slot, hours, room, title, youtubeId, createdAt }]
+  const KEY   = 'broadcasts';        // user.broadcasts = [{ id, slot, hours, room, title, youtubeId, coverUrl, createdAt }]
+  let _pendingCover = '';            // cover-bilde (data-URL) valgt i editoren, lagres på neste sendetid
   const GRACE = 10 * 60 * 1000;      // 10 min slingringsmonn før start (samme som booking-gaten)
   const MAX_HOURS = 12;
   const OWNER_EMAILS = ['producerenur@gmail.com'];   // stasjons-eier — sender alltid
@@ -252,13 +253,17 @@ const BroadcastSchedule = (() => {
 
     const b = eligible[0];
     const title = b.title ? esc(b.title) : 'Live-sett';
+    // Cover-bilde (still) når sendingen er kun lyd — kamera av. YouTube-embeden
+    // bærer allerede sitt eget bilde fra OBS, så da viser vi embeden i stedet.
+    const cover = (!b.youtubeId && b.coverUrl)
+      ? `<img src="${esc(b.coverUrl)}" alt="" style="width:100%;border-radius:12px;margin:0.9rem 0 0;display:block">` : '';
     let body;
     if (b.youtubeId) {
       body = _ytEmbed(b.youtubeId, { autoplay: true, mute: true, margin: '0.9rem 0 0' });
     } else if (isOwner) {
-      body = `<button class="btn btn-primary" onclick="BroadcastSchedule.goLive('${esc(b.room)}')" style="margin-top:0.9rem">${_I('radio')} Åpne DJ-konsoll</button>`;
+      body = cover + `<button class="btn btn-primary" onclick="BroadcastSchedule.goLive('${esc(b.room)}')" style="margin-top:0.9rem">${_I('radio')} Åpne DJ-konsoll</button>`;
     } else {
-      body = `<button class="btn btn-primary" onclick="BroadcastSchedule.listen('${esc(b.room)}')" style="margin-top:0.9rem">${_I('headphones')} Hør live nå</button>`;
+      body = cover + `<button class="btn btn-primary" onclick="BroadcastSchedule.listen('${esc(b.room)}')" style="margin-top:0.9rem">${_I('headphones')} Hør live nå</button>`;
     }
     return `
       <div style="margin:0 0 1.2rem;padding:1.1rem 1.2rem;border-radius:18px;background:linear-gradient(135deg,rgba(239,68,68,0.16),rgba(244,114,182,0.1));border:1px solid rgba(239,68,68,0.4);box-shadow:0 8px 30px rgba(239,68,68,0.12)">
@@ -433,7 +438,24 @@ const BroadcastSchedule = (() => {
           <input id="bs-title" placeholder="F.eks. «Fredagsmiks» eller «Ambient kveld»" style="${inp};margin:0 0 0.8rem" maxlength="60">
           <label style="${lbl}" for="bs-youtube">${_I('play')} YouTube live-lenke (valgfritt)</label>
           <input id="bs-youtube" placeholder="https://youtube.com/watch?v=… (din live-sending)" style="${inp};margin:0 0 0.4rem">
-          <p style="font-size:0.74rem;color:var(--text3);margin:0 0 1rem">Lim inn YouTube live-lenken din, så dukker videoen opp på profilen din og i Community når du er live. La feltet stå tomt for å sende lyd via DJ-konsollen i stedet.</p>
+          <p style="font-size:0.74rem;color:var(--text3);margin:0 0 0.8rem">Lim inn YouTube live-lenken din, så dukker videoen opp på profilen din og i Community når du er live. La feltet stå tomt for å sende lyd via DJ-konsollen i stedet.</p>
+
+          <label style="${lbl}">${_I('image')} Cover-bilde (still — vises når kamera er av)</label>
+          <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin:0 0 0.4rem">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('bs-cover').click()">${_I('camera')} Velg bilde</button>
+            <input type="file" id="bs-cover" accept="image/*" style="display:none" onchange="BroadcastSchedule.setCover(this)">
+            <img id="bs-cover-prev" alt="" style="height:42px;border-radius:8px;display:none">
+          </div>
+          <details style="margin:0 0 1rem">
+            <summary style="cursor:pointer;font-size:0.74rem;color:var(--text3)">Slik streamer du DJ-settet (Traktor) til YouTube — kun lyd</summary>
+            <ol style="font-size:0.74rem;color:var(--text3);line-height:1.55;margin:0.5rem 0 0;padding-left:1.1rem">
+              <li>Rut Traktor-masteren til en virtuell lydkabel (BlackHole / Loopback).</li>
+              <li>I OBS: legg til <strong>Lydinngangsopptak</strong> = den virtuelle kabelen.</li>
+              <li>Legg til <strong>Bilde</strong>-kilde (cover-bildet ditt) — <em>ingen kamera-kilde</em>.</li>
+              <li>Innstillinger → Stream → YouTube, lim inn streamnøkkelen. Start sending.</li>
+              <li>Kopier YouTube-lenken hit. Bildet over brukes som forhåndsvisning.</li>
+            </ol>
+          </details>
           <button class="btn btn-primary w-full" onclick="BroadcastSchedule.addEntry()">${_I('check')} Legg til sendetid</button>
         </div>
 
@@ -442,6 +464,18 @@ const BroadcastSchedule = (() => {
         </p>
       </div>`;
     App.openModal();
+  }
+
+  // Cover-bilde valgt i editoren → les til data-URL og forhåndsvis.
+  function setCover(input) {
+    const f = input && input.files && input.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      _pendingCover = String(rd.result || '');
+      const prev = document.getElementById('bs-cover-prev');
+      if (prev) { prev.src = _pendingCover; prev.style.display = ''; }
+    };
+    rd.readAsDataURL(f);
   }
 
   function addEntry() {
@@ -455,9 +489,11 @@ const BroadcastSchedule = (() => {
     const ytRaw = val('bs-youtube');
     const youtubeId = parseYouTubeId(ytRaw);
     if (ytRaw && ytRaw.trim() && !youtubeId) { App.toast('Fant ingen gyldig YouTube-lenke — sjekk lenken.', 'error'); return; }
+    const coverUrl = _pendingCover || '';
     const list  = entriesOf(cur);
-    list.push({ id: _uid(), slot, hours, room, title, youtubeId, createdAt: Date.now() });
+    list.push({ id: _uid(), slot, hours, room, title, youtubeId, coverUrl, createdAt: Date.now() });
     Auth.updateUser(cur.username, { [KEY]: list });
+    _pendingCover = '';
     if (typeof App !== 'undefined') App.toast(youtubeId ? 'Sendetid lagt til — YouTube live klar.' : 'Sendetid lagt til.', 'success');
     _renderEditor();
   }
@@ -505,7 +541,7 @@ const BroadcastSchedule = (() => {
 
   return {
     render, profileSection, liveBanner, communityLiveSection, refreshLiveSurfaces,
-    openEditor, addEntry, removeEntry, listen, goLive,
+    openEditor, addEntry, setCover, removeEntry, listen, goLive,
     entriesOf, nextOf, statusOf, parseYouTubeId,
   };
 })();

@@ -64,7 +64,8 @@ const LiveBroadcast = (() => {
       if (peers.has(listenerId)) return;
       const pc = new RTCPeerConnection(iceServers());
       peers.set(listenerId, pc);
-      stream.getAudioTracks().forEach(t => pc.addTrack(t, stream));
+      // Send alle spor: lyd + ev. video (stillbilde-canvas eller laptop-kamera).
+      stream.getTracks().forEach(t => pc.addTrack(t, stream));
       pc.onicecandidate = e => { if (e.candidate) sigTo(listenerId, { type: 'ice', candidate: e.candidate }); };
       pc.onconnectionstatechange = () => {
         log('Lytter ' + listenerId + ': ' + pc.connectionState);
