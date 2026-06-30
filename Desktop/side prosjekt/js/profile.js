@@ -421,13 +421,15 @@ const Profile = (() => {
         <!-- Hero -->
         <div class="profile-hero" style="${bannerUrl ? `background-image:url(${bannerUrl});background-size:cover;background-position:center;` : ''}">
           <div class="profile-hero-bg" style="${heroBgStyle}">${heroBgExtra}</div>
-          <div class="profile-hero-overlay"></div>
+          <div class="profile-hero-overlay${isOwner ? ' profile-hero-overlay--editable' : ''}"${isOwner ? ` onclick="document.getElementById('profile-banner-input').click()" title="${bannerUrl ? 'Bytt forsidebilde' : 'Last opp forsidebilde'}"` : ''}>
+            ${isOwner ? `<span class="profile-hero-overlay-hint"${!bannerUrl ? ' style="opacity:1"' : ''}>${Icon('camera')} ${bannerUrl ? 'Bytt forsidebilde' : 'Last opp forsidebilde'}</span>` : ''}
+          </div>
           ${isOwner ? `<div class="profile-hero-banner-actions">
             <input type="file" id="profile-banner-input" accept="image/*" style="display:none" onchange="Profile.setBannerFromProfile(this,'${username}')">
             ${bannerUrl
-              ? `<button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-banner-input').click()" title="Bytt forsidebilde">${Icon('camera')} Bytt bakgrunn</button>
-            <button class="btn btn-ghost btn-sm" onclick="Profile.deleteBanner('${username}')" title="Slett forsidebilde">${Icon('trash')} Slett bakgrunn</button>`
-              : `<button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-banner-input').click()" title="Last opp forsidebilde">${Icon('camera')} Last opp banner</button>`}
+              ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();document.getElementById('profile-banner-input').click()" title="Bytt forsidebilde">${Icon('camera')} Bytt bakgrunn</button>
+            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();Profile.deleteBanner('${username}')" title="Slett forsidebilde">${Icon('trash')} Slett bakgrunn</button>`
+              : `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();document.getElementById('profile-banner-input').click()" title="Last opp forsidebilde">${Icon('camera')} Last opp banner</button>`}
           </div>` : ''}
           ${current ? `<div class="profile-hero-actions">
             ${isOwner ? `<button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('edit')} Rediger profil</button>
@@ -771,6 +773,7 @@ const Profile = (() => {
           ${isOwner ? `<button class="btn-icon" title="Del til Community-veggen" onclick="event.stopPropagation();Profile.shareTrackToCommunity('${esc(r.id)}','${esc(username)}')">📣</button>` : ''}
           ${isOwner ? `<button class="btn-icon music-credits-btn" title="Kreditering & kjøpslenker" onclick="event.stopPropagation();Profile.openSongCreditsModal('${esc(r.id)}')">${Icon('edit')}</button>` : ''}
           ${isOwner ? `<label class="music-cover-upload" title="Endre cover" onclick="event.stopPropagation()">${Icon('camera')}<input type="file" accept="image/*" style="display:none" onchange="Profile.uploadMusicCover('${esc(r.id)}',this.files[0])"></label>` : ''}
+          ${isOwner ? `<button class="btn-icon btn-danger music-delete-btn" title="Slett denne sangen" onclick="event.stopPropagation();Profile.deleteTrack('${esc(r.id)}','${esc(username)}')">${Icon('trash')}</button>` : ''}
           ${isOwner && cat ? `
           <div class="music-demo-wrap">
             <button class="music-demo-btn" title="Send demo til plateselskap"
@@ -1036,19 +1039,7 @@ const Profile = (() => {
       <div>
         <div class="editor-panel">
           <div class="editor-panel-header">
-            <div class="profile-tabs" style="border:none;margin:0">
-              <button class="tab-btn active" onclick="switchEditorTab('theme',this)" data-tab="theme">${Icon('palette')} Utseende</button>
-              <button class="tab-btn" onclick="switchEditorTab('media',this)" data-tab="media">${Icon('camera')} Medier</button>
-              <button class="tab-btn" onclick="switchEditorTab('music',this)" data-tab="music">${Icon('music')} Musikk</button>
-              <button class="tab-btn" onclick="switchEditorTab('avatar',this)" data-tab="avatar">${Icon('user')} Avatar/Banner</button>
-              <button class="tab-btn" onclick="switchEditorTab('events',this)" data-tab="events">${Icon('calendar')} Events</button>
-              <button class="tab-btn" onclick="switchEditorTab('festivals',this)" data-tab="festivals">${Icon('star')} Festivaler</button>
-              <button class="tab-btn" onclick="switchEditorTab('mixes',this)" data-tab="mixes">${Icon('sliders')} DJ Mixes</button>
-              <button class="tab-btn" onclick="switchEditorTab('labels',this)" data-tab="labels">${Icon('tag')} Plateselskaper</button>
-              <button class="tab-btn" onclick="switchEditorTab('platforms',this)" data-tab="platforms">${Icon('laptop')} Plattformer</button>
-              <button class="tab-btn" onclick="switchEditorTab('mysites',this)" data-tab="mysites">${Icon('globe')} Mine Sider</button>
-              <button class="tab-btn" onclick="switchEditorTab('mypage',this)" data-tab="mypage">${Icon('wind')} Min Side</button>
-            </div>
+            ${editorTabNavHtml()}
           </div>
           <div class="editor-panel-body">
             <!-- THEME TAB -->
@@ -1136,6 +1127,32 @@ const Profile = (() => {
     const recs = await DB.getAllByIds('music', user.musicIds);
     sel.innerHTML = `<option value="">— Automatisk (første sang) —</option>` +
       recs.map(r => `<option value="${r.id}" ${t.bgMusicTrackId === r.id ? 'selected' : ''}>${r.name || r.id}</option>`).join('');
+  }
+
+  // Editor-fanene gruppert i 4 kategorier (top-nivå) med under-faner.
+  // Hver under-fane: [tab-id (= etab-<id>), ikon, etikett]
+  const EDITOR_GROUPS = [
+    ['utseende',  'palette',  'Utseende',  [['theme','palette','Tema'],      ['avatar','user','Avatar/Banner'], ['mypage','wind','Min Side']]],
+    ['innhold',   'music',    'Innhold',   [['media','camera','Medier'],     ['music','music','Musikk'],        ['mixes','sliders','DJ Mixes']]],
+    ['aktivitet', 'calendar', 'Aktivitet', [['events','calendar','Events'],  ['festivals','star','Festivaler']]],
+    ['nettverk',  'globe',    'Nettverk',  [['labels','tag','Plateselskaper'],['platforms','laptop','Plattformer'],['mysites','globe','Mine Sider']]],
+  ];
+
+  function editorTabNavHtml() {
+    const groupRow = EDITOR_GROUPS.map(([g, ic, label], i) =>
+      `<button class="group-tab-btn ${i === 0 ? 'active' : ''}" data-group="${g}" onclick="switchEditorGroup('${g}',this)">${Icon(ic)} ${label}</button>`
+    ).join('');
+    const subRows = EDITOR_GROUPS.map(([g, , , tabs], i) =>
+      `<div class="editor-subtabs ${i === 0 ? '' : 'hidden'}" data-group-tabs="${g}">
+        ${tabs.map(([tab, tic, tlabel], j) =>
+          `<button class="tab-btn ${i === 0 && j === 0 ? 'active' : ''}" data-tab="${tab}" onclick="switchEditorTab('${tab}',this)">${Icon(tic)} ${tlabel}</button>`
+        ).join('')}
+      </div>`
+    ).join('');
+    return `<div class="editor-tabnav">
+      <div class="editor-group-tabs">${groupRow}</div>
+      ${subRows}
+    </div>`;
   }
 
   function themeEditorHtml(t) {
@@ -1373,6 +1390,16 @@ const Profile = (() => {
       document.getElementById(`etab-${tab}`)?.classList.remove('hidden');
       document.querySelectorAll('.editor-panel-header .tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+    };
+
+    // Bytt top-nivå-gruppe: vis gruppens under-fane-rad og åpne dens første fane
+    window.switchEditorGroup = (group, btn) => {
+      document.querySelectorAll('.group-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('[data-group-tabs]').forEach(row =>
+        row.classList.toggle('hidden', row.dataset.groupTabs !== group)
+      );
+      document.querySelector(`[data-group-tabs="${group}"] .tab-btn`)?.click();
     };
 
     // Drag-drop on media zone
@@ -1926,6 +1953,24 @@ const Profile = (() => {
     loadEditorMusic(current);
   }
 
+  // Slett en opplastet sang permanent (eier-gated). Speiler deleteMix:
+  // fjerner cover-blob + selve sang-posten, oppdaterer user.musicIds,
+  // og rydder elementet ut av både editoren og profilens spilleliste.
+  async function deleteTrack(id, username) {
+    const current = Auth.current();
+    if (!current || current.username !== username) return;
+    if (!confirm('Vil du slette denne sangen permanent? Dette kan ikke angres.')) return;
+    const rec = await DB.get('music', id);
+    if (rec?.coverMediaId) await DB.delete('media', rec.coverMediaId).catch(() => {});
+    await DB.delete('music', id).catch(() => {});
+    current.musicIds = (current.musicIds || []).filter(x => x !== id);
+    Auth.updateUser(current.username, { musicIds: current.musicIds });
+    document.getElementById(`mitem-${id}`)?.remove();
+    App.toast('Sang slettet', 'info');
+    renderMusicPlayer(current, true);
+    loadEditorMusic(current);
+  }
+
   async function deleteMix(id, username) {
     const current = Auth.current();
     if (!current || current.username !== username) return;
@@ -2346,13 +2391,20 @@ const Profile = (() => {
     renderView(username);
   }
 
-  // Sett/endre bakgrunnsbildet (banneren) direkte fra profilen.
-  async function setBannerFromProfile(input, username) {
-    const file = input.files[0];
-    if (!file) return;
+  // ── Banner / forsidebilde ─────────────────────────────────────────────────
+  // ÉN felles kjerne brukes av BÅDE forsidebildet (hero) og opplastingssonen i
+  // «Rediger profil», slik at de to stedene alltid oppfører seg helt likt:
+  //   • sky-først (Supabase) → offentlig URL alle ser, på tvers av enheter
+  //   • faller pent tilbake til lokal IndexedDB-blob når sky ikke er satt opp
+  //   • rydder gammel blob og NULLER motsatt felt så bildet ALLTID byttes ut.
+  //     (Uten nullingen vant en gammel bannerUrl over en ny lokal opplasting →
+  //      «jeg laster opp men ingenting skjer»-feilen.)
+  // Returnerer { url } ved suksess, ellers null (ingen fil / ikke eier / feil filtype).
+  async function applyBannerFile(file, username) {
+    if (!file) return null;
     const current = Auth.current();
-    if (!current || current.username !== username) return;
-    if (file.type && !/^image\//.test(file.type)) { App.toast('Velg en bildefil', 'error'); return; }
+    if (!current || current.username !== username) return null;
+    if (file.type && !/^image\//.test(file.type)) { App.toast('Velg en bildefil', 'error'); return null; }
     const user = Auth.getUser(username);
     // Rydd opp gammel LOKAL blob så vi ikke samler foreldreløse blober.
     if (user && user.bannerMediaId) {
@@ -2360,8 +2412,7 @@ const Profile = (() => {
       await DB.delete('media', user.bannerMediaId).catch(() => {});
     }
     // Foretrekk skylagring (Supabase) → offentlig delbar URL som ALLE som har
-    // profilen kan se, også på tvers av enheter. Faller pent tilbake til lokal
-    // IndexedDB-blob når Supabase ikke er konfigurert (samme som før).
+    // profilen kan se, også på tvers av enheter.
     const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
     if (useCloud) {
       App.toast('Laster opp banner…', 'info');
@@ -2369,8 +2420,7 @@ const Profile = (() => {
         const res = await SC_Storage.upload(file, { prefix: 'banner' });
         Auth.updateUser(username, { bannerUrl: res.url, bannerPath: res.path || null, bannerMediaId: null });
         App.toast('Bakgrunnsbilde oppdatert!', 'success');
-        renderView(username);
-        return;
+        return { url: res.url };
       } catch (e) {
         // Sky feilet → fall gjennom til lokal lagring under.
         App.toast('Sky utilgjengelig — lagrer lokalt', 'info');
@@ -2380,7 +2430,25 @@ const Profile = (() => {
     await DB.storeFile('media', id, file);
     Auth.updateUser(username, { bannerMediaId: id, bannerUrl: null, bannerPath: null });
     App.toast('Bakgrunnsbilde oppdatert!', 'success');
-    renderView(username);
+    const url = await DB.getBlobUrl('media', id).catch(() => null);
+    return { url };
+  }
+
+  // Sett/endre forsidebildet direkte fra profilen (klikk på banneret eller knappene).
+  async function setBannerFromProfile(input, username) {
+    const r = await applyBannerFile(input.files[0], username);
+    if (r) renderView(username);
+  }
+
+  // Samme opplasting fra «Rediger profil»-sonen — deler kjerne med profilen over,
+  // så banneret havner i skyen og blir synlig for alle (ikke bare en lokal blob).
+  async function uploadBanner(input) {
+    const current = Auth.current();
+    if (!current) return;
+    const r = await applyBannerFile(input.files[0], current.username);
+    if (!r) return;
+    const prev = document.getElementById('banner-preview');
+    if (prev && r.url) prev.innerHTML = `<img src="${r.url}" style="width:100%;height:60px;object-fit:cover;border-radius:8px">`;
   }
 
   // Slett bakgrunnsbildet — faller tilbake til standard-bakgrunn.
@@ -2397,19 +2465,6 @@ const Profile = (() => {
     Auth.updateUser(username, { bannerMediaId: null, bannerUrl: null, bannerPath: null });
     App.toast('Bakgrunnsbilde slettet', 'success');
     renderView(username);
-  }
-
-  async function uploadBanner(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const current = Auth.current();
-    const id = `bn_${Date.now()}`;
-    await DB.storeFile('media', id, file);
-    Auth.updateUser(current.username, { bannerMediaId: id });
-    const url = await DB.getBlobUrl('media', id);
-    const prev = document.getElementById('banner-preview');
-    if (prev) prev.innerHTML = `<img src="${url}" style="width:100%;height:60px;object-fit:cover;border-radius:8px">`;
-    App.toast('Banner oppdatert!', 'success');
   }
 
   async function uploadMusicCover(trackId, file) {
@@ -3894,6 +3949,7 @@ const Profile = (() => {
     shareTrackToCommunity, shareMediaToCommunity,
     toggleTrackVisibility,
     openSongCreditsModal, saveSongCredits,
+    deleteTrack,
     uploadBgImage, uploadBgVideo, openImagePaintEditor,
     aiBio, aiColors, aiLayout, applyAiColors, applyAiLayout,
     updateRoleLabel, saveRoles, selectEditorRole,

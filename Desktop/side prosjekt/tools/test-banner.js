@@ -121,6 +121,7 @@ const Profile = sandbox.__Profile;
 assert.ok(Profile, 'Profile skal lastes fra js/profile.js');
 assert.strictEqual(typeof Profile.setBannerFromProfile, 'function', 'setBannerFromProfile eksponert');
 assert.strictEqual(typeof Profile.deleteBanner, 'function', 'deleteBanner eksponert');
+assert.strictEqual(typeof Profile.uploadBanner, 'function', 'uploadBanner eksponert');
 
 function baseUser(extra) {
   return Object.assign({
@@ -154,6 +155,9 @@ async function testRender() {
     assert.ok(hero.includes("Profile.setBannerFromProfile(this,'dj_test')"), 'uten banner: opplasting kaller setBannerFromProfile');
     assert.ok(hero.includes('Last opp banner'), 'uten banner: «Last opp banner» vises');
     assert.ok(!hero.includes('Slett bakgrunn'), 'uten banner: ingen slett-knapp');
+    // Hele banneren er klikkbar (Facebook-stil) for eier, med synlig hint når tom
+    assert.ok(hero.includes('profile-hero-overlay--editable'), 'uten banner: hele banneren er klikkbar');
+    assert.ok(hero.includes('Last opp forsidebilde'), 'uten banner: klikk-hint vises på banneren');
     ok('eier uten banner → «Last opp banner» på forsidebildet');
   }
 
@@ -166,6 +170,7 @@ async function testRender() {
     assert.ok(hero.includes('Slett bakgrunn'), 'med banner: «Slett bakgrunn» på hero');
     assert.ok(hero.includes("Profile.setBannerFromProfile(this,'dj_test')"), 'med banner: bytt kaller setBannerFromProfile');
     assert.ok(hero.includes("Profile.deleteBanner('dj_test')"), 'med banner: slett kaller deleteBanner');
+    assert.ok(hero.includes('profile-hero-overlay--editable'), 'med banner: hele banneren er klikkbar for bytte');
     ok('eier med banner → «Bytt/Slett bakgrunn» på forsidebildet');
   }
 
@@ -182,6 +187,7 @@ async function testRender() {
   let html = await renderHtml({ username: 'someone_else' }, baseUser({ bannerMediaId: 'bn_existing' }));
   assert.ok(!html.includes('profile-banner-input') && !html.includes('setBannerFromProfile') && !html.includes('deleteBanner'), 'ingen banner-markører for fremmed');
   assert.ok(!html.includes('Bytt bakgrunn') && !html.includes('Slett bakgrunn') && !html.includes('Last opp banner'), 'fremmed ser ikke bakgrunns-knappene');
+  assert.ok(!html.includes('profile-hero-overlay--editable'), 'fremmed: banneren er IKKE klikkbar');
   ok('ikke-eier → ingen bakgrunns-knapper (kun eier kan endre)');
 
   // Utlogget → ingen banner-knapper
@@ -280,11 +286,64 @@ async function testDeleteBanner() {
   ok('ikke-eier: deleteBanner er en no-op');
 }
 
+// ── 4) uploadBanner (edit-profil-sonen deler nå samme kjerne) ───────────────
+async function testUploadBanner() {
+  console.log('\nProfile.uploadBanner() — opplasting fra «Rediger profil» (samkjørt med forsidebildet)');
+
+  // Lokal lagring: ny blob + NULLER gammel sky-URL (selve bug-fiksen) + rydder gammel blob.
+  resetSpies();
+  cloudOn = false;
+  currentUser = { username: 'dj_test' };
+  usersById.dj_test = baseUser({ bannerMediaId: 'bn_old', bannerUrl: 'https://old.example/x.jpg', bannerPath: 'banner/x.jpg' });
+  await Profile.uploadBanner({ files: [{ name: 'ny.jpg', type: 'image/jpeg' }] });
+  assert.strictEqual(storeCalls.length, 1, 'lagrer nøyaktig én fil lokalt');
+  assert.ok(/^bn_/.test(storeCalls[0].id), 'ny blob får bn_-prefiks');
+  const upd = updateCalls.find(c => 'bannerMediaId' in c.patch);
+  assert.ok(upd && upd.patch.bannerMediaId === storeCalls[0].id, 'bannerMediaId peker på den nye blobben');
+  assert.strictEqual(upd.patch.bannerUrl, null, 'BUG-FIKS: gammel bannerUrl nulles så det nye bildet faktisk vises');
+  assert.strictEqual(upd.patch.bannerPath, null, 'gammel bannerPath nulles også');
+  assert.ok(deleteCalls.some(d => d.store === 'media' && d.id === 'bn_old'), 'gammel blob ryddes (delt kjerne)');
+  ok('rediger-profil: nuller gammel sky-URL + rydder gammel blob (bug-fiks)');
+
+  // Sky konfigurert → nøyaktig samme sky-vei som forsidebildet bruker.
+  resetSpies();
+  cloudOn = true;
+  currentUser = { username: 'dj_test' };
+  usersById.dj_test = baseUser({});
+  await Profile.uploadBanner({ files: [{ name: 'sky.jpg', type: 'image/jpeg' }] });
+  assert.strictEqual(cloudUploads.length, 1, 'sky: bruker SC_Storage akkurat som profilen');
+  assert.strictEqual(cloudUploads[0].opts.prefix, 'banner', 'sky: samme banner/-prefiks');
+  assert.strictEqual(storeCalls.length, 0, 'sky: ingen lokal blob');
+  const cu = updateCalls.find(c => 'bannerUrl' in c.patch);
+  assert.ok(cu && /^https:\/\//.test(cu.patch.bannerUrl), 'sky: bannerUrl settes til delbar URL');
+  assert.strictEqual(cu.patch.bannerMediaId, null, 'sky: lokal bannerMediaId nulles');
+  ok('rediger-profil bruker SAMME sky-kjerne som forsidebildet (samkjørt)');
+  cloudOn = false;
+
+  // Feil filtype → avvist med toast, ingen lagring.
+  resetSpies();
+  currentUser = { username: 'dj_test' };
+  usersById.dj_test = baseUser({});
+  await Profile.uploadBanner({ files: [{ name: 'ondt.pdf', type: 'application/pdf' }] });
+  assert.strictEqual(storeCalls.length, 0, 'feil filtype: ingenting lagres');
+  assert.ok(toasts.some(t => t.type === 'error'), 'feil filtype: gir feil-toast');
+  ok('rediger-profil: ikke-bilde avvises (delt validering)');
+
+  // Utlogget → no-op (ingen krasj på current.username slik den gamle koden ville gjort).
+  resetSpies();
+  currentUser = null;
+  await Profile.uploadBanner({ files: [{ name: 'x.jpg', type: 'image/jpeg' }] });
+  assert.strictEqual(storeCalls.length, 0, 'utlogget: ingenting lagres');
+  assert.strictEqual(updateCalls.length, 0, 'utlogget: ingen oppdatering');
+  ok('utlogget: uploadBanner er en trygg no-op (krasjer ikke)');
+}
+
 (async () => {
   try {
     await testRender();
     await testSetBanner();
     await testDeleteBanner();
+    await testUploadBanner();
     console.log(`\n\x1b[32mAlle ${passed} sjekkene passerte ✅\x1b[0m  — bilde-knappene i profilen er trygge.\n`);
     process.exit(0);
   } catch (e) {
