@@ -228,7 +228,7 @@ const LiveMix = (() => {
   // Bruker den delte modulen js/livebroadcast.js (WebRTC + Supabase Realtime
   // som signaling). State er modul-scopet så sendingen/lyden overlever at
   // modalen lukkes (App.closeModal() skjuler bare overlayet, tømmer ikke DOM).
-  const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null };
+  const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null, devBypass: false };
 
   // Finn en booking hvis tidsvindu dekker nå (10 min slingringsmonn før start).
   // Booking uten slot («avtales senere») regnes som alltid aktiv. Både betalte
@@ -264,10 +264,21 @@ const LiveMix = (() => {
   // Offentlig gate-sjekk — gjenbrukes av den frittstående DJ-verktøy-siden
   // (tools/broadcast-cloud.html) så NØYAKTIG samme regel gjelder begge steder.
   // Returnerer { user, active, next, ok }.
+  // localhost / 127.0.0.1 / file:// = utviklings-/testkontekst → forbigå gaten så
+  // DJ-en kan teste lokalt uten å sette opp en booking. På ekte domener
+  // (soundcoredevelopment.com) er hostname noe annet, så gaten gjelder fullt ut.
+  function _isLocalDev() {
+    try {
+      const h = location.hostname;
+      return h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '' || /\.local$/.test(h);
+    } catch (e) { return false; }
+  }
+
   function canGoLive() {
     const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
     const active = cur ? _activeBooking(cur) : null;
-    return { user: cur, active, next: cur ? _nextBooking(cur) : null, ok: !!active };
+    const devBypass = _isLocalDev();
+    return { user: cur, active, next: cur ? _nextBooking(cur) : null, devBypass, ok: !!active || devBypass };
   }
 
   function _esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
@@ -276,20 +287,23 @@ const LiveMix = (() => {
 
   // ── DJ: gå live ─────────────────────────────────────────────────────
   function goLive() {
-    const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
-    if (!cur) {
-      if (typeof App !== 'undefined') App.toast('Logg inn eller lag en gratis profil for å sende live.', 'info', 4000);
-      location.hash = '#/login';
-      return;
-    }
     if (typeof App === 'undefined') return;
     if (!window.LiveBroadcast) { App.toast('Kringkasting kunne ikke lastes (livebroadcast.js mangler).', 'error'); return; }
-    // Gate: live-sending er låst til en aktiv Live Mix-tid. Hvis allerede live,
-    // hopp over gaten (ikke steng en pågående sending ute når konsollen åpnes på nytt).
+    // Gate: live-sending er låst til en aktiv Live Mix-tid (forbigått på localhost
+    // for testing). Hvis allerede live, hopp over gaten ved re-åpning av konsollen.
     if (!_bc.dj) {
-      const active = _activeBooking(cur);
-      if (!active) { _renderNoBooking(cur); return; }
-      _bc.activeBooking = active;
+      const gate = canGoLive();
+      if (!gate.ok) {
+        if (!gate.user) {
+          App.toast('Logg inn eller lag en gratis profil for å sende live.', 'info', 4000);
+          location.hash = '#/login';
+        } else {
+          _renderNoBooking(gate.user);
+        }
+        return;
+      }
+      _bc.activeBooking = gate.active;                 // null ved localhost-bypass
+      _bc.devBypass = gate.devBypass && !gate.active;  // vis «lokal test»-merke da
     }
     _renderDJ();
   }
@@ -332,7 +346,9 @@ const LiveMix = (() => {
           Rut DJ-programmets master til en virtuell lydkabel (f.eks. BlackHole) og velg den under.
           Lytterne åpner «Hør live» med samme rom-navn. Signaling går over Supabase — funker over internett.
         </p>
-        ${_bc.activeBooking ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(34,197,94,0.12);color:#22c55e;margin:0 0 1rem">${_I('clock')} Aktiv tid: ${_bc.activeBooking.slot ? _fmtDateTime(_bc.activeBooking.slot) : 'avtales senere'}${_bc.activeBooking.test ? ' · TEST' : ''}</div>` : ''}
+        ${_bc.activeBooking
+          ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(34,197,94,0.12);color:#22c55e;margin:0 0 1rem">${_I('clock')} Aktiv tid: ${_bc.activeBooking.slot ? _fmtDateTime(_bc.activeBooking.slot) : 'avtales senere'}${_bc.activeBooking.test ? ' · TEST' : ''}</div>`
+          : (_bc.devBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">🧪 Lokal test — booking-gate forbigått</div>` : '')}
         <label style="${lbl}">Rom-navn</label>
         <input id="bc-room" value="${_esc(_bc.room || 'test')}" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
         <label style="${lbl}">Lyd-inngang (DJ-ruting)</label>
