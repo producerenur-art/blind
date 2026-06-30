@@ -1009,13 +1009,59 @@ img, video { display: block; max-width: 100%; }
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow);
+  /* Flytt + zoom: forskyvning/skala settes via inline transform i JS. */
+  transform-origin: center center;
+  transition: transform 0.14s ease;
+  will-change: transform;
 }
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+  /* Tittellinja er drahåndtaket — dra her for å flytte modalen fritt. */
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
 }
+.modal-header:active { cursor: grabbing; }
+.modal-header button { cursor: pointer; }
+
+/* Flytende zoom-stolpe nederst i overlegget (følger ikke modalens flytting). */
+.modal-zoom-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 1.1rem;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.25rem 0.3rem;
+  background: rgba(18, 18, 26, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  z-index: 2;
+}
+.mzb-btn {
+  min-width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.mzb-btn:hover { background: rgba(255, 255, 255, 0.08); }
+.mzb-reset { min-width: 3.1rem; font-size: 0.76rem; font-weight: 800; }
 .modal-header h2 { font-size: 1.25rem; font-weight: 700; }
 .modal-header h2 .icon { width: 1.1em; height: 1.1em; color: var(--accent); vertical-align: -0.15em; margin-right: 0.35rem; }
 

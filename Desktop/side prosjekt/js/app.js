@@ -21,12 +21,121 @@ const App = (() => {
     // overflow:hidden keeps the current scroll position (no jump) and avoids the
     // `body { top:0 !important }` Google-Translate hack a position:fixed lock hits.
     document.documentElement.classList.add('modal-open');
+    // Gjør modal-boksen flyttbar (dra i tittellinja, opp/ned/venstre/høyre) + zoombar.
+    _ensureModalTools();
+    _bindModalDrag();
+    _resetModalView();
   }
   function closeModal() {
     const ov = document.getElementById('modal-overlay');
     if (!ov) return;
     ov.classList.add('hidden');
     document.documentElement.classList.remove('modal-open');
+  }
+
+  // ── Modal: flytt (dra i tittel) + zoom ────────────────────────────────
+  // Alle modaler gjenbruker samme #modal-box, så vi binder dra/zoom én gang
+  // på selve boksen og legger en zoom-stolpe i overlegget. Tilstanden
+  // (forskyvning + skala) nullstilles hver gang en ny modal åpnes.
+  let _mz = { tx: 0, ty: 0, scale: 1 };
+
+  function _applyModalTransform() {
+    const box = document.getElementById('modal-box');
+    if (box) box.style.transform = `translate(${_mz.tx}px, ${_mz.ty}px) scale(${_mz.scale})`;
+  }
+  function _updateZoomLabel() {
+    const el = document.querySelector('.modal-zoom-bar .mzb-reset');
+    if (el) el.textContent = Math.round(_mz.scale * 100) + '%';
+  }
+  function _setModalZoom(s) {
+    _mz.scale = Math.max(0.4, Math.min(3, Math.round(s * 100) / 100));
+    _applyModalTransform();
+    _updateZoomLabel();
+  }
+  function _resetModalView() {
+    _mz = { tx: 0, ty: 0, scale: 1 };
+    _applyModalTransform();
+    _updateZoomLabel();
+  }
+
+  function _ensureModalTools() {
+    const ov = document.getElementById('modal-overlay');
+    if (!ov || ov.querySelector('.modal-zoom-bar')) return;
+    const bar = document.createElement('div');
+    bar.className = 'modal-zoom-bar';
+    bar.innerHTML = `
+      <button type="button" class="mzb-btn" data-act="out" aria-label="Zoom ut" title="Zoom ut">&minus;</button>
+      <button type="button" class="mzb-btn mzb-reset" data-act="reset" title="Tilbakestill plassering og zoom">100%</button>
+      <button type="button" class="mzb-btn" data-act="in" aria-label="Zoom inn" title="Zoom inn">+</button>`;
+    // Hindre at klikk på stolpen lukker modalen via bakgrunns-lytteren.
+    bar.addEventListener('pointerdown', e => e.stopPropagation());
+    bar.addEventListener('click', e => {
+      const act = e.target.closest('[data-act]')?.dataset.act;
+      if (act === 'in')        _setModalZoom(_mz.scale + 0.15);
+      else if (act === 'out')  _setModalZoom(_mz.scale - 0.15);
+      else if (act === 'reset') _resetModalView();
+    });
+    ov.appendChild(bar);
+  }
+
+  function _bindModalDrag() {
+    const box = document.getElementById('modal-box');
+    if (!box || box.dataset.dzBound) return;
+    box.dataset.dzBound = '1';
+
+    const pts = new Map();              // aktive pekere (mus/finger)
+    let mode = null;                    // 'drag' | 'pinch'
+    let sx = 0, sy = 0, ox = 0, oy = 0; // dra-start
+    let pinchDist = 0, pinchScale = 1;  // klyp-start
+
+    box.addEventListener('pointerdown', e => {
+      const onHeader = e.target.closest('.modal-header') && !e.target.closest('button');
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2) {
+        const [a, b] = [...pts.values()];
+        mode = 'pinch';
+        pinchDist = Math.hypot(a.x - b.x, a.y - b.y);
+        pinchScale = _mz.scale;
+        box.style.transition = 'none';
+      } else if (onHeader) {
+        mode = 'drag';
+        sx = e.clientX; sy = e.clientY; ox = _mz.tx; oy = _mz.ty;
+        box.style.transition = 'none';
+        try { box.setPointerCapture(e.pointerId); } catch (_) {}
+        e.preventDefault();
+      }
+    });
+
+    box.addEventListener('pointermove', e => {
+      if (!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (mode === 'pinch' && pts.size >= 2) {
+        const [a, b] = [...pts.values()];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (pinchDist > 0) _setModalZoom(pinchScale * (d / pinchDist));
+        e.preventDefault();
+      } else if (mode === 'drag') {
+        _mz.tx = ox + (e.clientX - sx);
+        _mz.ty = oy + (e.clientY - sy);
+        _applyModalTransform();
+      }
+    });
+
+    const end = e => {
+      pts.delete(e.pointerId);
+      try { box.releasePointerCapture(e.pointerId); } catch (_) {}
+      if (pts.size < 2 && mode === 'pinch') mode = null;
+      if (pts.size === 0) { mode = null; box.style.transition = ''; }
+    };
+    box.addEventListener('pointerup', end);
+    box.addEventListener('pointercancel', end);
+
+    // Ctrl/⌘ + rullehjul zoomer; vanlig rulling scroller innholdet som før.
+    box.addEventListener('wheel', e => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      _setModalZoom(_mz.scale + (e.deltaY < 0 ? 0.12 : -0.12));
+    }, { passive: false });
   }
 
   // ── Info / «Hva er Sound Core?» ───────────────────────────────────────
