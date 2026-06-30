@@ -295,9 +295,12 @@ const LiveMix = (() => {
   function _bcLog(m) { const l = _byId('bc-log'); if (!l) return; l.textContent += '\n' + new Date().toLocaleTimeString('nb-NO') + '  ' + m; l.scrollTop = l.scrollHeight; }
 
   // ── DJ: gå live ─────────────────────────────────────────────────────
-  function goLive() {
+  // room (valgfri): forhåndsvelg rom-navn — brukes når DJ-konsollen åpnes fra
+  // en planlagt sendetid (BroadcastSchedule) så DJ og lyttere havner i samme rom.
+  function goLive(room) {
     if (typeof App === 'undefined') return;
     if (!window.LiveBroadcast) { App.toast('Kringkasting kunne ikke lastes (livebroadcast.js mangler).', 'error'); return; }
+    if (room && !_bc.dj) _bc.room = String(room);
     // Gate: live-sending er låst til en aktiv Live Mix-tid (forbigått på localhost
     // for testing). Hvis allerede live, hopp over gaten ved re-åpning av konsollen.
     if (!_bc.dj) {
@@ -460,9 +463,12 @@ const LiveMix = (() => {
   }
 
   // ── Lytter: hør live ────────────────────────────────────────────────
-  function tuneIn() {
+  // room (valgfri): forhåndsvelg rom-navn — brukes når «Hør live» åpnes fra en
+  // planlagt sendetid (BroadcastSchedule).
+  function tuneIn(room) {
     if (typeof App === 'undefined') return;
     if (!window.LiveBroadcast) { App.toast('Kringkasting kunne ikke lastes (livebroadcast.js mangler).', 'error'); return; }
+    if (room) _bc.room = String(room);
     _renderListener();
   }
 

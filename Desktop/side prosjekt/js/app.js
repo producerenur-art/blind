@@ -142,6 +142,7 @@ const App = (() => {
       nav.innerHTML = `
         <a href="#/"            class="btn btn-ghost btn-sm">${Icon('home')} Feed</a>
         <a href="#/radio"       class="btn btn-ghost btn-sm">${Icon('radio')} Radio</a>
+        <a href="#/sendinger"   class="btn btn-ghost btn-sm">${Icon('mic')} Sendinger</a>
         <a href="#/discover"    class="btn btn-ghost btn-sm">${Icon('music')} Discover</a>
         <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">${Icon('user')} Profil</a>
         <button id="nav-more-btn" class="btn btn-ghost btn-sm nav-more-btn" onclick="App.toggleMoreMenu(this)" title="Mer — alle funksjoner" style="position:relative">${Icon('menu')} Mer ${Icon('chevron-down')}${moreBadge}</button>
@@ -151,6 +152,7 @@ const App = (() => {
       nav.innerHTML = `
         <a href="#/"            class="btn btn-ghost btn-sm">${Icon('home')} Feed</a>
         <a href="#/radio"       class="btn btn-ghost btn-sm">${Icon('radio')} Radio</a>
+        <a href="#/sendinger"   class="btn btn-ghost btn-sm">${Icon('mic')} Sendinger</a>
         <a href="#/discover"    class="btn btn-ghost btn-sm">${Icon('music')} Discover</a>
         <button id="nav-more-btn" class="btn btn-ghost btn-sm nav-more-btn" onclick="App.toggleMoreMenu(this)" title="Mer — alle funksjoner">${Icon('menu')} Mer ${Icon('chevron-down')}</button>
         <a href="#/login"       class="btn btn-ghost btn-sm">${Icon('log-in')} Logg inn</a>
@@ -268,6 +270,7 @@ const App = (() => {
     const pages = [
       { label: 'Hjem',        sub: 'Forsiden',                   icon: 'home',     route: '/',            kw: 'home forside front start hovedside' },
       { label: 'Radio',       sub: 'Live psy/ambient-stasjoner', icon: 'radio',    route: '/radio',       kw: 'stream stasjon stasjoner station live lyd musikk lytt' },
+      { label: 'Sendinger',   sub: 'Live-sendinger & sendetider', icon: 'mic',     route: '/sendinger',   kw: 'sendinger sending sendetid broadcast live dj mikse stream gå live hør live tidsplan schedule' },
       { label: 'Chat',        sub: 'Fellesskap-chat',            icon: 'message',  route: '/chat',        kw: 'prat melding samtale community' },
       { label: 'Discover',    sub: 'Finn folk & musikk',         icon: 'music',    route: '/discover',    kw: 'oppdage utforsk finn folk artister discover' },
       { label: 'Underground', sub: 'Underground-scene',          icon: 'moon',     route: '/underground', kw: 'undergrunn scene' },
@@ -2398,6 +2401,7 @@ const App = (() => {
     Router.define('/shop',                () => renderShop());
     Router.define('/share',              () => { if (window.ShareMusic) ShareMusic.render(); });
     Router.define('/radio',              () => Radio.render());
+    Router.define('/sendinger',          () => { if (window.BroadcastSchedule) BroadcastSchedule.render(); });
     Router.define('/chat',               () => Chat.render());
     Router.define('/discover',           () => Discover.render());
     Router.define('/underground',        () => Underground.render());

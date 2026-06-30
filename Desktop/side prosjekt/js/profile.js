@@ -455,6 +455,7 @@ const Profile = (() => {
             ${(()=>{const m={lytter:'🎧 Lytter',dj:'🎛️ DJ',produsent:'🎹 Produsent',plateselskap:'🏷️ Plateselskap'};const l=m[user.role||'lytter'];return l?`<div style="margin-bottom:0.75rem"><span class="profile-role-badge" style="background:${theme.primaryColor}33;border:1px solid ${theme.primaryColor}66;color:${theme.textColor}">${l}</span></div>`:'';})()}
             ${user.bio ? `<div class="profile-bio" style="color:${theme.textColor}cc">${user.bio}</div>` : isOwner ? `<div class="profile-bio-empty"><span style="color:${theme.textColor}55">Ingen bio ennå.</span> <a href="#/edit" style="color:${theme.primaryColor || 'var(--accent)'}">+ Legg til bio</a></div>` : ''}
             ${user.links?.length ? `<div class="profile-links">${user.links.map(l => `<a class="profile-link" href="${l.url}" target="_blank" rel="noopener">${Icon('link')} ${l.label}</a>`).join('')}</div>` : ''}
+            ${window.BroadcastSchedule ? BroadcastSchedule.profileSection(user, isOwner, theme) : ''}
             ${favRadioHtml}
             ${pendingHtml}
             ${friendsHtml}
