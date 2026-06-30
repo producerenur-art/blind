@@ -451,6 +451,9 @@ const Profile = (() => {
             <button class="btn btn-ghost btn-sm" onclick="Profile.deleteAvatar('${username}')">${Icon('trash')} Slett bilde</button>
           </div>` : ''}
 
+          <!-- Prominent LIVE-banner: vises tydelig øverst når brukeren sender live -->
+          ${window.BroadcastSchedule ? BroadcastSchedule.liveBanner(user, isOwner) : ''}
+
           <!-- Stats -->
           <div class="profile-stats" style="border-color:${theme.textColor}22">
             <div class="stat"><div class="stat-value">${(user.musicIds?.length || 0) + (user.mixIds?.length || 0) + (user.mediaIds?.length || 0)}</div><div class="stat-label" style="color:${theme.textColor}88">Opplastinger</div></div>

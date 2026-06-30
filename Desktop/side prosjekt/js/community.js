@@ -553,8 +553,9 @@ const Community = (() => {
     const me = Auth.current();
     if (_section === 'musikk') { body.innerHTML = me ? uploaderHtml('audio') : loginPromptHtml('laste opp og dele musikk'); return; }
     if (_section === 'video')  { body.innerHTML = me ? uploaderHtml('video') : loginPromptHtml('laste opp og dele video'); return; }
-    // 'vegg' — komponer + filter + feed (som før)
+    // 'vegg' — live nå + komponer + filter + feed (som før)
     body.innerHTML = `
+      ${window.BroadcastSchedule ? BroadcastSchedule.communityLiveSection() : ''}
       ${me ? composerHtml() : `<div class="community-login"><a href="#/login">Logg inn</a> for å dele noe med fellesskapet.</div>`}
       ${filterTabsHtml()}
       <div id="community-feed-list" class="community-feed"></div>`;
