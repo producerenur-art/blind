@@ -221,6 +221,147 @@ function purchaseHtml(name, siteUrl, planKey, orderRef) {
 </html>`;
 }
 
+// Markedsførings-/«bli medlem»-e-post (reklame). Inneheld: kva Sound Core er,
+// kvifor melde seg inn, nye fester i timeplanen, artistar du møter, AI-tilbod på
+// live stream — og ein tydeleg «Avmeld reklame»-knapp (GDPR/marknadsføringslov).
+// Sjølvstendig (hardkoda innhald) så e-posten ikkje er avhengig av frontend-modular.
+function promoHtml(name, siteUrl, unsubscribeUrl) {
+  const base       = (siteUrl || '').replace(/\/$/, '');
+  const displayUrl = base.replace(/^https?:\/\//, '') || 'Sound Core';
+  const joinUrl    = `${base}/#/signup`;
+  const liveUrl    = `${base}/#/sendinger`;
+  const unsubUrl   = unsubscribeUrl || `${base}/#/unsubscribe`;
+
+  // Det du får — kjernen i plattforma.
+  const FEATURES = [
+    ['🎚️', 'Last opp DJ-mixene dine', 'gratis opptil 3 timer — Pro låser opp opptil 20 t'],
+    ['📻', 'Sjangerradio & Discover', 'psytrance, ambient, techno & meir, med ukentlig rotasjon'],
+    ['🛰️', 'Live DJ-kringkasting', 'send Traktor-lyden din direkte til lytterne i sanntid'],
+    ['💬', 'Venner & innboks', 'chat, venneforespørsler og varsler i sanntid'],
+    ['🛒', 'Marketplace', 'kjøp og selg låter med trygg utbetaling'],
+  ];
+
+  // Nytt i festtimeplanen — ekte festivalar & klubbkvelder (frå World-fanen).
+  const PARTIES = [
+    ['🏔️', 'Burning Mountain', 'Zernez, Sveits', '25.–28. jun 2026'],
+    ['🏛️', 'IT Athens — Community Night III', 'Exarcheia, Athen', '3. jul 2026'],
+    ['🏛️', 'IT Athens — Closing Season · TYPEO · MOSHBEAT · Plagger', 'Athen', '11. jul 2026'],
+    ['🕉️', 'ZNA Gathering', 'Montargil, Portugal', '15.–22. jul 2026'],
+    ['🔥', 'OZORA Festival', 'Dádpuszta, Ungarn', '27. jul–4. aug 2026'],
+    ['🌲', 'Mo:Dem Festival', 'Primišlje, Kroatia', '3.–9. aug 2026'],
+    ['🌏', 'Earth Frequency Festival', 'Woodford, Australia', '23.–26. okt 2026'],
+  ];
+
+  // Artistar du møter på plattforma.
+  const ARTISTS = [
+    ['🌠', 'Astral Projection', 'Goa / Psytrance · Israel'],
+    ['✨', 'Shpongle', 'Psybient · UK'],
+    ['🍄', 'Infected Mushroom', 'Psytrance · Israel'],
+    ['🌀', 'Astrix', 'Full-on Psytrance · Israel'],
+    ['🚀', 'Vini Vici', 'Psytrance · Israel'],
+    ['🧬', 'Carbon Based Lifeforms', 'Psybient · Sverige'],
+  ];
+
+  const featRow = (emoji, title, desc) =>
+    `<tr>
+      <td style="padding:0.45rem 0;vertical-align:top;width:34px;font-size:1.2rem">${emoji}</td>
+      <td style="padding:0.45rem 0;vertical-align:top">
+        <span style="color:#e2e8f0;font-weight:600">${title}</span><span style="color:#94a3b8"> — ${desc}</span>
+      </td>
+    </tr>`;
+
+  const partyRow = (emoji, name, loc, date) =>
+    `<tr>
+      <td style="padding:0.55rem 0.75rem;vertical-align:top;width:30px;font-size:1.15rem;border-top:1px solid rgba(255,255,255,0.06)">${emoji}</td>
+      <td style="padding:0.55rem 0.75rem;vertical-align:top;border-top:1px solid rgba(255,255,255,0.06)">
+        <span style="color:#fff;font-weight:700;font-size:0.92rem">${name}</span><br>
+        <span style="color:#94a3b8;font-size:0.82rem">${loc}</span>
+      </td>
+      <td style="padding:0.55rem 0.75rem;vertical-align:top;text-align:right;white-space:nowrap;border-top:1px solid rgba(255,255,255,0.06)">
+        <span style="color:#f59e0b;font-weight:700;font-size:0.82rem">${date}</span>
+      </td>
+    </tr>`;
+
+  const artistChip = (emoji, name, meta) =>
+    `<td style="width:50%;padding:0.4rem">
+      <div style="background:#12121f;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.65rem 0.8rem">
+        <div style="font-size:1.1rem;line-height:1">${emoji}</div>
+        <div style="color:#fff;font-weight:700;font-size:0.88rem;margin-top:0.25rem">${name}</div>
+        <div style="color:#94a3b8;font-size:0.76rem;margin-top:0.1rem">${meta}</div>
+      </div>
+    </td>`;
+
+  const featureRows = FEATURES.map(f => featRow(f[0], f[1], f[2])).join('');
+  const partyRows   = PARTIES.map(p => partyRow(p[0], p[1], p[2], p[3])).join('');
+  // Artistar i eit 2-kolonners rutenett.
+  let artistRows = '';
+  for (let i = 0; i < ARTISTS.length; i += 2) {
+    const a = ARTISTS[i], b = ARTISTS[i + 1];
+    artistRows += `<tr>${artistChip(a[0], a[1], a[2])}${b ? artistChip(b[0], b[1], b[2]) : '<td style="width:50%"></td>'}</tr>`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="no">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:'Inter',Arial,sans-serif">
+  <div style="max-width:560px;margin:2rem auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(124,58,237,0.3)">
+    <div style="background:linear-gradient(135deg,#7c3aed,#2563eb);padding:2rem;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:1.75rem;font-weight:800;letter-spacing:-0.5px">Sound<span style="color:#f59e0b">Core</span></h1>
+      <p style="color:rgba(255,255,255,0.85);margin:0.4rem 0 0;font-size:0.85rem;letter-spacing:0.04em">DET DESENTRALISERTE LYD-UNIVERSET</p>
+    </div>
+    <div style="padding:2rem;color:#e2e8f0">
+      <h2 style="color:#fff;margin:0 0 0.75rem;font-size:1.3rem">Bli med i Sound Core, ${escHtml(name)} 🎧</h2>
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1.25rem">Sound Core er den desentraliserte plattformen for DJ-er, produsenter og psytrance-/ambient-folk. Last opp mixene dine, stream sjangerradio døgnet rundt, kringkast direkte, finn venner og kjøp &amp; selg låter — alt på ett sted. <strong style="color:#c4b5fd">Meld deg inn gratis</strong> og bli en del av miljøet.</p>
+
+      <h3 style="color:#fff;margin:0 0 0.5rem;font-size:1.05rem">🚀 Hvorfor melde deg inn?</h3>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;line-height:1.45;font-size:0.92rem">
+        ${featureRows}
+      </table>
+
+      <div style="border-top:1px solid rgba(255,255,255,0.08);margin:1.75rem 0 1.25rem"></div>
+
+      <h3 style="color:#fff;margin:0 0 0.25rem;font-size:1.05rem">🗓️ Nytt i festtimeplanen</h3>
+      <p style="color:#94a3b8;line-height:1.5;margin:0 0 0.75rem;font-size:0.88rem">Ferske datoer fra scenen — følg dem direkte i World-fanen:</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden">
+        ${partyRows}
+      </table>
+
+      <div style="border-top:1px solid rgba(255,255,255,0.08);margin:1.75rem 0 1.25rem"></div>
+
+      <h3 style="color:#fff;margin:0 0 0.5rem;font-size:1.05rem">🎤 Artister du møter</h3>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+        ${artistRows}
+      </table>
+
+      <div style="border-top:1px solid rgba(255,255,255,0.08);margin:1.75rem 0 1.25rem"></div>
+
+      <div style="background:linear-gradient(135deg,rgba(124,58,237,0.22),rgba(37,99,235,0.18));border:1px solid rgba(124,58,237,0.35);border-radius:12px;padding:1.25rem">
+        <h3 style="color:#fff;margin:0 0 0.4rem;font-size:1.05rem">🤖 Nytt: AI live på direkten</h3>
+        <p style="color:#cbd5e1;line-height:1.6;margin:0 0 0.5rem;font-size:0.92rem">Når du kringkaster live på Sound Core, får du <strong style="color:#fff">AI med på laget</strong>: sanntids stemme inn/ut, automatisk transkripsjon av settet, og AI-rettighetssjekk på låtene du deler. La AI-en være co-piloten din mens du spiller.</p>
+        <div style="text-align:center;margin:0.85rem 0 0">
+          <a href="${liveUrl}" style="display:inline-block;background:rgba(255,255,255,0.1);color:#fff;text-decoration:none;padding:0.6rem 1.4rem;border-radius:8px;font-weight:700;font-size:0.9rem;border:1px solid rgba(255,255,255,0.25)">Se live-sendinger ▸</a>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin:2rem 0 0.5rem">
+        <a href="${joinUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;text-decoration:none;padding:0.95rem 2.25rem;border-radius:8px;font-weight:800;font-size:1.05rem">Meld meg inn — gratis</a>
+      </div>
+      <p style="color:#64748b;font-size:0.85rem;text-align:center;margin:0.5rem 0 0">Eller åpne <a href="${base}" style="color:#7c3aed">${displayUrl}</a> i nettleseren.</p>
+    </div>
+    <div style="padding:1.5rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
+      <p style="color:#94a3b8;font-size:0.9rem;margin:0 0 0.35rem">Hilsen,<br><strong style="color:#fff">Sound Core</strong></p>
+      <p style="margin:0 0 1rem"><a href="${base}" style="color:#7c3aed;font-size:0.85rem;text-decoration:none">${displayUrl}</a></p>
+      <p style="color:#64748b;font-size:0.78rem;line-height:1.5;margin:0 0 0.75rem">Du får denne reklame-e-posten fordi du er medlem av Sound Core. Vil du ikke ha flere markedsførings-e-poster?</p>
+      <div style="margin:0 0 1rem">
+        <a href="${unsubUrl}" style="display:inline-block;background:transparent;color:#94a3b8;text-decoration:none;padding:0.5rem 1.4rem;border-radius:8px;font-weight:600;font-size:0.85rem;border:1px solid rgba(255,255,255,0.18)">Avmeld reklame</a>
+      </div>
+      <p style="color:#475569;font-size:0.75rem;margin:0">© ${new Date().getFullYear()} Sound Core</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 function bugReportHtml(info) {
   const row = (label, value) =>
     `<tr>
@@ -314,6 +455,10 @@ module.exports = async (req, res) => {
   } else if (type === 'purchase') {
     subject = 'Kvittering — Sound Core Pro er aktivert ⭐';
     html = purchaseHtml(toName, `${siteUrl}/`, plan, orderRef);
+  } else if (type === 'promo') {
+    // Markedsførings-/«bli medlem»-e-post. Unsubscribe-lenka kan overstyrast av klienten.
+    subject = 'Bli med på Sound Core — nye fester, artister & AI live ⚡';
+    html = promoHtml(toName, siteUrl, req.body?.unsubscribeUrl);
   } else {
     return res.status(400).json({ error: 'Ukjent e-posttype' });
   }
@@ -335,6 +480,9 @@ module.exports = async (req, res) => {
   }
 };
 
-// Eksponert for testing (tools/test-activation.js) — påverkar ikkje produksjon.
+// Eksponert for testing (tools/test-activation.js) + gjenbruk i api/auth.js
+// (server-side e-postutsending for kontoer). Påverkar ikkje produksjon.
 module.exports.CANONICAL_URL = CANONICAL_URL;
 module.exports.activationHtml = activationHtml;
+module.exports.resetHtml = resetHtml;
+module.exports.promoHtml = promoHtml;

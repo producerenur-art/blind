@@ -61,11 +61,16 @@ const Email = (() => {
       }
     }
 
-    // 3) Dev-modus: vis lenke i konsollen og auto-aktiver
-    const link = `${window.location.origin}/#/activate/${token}`;
-    console.info(`[DEV] Aktiveringslenke for ${username}:\n${link}`);
-    Auth.activate(token);
-    return { success: true, devMode: true };
+    // 3) Dev-modus — KUN lokalt. I produksjon auto-aktiverer vi ALDRI stille:
+    // en mislykket e-post (f.eks. Resend gratis-tier som bare når kontoeieren)
+    // ville da skjult logge brukeren inn og skjule feilen. Vær ærlig.
+    if (isLocalhost()) {
+      const link = `${window.location.origin}/#/activate/${token}`;
+      console.info(`[DEV] Aktiveringslenke for ${username}:\n${link}`);
+      Auth.activate(token);
+      return { success: true, devMode: true };
+    }
+    return { error: apiRes.error || 'Kunne ikke sende aktiverings-e-post akkurat nå. Prøv igjen senere.' };
   }
 
   async function sendPasswordReset(toEmail, username, token) {
@@ -104,6 +109,15 @@ const Email = (() => {
     if (apiRes.success) return { success: true };
     console.info(`[DEV] Kjøpsbekreftelse ville blitt sendt til ${username} <${toEmail}>`);
     return { success: true, devMode: true };
+  }
+
+  async function sendPromo(toEmail, username, unsubscribeUrl) {
+    // Markedsførings-/«bli medlem»-e-post (reklame). Kun server-API (Resend).
+    const base = (CONFIG.CANONICAL_URL || window.location.origin).replace(/\/$/, '');
+    const unsub = unsubscribeUrl || `${base}/#/unsubscribe`;
+    const apiRes = await callApi('promo', toEmail, username, null, { unsubscribeUrl: unsub });
+    if (apiRes.success) return { success: true };
+    return { error: apiRes.error || 'Kunne ikke sende reklame-e-post akkurat nå.' };
   }
 
   async function sendMessageNotification(toEmail, toName, fromName, fromUsername, previewText) {
@@ -161,5 +175,5 @@ const Email = (() => {
     }
   }
 
-  return { sendActivation, sendPasswordReset, sendPurchaseConfirmation, sendFriendRequest, sendTestEmail, sendMessageNotification, isConfigured: isEmailJSConfigured };
+  return { sendActivation, sendPasswordReset, sendPurchaseConfirmation, sendFriendRequest, sendTestEmail, sendMessageNotification, sendPromo, isConfigured: isEmailJSConfigured };
 })();

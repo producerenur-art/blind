@@ -196,6 +196,52 @@ const Auth = (() => {
       return true;
     },
 
+    // Speil en konto hentet fra serveren (api/auth.js) inn i den lokale brukerlista,
+    // slik at resten av appen — som bruker den synkrone Auth-API-en — virker uendret.
+    // Serveren er sannhetskilden for konto-feltene (e-post, rolle, aktivert); lokale
+    // presentasjonsfelt (tema, venner, media) bevares. Passord lagres ALDRI lokalt
+    // for server-kontoer (verifisering skjer på serveren).
+    adoptServerUser(serverUser, opts = {}) {
+      if (!serverUser || !serverUser.username) return null;
+      const users = getUsers();
+      const existing = users[serverUser.username];
+      const skeleton = existing || {
+        username:          serverUser.username,
+        theme:             defaultTheme(),
+        bio:               '',
+        links:             [],
+        mediaIds:          [],
+        musicIds:          [],
+        avatarMediaId:     null,
+        bannerMediaId:     null,
+        followers:         [],
+        following:         [],
+        events:            [],
+        friends:           [],
+        friendRequests:    [],
+        sentRequests:      [],
+        mixIds:            [],
+        subscription:      'free',
+        role:              'lytter',
+        profileVisibility: 'public',
+      };
+      const merged = Object.assign({}, skeleton, {
+        username:    serverUser.username,
+        displayName: serverUser.displayName || skeleton.displayName || serverUser.username,
+        email:       (serverUser.email || skeleton.email || '').toLowerCase(),
+        role:        serverUser.role || skeleton.role || 'lytter',
+        activated:   serverUser.activated != null ? serverUser.activated : skeleton.activated,
+        createdAt:   serverUser.createdAt || skeleton.createdAt || Date.now(),
+      });
+      delete merged.password;          // server-kontoer har ikke lokalt passord
+      users[serverUser.username] = merged;
+      saveUsers(users);
+      if (opts.login) {
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ username: serverUser.username, ts: Date.now() }));
+      }
+      return merged;
+    },
+
     getUser(username) {
       return getUsers()[username] || null;
     },

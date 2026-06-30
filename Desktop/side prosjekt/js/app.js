@@ -1246,7 +1246,12 @@ const App = (() => {
     const user = document.getElementById('login-user')?.value?.trim();
     const pass = document.getElementById('login-pass')?.value;
     const errEl = document.getElementById('login-error');
-    const result = Auth.login(user, pass);
+
+    // Server-kontoer først (sannhetskilden). Faller tilbake til lokal modus om
+    // API-et ikke er tilgjengelig (utvikling) eller ikke konfigurert.
+    let result = await AccountServer.login({ usernameOrEmail: user, password: pass });
+    if (result.offline) result = Auth.login(user, pass);
+
     if (result.error) {
       if (errEl) {
         if (result.notActivated) {
@@ -1264,6 +1269,17 @@ const App = (() => {
   }
 
   async function resendActivationByEmail(usernameOrEmail) {
+    toast('Sender aktiveringslenke…', 'info');
+
+    // Server først: regenererer token og sender e-posten server-side.
+    const serverRes = await AccountServer.resend(usernameOrEmail);
+    if (!serverRes.offline) {
+      if (serverRes.emailError) { toast('Feil: ' + serverRes.emailError, 'error'); return; }
+      toast('Aktiveringslenke sendt! Sjekk e-posten din 📧', 'success');
+      return;
+    }
+
+    // Lokal fallback (utvikling / API utilgjengelig).
     const users = Auth.getUsers();
     let u = users[usernameOrEmail];
     if (!u) u = Object.values(users).find(x => x.email === usernameOrEmail.toLowerCase().trim());
@@ -1276,7 +1292,6 @@ const App = (() => {
       u.activationToken = token;
     }
 
-    toast('Sender aktiveringslenke…', 'info');
     const res = await Email.sendActivation(u.email, u.username, u.activationToken);
     toast(res.error ? 'Feil: ' + res.error : 'Aktiveringslenke sendt! Sjekk e-posten din 📧', res.error ? 'error' : 'success');
   }
@@ -1363,29 +1378,8 @@ const App = (() => {
     const roleInput = document.querySelector('input[name="reg-role"]:checked');
     const role = roleInput?.value || 'lytter';
 
-    if (btn) { btn.textContent = 'Registrerer…'; btn.disabled = true; }
-    const result = Auth.register(username, pass, displayName, email);
-    if (btn) { btn.textContent = 'Registrer'; btn.disabled = false; }
-
-    if (result.error) {
-      if (errEl) { errEl.textContent = result.error; errEl.style.display = 'block'; }
-      return;
-    }
-
-    Auth.updateUser(username, { role });
-
-    // Send activation email
-    const emailRes = await Email.sendActivation(email, username, result.activationToken);
-
-    if (emailRes.devMode) {
-      // Auto-activated in dev mode — log the user in immediately
-      localStorage.setItem('pv_session', JSON.stringify({ username, ts: Date.now() }));
-      renderNav();
-      toast(`Konto opprettet! Velkommen, ${displayName || username}! ${Icon('party')}`, 'success');
-      Router.go(`/u/${username}`);
-    } else if (emailRes.error) {
-      // E-posten gikk IKKE ut (f.eks. Resend avviste mottakeren / domenet er ikke verifisert).
-      // Vær ærlig — ikke be brukeren «sjekke e-posten» når ingenting ble sendt.
+    // Vis «kontoen ble opprettet, men e-posten gikk ikke ut» — ærlig melding.
+    const showEmailFailedPage = (msg) => {
       document.getElementById('app').innerHTML = `
         <div class="auth-page">
           <div class="auth-card" style="text-align:center">
@@ -1394,15 +1388,16 @@ const App = (() => {
             <p style="color:var(--text2);margin-bottom:1rem">
               Men vi klarte dessverre ikke å sende aktiveringslenken til <strong>${email}</strong> akkurat nå.
             </p>
-            <div class="badge badge-red" style="margin-bottom:1.25rem">${emailRes.error}</div>
+            <div class="badge badge-red" style="margin-bottom:1.25rem">${msg}</div>
             <div style="margin-bottom:0.75rem">
               <button class="btn btn-primary" id="resend-confirm-btn" onclick="App.resendActivationByEmail('${username}')">${Icon('mail')} Prøv å sende aktiveringslenken igjen</button>
             </div>
             <a href="#/login" class="btn btn-ghost btn-sm" style="display:inline-flex">Gå til innlogging</a>
           </div>
         </div>`;
-    } else {
-      // Show confirmation page (e-posten ble sendt OK)
+    };
+    // Vis «sjekk e-posten din» — aktiveringslenke sendt OK.
+    const showCheckEmailPage = () => {
       document.getElementById('app').innerHTML = `
         <div class="auth-page">
           <div class="auth-card" style="text-align:center">
@@ -1419,6 +1414,49 @@ const App = (() => {
             <p style="color:var(--text2);font-size:0.8rem;margin-top:1rem">Fant du ikke e-posten? Sjekk søppelpost-mappen.</p>
           </div>
         </div>`;
+    };
+
+    if (btn) { btn.textContent = 'Registrerer…'; btn.disabled = true; }
+
+    // ── Server-kontoer først (sannhetskilden) ──────────────────────────────
+    // Global unik e-post, lagring på tvers av enheter, ekte glemt-passord.
+    const serverRes = await AccountServer.register({ username, displayName, email, password: pass, role });
+    if (!serverRes.offline) {
+      if (btn) { btn.textContent = 'Registrer'; btn.disabled = false; }
+      if (serverRes.error) {
+        if (errEl) { errEl.textContent = serverRes.error; errEl.style.display = 'block'; }
+        return;
+      }
+      // Konto opprettet på serveren. Serveren har allerede prøvd å sende e-posten.
+      Auth.updateUser(username, { role });
+      if (serverRes.emailError) showEmailFailedPage(serverRes.emailError);
+      else                      showCheckEmailPage();
+      return;
+    }
+
+    // ── Lokal fallback (utvikling / API utilgjengelig) ─────────────────────
+    const result = Auth.register(username, pass, displayName, email);
+    if (btn) { btn.textContent = 'Registrer'; btn.disabled = false; }
+
+    if (result.error) {
+      if (errEl) { errEl.textContent = result.error; errEl.style.display = 'block'; }
+      return;
+    }
+
+    Auth.updateUser(username, { role });
+
+    const emailRes = await Email.sendActivation(email, username, result.activationToken);
+
+    if (emailRes.devMode) {
+      // Auto-activated in dev mode — log the user in immediately
+      localStorage.setItem('pv_session', JSON.stringify({ username, ts: Date.now() }));
+      renderNav();
+      toast(`Konto opprettet! Velkommen, ${displayName || username}! ${Icon('party')}`, 'success');
+      Router.go(`/u/${username}`);
+    } else if (emailRes.error) {
+      showEmailFailedPage(emailRes.error);
+    } else {
+      showCheckEmailPage();
     }
   }
 
@@ -1452,6 +1490,25 @@ const App = (() => {
     if (!email) { if (errEl) { errEl.textContent = 'Skriv inn e-postadressen din'; errEl.style.display = 'block'; } return; }
 
     if (btn) { btn.textContent = 'Sender…'; btn.disabled = true; }
+
+    // Server først: slår opp kontoen globalt og sender e-posten selv. Svarer
+    // generisk (avslører ikke om adressen finnes) for å hindre kontooppramsing.
+    const serverRes = await AccountServer.forgot(email);
+    if (!serverRes.offline) {
+      if (btn) { btn.textContent = 'Send tilbakestillingslenke'; btn.disabled = false; }
+      if (serverRes.error) {
+        if (errEl) { errEl.textContent = serverRes.error; errEl.style.display = 'block'; }
+        return;
+      }
+      if (errEl) errEl.style.display = 'none';
+      if (sucEl) {
+        sucEl.style.display = 'block';
+        sucEl.innerHTML = `${Icon('check-circle')} Finnes det en konto med <strong>${email}</strong>, har vi sendt en tilbakestillingslenke dit. Sjekk e-posten (og søppelpost-mappen).`;
+      }
+      return;
+    }
+
+    // Lokal fallback (utvikling / API utilgjengelig).
     const result = Auth.forgotPassword(email);
     if (btn) { btn.textContent = 'Send tilbakestillingslenke'; btn.disabled = false; }
 
@@ -1505,7 +1562,10 @@ const App = (() => {
       if (errEl) { errEl.textContent = 'Passordene stemmer ikke'; errEl.style.display = 'block'; }
       return;
     }
-    const result = Auth.resetPassword(token, pass);
+    // Server først (sannhetskilden), lokal fallback om API-et ikke er tilgjengelig.
+    let result = await AccountServer.reset(token, pass);
+    if (result.offline) result = Auth.resetPassword(token, pass);
+
     if (result.error) {
       if (errEl) { errEl.textContent = result.error; errEl.style.display = 'block'; }
       return;
@@ -1514,8 +1574,11 @@ const App = (() => {
     Router.go('/login');
   }
 
-  function renderActivate(token) {
-    const result = Auth.activate(token);
+  async function renderActivate(token) {
+    // Server først (sannhetskilden). AccountServer.activate logger også inn ved
+    // suksess. Lokal fallback om API-et ikke er tilgjengelig.
+    let result = await AccountServer.activate(token);
+    if (result.offline) result = Auth.activate(token);
     if (result.error) {
       document.getElementById('app').innerHTML = `
         <div class="auth-page"><div class="auth-card" style="text-align:center">
