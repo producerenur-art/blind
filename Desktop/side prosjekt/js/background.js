@@ -8,10 +8,11 @@ const BgManager = (() => {
   // Standard-bakgrunner som roterer som en pauseskjerm når ingen egen bakgrunn er
   // lagret. Legg bildene i assets/ (default-bg.jpg, bg1.jpg, bg2.jpg, …). De som
   // finnes brukes; manglende hoppes over. Kryssfader gjennom den mørke bakgrunnen.
+  // Legg til flere her når bildene finnes i assets/ (bg3.jpg, bg4.jpg, …) —
+  // de som finnes brukes, manglende hoppes over (se _startDefaultSlideshow).
   const DEFAULT_BGS = [
     'assets/default-bg.jpg',
-    'assets/bg1.jpg', 'assets/bg2.jpg', 'assets/bg3.jpg',
-    'assets/bg4.jpg', 'assets/bg5.jpg', 'assets/bg6.jpg',
+    'assets/bg1.jpg', 'assets/bg2.jpg',
   ];
   const SLIDE_MS = 14000;   // bytt bilde hvert 14. sekund
 
