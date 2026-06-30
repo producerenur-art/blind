@@ -199,5 +199,26 @@ Reply with ONLY compact JSON, no markdown: {"terms":["genre1","genre2"],"note":"
         return { terms: [], note: txt.slice(0, 160) };
       }
     },
+
+    // Foreslå en tekststil for Blend Studio sitt tekstverktøy ut fra en fri
+    // beskrivelse/stemning. Returnerer {fontFamily,color,weight,anim} eller null.
+    async suggestTextStyle(description, fonts = []) {
+      const fontList = (fonts.length ? fonts : ['Inter','Anton','Bebas Neue','Pacifico','Lobster']).join(', ');
+      const result = await callClaude(
+        `Du er en typografi-designer for et verktøy som setter tekst på bilder. Returner KUN ett JSON-objekt, ingen forklaring.
+Format: {"fontFamily":"<ett navn fra lista>","color":"#hex","weight":400|700|900,"anim":"none|left|right|up|down|zoom-in|zoom-out|pulse"}
+- fontFamily MÅ være nøyaktig ett av disse navnene: ${fontList}
+- color er én hex-farge som passer stemningen
+- anim er bevegelsen teksten zoomer inn med`,
+        `Foreslå en tekststil som passer denne stemningen/beskrivelsen: "${description}".`,
+        160
+      );
+      try {
+        const m = result.match(/\{[\s\S]*\}/);
+        return m ? JSON.parse(m[0]) : null;
+      } catch {
+        return null;
+      }
+    },
   };
 })();
