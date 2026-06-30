@@ -795,6 +795,8 @@ const Radio = (() => {
             <div class="vrr nw" data-resize="nw" title="Dra for å endre størrelse"></div>
             <div class="vrr se" data-resize="se" title="Dra for å endre størrelse"></div>
             <div class="vrr sw" data-resize="sw" title="Dra for å endre størrelse"></div>
+            <!-- Live størrelses-indikator (vises mens man drar/zoomer) -->
+            <div class="vis-size-badge" id="vis-size-badge" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);padding:0.42rem 0.75rem;background:rgba(10,8,24,0.82);border:1px solid rgba(196,166,255,0.5);border-radius:10px;color:#fff;font-size:0.82rem;font-weight:700;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.15s ease;z-index:5"></div>
           </div>
 
           <!-- External embed area (hidden by default) -->
@@ -1730,6 +1732,17 @@ const Radio = (() => {
     localStorage.setItem('pv_vis_free', JSON.stringify({ w: wrap.offsetWidth, h: wrap.offsetHeight }));
   }
 
+  // Live størrelses-indikator midt på canvasen mens man drar/zoomer.
+  let _visBadgeTimer = null;
+  function showVisBadge(wrap) {
+    const b = document.getElementById('vis-size-badge');
+    if (!b) return;
+    b.textContent = `${Math.round(wrap.offsetWidth)} × ${Math.round(wrap.offsetHeight)} px`;
+    b.style.opacity = '1';
+    clearTimeout(_visBadgeTimer);
+    _visBadgeTimer = setTimeout(() => { b.style.opacity = '0'; }, 800);
+  }
+
   function restoreVisFree() {
     const wrap = document.getElementById('radio-vis-wrap');
     if (!wrap) return;
@@ -1754,6 +1767,7 @@ const Radio = (() => {
     wrap.style.height = nh + 'px';
     saveVisFree(wrap);
     resizeCanvas();
+    showVisBadge(wrap);
   }
   function visZoomIn()  { visZoom(1.15); }
   function visZoomOut() { visZoom(1 / 1.15); }
@@ -1787,6 +1801,7 @@ const Radio = (() => {
       if (action.includes('s')) wrap.style.height = Math.max(VIS_MIN_H, startH + dy) + 'px';
       if (action.includes('n')) wrap.style.height = Math.max(VIS_MIN_H, startH - dy) + 'px';
       resizeCanvas();
+      showVisBadge(wrap);
     }
 
     function end() {
