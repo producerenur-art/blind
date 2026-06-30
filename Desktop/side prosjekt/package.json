@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "node tools/test-activation.js && node tools/test-activation-e2e.js && node tools/test-magazine.js && node tools/test-linkpreview.js && node tools/test-livemix.js && node tools/test-avatar.js && node tools/test-banner.js && node tools/test-delete-track.js && node tools/test-broadcast.js && node tools/test-livestream-visual.js && node tools/test-profilesync.js"
+    "test": "node tools/test-activation.js && node tools/test-activation-e2e.js && node tools/test-magazine.js && node tools/test-linkpreview.js && node tools/test-livemix.js && node tools/test-avatar.js && node tools/test-banner.js && node tools/test-delete-track.js && node tools/test-broadcast.js && node tools/test-livestream-visual.js && node tools/test-profilesync.js && node tools/test-editor-tabs.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

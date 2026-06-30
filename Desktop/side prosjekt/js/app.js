@@ -340,7 +340,6 @@ const App = (() => {
         ${item('#/a1','sparkles','A1')}
         ${item('#/studio','image','Studio')}
         <div class="nav-more-sep"></div>
-        ${btn("if(window.Chat)Chat.toggleFloat()",'message','Flytende chat-vindu')}
         ${btn("if(window.Notify)Notify.togglePanel()",'bell','Varsler')}
         ${item('#/edit','edit','Rediger profil')}
         ${item('#/settings','settings','Innstillinger')}
@@ -355,8 +354,6 @@ const App = (() => {
       ${item('#/world','globe','World')}
       ${item('#/magazine','book','Magasin')}
       ${item('#/a1','sparkles','A1')}
-      <div class="nav-more-sep"></div>
-      ${btn("if(window.Chat)Chat.toggleFloat()",'message','Flytende chat-vindu')}
     `;
   }
   function closeMoreMenu() {

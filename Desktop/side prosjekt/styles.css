@@ -1813,6 +1813,31 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   font-size: 0.9rem;
   display: flex; align-items: center; gap: 0.5rem;
 }
+
+/* Two-level editor tab nav: category pills (top) + sub-tabs (below) */
+.editor-tabnav { flex: 1; display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.editor-group-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.group-tab-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem; font-weight: 700;
+  color: var(--text2);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  transition: all var(--trans);
+}
+.group-tab-btn:hover { color: var(--text); border-color: var(--text3); }
+.group-tab-btn.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+.group-tab-btn svg { width: 16px; height: 16px; }
+.editor-subtabs {
+  display: flex; flex-wrap: wrap; gap: 0.15rem 0.25rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.55rem;
+}
+.editor-subtabs.hidden { display: none; }
+.editor-subtabs .tab-btn { padding: 0.45rem 0.9rem; }
+
 .editor-panel-body { padding: 1.25rem; }
 .editor-section { margin-bottom: 1.5rem; }
 .editor-section-title {
