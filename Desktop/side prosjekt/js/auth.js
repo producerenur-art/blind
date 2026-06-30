@@ -173,6 +173,26 @@ const Auth = (() => {
       if (!users[username]) return false;
       Object.assign(users[username], data);
       saveUsers(users);
+      // Publiser eierens egen profil til sky-sync (om aktivert) så ALLE ser
+      // endringene. Kun for den innloggede eieren; fire-and-forget.
+      try {
+        const sess = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+        if (sess && sess.username === username && typeof window !== 'undefined' && window.ProfileSync) {
+          window.ProfileSync.push(users[username]);
+        }
+      } catch (_) {}
+      return true;
+    },
+
+    // Flett en profil hentet fra sky-sync inn i den lokale brukerlista, slik at
+    // getUser()/renderView ser ANDRE brukeres profiler (ellers kun localStorage).
+    // Lokale auth-felt (passord, e-post, tokens) på en evt. eksisterende rad
+    // bevares — vi legger kun de offentlige feltene oppå.
+    cacheRemoteProfile(username, data) {
+      if (!username || !data || typeof data !== 'object') return false;
+      const users = getUsers();
+      users[username] = Object.assign({}, users[username] || {}, data, { username });
+      saveUsers(users);
       return true;
     },
 

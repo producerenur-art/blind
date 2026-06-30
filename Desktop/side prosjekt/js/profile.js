@@ -285,6 +285,18 @@ const Profile = (() => {
     const app = document.getElementById('app');
     app.innerHTML = '<div class="page-loading"><div class="spinner"></div></div>';
 
+    // Sky-sync: en besøkende henter profilen ned fra Supabase FØR vi leser lokalt
+    // (ellers finnes ikke andres profil i denne nettleseren). Eieren publiserer
+    // sin egen i bakgrunnen. No-op når Supabase ikke er konfigurert.
+    if (window.ProfileSync && ProfileSync._enabled()) {
+      const sess = Auth.current();
+      if (sess && sess.username === username) {
+        ProfileSync.push(Auth.getUser(username));   // eier → publiser (fire-and-forget)
+      } else {
+        await ProfileSync.pull(username).catch(() => {});  // besøkende → hent ned
+      }
+    }
+
     const user = Auth.getUser(username);
     if (!user) { app.innerHTML = `<div class="empty-state" style="padding:6rem"><div class="empty-icon">${Icon('user')}</div><p>Bruker ikke funnet</p></div>`; return; }
 
