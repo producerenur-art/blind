@@ -228,7 +228,38 @@ const LiveMix = (() => {
   // Bruker den delte modulen js/livebroadcast.js (WebRTC + Supabase Realtime
   // som signaling). State er modul-scopet så sendingen/lyden overlever at
   // modalen lukkes (App.closeModal() skjuler bare overlayet, tømmer ikke DOM).
-  const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test' };
+  const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null };
+
+  // Finn en booking hvis tidsvindu dekker nå (10 min slingringsmonn før start).
+  // Booking uten slot («avtales senere») regnes som alltid aktiv. Både betalte
+  // og test-bookinger teller, så gaten kan demonstreres via Test-kjøp.
+  function _activeBooking(cur) {
+    const list = (cur && Array.isArray(cur[BOOKINGS_KEY])) ? cur[BOOKINGS_KEY] : [];
+    const now = Date.now(), GRACE = 10 * 60 * 1000;
+    for (const b of list) {
+      if (!b || b.product !== 'livemix') continue;
+      if (!b.slot) return b;
+      const start = new Date(b.slot).getTime();
+      if (isNaN(start)) continue;
+      const end = start + Math.max(1, b.hours || 1) * 3600 * 1000;
+      if (now >= start - GRACE && now < end) return b;
+    }
+    return null;
+  }
+
+  // Nærmeste kommende booking (for å fortelle brukeren når de kan sende).
+  function _nextBooking(cur) {
+    const list = (cur && Array.isArray(cur[BOOKINGS_KEY])) ? cur[BOOKINGS_KEY] : [];
+    const now = Date.now();
+    let best = null;
+    for (const b of list) {
+      if (!b || b.product !== 'livemix' || !b.slot) continue;
+      const t = new Date(b.slot).getTime();
+      if (isNaN(t) || t <= now) continue;
+      if (!best || t < new Date(best.slot).getTime()) best = b;
+    }
+    return best;
+  }
 
   function _esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
   function _byId(id) { return document.getElementById(id); }
@@ -244,7 +275,35 @@ const LiveMix = (() => {
     }
     if (typeof App === 'undefined') return;
     if (!window.LiveBroadcast) { App.toast('Kringkasting kunne ikke lastes (livebroadcast.js mangler).', 'error'); return; }
+    // Gate: live-sending er låst til en aktiv Live Mix-tid. Hvis allerede live,
+    // hopp over gaten (ikke steng en pågående sending ute når konsollen åpnes på nytt).
+    if (!_bc.dj) {
+      const active = _activeBooking(cur);
+      if (!active) { _renderNoBooking(cur); return; }
+      _bc.activeBooking = active;
+    }
     _renderDJ();
+  }
+
+  function _renderNoBooking(cur) {
+    const box = _byId('modal-box'); if (!box) return;
+    const next = _nextBooking(cur);
+    const note = next
+      ? `Din neste bookede tid: <strong>${_fmtDateTime(next.slot)}</strong> (${next.hours} ${next.hours > 1 ? 'timer' : 'time'}). Du kan gå live fra ~10 min før start.`
+      : `Du har ingen kommende Live Mix-tid. Book et slot for å sende live.`;
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2>${_I('radio')} Gå live</h2>
+        <button class="btn-icon" onclick="App.closeModal()" aria-label="Lukk">${_I('x')}</button>
+      </div>
+      <div style="padding:0.5rem 0">
+        <p style="color:var(--text2);font-size:0.9rem;line-height:1.5;margin:0 0 0.75rem">
+          Live-sending er låst til en <strong>aktiv Live Mix-tid</strong> — du sender i tidsrommet du har booket.
+        </p>
+        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:0.8rem 1rem;font-size:0.88rem;color:var(--text);margin:0 0 1rem">${note}</div>
+        <button class="btn btn-primary w-full" onclick="LiveMix.openBooking()">${_I('clock')} Book mikse-slot</button>
+      </div>`;
+    App.openModal();
   }
 
   function _renderDJ() {
@@ -264,6 +323,7 @@ const LiveMix = (() => {
           Rut DJ-programmets master til en virtuell lydkabel (f.eks. BlackHole) og velg den under.
           Lytterne åpner «Hør live» med samme rom-navn. Signaling går over Supabase — funker over internett.
         </p>
+        ${_bc.activeBooking ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(34,197,94,0.12);color:#22c55e;margin:0 0 1rem">${_I('clock')} Aktiv tid: ${_bc.activeBooking.slot ? _fmtDateTime(_bc.activeBooking.slot) : 'avtales senere'}${_bc.activeBooking.test ? ' · TEST' : ''}</div>` : ''}
         <label style="${lbl}">Rom-navn</label>
         <input id="bc-room" value="${_esc(_bc.room || 'test')}" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
         <label style="${lbl}">Lyd-inngang (DJ-ruting)</label>
