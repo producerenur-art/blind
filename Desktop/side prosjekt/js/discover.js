@@ -716,58 +716,56 @@ const Discover = (() => {
       </div>`;
   }
 
-  // ── Tab bar ───────────────────────────────────────────────────────────
+  // ── Tab-katalog (én kilde til sannhet for nedtrekksmenyen) ─────────────
+  // Rekkefølge = rekkefølge i menyen. `notranslate` for merkevarenavn som ikke
+  // skal oversettes av Google Translate.
+  const TABS = [
+    { id:'music',           icon:'music',     label:'Musikk' },
+    { id:'ultimae',         icon:'disc',      label:'Ultimae Records' },
+    { id:'people',          icon:'users',     label:'Finn folk' },
+    { id:'psy-tour',        icon:'wind',      label:'Psytrance Peak Tour' },
+    { id:'ambient-mann',    icon:'waves',     label:'Ambient Mann', notranslate:true },
+    { id:'psybient',        icon:'leaf',      label:'Psybient Events' },
+    { id:'altar-records',   icon:'home',      label:'Altar Records' },
+    { id:'hadra',           icon:'star',      label:'Hadra Festival' },
+    { id:'dacru',           icon:'wind',      label:'DaCru Records' },
+    { id:'tip-raja',        icon:'wind',      label:'Raja Ram / T.I.P.' },
+    { id:'astral',          icon:'star',      label:'Astral Projection' },
+    { id:'shpongle',        icon:'sparkles',  label:'Shpongle' },
+    { id:'younger-brother', icon:'atom',      label:'Younger Brother' },
+    { id:'goa-gil',         icon:'feather',   label:'Goa Gil — R.I.P.' },
+    { id:'shunyata',        icon:'sparkles',  label:'Shunyata Records' },
+    { id:'kukan-dub',       icon:'cloud',     label:'Kukan Dub Lagan' },
+    { id:'cosmic-leaf',     icon:'leaf',      label:'Cosmic Leaf' },
+    { id:'cryo-chamber',    icon:'snowflake', label:'Cryo Chamber' },
+    { id:'mikelabella',     icon:'disc',      label:'MikelaBella Records' },
+    { id:'gagarin-project', icon:'rocket',    label:'Gagarin Project' },
+    { id:'leftfield',       icon:'moon',      label:'Leftfield Records' },
+  ];
+  const _tabLabel = t => t.notranslate
+    ? `<span class="notranslate" translate="no">${t.label}</span>`
+    : t.label;
+
+  // ── Tab-velger: nedtrekksboks med åpne/lukke-knapp ────────────────────
+  // Erstatter den gamle sidescrollande fane-stripa (folk skjønte ikke at den
+  // kunne dras). Knappen viser valgt kategori; boksen lister alle vertikalt.
   function renderTabBar() {
+    const cur = TABS.find(t => t.id === activeTab) || TABS[0];
+    const items = TABS.map(t => `
+        <button class="disc-tab-btn ${t.id === activeTab ? 'active' : ''}" type="button"
+          role="menuitem" data-tab="${t.id}" onclick="Discover.switchTab('${t.id}')">
+          ${Icon(t.icon)} ${_tabLabel(t)}</button>`).join('');
     return `
-      <div class="disc-tab-scroll at-start" id="disc-tab-scroll">
-      <button class="disc-tab-arrow disc-tab-arrow--left" type="button" aria-label="Bla til venstre"
-        onclick="Discover.scrollTabs(-1)">${Icon('chevron-left')}</button>
-      <div class="disc-tab-bar" id="disc-tab-bar" onscroll="Discover.updateTabArrows()">
-        <button class="disc-tab-btn ${activeTab === 'music' ? 'active' : ''}"
-          onclick="Discover.switchTab('music')">${Icon('music')} Musikk</button>
-        <button class="disc-tab-btn ${activeTab === 'ultimae' ? 'active' : ''}"
-          onclick="Discover.switchTab('ultimae')">${Icon('disc')} Ultimae Records</button>
-        <button class="disc-tab-btn ${activeTab === 'people' ? 'active' : ''}"
-          onclick="Discover.switchTab('people')">${Icon('users')} Finn folk</button>
-        <button class="disc-tab-btn ${activeTab === 'psy-tour' ? 'active' : ''}"
-          onclick="Discover.switchTab('psy-tour')">${Icon('wind')} Psytrance Peak Tour</button>
-        <button class="disc-tab-btn ${activeTab === 'ambient-mann' ? 'active' : ''}"
-          onclick="Discover.switchTab('ambient-mann')">${Icon('waves')} <span class="notranslate" translate="no">Ambient Mann</span></button>
-        <button class="disc-tab-btn ${activeTab === 'psybient' ? 'active' : ''}"
-          onclick="Discover.switchTab('psybient')">${Icon('leaf')} Psybient Events</button>
-        <button class="disc-tab-btn ${activeTab === 'altar-records' ? 'active' : ''}"
-          onclick="Discover.switchTab('altar-records')">${Icon('home')} Altar Records</button>
-        <button class="disc-tab-btn ${activeTab === 'hadra' ? 'active' : ''}"
-          onclick="Discover.switchTab('hadra')">${Icon('star')} Hadra Festival</button>
-        <button class="disc-tab-btn ${activeTab === 'dacru' ? 'active' : ''}"
-          onclick="Discover.switchTab('dacru')">${Icon('wind')} DaCru Records</button>
-        <button class="disc-tab-btn ${activeTab === 'tip-raja' ? 'active' : ''}"
-          onclick="Discover.switchTab('tip-raja')">${Icon('wind')} Raja Ram / T.I.P.</button>
-        <button class="disc-tab-btn ${activeTab === 'astral' ? 'active' : ''}"
-          onclick="Discover.switchTab('astral')">${Icon('star')} Astral Projection</button>
-        <button class="disc-tab-btn ${activeTab === 'shpongle' ? 'active' : ''}"
-          onclick="Discover.switchTab('shpongle')">${Icon('sparkles')} Shpongle</button>
-        <button class="disc-tab-btn ${activeTab === 'younger-brother' ? 'active' : ''}"
-          onclick="Discover.switchTab('younger-brother')">${Icon('atom')} Younger Brother</button>
-        <button class="disc-tab-btn ${activeTab === 'goa-gil' ? 'active' : ''}"
-          onclick="Discover.switchTab('goa-gil')">${Icon('feather')} Goa Gil — R.I.P.</button>
-        <button class="disc-tab-btn ${activeTab === 'shunyata' ? 'active' : ''}"
-          onclick="Discover.switchTab('shunyata')">${Icon('sparkles')} Shunyata Records</button>
-        <button class="disc-tab-btn ${activeTab === 'kukan-dub' ? 'active' : ''}"
-          onclick="Discover.switchTab('kukan-dub')">${Icon('cloud')} Kukan Dub Lagan</button>
-        <button class="disc-tab-btn ${activeTab === 'cosmic-leaf' ? 'active' : ''}"
-          onclick="Discover.switchTab('cosmic-leaf')">${Icon('leaf')} Cosmic Leaf</button>
-        <button class="disc-tab-btn ${activeTab === 'cryo-chamber' ? 'active' : ''}"
-          onclick="Discover.switchTab('cryo-chamber')">${Icon('snowflake')} Cryo Chamber</button>
-        <button class="disc-tab-btn ${activeTab === 'mikelabella' ? 'active' : ''}"
-          onclick="Discover.switchTab('mikelabella')">${Icon('disc')} MikelaBella Records</button>
-        <button class="disc-tab-btn ${activeTab === 'gagarin-project' ? 'active' : ''}"
-          onclick="Discover.switchTab('gagarin-project')">${Icon('rocket')} Gagarin Project</button>
-        <button class="disc-tab-btn ${activeTab === 'leftfield' ? 'active' : ''}"
-          onclick="Discover.switchTab('leftfield')">${Icon('moon')} Leftfield Records</button>
-      </div>
-      <button class="disc-tab-arrow disc-tab-arrow--right" type="button" aria-label="Bla til høyre"
-        onclick="Discover.scrollTabs(1)">${Icon('chevron-right')}</button>
+      <div class="disc-tab-dropdown" id="disc-tab-dropdown">
+        <button class="disc-tab-toggle" id="disc-tab-toggle" type="button"
+          aria-haspopup="true" aria-expanded="false" aria-label="Velg kategori"
+          onclick="Discover.toggleTabMenu(event)">
+          <span class="disc-tab-toggle-current" id="disc-tab-toggle-label">${Icon(cur.icon)} ${_tabLabel(cur)}</span>
+          <span class="disc-tab-toggle-chev">${Icon('chevron-down')}</span>
+        </button>
+        <div class="disc-tab-menu" id="disc-tab-menu" role="menu" aria-label="Kategorier">
+          ${items}
+        </div>
       </div>`;
   }
 
@@ -1167,31 +1165,38 @@ const Discover = (() => {
 
     startActivityScroll();
     loadPeopleAvatars(allUsers);
-    requestAnimationFrame(updateTabArrows);
   }
 
-  // ── Tab-bar horizontal scrolling ──────────────────────────────────────
-  // Tab-baren kan ha mange artist-/label-faner. Den scrollar horisontalt
-  // (sveip / trackpad / piler) så alle held seg synlege og fleire kan leggjast til.
-  function scrollTabs(dir) {
-    const bar = document.getElementById('disc-tab-bar');
-    if (!bar) return;
-    const step = Math.max(220, Math.round(bar.clientWidth * 0.75));
-    bar.scrollBy({ left: dir * step, behavior: 'smooth' });
+  // ── Tab-velger: åpne/lukke nedtrekksboksen ────────────────────────────
+  function toggleTabMenu(e) {
+    if (e) e.stopPropagation();
+    const dd = document.getElementById('disc-tab-dropdown');
+    if (!dd) return;
+    dd.classList.contains('open') ? closeTabMenu() : openTabMenu();
   }
-
-  // Skjuler venstre-/høgrepila når ein er heilt i kvar ende, og begge når
-  // alt får plass utan scrolling.
-  function updateTabArrows() {
-    const wrap = document.getElementById('disc-tab-scroll');
-    const bar  = document.getElementById('disc-tab-bar');
-    if (!wrap || !bar) return;
-    const overflow = bar.scrollWidth - bar.clientWidth;
-    wrap.classList.toggle('no-scroll', overflow <= 2);
-    wrap.classList.toggle('at-start', bar.scrollLeft <= 2);
-    wrap.classList.toggle('at-end',   bar.scrollLeft >= overflow - 2);
+  function openTabMenu() {
+    const dd = document.getElementById('disc-tab-dropdown');
+    if (!dd) return;
+    dd.classList.add('open');
+    document.getElementById('disc-tab-toggle')?.setAttribute('aria-expanded', 'true');
+    // Bind etter denne klikk-runden så åpnings-klikket ikke straks lukker igjen.
+    setTimeout(() => {
+      document.addEventListener('click', _tabMenuOutside, true);
+      document.addEventListener('keydown', _tabMenuKey);
+    }, 0);
   }
-  window.addEventListener('resize', updateTabArrows);
+  function closeTabMenu() {
+    const dd = document.getElementById('disc-tab-dropdown');
+    if (dd) dd.classList.remove('open');
+    document.getElementById('disc-tab-toggle')?.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('click', _tabMenuOutside, true);
+    document.removeEventListener('keydown', _tabMenuKey);
+  }
+  function _tabMenuOutside(e) {
+    const dd = document.getElementById('disc-tab-dropdown');
+    if (dd && !dd.contains(e.target)) closeTabMenu();
+  }
+  function _tabMenuKey(e) { if (e.key === 'Escape') closeTabMenu(); }
 
   function renderAmbientMannTab() {
     const TAGS = [
@@ -3380,11 +3385,15 @@ const Discover = (() => {
   // ── Tab / sub-tab switching ───────────────────────────────────────────
   function switchTab(tab) {
     activeTab = tab;
-    const TAB_LABELS = { music: 'Musikk', people: 'folk', 'psy-tour': 'Psytrance', 'ambient-mann': 'Ambient Mann', psybient: 'Psybient', 'altar-records': 'Altar', hadra: 'Hadra', dacru: 'DaCru', 'tip-raja': 'Raja', astral: 'Astral', shpongle: 'Shpongle', 'younger-brother': 'Younger', 'goa-gil': 'Goa Gil', shunyata: 'Shunyata', 'kukan-dub': 'Kukan', 'cosmic-leaf': 'Cosmic', 'cryo-chamber': 'Cryo', ultimae: 'Ultimae', mikelabella: 'MikelaBella', 'gagarin-project': 'Gagarin', leftfield: 'Leftfield' };
+    // Marker aktiv knapp i menyen via data-tab (robust mot oversatt tekst).
     document.querySelectorAll('.disc-tab-btn').forEach(b => {
-      const matched = Object.entries(TAB_LABELS).find(([, label]) => b.textContent.includes(label));
-      b.classList.toggle('active', matched ? matched[0] === tab : false);
+      b.classList.toggle('active', b.dataset.tab === tab);
     });
+    // Oppdater knappe-etiketten + lukk nedtrekket.
+    const cur = TABS.find(t => t.id === tab);
+    const lbl = document.getElementById('disc-tab-toggle-label');
+    if (cur && lbl) lbl.innerHTML = `${Icon(cur.icon)} ${_tabLabel(cur)}`;
+    closeTabMenu();
     document.getElementById('disc-music-tab')?.classList.toggle('hidden', tab !== 'music');
     document.getElementById('disc-people-tab')?.classList.toggle('hidden', tab !== 'people');
     document.getElementById('disc-psy-tour-tab')?.classList.toggle('hidden', tab !== 'psy-tour');
@@ -3813,6 +3822,6 @@ const Discover = (() => {
     downloadTrack, closeDownloadModal, confirmDownloadPayment,
     openDroneZone, closeDroneZone,
     ytSearch, openYt, ambientYtSearch, ambientYtPlay,
-    scrollTabs, updateTabArrows,
+    toggleTabMenu,
   };
 })();
