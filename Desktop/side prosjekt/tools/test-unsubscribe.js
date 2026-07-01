@@ -29,17 +29,23 @@ function load(extra) {
   const { appNode, document } = makeApp();
   const window = {};
   let lastUpdate = null;
+  const serverCalls = [];
   const sandbox = {
     window, document, console,
     localStorage: makeStore(),
     Icon: () => '',                 // ikoner irrelevante i test
     toast: () => {},
     Auth: extra && extra.Auth ? extra.Auth(u => { lastUpdate = u; }) : undefined,
+    // AccountServer-stub kun når testen ber om det (ellers skal _serverSync no-ope).
+    AccountServer: extra && extra.server ? {
+      unsubscribe: e => { serverCalls.push(['unsubscribe', e]); return Promise.resolve({ success: true }); },
+      resubscribe: e => { serverCalls.push(['resubscribe', e]); return Promise.resolve({ success: true }); },
+    } : undefined,
   };
   sandbox.globalThis = sandbox;
   const code = fs.readFileSync(path.join(__dirname, '..', 'js', 'unsubscribe.js'), 'utf8');
   vm.runInNewContext(code, sandbox);
-  return { U: window.Unsubscribe, appNode, getUpdate: () => lastUpdate };
+  return { U: window.Unsubscribe, appNode, getUpdate: () => lastUpdate, serverCalls };
 }
 
 // ── 1) opt-out via e-post i lenka ────────────────────────────────────────
@@ -97,6 +103,25 @@ function load(extra) {
   const { U, appNode } = load();
   U.render('x"<b>@y.com');
   ok(!appNode.innerHTML.includes('<b>'), 'rå HTML i e-post escapes i visningen');
+}
+
+// ── 7) opt-out/opt-in speiles til serveren (best-effort) ─────────────────
+{
+  const { U, serverCalls } = load({ server: true });
+  U.optOut('sync@test.com');
+  ok(serverCalls.some(c => c[0] === 'unsubscribe' && c[1] === 'sync@test.com'),
+     'optOut kaller AccountServer.unsubscribe med e-posten');
+  U.optIn('sync@test.com');
+  ok(serverCalls.some(c => c[0] === 'resubscribe' && c[1] === 'sync@test.com'),
+     'optIn kaller AccountServer.resubscribe med e-posten');
+}
+
+// ── 8) uten AccountServer no-oper _serverSync (kaster ikke) ───────────────
+{
+  const { U } = load();   // ingen server-stub
+  let threw = false;
+  try { U.optOut('nostub@test.com'); } catch { threw = true; }
+  ok(!threw, 'opt-out uten AccountServer kaster ikke (best-effort, lokal fasit)');
 }
 
 console.log(`\nunsubscribe: ${pass} passerte, ${fail} feilet`);

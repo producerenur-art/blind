@@ -65,6 +65,16 @@ const AccountServer = (() => {
     async resend(usernameOrEmail) {
       return _call('resend', { usernameOrEmail });
     },
+
+    // Reklame-avmelding: speiler den lokale opt-out-en til serveren (Supabase) så
+    // utsending (api/send-email type:'promo') kan respektere den på tvers av enheter.
+    async unsubscribe(email) {
+      return _call('unsubscribe', { email });
+    },
+
+    async resubscribe(email) {
+      return _call('resubscribe', { email });
+    },
   };
 })();
 

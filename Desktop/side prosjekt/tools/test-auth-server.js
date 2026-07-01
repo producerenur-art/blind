@@ -238,6 +238,9 @@ function testClientWiring() {
   const auth  = fs.readFileSync(path.join(ROOT, 'js/auth.js'), 'utf8');
   const html  = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   const mig   = fs.readFileSync(path.join(ROOT, 'supabase/migrations/0003_accounts.sql'), 'utf8');
+  const sendEmail = fs.readFileSync(path.join(ROOT, 'api/send-email.js'), 'utf8');
+  const unsub = fs.readFileSync(path.join(ROOT, 'js/unsubscribe.js'), 'utf8');
+  const mig4  = fs.readFileSync(path.join(ROOT, 'supabase/migrations/0004_marketing_opt_out.sql'), 'utf8');
 
   for (const m of ['register', 'login', 'activate', 'forgot', 'reset', 'resend'])
     assert.ok(new RegExp(`async ${m}\\b|${m}\\(`).test(accountServer), `AccountServer.${m} finnes`);
@@ -266,6 +269,50 @@ function testClientWiring() {
   assert.ok(/unique index[\s\S]*lower\(email\)/.test(mig), 'global unik e-post (lower)');
   assert.ok(/enable row level security/.test(mig), 'RLS på (låst til service-role)');
   ok('migrasjon: accounts-tabell + unik e-post + RLS');
+
+  // Reklame-avmelding wiret ende-til-ende (server-sjekk + klient-speiling + migrasjon).
+  assert.ok(/async unsubscribe\b/.test(accountServer) && /async resubscribe\b/.test(accountServer), 'AccountServer.unsubscribe/resubscribe finnes');
+  assert.ok(/async function isUnsubscribed/.test(sendEmail), 'send-email.js har isUnsubscribed-sjekk');
+  assert.ok(/if \(await isUnsubscribed\(toEmail\)\)/.test(sendEmail), 'promo-grenen hopper over avmeldte mottakere');
+  assert.ok(/_serverSync\('unsubscribe'/.test(unsub) && /_serverSync\('resubscribe'/.test(unsub), 'unsubscribe.js speiler opt-out/-in til serveren');
+  assert.ok(/marketing_opt_out/.test(mig4) && /add column if not exists/i.test(mig4), 'migrasjon 0004 legger til marketing_opt_out (idempotent)');
+  ok('reklame-avmelding wiret ende-til-ende (server + klient + migrasjon)');
+}
+
+async function testMarketingOptOut() {
+  console.log('\n10) reklame-avmelding (unsubscribe / resubscribe)');
+  const store = { accounts: [] };
+  const db = makeDb(store);
+  sentEmails.length = 0;
+  mockEmailResult = { data: { id: 'test_id' }, error: null };
+
+  await ACTIONS.register(db, { username: 'mia', displayName: 'Mia', email: 'Mia@Eksempel.no', password: 'Passord!9' });
+  const row = () => store.accounts.find(a => a.username === 'mia');
+  assert.ok(!row().marketing_opt_out, 'ny konto er IKKE avmeldt reklame');
+
+  // ugyldig e-post → 400
+  let bad = await ACTIONS.unsubscribe(db, { email: 'ikke-epost' });
+  assert.strictEqual(bad.status, 400, 'ugyldig e-post → 400');
+  ok('unsubscribe: ugyldig e-post avvises (400)');
+
+  // unsubscribe (annet casing enn lagret) → setter flagget
+  let u = await ACTIONS.unsubscribe(db, { email: 'mia@eksempel.no' });
+  assert.strictEqual(u.status, 200, 'unsubscribe → 200');
+  assert.ok(u.body.success, 'unsubscribe success');
+  assert.strictEqual(row().marketing_opt_out, true, 'marketing_opt_out satt true (case-insensitivt)');
+  ok('unsubscribe: setter marketing_opt_out=true på riktig konto');
+
+  // resubscribe → nullstiller
+  let r = await ACTIONS.resubscribe(db, { email: 'MIA@eksempel.no' });
+  assert.strictEqual(r.status, 200, 'resubscribe → 200');
+  assert.strictEqual(row().marketing_opt_out, false, 'marketing_opt_out satt false');
+  ok('resubscribe: setter marketing_opt_out=false');
+
+  // ukjent e-post → generisk success (avslører ikke eksistens)
+  let unk = await ACTIONS.unsubscribe(db, { email: 'finnesikke@eksempel.no' });
+  assert.strictEqual(unk.status, 200, 'ukjent e-post → 200 generisk');
+  assert.ok(unk.body.success, 'generisk success for ukjent e-post');
+  ok('unsubscribe: generisk success for ukjent e-post (ingen kontooppramsing)');
 }
 
 (async () => {
@@ -274,5 +321,6 @@ function testClientWiring() {
   await testRegisterLoginFlow();
   await testForgotReset();
   testClientWiring();
+  await testMarketingOptOut();
   console.log(`\n\x1b[32m✓ Alle ${passed} sjekkene passerte.\x1b[0m\n`);
 })().catch(e => { console.error('\n\x1b[31m✗ Test feilet:\x1b[0m', e.message, '\n', e.stack); process.exit(1); });

@@ -64,6 +64,14 @@ function tableMissing(error) {
     || /does not exist|schema cache|find the table/i.test(error.message || '');
 }
 
+// Sant når feilen betyr at marketing_opt_out-kolonnen ikke finnes ennå (migrasjon
+// 0004 ikke kjørt). Da degraderer vi pent: klienten beholder sin lokale opt-out.
+function columnMissing(error) {
+  if (!error) return false;
+  return error.code === '42703' || error.code === 'PGRST204'
+    || /column .* does not exist|find the .* column/i.test(error.message || '');
+}
+
 // Kun trygge, offentlige felt går tilbake til nettleseren (aldri passord/tokens).
 function publicUser(row) {
   if (!row) return null;
@@ -244,7 +252,28 @@ async function resend(db, body) {
   return { status: 200, body: { success: true } };
 }
 
-const ACTIONS = { register, login, activate, forgot, reset, resend };
+// ── Reklame-avmelding (marketing opt-out) ─────────────────────────────────
+// Server-side sannhetskilde for hvem som ikke skal få reklame-e-post. Klikkbar
+// fra promo-e-postens «Avmeld reklame»-lenke (#/unsubscribe/<email>) — mottakeren
+// er som regel IKKE innlogget, så vi slår opp på e-post og svarer alltid generisk
+// (marketing-opt-out er ikke sensitivt; verste utfall er at noen melder av en annens
+// reklame, som lett kan angres via «Meld på igjen»). Påvirker ALDRI konto-e-post.
+async function setMarketingOptOut(db, body, value) {
+  const email = String(body.email || '').toLowerCase().trim();
+  if (!email || !email.includes('@')) return { status: 400, body: { error: 'Ugyldig e-postadresse' } };
+  const { error } = await db.from('accounts').update({ marketing_opt_out: value }).ilike('email', email);
+  if (error) {
+    // Kolonnen mangler (migrasjon 0004 ikke kjørt) → myk suksess; klienten beholder
+    // sin lokale opt-out i localStorage, så avmeldingen fungerer uansett per enhet.
+    if (columnMissing(error)) return { status: 200, body: { success: true, notProvisioned: true } };
+    return { status: 500, body: { error: value ? 'Kunne ikke lagre avmelding' : 'Kunne ikke lagre påmelding' } };
+  }
+  return { status: 200, body: { success: true } };
+}
+async function unsubscribe(db, body) { return setMarketingOptOut(db, body, true); }
+async function resubscribe(db, body) { return setMarketingOptOut(db, body, false); }
+
+const ACTIONS = { register, login, activate, forgot, reset, resend, unsubscribe, resubscribe };
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

@@ -403,6 +403,27 @@ function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// Sjekker server-side (Supabase accounts.marketing_opt_out) om mottakeren har meldt
+// seg av reklame. Fail-open: kan vi IKKE sjekke (mangler konfig/tabell/kolonne, eller
+// annen feil) → returner false, så promo-utsending oppfører seg som før provisjonering
+// i stedet for å stoppe helt. Gjelder KUN reklame (type:'promo') — aldri konto-e-post.
+async function isUnsubscribed(email) {
+  const url  = process.env.SUPABASE_URL;
+  const key  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const addr = String(email || '').toLowerCase().trim();
+  if (!url || !key || !addr) return false;
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const db = createClient(url, key, { auth: { persistSession: false } });
+    const { data, error } = await db.from('accounts')
+      .select('marketing_opt_out').ilike('email', addr).maybeSingle();
+    if (error) return false;   // tabell/kolonne mangler e.l. → fail-open
+    return !!(data && data.marketing_opt_out);
+  } catch {
+    return false;
+  }
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -456,6 +477,10 @@ module.exports = async (req, res) => {
     subject = 'Kvittering — Sound Core Pro er aktivert ⭐';
     html = purchaseHtml(toName, `${siteUrl}/`, plan, orderRef);
   } else if (type === 'promo') {
+    // Respekter avmelding: send ALDRI reklame til noen som har meldt seg av.
+    if (await isUnsubscribed(toEmail)) {
+      return res.status(200).json({ success: true, skipped: 'unsubscribed' });
+    }
     // Markedsførings-/«bli medlem»-e-post. Unsubscribe-lenka bærer mottakerens e-post
     // (#/unsubscribe/<email>) så ett klikk identifiserer hvem som melder seg av; kan
     // overstyrast av klienten via unsubscribeUrl.
@@ -489,3 +514,4 @@ module.exports.CANONICAL_URL = CANONICAL_URL;
 module.exports.activationHtml = activationHtml;
 module.exports.resetHtml = resetHtml;
 module.exports.promoHtml = promoHtml;
+module.exports.isUnsubscribed = isUnsubscribed;

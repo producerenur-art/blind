@@ -26,9 +26,20 @@ const Unsubscribe = (() => {
     } catch {}
   }
 
+  // Speil opt-out til serveren (Supabase) så selve utsendingen respekterer den på
+  // tvers av enheter. Best-effort: feiler stille (localStorage er alltid fasit lokalt,
+  // og api/auth.js degraderer pent når server/kolonne mangler).
+  function _serverSync(action, email) {
+    try {
+      if (typeof AccountServer !== 'undefined' && typeof AccountServer[action] === 'function') {
+        Promise.resolve(AccountServer[action](email)).catch(() => {});
+      }
+    } catch {}
+  }
+
   function isOptedOut(email) { const e = _norm(email); return !!e && !!_load()[e]; }
-  function optOut(email) { const e = _norm(email); if (!e) return false; const m = _load(); m[e] = Date.now(); _save(m); _flagUser(e, true);  return true; }
-  function optIn(email)  { const e = _norm(email); if (!e) return false; const m = _load(); delete m[e];  _save(m); _flagUser(e, false); return true; }
+  function optOut(email) { const e = _norm(email); if (!e) return false; const m = _load(); m[e] = Date.now(); _save(m); _flagUser(e, true);  _serverSync('unsubscribe', e); return true; }
+  function optIn(email)  { const e = _norm(email); if (!e) return false; const m = _load(); delete m[e];  _save(m); _flagUser(e, false); _serverSync('resubscribe', e); return true; }
 
   // ── Visning ──────────────────────────────────────────────────────────
   function render(email) {
