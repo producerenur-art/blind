@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none" role="img" aria-label="SiriusFM">
+  <defs>
+    <radialGradient id="k-bg" cx="50%" cy="42%" r="72%">
+      <stop offset="0%"   stop-color="#16224a"/>
+      <stop offset="60%"  stop-color="#080d20"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+    <radialGradient id="k-core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"  stop-color="#ffffff"/>
+      <stop offset="38%" stop-color="#bfeaff"/>
+      <stop offset="72%" stop-color="#6fd3ff"/>
+      <stop offset="100%" stop-color="#a98bff"/>
+    </radialGradient>
+    <radialGradient id="k-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#6fd3ff" stop-opacity=".5"/>
+      <stop offset="45%"  stop-color="#a98bff" stop-opacity=".18"/>
+      <stop offset="100%" stop-color="#a98bff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="k-ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#6fd3ff" stop-opacity=".9"/>
+      <stop offset="55%"  stop-color="#a98bff" stop-opacity=".45"/>
+      <stop offset="100%" stop-color="#6fd3ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- helflate bakgrunn: trygt for maskable-beskjæring -->
+  <rect width="512" height="512" fill="url(#k-bg)"/>
+  <!-- merket holdes innenfor sikker sone (senter 80 %) -->
+  <g transform="translate(256 256) scale(3.4) translate(-50 -50)">
+    <circle cx="50" cy="50" r="46" fill="url(#k-glow)"/>
+    <ellipse cx="50" cy="50" rx="40" ry="14.5" stroke="url(#k-ring)" stroke-width="2.2"
+             transform="rotate(-24 50 50)" opacity=".85"/>
+    <path d="M50 18 Q52.4 47.6 82 50 Q52.4 52.4 50 82 Q47.6 52.4 18 50 Q47.6 47.6 50 18 Z"
+          fill="#a98bff" opacity=".5" transform="rotate(45 50 50)"/>
+    <path d="M50 3 Q53 47 97 50 Q53 53 50 97 Q47 53 3 50 Q47 47 50 3 Z" fill="url(#k-core)"/>
+    <circle cx="50" cy="50" r="7" fill="#ffffff" opacity=".95"/>
+    <circle cx="50" cy="50" r="11.5" fill="url(#k-core)" opacity=".35"/>
+  </g>
+</svg>

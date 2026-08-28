@@ -5,7 +5,7 @@ const Underground = (() => {
     {
       name: 'Surgeon',
       city: 'Birmingham',
-      desc: 'Birmingham-basert techno-pioner. Kjent for rå, industriell lyd og massiv tilstedeværelse bak boksen.',
+      desc: 'Birmingham-based techno pioneer. Known for raw, industrial sound and a massive presence behind the decks.',
       ra: 'https://ra.co/dj/surgeon',
       sc: 'https://soundcloud.com/surgeon-official',
       tag: 'Industrial Techno',
@@ -13,7 +13,7 @@ const Underground = (() => {
     {
       name: 'Blawan',
       city: 'Yorkshire',
-      desc: 'Avant-garde techno og breakbeats. En av Storbritannias mest nyskapende elektroniske artister.',
+      desc: 'Avant-garde techno and breakbeats. One of Britain’s most innovative electronic artists.',
       ra: 'https://ra.co/dj/blawan',
       sc: 'https://soundcloud.com/blawan',
       tag: 'Industrial / Breaks',
@@ -21,7 +21,7 @@ const Underground = (() => {
     {
       name: 'Perc',
       city: 'London',
-      desc: 'Grunnlegger av Perc Trax. Rå, presisjonstekno med industrielle elementer og intens energi.',
+      desc: 'Founder of Perc Trax. Raw, precision techno with industrial elements and intense energy.',
       ra: 'https://ra.co/dj/perc',
       sc: 'https://soundcloud.com/perctrax',
       tag: 'Hard Techno',
@@ -29,7 +29,7 @@ const Underground = (() => {
     {
       name: 'Andy Stott',
       city: 'Manchester',
-      desc: 'Modern Love-artist fra Manchester. Atmosfærisk, tung og dyp techno som borer seg inn i sjelen.',
+      desc: 'Modern Love artist from Manchester. Atmospheric, heavy and deep techno that burrows into the soul.',
       ra: 'https://ra.co/dj/andystott',
       sc: 'https://soundcloud.com/andy-stott',
       tag: 'Dark Techno',
@@ -37,7 +37,7 @@ const Underground = (() => {
     {
       name: 'Truss',
       city: 'London',
-      desc: 'London-basert producer kjent for ren, kald og mekanisk techno. Grunnlegger av Modus-platelabelen.',
+      desc: 'London-based producer known for clean, cold and mechanical techno. Founder of the Modus record label.',
       ra: 'https://ra.co/dj/truss',
       sc: 'https://soundcloud.com/truss',
       tag: 'Minimal Techno',
@@ -45,7 +45,7 @@ const Underground = (() => {
     {
       name: 'Dave Clarke',
       city: 'Brighton',
-      desc: 'The Baron of Techno — ikonisk britisk DJ med røtter dypt plantet i Detroit-lyden.',
+      desc: 'The Baron of Techno — iconic British DJ with roots planted deep in the Detroit sound.',
       ra: 'https://ra.co/dj/daveclarke',
       sc: 'https://soundcloud.com/dave-clarke',
       tag: 'Detroit Techno',
@@ -56,7 +56,7 @@ const Underground = (() => {
     {
       name: 'Carl Cox',
       city: 'Ibiza / Brighton',
-      desc: 'Legendarisk resident på Space og Music Is Revolution. Kongen av Ibiza-techno gjennom tre tiår.',
+      desc: 'Legendary resident at Space and Music Is Revolution. The king of Ibiza techno for three decades.',
       ra: 'https://ra.co/dj/carlcox',
       sc: 'https://soundcloud.com/carlcox-official',
       tag: 'Techno / Tech House',
@@ -64,7 +64,7 @@ const Underground = (() => {
     {
       name: 'Ricardo Villalobos',
       city: 'Ibiza / Berlin',
-      desc: 'Minimal techno-maestro. Lange, hypnotiske sets som er blitt legendariske på øya.',
+      desc: 'Minimal techno maestro. Long, hypnotic sets that have become legendary on the island.',
       ra: 'https://ra.co/dj/ricardovillalobos',
       sc: null,
       tag: 'Minimal Techno',
@@ -72,7 +72,7 @@ const Underground = (() => {
     {
       name: 'Loco Dice',
       city: 'Ibiza',
-      desc: 'Grunnlegger av Desolat. Fast resident på Ibizas beste klubber med fengslende, groovy sett.',
+      desc: 'Founder of Desolat. A regular resident at Ibiza’s best clubs with captivating, groovy sets.',
       ra: 'https://ra.co/dj/locodice',
       sc: 'https://soundcloud.com/loco-dice',
       tag: 'Tech House / Techno',
@@ -80,7 +80,7 @@ const Underground = (() => {
     {
       name: 'DJ Harvey',
       city: 'Ibiza',
-      desc: 'Ibiza-ikon. Eklektiske, musikalske sett som beveger seg gjennom disco, house og techno.',
+      desc: 'Ibiza icon. Eclectic, musical sets that move through disco, house and techno.',
       ra: 'https://ra.co/dj/djharvey',
       sc: null,
       tag: 'Eclectic / House',
@@ -88,7 +88,7 @@ const Underground = (() => {
     {
       name: 'Sven Väth',
       city: 'Ibiza / Frankfurt',
-      desc: 'Grunnlegger av Cocoon og veteran-resident på Amnesia. En av technoens mest ikoniske skikkelser.',
+      desc: 'Founder of Cocoon and veteran resident at Amnesia. One of techno’s most iconic figures.',
       ra: 'https://ra.co/dj/svenvath',
       sc: 'https://soundcloud.com/svenvath',
       tag: 'Techno',
@@ -96,7 +96,7 @@ const Underground = (() => {
     {
       name: 'Joseph Capriati',
       city: 'Ibiza / Napoli',
-      desc: 'Eksplosiv techno og tech house. Fast resident på DC-10 og Amnesia sesong etter sesong.',
+      desc: 'Explosive techno and tech house. A regular resident at DC-10 and Amnesia season after season.',
       ra: 'https://ra.co/dj/josephcapriati',
       sc: 'https://soundcloud.com/josephcapriati',
       tag: 'Techno / Tech House',
@@ -107,7 +107,7 @@ const Underground = (() => {
     {
       name: 'fabric',
       city: 'London',
-      desc: 'Londons fremste techno-institusjon siden 1999. Fredag = FabricLive, Lørdag = fabric.',
+      desc: 'London’s premier techno institution since 1999. Friday = FabricLive, Saturday = fabric.',
       url: 'https://www.fabriclondon.com',
       tag: 'Club',
       events: 'https://ra.co/clubs/uk/london/fabric',
@@ -115,7 +115,7 @@ const Underground = (() => {
     {
       name: 'Printworks',
       city: 'London',
-      desc: 'Ikonisk industriell venue i London Bridge-området med enestående lydsystem.',
+      desc: 'Iconic industrial venue in the London Bridge area with an outstanding sound system.',
       url: 'https://printworkslondon.co.uk',
       tag: 'Venue',
       events: 'https://ra.co/clubs/uk/london/printworks-london',
@@ -123,7 +123,7 @@ const Underground = (() => {
     {
       name: 'Warehouse Project',
       city: 'Manchester',
-      desc: 'Manchesters største techno-event. Holder til i historiske Aviva Studios fra september til desember.',
+      desc: 'Manchester’s biggest techno event. Housed in the historic Aviva Studios from September to December.',
       url: 'https://www.thewarehouseproject.com',
       tag: 'Festival / Club',
       events: 'https://ra.co/promoters/uk/warehouseproject',
@@ -131,7 +131,7 @@ const Underground = (() => {
     {
       name: 'Sub Club',
       city: 'Glasgow',
-      desc: 'Et av Europas eldste og mest respekterte undergrunns-klubber — aktivt siden 1987.',
+      desc: 'One of Europe’s oldest and most respected underground clubs — active since 1987.',
       url: 'https://subclub.co.uk',
       tag: 'Club',
       events: 'https://ra.co/clubs/uk/glasgow/sub-club',
@@ -142,7 +142,7 @@ const Underground = (() => {
     {
       name: 'DC-10',
       city: 'Ibiza',
-      desc: 'Hjem til Circoloco. Ibizas råeste og mest autentiske undergrunnsklubb med åpen terrasse.',
+      desc: 'Home of Circoloco. Ibiza’s rawest and most authentic underground club with an open terrace.',
       url: 'https://www.circoloco.com',
       tag: 'Club',
       events: 'https://ra.co/clubs/es/ibiza/dc10',
@@ -150,7 +150,7 @@ const Underground = (() => {
     {
       name: 'Amnesia',
       city: 'Ibiza',
-      desc: 'Et av verdens mest berømte klubber. Hjem til Sven Väths Cocoon og mange ikoniske residencies.',
+      desc: 'One of the world’s most famous clubs. Home to Sven Väth’s Cocoon and many iconic residencies.',
       url: 'https://www.amnesia.es',
       tag: 'Club',
       events: 'https://ra.co/clubs/es/ibiza/amnesia',
@@ -158,7 +158,7 @@ const Underground = (() => {
     {
       name: 'Hï Ibiza',
       city: 'Ibiza',
-      desc: 'Moderne megaklubb kjent for banebrytende lydsystem og spektakulært lysshow.',
+      desc: 'A modern mega-club known for its groundbreaking sound system and spectacular light show.',
       url: 'https://www.hiibiza.com',
       tag: 'Club',
       events: 'https://ra.co/clubs/es/ibiza/hi-ibiza',
@@ -166,7 +166,7 @@ const Underground = (() => {
     {
       name: 'Ushuaïa',
       city: 'Ibiza',
-      desc: 'Åpen utescene med havutsikt. Sommers beste dag- og solnedgangs-events på øya.',
+      desc: 'Open-air stage with sea views. The summer’s best daytime and sunset events on the island.',
       url: 'https://www.ushuaiaibiza.com',
       tag: 'Open Air',
       events: 'https://ra.co/clubs/es/ibiza/ushuaia-ibiza-beach-hotel',
@@ -174,12 +174,9 @@ const Underground = (() => {
   ];
 
   const MUSIC_LINKS = [
-    { name: 'SoundCloud — Techno', desc: 'Tracks og miks fra artister over hele verden', url: 'https://soundcloud.com/tags/techno', color: '#ff5500', icon: '☁️' },
-    { name: 'Boiler Room', desc: 'Live-sett fra verdens beste artister', url: 'https://www.youtube.com/@BoilerRoomTV', color: '#e00', icon: '▶' },
-    { name: 'RA Podcasts', desc: 'Kuraterte miks fra Resident Advisor', url: 'https://ra.co/podcasts', color: '#7c3aed', icon: '🎙' },
-    { name: 'Mixcloud — Techno', desc: 'Lange DJ-miks og radio-shows', url: 'https://www.mixcloud.com/tag/techno/', color: '#5000ff', icon: '🌀' },
-    { name: 'Beatport Techno', desc: 'Kjøp og last ned profesjonell techno', url: 'https://www.beatport.com/genre/techno/6', color: '#01ff95', icon: '🎵' },
-    { name: 'Bandcamp — Techno', desc: 'Støtt uavhengige artister direkte', url: 'https://bandcamp.com/tag/techno', color: '#1da0c3', icon: '🎸' },
+    { name: 'Mixcloud — Techno', desc: 'Long DJ mixes and radio shows', url: 'https://www.mixcloud.com/tag/techno/', color: '#5000ff', icon: '🌀' },
+    { name: 'Beatport Techno', desc: 'Buy and download professional techno', url: 'https://www.beatport.com/genre/techno/6', color: '#01ff95', icon: '🎵' },
+    { name: 'Bandcamp — Techno', desc: 'Support independent artists directly', url: 'https://bandcamp.com/tag/techno', color: '#1da0c3', icon: '🎸' },
   ];
 
   function escHtml(str) {
@@ -198,7 +195,7 @@ const Underground = (() => {
           <p class="ug-artist-desc">${escHtml(a.desc)}</p>
           <div class="ug-artist-links">
             <a href="${escHtml(a.ra)}" target="_blank" rel="noopener" class="ug-link-btn ug-link-ra">Resident Advisor</a>
-            ${a.sc ? `<button onclick="openMedia('${escHtml(a.sc)}','${escHtml(a.name)} på SoundCloud')" class="ug-link-btn ug-link-sc">SoundCloud</button>` : ''}
+            ${a.sc ? `<button onclick="openMedia('${escHtml(a.sc)}','${escHtml(a.name)} on SoundCloud')" class="ug-link-btn ug-link-sc">SoundCloud</button>` : ''}
           </div>
         </div>
       </div>`;
@@ -214,8 +211,8 @@ const Underground = (() => {
         <div class="ug-venue-city">${Icon('map-pin')} ${escHtml(v.city)}</div>
         <p class="ug-venue-desc">${escHtml(v.desc)}</p>
         <div class="ug-venue-actions">
-          <a href="${escHtml(v.url)}" target="_blank" rel="noopener" class="ug-link-btn ug-link-web">Nettside ${Icon('arrow-right')}</a>
-          <a href="${escHtml(v.events)}" target="_blank" rel="noopener" class="ug-link-btn ug-link-ra">Arrangementer</a>
+          <a href="${escHtml(v.url)}" target="_blank" rel="noopener" class="ug-link-btn ug-link-web">Website ${Icon('arrow-right')}</a>
+          <a href="${escHtml(v.events)}" target="_blank" rel="noopener" class="ug-link-btn ug-link-ra">Events</a>
         </div>
       </div>`;
   }
@@ -246,21 +243,27 @@ const Underground = (() => {
         <!-- HERO -->
         <div class="ug-hero">
           <div class="ug-hero-glow"></div>
-          <button class="ug-back-btn" onclick="Router.go('/discover')">${Icon('arrow-left')} Tilbake til Discover</button>
+          <button class="ug-back-btn" onclick="Router.go('/discover')">${Icon('arrow-left')} Back to Discover</button>
           <div class="ug-hero-badge">${Icon('zap')} Underground</div>
-          <h1 class="ug-hero-title">Tekno Undergrunden</h1>
-          <p class="ug-hero-sub">De hypnotiske groovsene, de mørkeste beatene — fra Englands fabrikkloft til Ibizas natthimmel.</p>
+          <h1 class="ug-hero-title">Techno Underground</h1>
+          <p class="ug-hero-sub">The hypnotic grooves, the darkest beats — from England’s factory lofts to Ibiza’s night sky.</p>
         </div>
 
         <div class="ug-content">
+
+          <!-- FRESH FROM THE WEB (AI-rotasjon, se js/aifresh.js) -->
+          <section class="ug-section">
+            <div id="ug-fresh"></div>
+            <div id="ug-fresh-events"></div>
+          </section>
 
           <!-- ENGLAND ARTISTS -->
           <section class="ug-section">
             <div class="ug-section-header">
               <div class="ug-section-flag">🇬🇧</div>
               <div>
-                <h2 class="ug-section-title">England — Artister</h2>
-                <p class="ug-section-sub">Fra Birminghams fabrikklyd til Londons underjordiske klubber</p>
+                <h2 class="ug-section-title">England — Artists</h2>
+                <p class="ug-section-sub">From Birmingham’s factory sound to London’s underground clubs</p>
               </div>
             </div>
             <div class="ug-artist-grid">
@@ -273,8 +276,8 @@ const Underground = (() => {
             <div class="ug-section-header">
               <div class="ug-section-flag">🇪🇸</div>
               <div>
-                <h2 class="ug-section-title">Ibiza — Artister</h2>
-                <p class="ug-section-sub">Øyas legendariske DJ-er og residenter</p>
+                <h2 class="ug-section-title">Ibiza — Artists</h2>
+                <p class="ug-section-sub">The island’s legendary DJs and residents</p>
               </div>
             </div>
             <div class="ug-artist-grid">
@@ -287,15 +290,15 @@ const Underground = (() => {
             <div class="ug-section-header">
               <div class="ug-section-flag">${Icon('ticket')}</div>
               <div>
-                <h2 class="ug-section-title">Arrangementer — England</h2>
-                <p class="ug-section-sub">Finn billetter og events direkte fra klubbene og via Resident Advisor</p>
+                <h2 class="ug-section-title">Events — England</h2>
+                <p class="ug-section-sub">Find tickets and events directly from the clubs and via Resident Advisor</p>
               </div>
             </div>
             <div class="ug-venue-grid">
               ${VENUES_UK.map(v => venueCard(v)).join('')}
             </div>
             <a class="ug-ra-banner" href="https://ra.co/events/uk" target="_blank" rel="noopener">
-              ${Icon('search')} Se alle UK-arrangementer på <strong>Resident Advisor</strong> ${Icon('arrow-right')}
+              ${Icon('search')} See all UK events on <strong>Resident Advisor</strong> ${Icon('arrow-right')}
             </a>
           </section>
 
@@ -304,15 +307,15 @@ const Underground = (() => {
             <div class="ug-section-header">
               <div class="ug-section-flag">${Icon('sun')}</div>
               <div>
-                <h2 class="ug-section-title">Arrangementer — Ibiza</h2>
-                <p class="ug-section-sub">Sesongens beste venues og parties på øya</p>
+                <h2 class="ug-section-title">Events — Ibiza</h2>
+                <p class="ug-section-sub">The season’s best venues and parties on the island</p>
               </div>
             </div>
             <div class="ug-venue-grid">
               ${VENUES_IBIZA.map(v => venueCard(v)).join('')}
             </div>
             <a class="ug-ra-banner" href="https://ra.co/events/es/ibiza" target="_blank" rel="noopener">
-              ${Icon('search')} Se alle Ibiza-arrangementer på <strong>Resident Advisor</strong> ${Icon('arrow-right')}
+              ${Icon('search')} See all Ibiza events on <strong>Resident Advisor</strong> ${Icon('arrow-right')}
             </a>
           </section>
 
@@ -321,8 +324,8 @@ const Underground = (() => {
             <div class="ug-section-header">
               <div class="ug-section-flag">${Icon('headphones')}</div>
               <div>
-                <h2 class="ug-section-title">Musikk — Lytt nå</h2>
-                <p class="ug-section-sub">Strøm og last ned fra de beste kanalene på nettet</p>
+                <h2 class="ug-section-title">Music — Listen now</h2>
+                <p class="ug-section-sub">Stream and download from the best channels on the web</p>
               </div>
             </div>
             <div class="ug-music-grid">
@@ -330,35 +333,19 @@ const Underground = (() => {
             </div>
           </section>
 
-          <!-- DEMO CONTACT -->
-          <section class="ug-section">
-            <div class="ug-demo-card">
-              <div class="ug-demo-icon">${Icon('mail')}</div>
-              <div class="ug-demo-body">
-                <h2 class="ug-demo-title">Send Demo</h2>
-                <p class="ug-demo-desc">
-                  Har du produsert techno eller elektronisk musikk og vil nå ut til klubber, plateselskaper og DJer?
-                  Send din demo til redaksjonen på Sound Core — vi lytter til alt vi mottar.
-                </p>
-                <a href="mailto:demos@soundcore.no" class="ug-demo-email">
-                  ${Icon('mail')} demos@soundcore.no
-                </a>
-                <div class="ug-demo-tips">
-                  <p class="ug-demo-tips-title">Tips for innsending:</p>
-                  <ul class="ug-demo-tips-list">
-                    <li>Send lenke til SoundCloud (privat eller offentlig)</li>
-                    <li>Beskriv lyden din kort — sjanger, inspirasjon, BPM</li>
-                    <li>Legg ved sosiale medier og kontaktinfo</li>
-                    <li>Vi svarer innen 2–4 uker</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </section>
-
         </div>
       </div>
     `;
+
+    // Ferske techno-undergrunn-nyheter + arrangementer i hele verden, rotert hver
+    // halvtime (samme AI-kilde som magasinet og verden-siden — se js/aifresh.js).
+    if (typeof AIFresh !== 'undefined') {
+      AIFresh.reset();
+      AIFresh.mount({ id: 'ug-fresh', genre: 'techno-underground',
+        title: 'Fresh from the underground', emoji: '🏭', limit: 4 });
+      AIFresh.mount({ id: 'ug-fresh-events', genre: 'festivals',
+        title: 'Events & festivals worldwide', emoji: '🎪', limit: 3 });
+    }
   }
 
   return { render };

@@ -1,22 +1,71 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="SoundCore">
+  <meta name="apple-mobile-web-app-title" content="SiriusFM">
   <meta name="theme-color" content="#0a0a0f">
-  <title>Sound Core</title>
+  <title>SiriusFM</title>
+  <!-- Bar-vert-fiks: siriusfm.no (uten www) 308-omdirigerer /api/* til www.
+       Nettleseren BLOKKERER en slik kryss-opphav-omdirigering på en POST med
+       JSON-kropp («…disallowed to follow cross-origin redirect») → bl.a.
+       banner-opplasting feilet stille (fanget som «Sky utilgjengelig»).
+       Gamle brukere kan sitte fast på bar-vert via en frossen service worker,
+       så vi kan ikke flytte dem til www uten å miste innlogget tilstand.
+       Løsning: send API-kall RETT til www (direkte CORS, INGEN omdirigering)
+       når siden kjører på bar-vert. Gjelder kun /api/* — alt annet urørt. -->
+  <script>
+  (function () {
+    try {
+      if (location.hostname !== 'siriusfm.no' || !window.fetch) return;
+      var WWW = 'https://www.siriusfm.no';
+      var BARE = 'https://siriusfm.no';
+      function toWww(u) {
+        if (typeof u !== 'string') return null;
+        if (u.indexOf('/api/') === 0) return WWW + u;                 // relativ /api/…
+        if (u.indexOf(BARE + '/api/') === 0) return WWW + u.slice(BARE.length); // absolutt bar-vert
+        return null;
+      }
+      var _fetch = window.fetch.bind(window);
+      window.fetch = function (input, init) {
+        try {
+          if (typeof input === 'string') {
+            var r = toWww(input);
+            if (r) input = r;
+          } else if (input && typeof input.url === 'string') {
+            var r2 = toWww(input.url);
+            if (r2) input = new Request(r2, input);
+          }
+        } catch (e) {}
+        return _fetch(input, init);
+      };
+    } catch (e) {}
+  })();
+  </script>
   <!-- PWA: installerbar app på iPhone/Android -->
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0f'/%3E%3Cg fill='none' stroke='%23a78bfa' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M16 8v16'/%3E%3Cpath d='M11 12v8'/%3E%3Cpath d='M21 12v8'/%3E%3Cpath d='M6.5 14.5v3'/%3E%3Cpath d='M25.5 14.5v3'/%3E%3C/g%3E%3C/svg%3E">
-  <meta name="description" content="SoundCore — desentralisert sosial plattform for elektronisk musikk, radio og DJ-miks.">
-  <meta property="og:title" content="SoundCore">
-  <meta property="og:description" content="Desentralisert sosial plattform for elektronisk musikk, radio og DJ-miks.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0f'/%3E%3Cpath d='M16 7 Q16.7 15.3 24.5 16 Q16.7 16.7 16 24.5 Q15.3 16.7 7.5 16 Q15.3 15.3 16 7 Z' fill='%23a98bff' transform='rotate(45 16 16)'/%3E%3Cpath d='M16 2 Q17 15 30 16 Q17 17 16 30 Q15 17 2 16 Q15 15 16 2 Z' fill='%239fe0ff'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23ffffff'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+  <meta name="description" content="SiriusFM — decentralized social platform for electronic music, radio and DJ mixes.">
+  <meta property="og:title" content="SiriusFM">
+  <meta property="og:description" content="SiriusFM">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SiriusFM">
+  <meta property="og:url" content="https://www.siriusfm.no/">
+  <meta property="og:image" content="https://www.siriusfm.no/assets/og-cover.png?v=4">
+  <meta property="og:image:secure_url" content="https://www.siriusfm.no/assets/og-cover.png?v=4">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="SiriusFM — web radio">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SiriusFM">
+  <meta name="twitter:description" content="SiriusFM">
+  <meta name="twitter:image" content="https://www.siriusfm.no/assets/og-cover.png?v=4">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -26,7 +75,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <!-- Supabase JS — shared media storage (60-min audio, video) across all users -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="styles.css?v=20260630-disctabdropdown">
+  <link rel="stylesheet" href="styles.css?v=20260819-blue-player">
 </head>
 <body>
 
@@ -48,116 +97,6 @@
     <div id="bg-prism-2"></div>
     <div id="bg-prism-3"></div>
     <canvas id="bg-particles-canvas"></canvas>
-    <!-- Cosmos UFO — realistic metallic flying saucer (only shown for data-bg-effect="cosmos") -->
-    <div id="bg-ufo" aria-hidden="true">
-      <svg viewBox="0 0 220 300" width="220" height="300" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <!-- brushed-metal upper hull, top-lit -->
-          <linearGradient id="ufoHullTop" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#f7f9ff"/>
-            <stop offset="20%"  stop-color="#d2d8f7"/>
-            <stop offset="48%"  stop-color="#9aa2d4"/>
-            <stop offset="76%"  stop-color="#5f6699"/>
-            <stop offset="100%" stop-color="#373e6c"/>
-          </linearGradient>
-          <linearGradient id="ufoHullBot" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#666ead"/>
-            <stop offset="40%"  stop-color="#2e3460"/>
-            <stop offset="100%" stop-color="#080b1e"/>
-          </linearGradient>
-          <!-- polished chrome equatorial band (multi-band specular) -->
-          <linearGradient id="ufoRim" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%"   stop-color="#23284a"/>
-            <stop offset="9%"   stop-color="#dfe4ff"/>
-            <stop offset="22%"  stop-color="#7c85c2"/>
-            <stop offset="40%"  stop-color="#ffffff"/>
-            <stop offset="50%"  stop-color="#eef1ff"/>
-            <stop offset="60%"  stop-color="#ffffff"/>
-            <stop offset="78%"  stop-color="#7c85c2"/>
-            <stop offset="91%"  stop-color="#dfe4ff"/>
-            <stop offset="100%" stop-color="#23284a"/>
-          </linearGradient>
-          <!-- top-left specular sheen sweeping the hull -->
-          <radialGradient id="ufoSpec" cx="34%" cy="20%" r="62%">
-            <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.9"/>
-            <stop offset="38%"  stop-color="#ffffff" stop-opacity="0.16"/>
-            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-          </radialGradient>
-          <radialGradient id="ufoDome" cx="38%" cy="24%" r="86%">
-            <stop offset="0%"   stop-color="#ffffff"/>
-            <stop offset="20%"  stop-color="#caf3ff"/>
-            <stop offset="54%"  stop-color="#54bdf0"/>
-            <stop offset="82%"  stop-color="#1f74c4"/>
-            <stop offset="100%" stop-color="#103c74"/>
-          </radialGradient>
-          <radialGradient id="ufoThruster" cx="50%" cy="50%" r="50%">
-            <stop offset="0%"   stop-color="#ffffff"/>
-            <stop offset="32%"  stop-color="#9beaff"/>
-            <stop offset="68%"  stop-color="#48c6ff"/>
-            <stop offset="100%" stop-color="#48c6ff" stop-opacity="0"/>
-          </radialGradient>
-          <linearGradient id="ufoBeamGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#d6fbff" stop-opacity="0.9"/>
-            <stop offset="32%"  stop-color="#74dcff" stop-opacity="0.32"/>
-            <stop offset="100%" stop-color="#74dcff" stop-opacity="0"/>
-          </linearGradient>
-          <filter id="ufoBlur" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="2.2"/>
-          </filter>
-        </defs>
-
-        <!-- ambient depth shadow beneath the craft -->
-        <ellipse cx="110" cy="127" rx="90" ry="12" fill="#04060f" opacity="0.55" filter="url(#ufoBlur)"/>
-
-        <!-- Abduction beam (behind hull) -->
-        <g class="ufo-beam">
-          <polygon points="95,150 125,150 188,296 32,296" fill="url(#ufoBeamGrad)" opacity="0.55"/>
-          <polygon points="103,150 117,150 150,296 70,296" fill="url(#ufoBeamGrad)" opacity="0.5"/>
-          <ellipse cx="110" cy="151" rx="21" ry="6" fill="url(#ufoThruster)"/>
-        </g>
-
-        <!-- Lower hull (underside, in shadow) -->
-        <path d="M14,107 Q44,151 110,154 Q176,151 206,107 Z" fill="url(#ufoHullBot)"/>
-        <!-- concentric underside panel rings -->
-        <path d="M34,111 Q110,140 186,111" fill="none" stroke="#0a0d20" stroke-width="1.4" opacity="0.6"/>
-        <path d="M52,114 Q110,134 168,114" fill="none" stroke="#0a0d20" stroke-width="1.2" opacity="0.5"/>
-        <path d="M72,117 Q110,129 148,117" fill="none" stroke="#0a0d20" stroke-width="1"   opacity="0.4"/>
-        <!-- glowing central engine pod -->
-        <ellipse cx="110" cy="147" rx="16" ry="6"   fill="#090d24"/>
-        <ellipse cx="110" cy="147" rx="11" ry="4.2" fill="url(#ufoThruster)"/>
-        <ellipse cx="110" cy="146" rx="5"  ry="2.4" fill="#ffffff" opacity="0.9"/>
-
-        <!-- Upper hull (lit) + specular sheen -->
-        <path d="M16,106 Q16,84 46,76 Q76,67 110,67 Q144,67 174,76 Q204,84 204,106 Z" fill="url(#ufoHullTop)"/>
-        <path d="M16,106 Q16,84 46,76 Q76,67 110,67 Q144,67 174,76 Q204,84 204,106 Z" fill="url(#ufoSpec)"/>
-        <ellipse cx="84" cy="86" rx="36" ry="7" fill="#ffffff" opacity="0.18"/>
-        <path d="M38,90 Q110,76 182,90" fill="none" stroke="#39406f" stroke-width="1" opacity="0.4"/>
-
-        <!-- Chrome rim band at the equator (with under-shadow for thickness) -->
-        <ellipse cx="110" cy="106" rx="98" ry="11.5" fill="url(#ufoRim)"/>
-        <ellipse cx="110" cy="103" rx="94" ry="5"   fill="#ffffff" opacity="0.25"/>
-        <ellipse cx="110" cy="110" rx="95" ry="4"   fill="#0a0d20" opacity="0.35"/>
-
-        <!-- Running lights (warm white, sequential chase) -->
-        <circle class="ufo-light" cx="110" cy="115" r="3.1" fill="#fff4d8" style="animation-delay:0s"/>
-        <circle class="ufo-light" cx="84"  cy="113" r="3"   fill="#fff4d8" style="animation-delay:.16s"/>
-        <circle class="ufo-light" cx="136" cy="113" r="3"   fill="#fff4d8" style="animation-delay:.16s"/>
-        <circle class="ufo-light" cx="60"  cy="109" r="2.8" fill="#ffe8bf" style="animation-delay:.34s"/>
-        <circle class="ufo-light" cx="160" cy="109" r="2.8" fill="#ffe8bf" style="animation-delay:.34s"/>
-        <circle class="ufo-light" cx="38"  cy="105" r="2.5" fill="#ffe8bf" style="animation-delay:.52s"/>
-        <circle class="ufo-light" cx="182" cy="105" r="2.5" fill="#ffe8bf" style="animation-delay:.52s"/>
-
-        <!-- Cockpit glass dome -->
-        <ellipse cx="110" cy="89" rx="41" ry="8" fill="#1d2a4e" opacity="0.85"/>
-        <path d="M70,89 Q70,55 110,53 Q150,55 150,89 Z" fill="url(#ufoDome)"/>
-        <!-- faint interior depth -->
-        <ellipse cx="110" cy="80" rx="9" ry="11" fill="#0a2540" opacity="0.3"/>
-        <path d="M70,89 Q70,55 110,53 Q150,55 150,89" fill="none" stroke="#cdf2ff" stroke-width="1.2" opacity="0.55"/>
-        <!-- glass specular reflections -->
-        <ellipse cx="95" cy="71" rx="12" ry="7" fill="#ffffff" opacity="0.6" transform="rotate(-24 95 71)"/>
-        <path d="M86,83 Q97,69 116,68" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
-      </svg>
-    </div>
     <div id="bg-vignette"></div>
   </div>
 
@@ -166,14 +105,7 @@
 
   <!-- ═══ PERSISTENT NAV ═══ -->
   <nav id="main-nav">
-    <a class="nav-logo" id="nav-logo-link" href="#/" aria-label="SoundCore — hjem"><img src="assets/logo.svg?v=20260630-logo" alt="SoundCore" class="nav-logo-img"></a>
-    <div class="nav-center" id="nav-search-wrap">
-      <div class="search-box">
-        <span class="search-icon" data-icon="search"></span>
-        <input type="text" id="nav-search" placeholder="Søk på siden — sider, folk, radio…" autocomplete="off">
-        <div id="search-results" class="search-dropdown hidden"></div>
-      </div>
-    </div>
+    <a class="nav-logo" id="nav-logo-link" href="#/" aria-label="SiriusFM — home"><img src="assets/logo.svg?v=20260816-sfmword" alt="SiriusFM" class="nav-logo-img"></a>
     <div class="nav-right" id="nav-links"></div>
   </nav>
 
@@ -188,16 +120,16 @@
     <div id="modal-box" class="modal-box"></div>
   </div>
 
-  <!-- ═══ PERSISTENT MUSIC PLAYER (never unmounts) ═══ -->
-  <div id="player-bar" class="player-bar hidden">
+  <!-- ═══ PERSISTENT MUSIC PLAYER (never unmounts, vises på alle ruter) ═══ -->
+  <div id="player-bar" class="player-bar idle">
 
     <!-- Drag handle + minimize strip -->
     <div class="player-bar-header" id="player-drag-handle">
       <span class="player-drag-dots" data-icon="grip"></span>
       <div class="player-bar-hdr-btns">
-        <button class="pbar-hdr-btn" id="player-dock-btn" onclick="PlayerDrag.dock()" title="Fest til bunnen" data-icon="panel-bottom"></button>
-        <button class="pbar-hdr-btn" id="player-maximize-btn" onclick="PlayerDrag.toggleMaximize()" title="Forstørre" data-icon="maximize"></button>
-        <button class="pbar-hdr-btn" id="player-minimize-btn" onclick="PlayerDrag.toggleMinimize()" title="Minimer" data-icon="minus"></button>
+        <button class="pbar-hdr-btn" id="player-dock-btn" onclick="PlayerDrag.dock()" title="Dock to bottom" data-icon="panel-bottom"></button>
+        <button class="pbar-hdr-btn" id="player-maximize-btn" onclick="PlayerDrag.toggleMaximize()" title="Maximize" data-icon="maximize"></button>
+        <button class="pbar-hdr-btn" id="player-minimize-btn" onclick="PlayerDrag.toggleMinimize()" title="Minimize" data-icon="minus"></button>
       </div>
     </div>
 
@@ -208,18 +140,18 @@
           <span class="artwork-note" data-icon="music"></span>
         </div>
         <div class="player-meta">
-          <div class="player-title" id="player-title">Ingen sang valgt</div>
+          <div class="player-title" id="player-title">No track selected</div>
           <div class="player-artist" id="player-artist">—</div>
         </div>
       </div>
 
       <div class="player-center">
         <div class="player-controls">
-          <button class="ctrl-btn" id="ctrl-shuffle" title="Bland" data-icon="shuffle"></button>
-          <button class="ctrl-btn" id="ctrl-prev" title="Forrige" data-icon="skip-back"></button>
-          <button class="ctrl-btn ctrl-play" id="ctrl-play" title="Spill av" data-icon="play"></button>
-          <button class="ctrl-btn" id="ctrl-next" title="Neste" data-icon="skip-fwd"></button>
-          <button class="ctrl-btn" id="ctrl-repeat" title="Repeter" data-icon="repeat"></button>
+          <button class="ctrl-btn" id="ctrl-shuffle" title="Shuffle" data-icon="shuffle"></button>
+          <button class="ctrl-btn" id="ctrl-prev" title="Previous" data-icon="skip-back"></button>
+          <button class="ctrl-btn ctrl-play" id="ctrl-play" title="Play" data-icon="play"></button>
+          <button class="ctrl-btn" id="ctrl-next" title="Next" data-icon="skip-fwd"></button>
+          <button class="ctrl-btn" id="ctrl-repeat" title="Repeat" data-icon="repeat"></button>
         </div>
         <div class="player-progress-row">
           <span id="time-current">0:00</span>
@@ -232,7 +164,7 @@
       </div>
 
       <div class="player-right">
-        <button class="ctrl-btn" id="ctrl-queue" title="Køen" data-icon="list"></button>
+        <button class="ctrl-btn" id="ctrl-queue" title="Queue" data-icon="list"></button>
         <span class="vol-icon" data-icon="volume"></span>
         <div class="progress-track vol-track">
           <div class="progress-fill" id="vol-fill" style="width:80%"></div>
@@ -243,30 +175,10 @@
       <!-- Queue panel -->
       <div id="queue-panel" class="queue-panel hidden">
         <div class="queue-header">
-          <h3>Spilleliste</h3>
+          <h3>Playlist</h3>
           <button onclick="document.getElementById('queue-panel').classList.add('hidden')" class="btn-icon" data-icon="x"></button>
         </div>
         <div id="queue-list"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══ FLYTENDE RADIO-FANE (vises når en kanal er valgt) ═══ -->
-  <div id="radio-dock" class="radio-dock hidden" role="region" aria-label="Radio-kontroll">
-    <div class="radio-dock-handle" id="radio-dock-handle">
-      <span class="radio-dock-grip" data-icon="grip"></span>
-      <span class="radio-dock-name" id="radio-dock-name">Radio</span>
-      <button class="radio-dock-toggle" id="radio-dock-toggle" onclick="RadioDock.toggleOpen()" title="Lukk" aria-label="Åpne/lukk"></button>
-    </div>
-    <div class="radio-dock-body">
-      <div class="radio-dock-vol">
-        <button class="radio-dock-btn radio-dock-vol-btn" onclick="RadioDock.volDown()" title="Lyd ned" aria-label="Lyd ned" data-icon="minus"></button>
-        <div class="radio-dock-vol-meter"><div class="radio-dock-vol-fill" id="radio-dock-vol-fill"></div></div>
-        <button class="radio-dock-btn radio-dock-vol-btn" onclick="RadioDock.volUp()" title="Lyd opp" aria-label="Lyd opp" data-icon="plus"></button>
-      </div>
-      <div class="radio-dock-transport">
-        <button class="radio-dock-btn radio-dock-play" id="radio-dock-play" onclick="RadioDock.togglePlay()" title="Start" aria-label="Start / pause"></button>
-        <button class="radio-dock-btn radio-dock-stop" onclick="RadioDock.stop()" title="Stopp" aria-label="Stopp" data-icon="square"></button>
       </div>
     </div>
   </div>
@@ -283,87 +195,28 @@
     <form id="embed-panel-search" class="embed-panel-search hidden" onsubmit="return embedPanelSearch(event)" autocomplete="off">
       <span class="embed-panel-search-icon" data-icon="search"></span>
       <input id="embed-panel-search-input" type="search" class="embed-panel-search-input"
-             placeholder="Søk musikk på SoundCloud …" aria-label="Søk musikk på SoundCloud" />
-      <button type="submit" class="embed-panel-search-go">Søk</button>
+             placeholder="Search music on SoundCloud …" aria-label="Search music on SoundCloud" />
+      <button type="submit" class="embed-panel-search-go">Search</button>
     </form>
     <iframe id="embed-panel-frame" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
   </div>
 
-  <!-- ═══ CONTROL DOCK — samler AI, språk, plattform, lenker og bakgrunn ═══ -->
+  <!-- ═══ CONTROL DOCK — samler AI, info, lenker og bakgrunn ═══ -->
   <div id="dock">
 
-    <!-- AI assistant launcher -->
-    <button id="dock-ai-btn" class="dock-btn dock-btn-ai" title="AI-assistent — spør om hjelp"
-            aria-label="Åpne AI-assistent" onclick="Assistant.toggle()">
-      <span data-icon="message"></span>
-    </button>
-
-    <!-- Info — «Hva er Sound Core?» -->
-    <button id="dock-info-btn" class="dock-btn" title="Hva er Sound Core?"
-            aria-label="Om Sound Core" onclick="App.showInfo()">
+    <!-- Info — «Hva er SiriusFM?» -->
+    <button id="dock-info-btn" class="dock-btn" title="What is SiriusFM?"
+            aria-label="About SiriusFM" onclick="App.showInfo()">
       <span data-icon="info"></span>
     </button>
 
-    <!-- Language picker — must NEVER be translated by Google Translate,
-         or the language names inside the dropdown change with the page
-         language and the search stops matching what you type. -->
-    <div id="lang-widget" class="dock-widget notranslate" translate="no">
-      <button id="lang-toggle" title="Choose language">
-        <span id="lang-globe" data-icon="globe"></span>
-        <span id="lang-current-label">Language</span>
-        <span id="lang-chevron" data-icon="chevron-up"></span>
-      </button>
-      <div id="lang-panel">
-        <div id="lang-search-wrap">
-          <input id="lang-search" type="text" placeholder="Search language..." autocomplete="off" spellcheck="false">
-        </div>
-        <ul id="lang-list"></ul>
-      </div>
-    </div>
-
-    <!-- Platform switcher -->
-    <div id="platform-widget" class="dock-widget">
-      <button id="platform-toggle" title="Open on another platform">
-        <span id="platform-icon" data-icon="share"></span>
-        <span id="platform-label">Platform</span>
-        <span id="platform-chevron" data-icon="chevron-up"></span>
-      </button>
-      <div id="platform-panel">
-        <div class="platform-title">Open on</div>
-        <a class="platform-item" id="platform-mobile" href="#" target="_blank" rel="noopener">
-          <span class="platform-emoji" data-icon="smartphone"></span>
-          <div class="platform-info">
-            <span class="platform-name">Smartphone</span>
-            <span class="platform-desc">Mobile version</span>
-          </div>
-          <span class="platform-arrow" data-icon="arrow-up-right"></span>
-        </a>
-        <a class="platform-item" id="platform-desktop" href="#" target="_blank" rel="noopener">
-          <span class="platform-emoji" data-icon="laptop"></span>
-          <div class="platform-info">
-            <span class="platform-name">Mac / Laptop</span>
-            <span class="platform-desc">Desktop version</span>
-          </div>
-          <span class="platform-arrow" data-icon="arrow-up-right"></span>
-        </a>
-        <a class="platform-item" id="platform-appstore" href="#" target="_blank" rel="noopener">
-          <span class="platform-emoji" data-icon="store"></span>
-          <div class="platform-info">
-            <span class="platform-name">App Store</span>
-            <span class="platform-desc">iOS & Mac App</span>
-          </div>
-          <span class="platform-arrow" data-icon="arrow-up-right"></span>
-        </a>
-      </div>
-    </div>
-
     <!-- Social / label links (moved out of the old floating footer) -->
     <div id="dock-links-widget" class="dock-widget">
-      <button id="dock-links-btn" class="dock-btn" title="Lenker" aria-label="Lenker">
+      <button id="dock-links-btn" class="dock-btn" title="Links" aria-label="Links">
         <span data-icon="link"></span>
       </button>
       <div id="dock-links-panel">
-        <div class="platform-title">Lenker</div>
+        <div class="dock-panel-title">Links</div>
         <div class="dock-links-grid">
           <a class="social-link" href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" title="Facebook">
             <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -373,11 +226,6 @@
           <a class="social-link" href="https://x.com" target="_blank" rel="noopener noreferrer" title="X">
             <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-            </svg>
-          </a>
-          <a class="social-link" href="https://www.soundcloud.com" target="_blank" rel="noopener noreferrer" title="SoundCloud">
-            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path d="M1.175 12.225c-.015 0-.023.011-.023.028l.435 2.301-.435 2.221c0 .017.008.028.023.028.016 0 .024-.011.027-.028l.497-2.221-.497-2.301c-.003-.017-.011-.028-.027-.028zm.882-.218c-.019 0-.03.013-.03.032l-.372 2.515.372 2.346c0 .019.011.032.03.032.018 0 .03-.013.033-.032l.424-2.346-.424-2.515c-.003-.019-.015-.032-.033-.032zm.912-.101c-.022 0-.036.015-.036.037l-.309 2.616.309 2.468c0 .022.014.037.036.037.021 0 .035-.015.038-.037l.352-2.468-.352-2.616c-.003-.022-.017-.037-.038-.037zm.921-.064c-.025 0-.041.017-.041.042l-.246 2.68.246 2.588c0 .025.016.042.041.042.024 0 .04-.017.043-.042l.28-2.588-.28-2.68c-.003-.025-.019-.042-.043-.042zM5.81 11.7c-.028 0-.046.019-.046.047l-.184 2.745.184 2.708c0 .028.018.047.046.047.027 0 .045-.019.048-.047l.209-2.708-.209-2.745c-.003-.028-.021-.047-.048-.047zm.928-.144c-.03 0-.05.021-.05.051l-.121 2.836.121 2.827c0 .03.02.051.05.051s.05-.021.053-.051l.138-2.827-.138-2.836c-.003-.03-.023-.051-.053-.051zm.931-.07c-.034 0-.055.023-.055.056l-.059 2.89.059 2.947c0 .033.021.056.055.056.033 0 .054-.023.057-.056l.067-2.947-.067-2.89c-.003-.033-.024-.056-.057-.056zm.933-.003c-.037 0-.06.026-.06.062l.003 2.893-.003 2.965c0 .036.023.062.06.062.036 0 .059-.026.062-.062l.003-2.965-.003-2.893c-.003-.036-.026-.062-.062-.062zm.937.068c-.04 0-.065.028-.065.067l.065 2.825-.065 2.983c0 .039.025.067.065.067s.065-.028.068-.067l.074-2.983-.074-2.825c-.003-.039-.028-.067-.068-.067zm4.63-5.434C12.753 2.87 11.14 2 9.324 2 8.515 2 7.748 2.187 7.066 2.52c-.268.124-.34.249-.343.362v11.808c.003.12.097.215.218.225h7.79c.119-.01.213-.104.213-.225V8.97c.001-1.664-1.345-3.01-3.01-3.01-.488 0-.948.117-1.355.323V5.117zM21.5 9.128c-.578 0-1.128.117-1.63.33C19.577 6.93 17.335 5 14.63 5c-.322 0-.637.034-.944.096v13.49c.003.131.104.235.236.235h7.578c.131 0 .236-.105.236-.235V9.364c0-.13-.105-.236-.236-.236z"/>
             </svg>
           </a>
           <a class="social-link" href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" title="YouTube">
@@ -403,15 +251,6 @@
           <a class="social-link social-link-img" href="https://feedfreq.com/" target="_blank" rel="noopener noreferrer" title="FeedFreq">
             <img src="https://feedfreq.com/wp-content/uploads/2023/08/logo-Header.svg" alt="FeedFreq" class="social-logo-img">
           </a>
-          <a class="social-link social-link-img" href="https://cryochamber.bandcamp.com/" target="_blank" rel="noopener noreferrer" title="Cryo Chamber">
-            <img src="https://f4.bcbits.com/img/0044856012_100.png" alt="Cryo Chamber" class="social-logo-img social-logo-img--round">
-          </a>
-          <a class="social-link social-link-img" href="https://ultimae.com/" target="_blank" rel="noopener noreferrer" title="Ultimae Records">
-            <img src="https://ultimae.com/wp-content/uploads/2016/07/Horizontal-Ultimae-Records-2016-White.png" alt="Ultimae Records" class="social-logo-img">
-          </a>
-          <a class="social-link social-link-img" href="https://cosmicleaf.bandcamp.com/" target="_blank" rel="noopener noreferrer" title="Cosmicleaf Records">
-            <img src="https://f4.bcbits.com/img/0019220328_21.jpg" alt="Cosmicleaf Records" class="social-logo-img social-logo-img--round">
-          </a>
           <a class="social-link social-link-img" href="https://soundcloud.com/gagarinproject" target="_blank" rel="noopener noreferrer" title="Gagarin Project">
             <img src="https://i1.sndcdn.com/avatars-SgNgVNRKf2gOewld-okFyUQ-t500x500.jpg" alt="Gagarin Project" class="social-logo-img social-logo-img--round">
           </a>
@@ -424,128 +263,181 @@
           <a class="social-link social-link-img" href="https://app.bigfreq.com/communities/groups/bigfreq-public/home" target="_blank" rel="noopener noreferrer" title="BIGFREQ Community">
             <img src="https://www.google.com/s2/favicons?domain=bigfreq.com&sz=128" alt="BIGFREQ Community" class="social-logo-img social-logo-img--round">
           </a>
+          <a class="social-link social-link-img" href="https://www.facebook.com/VikingVillageCommunity/" target="_blank" rel="noopener noreferrer" title="Viking Village Community">
+            <img src="assets/link-vikingvillage.jpg" alt="Viking Village Community" class="social-logo-img social-logo-img--round">
+          </a>
+          <a class="social-link social-link-img" href="https://www.ambientmann.com" target="_blank" rel="noopener noreferrer" title="Ambient Mann">
+            <img src="https://www.google.com/s2/favicons?domain=ambientmann.com&sz=128" alt="Ambient Mann" class="social-logo-img social-logo-img--round">
+          </a>
+          <a class="social-link social-link-img" href="https://trancentral.tv/" target="_blank" rel="noopener noreferrer" title="Trancentral">
+            <img src="https://trancentral.tv/wp-content/uploads/2015/05/Trancentral_Logo-e1463578924765.png" alt="Trancentral" class="social-logo-img">
+          </a>
+          <a class="social-link social-link-img" href="https://2025.ozorafestival.eu/" target="_blank" rel="noopener noreferrer" title="Ozora Festival">
+            <img src="https://www.google.com/s2/favicons?domain=ozorafestival.eu&sz=128" alt="Ozora Festival" class="social-logo-img social-logo-img--round">
+          </a>
+          <a class="social-link social-link-img" href="https://hadratrancefestival.net/en/home/" target="_blank" rel="noopener noreferrer" title="Hadra Trance Festival">
+            <img src="https://hadratrancefestival.net/wp-content/uploads/2025/03/hadra-trance-festival.jpg" alt="Hadra Trance Festival" class="social-logo-img social-logo-img--round">
+          </a>
+          <a class="social-link social-link-img" href="https://www.boomfestival.org/2027" target="_blank" rel="noopener noreferrer" title="Boom Festival">
+            <img src="https://mediacdn.boomfestival.org/templates/img/BF25-image-preview-link.png" alt="Boom Festival" class="social-logo-img">
+          </a>
+          <a class="social-link social-link-img" href="https://freeearth-festival.com/program/" target="_blank" rel="noopener noreferrer" title="Free Earth Festival">
+            <img src="https://freeearth-festival.com/wp-content/uploads/2025/10/Logo-26-clean-180.png" alt="Free Earth Festival" class="social-logo-img social-logo-img--round">
+          </a>
+          <a class="social-link social-link-img" href="https://luma.com/iluminar" target="_blank" rel="noopener noreferrer" title="Iluminar Festival">
+            <img src="assets/link-iluminar.jpg" alt="Iluminar Festival" class="social-logo-img">
+          </a>
+          <a class="social-link social-link-img" href="https://burningman.org/" target="_blank" rel="noopener noreferrer" title="Burning Man">
+            <img src="https://burningman.org/wp-content/themes/firebird-master/assets/images/BMP-socialCard-Rawlinson_2024.jpg" alt="Burning Man" class="social-logo-img">
+          </a>
+          <a class="social-link social-link-img" href="https://linktr.ee/HillTopGoa" target="_blank" rel="noopener noreferrer" title="Hill Top Goa">
+            <img src="https://linktr.ee/og/image/HillTopGoa.jpg" alt="Hill Top Goa" class="social-logo-img social-logo-img--round">
+          </a>
+          <a class="social-link social-link-img" href="https://www.psyndora.com/" target="_blank" rel="noopener noreferrer" title="Psyndora">
+            <img src="https://www.psyndora.com/images/300red.png" alt="Psyndora" class="social-logo-img">
+          </a>
+          <a class="social-link social-link-img" href="http://psyradio.fm/" target="_blank" rel="noopener noreferrer" title="PsyRadio.fm">
+            <img src="https://www.google.com/s2/favicons?domain=psyradio.fm&sz=128" alt="PsyRadio.fm" class="social-logo-img social-logo-img--round">
+          </a>
+          <a class="social-link social-link-img" href="https://www.sincity.fm/" target="_blank" rel="noopener noreferrer" title="SinCity.fm">
+            <img src="https://cdn.prod.website-files.com/63eb14faf0325006f8a4edc6/63eb1b46a5edc063abe19ecc_Logo%20only%20transparent-p-500.png" alt="SinCity.fm" class="social-logo-img">
+          </a>
+          <a class="social-link social-link-img" href="https://somafm.com/deepspaceone/" target="_blank" rel="noopener noreferrer" title="SomaFM — Deep Space One">
+            <img src="https://somafm.com/logos/400/deepspaceone400.png" alt="SomaFM Deep Space One" class="social-logo-img">
+          </a>
+          <a class="social-link social-link-img" href="https://www.hbr1.com/" target="_blank" rel="noopener noreferrer" title="HBR1">
+            <img src="https://www.google.com/s2/favicons?domain=hbr1.com&sz=128" alt="HBR1" class="social-logo-img social-logo-img--round">
+          </a>
+          <a class="social-link social-link-img" href="https://www.smoothradio.com/chill/" target="_blank" rel="noopener noreferrer" title="Smooth Radio Chill">
+            <img src="https://www.smoothradio.com/assets_v4r/smooth/img/favicon-196x196.png" alt="Smooth Radio Chill" class="social-logo-img social-logo-img--round">
+          </a>
+          <a class="social-link social-link-img" href="https://multihuman.com.br/site/" target="_blank" rel="noopener noreferrer" title="Multihuman">
+            <img src="https://multihuman.com.br/site/wp-content/uploads/2020/10/logo_site_2020_shadow_00_ok-1.png" alt="Multihuman" class="social-logo-img">
+          </a>
+          <a class="social-link social-link-img" href="https://www.di.fm/psychill" target="_blank" rel="noopener noreferrer" title="DI.FM — PsyChill">
+            <img src="https://www.google.com/s2/favicons?domain=di.fm&sz=128" alt="DI.FM PsyChill" class="social-logo-img social-logo-img--round">
+          </a>
         </div>
       </div>
     </div>
 
-    <!-- Bakgrunnsfart — pauseskjerm: Sakte / Normal / Rask -->
-    <button id="bg-speed-btn" class="dock-btn" title="Bakgrunnsfart"
-            aria-label="Bakgrunnsfart" onclick="BgManager.cycleSpeed()">⏩</button>
-
-    <!-- Background changer -->
-    <button id="bg-change-btn" class="dock-btn" title="Bytt bakgrunn"
-            aria-label="Bytt bakgrunn" onclick="BgManager.openPicker()">
-      <span data-icon="image"></span>
-    </button>
-
   </div>
 
-  <!-- ═══ ABOUT SOUNDCORE — utdragbar fane i høyre kant ═══ -->
+  <!-- ═══ ABOUT SIRIUSFM — utdragbar fane i høyre kant ═══ -->
   <div id="about-tab">
-    <button id="about-tab-handle" type="button" aria-label="About SoundCore" aria-expanded="false" aria-controls="about-panel">
+    <button id="about-tab-handle" type="button" aria-label="About SiriusFM" aria-expanded="false" aria-controls="about-panel">
       <span class="about-tab-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span class="about-tab-label">About SoundCore</span>
+      <span class="about-tab-label">About SiriusFM</span>
     </button>
-    <aside id="about-panel" class="about-panel" aria-hidden="true" aria-label="About SoundCore">
+    <aside id="about-panel" class="about-panel" aria-hidden="true" aria-label="About SiriusFM">
       <div class="about-panel-hdr">
-        <h2>About SoundCore</h2>
-        <button class="about-panel-close" id="about-panel-close" type="button" aria-label="Lukk"><span data-icon="x"></span></button>
+        <h2>About SiriusFM</h2>
+        <button class="about-panel-close" id="about-panel-close" type="button" aria-label="Close"><span data-icon="x"></span></button>
       </div>
       <div class="about-panel-body">
         <section class="about-block">
-          <p class="about-lead">I've created a <strong>VERY special community</strong> for both fans &amp; producers &mdash; join for free and let's connect!</p>
-          <p class="about-contact">Contact: <a href="mailto:producerenur@gmail.com">producerenur@gmail.com</a></p>
+          <p class="about-subtitle">A Psychedelic Web Radio</p>
+          <p class="about-lead">We created a <strong>Very special Web Radio</strong> for both fans &amp; producers &mdash; join for free and let's connect!</p>
+          <p class="about-quote">&ldquo;We are the music makers, and we are the dreamers of dreams.&rdquo;</p>
+          <p class="about-quote">Music touches us emotionally, where words alone can't.</p>
           <a class="about-cta about-cta--primary" href="https://app.bigfreq.com/communities/groups/bigfreq-public/home" target="_blank" rel="noopener noreferrer">Join Now</a>
         </section>
         <section class="about-block">
           <h3>World Tour</h3>
-          <p class="about-quote">&ldquo;We are the music makers, and we are the dreamers of dreams.&rdquo;</p>
+          <p class="about-desc">The global psytrance and psybient scene stretches across the entire planet &mdash; with major transformational festivals, influential record labels and pioneering artists. A scene deeply rooted in visual art, spirituality and multi-day open-air gatherings.</p>
           <a class="about-cta" href="#/shows">Watch Dates</a>
         </section>
         <section class="about-block">
           <h3>Latest Videos</h3>
-          <p class="about-quote">Music touches us emotionally, where words alone can't.</p>
-          <a class="about-cta" href="https://www.youtube.com" target="_blank" rel="noopener noreferrer">View Videos</a>
+          <p class="about-desc">Explore weekly live broadcasts from SiriusFM &mdash; psytrance, ambient, techno, and more.</p>
+        </section>
+        <section class="about-block">
+          <p class="about-contact">Contact: <a href="mailto:post@siriusfm.no">post@siriusfm.no</a></p>
         </section>
       </div>
     </aside>
   </div>
 
-  <!-- Hidden Google Translate element -->
-  <div id="google_translate_element" style="display:none"></div>
-
   <!-- ═══ SCRIPTS ═══ -->
-  <script src="js/icons.js?v=20260630-shop"></script>
-  <script src="js/config.js?v=20260630-turn"></script>
+  <script src="js/icons.js?v=20260714-noshoptab"></script>
+  <script src="js/config.js?v=20260815-noplatform"></script>
   <script src="js/storage.js"></script>
-  <script src="js/payment.js?v=20260629-livemix"></script>
-  <script src="js/livebroadcast.js?v=20260630-livevisual"></script>
-  <script src="js/livemix.js?v=20260630-livevisual"></script>
-  <script src="js/broadcastschedule.js?v=20260630-livevisual"></script>
-  <script src="js/sharemusic.js?v=20260629-sharemusic"></script>
-  <script src="js/background.js?v=20260630-ambient"></script>
+  <script src="js/payment.js?v=20260819-blue-text"></script>
+  <script src="js/sharemusic.js?v=20260716-en"></script>
+  <script src="js/background.js?v=20260810-dailybg2"></script>
+  <!-- UFO-scene av på ønske (slett fra hele siden). Fjern kommentaren for å slå på igjen. -->
+  <!-- <script src="js/ufo.js?v=20260720-realistic4"></script> -->
   <script src="js/db.js"></script>
-  <script src="js/auth.js?v=20260630-serverauth"></script>
-  <script src="js/accountServer.js?v=20260630-optout"></script>
-  <script src="js/profilesync.js?v=20260630-profilesync"></script>
-  <script src="js/email.js?v=20260630-serverauth"></script>
-  <script src="js/ai.js?v=20260630-ambient"></script>
-  <script src="js/player.js"></script>
-  <script src="js/profile.js?v=20260630-editortabs"></script>
-  <script src="js/videoEditor.js?v=20260627-media"></script>
-  <script src="js/marketplace.js?v=20260629-cover"></script>
-  <script src="js/profileshop.js?v=20260630-shop"></script>
-  <script src="js/radio.js?v=20260629-vistune"></script>
-  <script src="js/radioSearch.js?v=20260629-worldsearch"></script>
-  <script src="js/chat.js?v=20260628-social3"></script>
+  <script src="js/share.js?v=20260716-en"></script>
+  <script src="js/auth.js?v=20260716-en"></script>
+  <script src="js/accountServer.js?v=20260716-en"></script>
+  <script src="js/profilesync.js?v=20260714-bannerpos"></script>
+  <script src="js/email.js?v=20260817-reminder"></script>
+  <script src="js/safesearch.js?v=20260816-safesearch"></script>
+  <script src="js/ai.js?v=20260815-noplatform"></script>
+  <script src="js/player.js?v=20260817-player-always"></script>
+  <script src="js/profile.js?v=20260819-blue-text">
+  <script src="js/videoEditor.js?v=20260716-en"></script>
+  <script src="js/marketplace.js?v=20260716-en"></script>
+  <script src="js/profileshop.js?v=20260819-blue-text"></script>
+  <script src="js/streamfix.js?v=20260817-streamfix"></script>
+  <script src="js/radio.js?v=20260819-blue-text"></script>
+  <script src="js/radioSearch.js?v=20260817-player-always"></script>
+  <script src="js/chat.js?v=20260816-chatonly"></script>
   <!-- Sosialt sanntidslag: vennechat, lydvarsel, community-vegg, kommentarar/reaksjonar (Gun.js) -->
-  <script src="js/realtime.js?v=20260630-gunguard"></script>
-  <script src="js/social.js?v=20260630-gunguard"></script>
-  <script src="js/friendchat.js?v=20260628-social3"></script>
-  <script src="js/notify.js?v=20260630-gunguard"></script>
-  <script src="js/linkpreview.js?v=20260629-linkprev"></script>
-  <script src="js/community.js?v=20260630-liveyt"></script>
-  <script src="js/friends.js?v=20260628-friends"></script>
-  <script src="js/unsubscribe.js?v=20260630-optout"></script>
-  <script src="js/discover.js?v=20260630-disctabdropdown"></script>
-  <script src="js/underground.js"></script>
-  <script src="js/shows.js?v=20260629-worldsearch"></script>
-  <script src="js/world.js?v=20260629-worldsearch"></script>
-  <script src="js/voice.js?v=20260629-voice2"></script>
-  <script src="js/a1.js?v=20260629-voice"></script>
-  <script src="js/dj.js?v=20260628-rm"></script>
-  <script src="js/studio.js?v=20260629-textlayer"></script>
-  <script src="js/magazine.js?v=20260629-magtabs"></script>
-  <script src="js/router.js?v=20260627-ufohome"></script>
-  <script src="js/app.js?v=20260630-serverauth"></script>
-  <script src="js/platform.js"></script>
-  <script src="js/platformDrag.js"></script>
-  <script src="js/lang.js?v=20260628-social3"></script>
-  <script src="js/langDrag.js"></script>
-  <script src="js/playerDrag.js"></script>
-  <script src="js/radioDock.js?v=20260628-radiodock"></script>
+  <script src="js/realtime.js?v=20260716-status">
+  <script src="js/onlineWidget.js?v=20260716-en"></script>
+  <!-- Sanntid besøkstelling (alle besøkende, inkl. gjester); admin-only visning -->
+  <script src="js/livePresence.js?v=20260721-visitors"></script>
+  <script src="js/commentsync.js?v=20260716b-openedit"></script>
+  <script src="js/reactionsync.js?v=20260715-rxsync"></script>
+  <script src="js/social.js?v=20260716-en"></script>
+  <script src="js/friendchat.js?v=20260716-en"></script>
+  <script src="js/notify.js?v=20260817-magnotif"></script>
+  <script src="js/messenger.js?v=20260819-blue-text"></script>
+  <script src="js/linkpreview.js?v=20260716-en"></script>
+  <script src="js/communitysync.js?v=20260716-delowned"></script>
+  <script src="js/community.js?v=20260716-en"></script>
+  <script src="js/groups.js?v=20260716-en"></script>
+  <script src="js/friends.js?v=20260716-en"></script>
+  <script src="js/unsubscribe.js?v=20260716-en"></script>
+  <!-- Delt AI-rotasjonslag for «Fersk fra nettet» (magasin, verden, undergrunn, shows) -->
+  <script src="js/aifresh.js?v=20260817-magnotif"></script>
+  <script src="js/discover.js?v=20260819-blue-text"></script>
+  <script src="js/underground.js?v=20260818-nosub"></script>
+  <script src="js/shows.js?v=20260818-nosub"></script>
+  <script src="js/world.js?v=20260819-tristan"></script>
+  <script src="js/voice.js?v=20260718-nocore"></script>
+  <script src="js/a1.js?v=20260816-safesearch"></script>
+  <script src="js/dj.js?v=20260716-en"></script>
+  <script src="js/studio.js?v=20260716-en"></script>
+  <script src="js/magazine.js?v=20260818-nosub"></script>
+  <script src="js/router.js?v=20260716-en"></script>
+  <script src="js/app.js?v=20260819-blue-text"></script>
+  <script src="js/playerDrag.js?v=20260716-en"></script>
   <script src="js/footerDrag.js?v=20260628-footer"></script>
   <script src="js/navDrag.js?v=20260628-navscroll"></script>
   <script src="js/picksDrag.js?v=20260629-picksdrag"></script>
-  <script src="js/aiAssistant.js?v=20260629-voice"></script>
-  <script src="js/bugHelp.js?v=20260628-bughelp"></script>
-  <script src="js/dock.js"></script>
+  <script src="js/bugHelp.js?v=20260718-en100"></script>
+  <script src="js/report.js?v=20260716-en"></script>
+  <script src="js/dock.js?v=20260815-noplatform"></script>
   <script src="js/aboutTab.js"></script>
+  <script src="js/edgeAutohide.js?v=20260815-noplatform"></script>
   <script src="js/collapsible.js?v=20260629-collapse"></script>
-  <script type="text/javascript">
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement(
-        { pageLanguage: 'no', autoDisplay: false },
-        'google_translate_element'
-      );
-    }
-  </script>
-  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <script src="js/sfmWord.js?v=20260816-sfmword"></script>
   <!-- PWA service worker: gjør appen installerbar + offline-skall -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/sw.js').catch(function () {});
+        navigator.serviceWorker.register('/sw.js').then(function (reg) {
+          // Tving ein oppdaterings-sjekk med ein gong + kvar time, så ein ny
+          // service worker (og dermed ferskare kode) blir plukka opp raskt i
+          // staden for å vente på nettlesaren sin 24t-syklus. Kombinert med
+          // network-first i sw.js betyr det at brukarar aldri blir hengande på
+          // gammal kode.
+          try { reg.update(); } catch (e) {}
+          setInterval(function () { try { reg.update(); } catch (e) {} }, 3600000);
+        }).catch(function () {});
       });
     }
   </script>

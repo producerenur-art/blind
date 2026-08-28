@@ -17,7 +17,7 @@ const Marketplace = (() => {
   }
 
   function notReady() {
-    App.toast('Butikken er ikke konfigurert ennå (mangler Supabase-nøkler). Se MARKETPLACE-SETUP.md.', 'error', 6000);
+    App.toast('The store is not configured yet (missing Supabase keys). See MARKETPLACE-SETUP.md.', 'error', 6000);
   }
 
   // ── Selger-onboarding (Stripe Connect) ─────────────────────────────────
@@ -30,10 +30,10 @@ const Marketplace = (() => {
         body: JSON.stringify({ username: u.username }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || 'Feil ved onboarding');
+      if (!r.ok) throw new Error(d.error || 'Onboarding error');
       window.location.href = d.url;
     } catch (e) {
-      App.toast('Kunne ikke starte selger-onboarding: ' + e.message, 'error');
+      App.toast('Could not start seller onboarding: ' + e.message, 'error');
     }
   }
 
@@ -56,12 +56,12 @@ const Marketplace = (() => {
     if (!u) { Router.go('/login'); return; }
     if (!isConfigured()) return notReady();
     if (!isFree && (!priceNok || parseFloat(priceNok) <= 0)) {
-      App.toast('Sett en pris, eller huk av for gratis nedlasting.', 'error'); return;
+      App.toast('Set a price, or check off for free download.', 'error'); return;
     }
     const rec = await DB.get('music', trackId);
-    if (!rec) { App.toast('Fant ikke sporet', 'error'); return; }
+    if (!rec) { App.toast('Could not find the track', 'error'); return; }
 
-    App.toast('Laster opp sang til butikken…', 'info', 8000);
+    App.toast('Uploading track to the store…', 'info', 8000);
     try {
       const file = new Blob([rec.data], { type: rec.type || 'audio/mpeg' });
       const ext  = (rec.name || '').match(/\.([a-z0-9]+)$/i)?.[1] || (rec.type || '').split('/')[1] || 'mp3';
@@ -73,7 +73,7 @@ const Marketplace = (() => {
         body: JSON.stringify({ username: u.username }),
       });
       const tkd = await tk.json();
-      if (!tk.ok) throw new Error(tkd.error || 'Kunne ikke hente opplastings-token');
+      if (!tk.ok) throw new Error(tkd.error || 'Could not get upload token');
 
       // 1b) Hent signert opplastings-URL for privat bøtte
       const up  = await fetch('/api/marketplace?action=song-upload-url', {
@@ -81,7 +81,7 @@ const Marketplace = (() => {
         body: JSON.stringify({ path, uploadToken: tkd.token }),
       });
       const upd = await up.json();
-      if (!up.ok) throw new Error(upd.error || 'Opplasting feilet');
+      if (!up.ok) throw new Error(upd.error || 'Upload failed');
 
       // 2) Last opp filen direkte til Supabase Storage
       const sb = client();
@@ -100,7 +100,7 @@ const Marketplace = (() => {
         }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || 'Kunne ikke publisere');
+      if (!r.ok) throw new Error(d.error || 'Could not publish');
 
       // Lagre produkt-id lokalt på sporet
       rec.productId    = d.product?.id || rec.productId;
@@ -110,9 +110,9 @@ const Marketplace = (() => {
       await DB.put('music', rec);
 
       App.closeModal();
-      App.toast(isFree ? 'Sang lagt ut for gratis nedlasting! 🎁' : 'Sang lagt ut for salg! 🛒', 'success');
+      App.toast(isFree ? 'Track listed for free download! 🎁' : 'Track listed for sale! 🛒', 'success');
     } catch (e) {
-      App.toast('Feil: ' + e.message, 'error', 6000);
+      App.toast('Error: ' + e.message, 'error', 6000);
     }
   }
 
@@ -126,15 +126,15 @@ const Marketplace = (() => {
         body: JSON.stringify({ productId, buyerUsername: u.username }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || 'Feil');
+      if (!r.ok) throw new Error(d.error || 'Error');
       if (d.free) {
         if (d.downloadToken) storeDlToken(d.productId || productId, d.downloadToken);
-        App.toast('Gratis nedlasting klar! 🎁', 'success');
+        App.toast('Free download ready! 🎁', 'success');
         return download(productId);
       }
       window.location.href = d.url;
     } catch (e) {
-      App.toast('Kjøp feilet: ' + e.message, 'error');
+      App.toast('Purchase failed: ' + e.message, 'error');
     }
   }
 
@@ -151,14 +151,14 @@ const Marketplace = (() => {
     const u = Auth.current();
     if (!u) { Router.go('/login'); return; }
     const token = getDlToken(productId);
-    if (!token) { App.toast('Nedlastingslenken mangler eller er utløpt. For gratis sanger: trykk «Gratis nedlasting» på nytt.', 'error', 6000); return; }
+    if (!token) { App.toast('The download link is missing or expired. For free tracks: tap "Free download" again.', 'error', 6000); return; }
     try {
       const r = await fetch(`/api/marketplace?action=download&productId=${encodeURIComponent(productId)}&token=${encodeURIComponent(token)}`);
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || 'Ingen tilgang');
+      if (!r.ok) throw new Error(d.error || 'No access');
       window.open(d.url, '_blank', 'noopener');
     } catch (e) {
-      App.toast('Nedlasting feilet: ' + e.message, 'error');
+      App.toast('Download failed: ' + e.message, 'error');
     }
   }
 
@@ -196,12 +196,12 @@ const Marketplace = (() => {
       const d = await r.json();
       if (r.ok && d.token) {
         storeDlToken(d.productId, d.token);
-        App.toast('Takk for kjøpet! 🎶 Last ned i «Mine kjøp».', 'success', 8000);
+        App.toast('Thanks for your purchase! 🎶 Download it in "My purchases".', 'success', 8000);
       } else {
-        App.toast('Takk for kjøpet! Nedlastingen blir klar straks betalingen er bekreftet.', 'success', 8000);
+        App.toast('Thanks for your purchase! The download will be ready as soon as payment is confirmed.', 'success', 8000);
       }
     } catch (_) {
-      App.toast('Takk for kjøpet! 🎶', 'success', 6000);
+      App.toast('Thanks for your purchase! 🎶', 'success', 6000);
     }
   }
 

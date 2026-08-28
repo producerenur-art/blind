@@ -4,7 +4,7 @@ const Auth = (() => {
   const SESSION_KEY = 'pv_session';
 
   const defaultTheme = () => ({
-    primaryColor:   '#7c3aed',
+    primaryColor:   '#22c55e',
     secondaryColor: '#2563eb',
     bgColor:        '#0f0f1a',
     textColor:      '#ffffff',
@@ -48,18 +48,18 @@ const Auth = (() => {
     },
 
     register(username, password, displayName, email) {
-      if (!username || username.length < 3)  return { error: 'Brukernavn må være minst 3 tegn' };
-      if (!/^[a-zA-Z0-9_]+$/.test(username)) return { error: 'Brukernavn kan bare ha bokstaver, tall og _' };
-      if (!password || password.length < 6)  return { error: 'Passord må være minst 6 tegn' };
-      if (!/[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?~`]/.test(password)) return { error: 'Passord må inneholde minst ett spesialtegn (f.eks. !@#$%)' };
-      if (!email || !email.includes('@'))     return { error: 'Ugyldig e-postadresse' };
+      if (!username || username.length < 3)  return { error: 'Username must be at least 3 characters' };
+      if (!/^[a-zA-Z0-9_]+$/.test(username)) return { error: 'Username can only contain letters, numbers and _' };
+      if (!password || password.length < 6)  return { error: 'Password must be at least 6 characters' };
+      if (!/[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?~`]/.test(password)) return { error: 'Password must contain at least one special character (e.g. !@#$%)' };
+      if (!email || !email.includes('@'))     return { error: 'Invalid email address' };
 
       const users = getUsers();
-      if (users[username]) return { error: 'Brukernavn er tatt' };
+      if (users[username]) return { error: 'Username is taken' };
 
       const emailLower = email.toLowerCase().trim();
       if (Object.values(users).some(u => u.email === emailLower)) {
-        return { error: 'E-postadressen er allerede i bruk' };
+        return { error: 'Email address is already in use' };
       }
 
       const activationToken = generateToken();
@@ -89,6 +89,8 @@ const Auth = (() => {
         mixIds:            [],
         subscription:      'free', // 'free' | 'pro'
         role:              'lytter', // 'lytter' | 'dj' | 'produsent' | 'plateselskap'
+        labelName:         '',       // navn på plateselskapet (kun for role === 'plateselskap')
+        buyUrl:            '',       // plateselskapets faste kjøps-/nettstedslenke
         profileVisibility: 'public', // 'public' | 'private'
       };
       saveUsers(users);
@@ -102,9 +104,9 @@ const Auth = (() => {
       if (!user) {
         user = Object.values(users).find(u => u.email === usernameOrEmail.toLowerCase().trim());
       }
-      if (!user)               return { error: 'Bruker finnes ikke' };
-      if (user.password !== hash(password)) return { error: 'Feil passord' };
-      if (!user.activated)     return { error: 'Konto ikke aktivert. Sjekk e-posten din.', notActivated: true };
+      if (!user)               return { error: 'User does not exist' };
+      if (user.password !== hash(password)) return { error: 'Wrong password' };
+      if (!user.activated)     return { error: 'Account not activated. Check your email.', notActivated: true };
 
       localStorage.setItem(SESSION_KEY, JSON.stringify({ username: user.username, ts: Date.now() }));
       return { success: true, user };
@@ -134,7 +136,7 @@ const Auth = (() => {
     activate(token) {
       const users = getUsers();
       const user = Object.values(users).find(u => u.activationToken === token);
-      if (!user) return { error: 'Ugyldig eller utløpt aktiveringslenke' };
+      if (!user) return { error: 'Invalid or expired activation link' };
       user.activated = true;
       user.activationToken = null;
       saveUsers(users);
@@ -145,7 +147,7 @@ const Auth = (() => {
     forgotPassword(email) {
       const users = getUsers();
       const user = Object.values(users).find(u => u.email === email.toLowerCase().trim());
-      if (!user) return { error: 'Ingen konto med denne e-postadressen' };
+      if (!user) return { error: 'No account with this email address' };
       const token = generateToken();
       user.resetToken  = token;
       user.resetExpiry = Date.now() + 3600_000; // 1 hour
@@ -155,15 +157,19 @@ const Auth = (() => {
 
     // Reset password with token
     resetPassword(token, newPassword) {
-      if (!newPassword || newPassword.length < 6) return { error: 'Passord må være minst 6 tegn' };
-      if (!/[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?~`]/.test(newPassword)) return { error: 'Passord må inneholde minst ett spesialtegn (f.eks. !@#$%)' };
+      if (!newPassword || newPassword.length < 6) return { error: 'Password must be at least 6 characters' };
+      if (!/[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?~`]/.test(newPassword)) return { error: 'Password must contain at least one special character (e.g. !@#$%)' };
       const users = getUsers();
       const user = Object.values(users).find(u => u.resetToken === token);
-      if (!user)                       return { error: 'Ugyldig eller utløpt lenke' };
-      if (Date.now() > user.resetExpiry) return { error: 'Lenken har utløpt. Be om ny.' };
+      if (!user)                       return { error: 'Invalid or expired link' };
+      if (Date.now() > user.resetExpiry) return { error: 'The link has expired. Request a new one.' };
       user.password    = hash(newPassword);
       user.resetToken  = null;
       user.resetExpiry = null;
+      // Fullført reset beviser e-posteierskap → aktiver kontoen (speiler serveren),
+      // så en uaktivert bruker ikke blir stengt ute etter tilbakestilling.
+      user.activated       = true;
+      user.activationToken = null;
       saveUsers(users);
       return { success: true };
     },
@@ -269,7 +275,12 @@ const Auth = (() => {
         displayName: u.displayName,
         bio:         u.bio,
         theme:       u.theme,
+        avatarUrl:     u.avatarUrl || null,
+        avatarPath:    u.avatarPath || null,
         avatarMediaId: u.avatarMediaId,
+        bannerUrl:     u.bannerUrl || null,
+        bannerPath:    u.bannerPath || null,
+        bannerMediaId: u.bannerMediaId || null,
         createdAt:   u.createdAt,
         favoriteRadio: u.favoriteRadio || null,
         liveEvent: (u.events || []).find(e => e.isLive) || null,
@@ -306,17 +317,17 @@ const Auth = (() => {
       const users = getUsers();
       const from = users[fromUsername];
       const to   = users[toUsername];
-      if (!from || !to) return { error: 'Bruker ikke funnet' };
-      if (fromUsername === toUsername) return { error: 'Kan ikke sende venneforespørsel til deg selv' };
+      if (!from || !to) return { error: 'User not found' };
+      if (fromUsername === toUsername) return { error: 'Cannot send a friend request to yourself' };
 
       from.friends      = from.friends      || [];
       from.sentRequests = from.sentRequests  || [];
       to.friends        = to.friends         || [];
       to.friendRequests = to.friendRequests  || [];
 
-      if (from.friends.includes(toUsername)) return { error: 'Dere er allerede venner' };
-      if (from.sentRequests.includes(toUsername)) return { error: 'Forespørsel allerede sendt' };
-      if (to.friendRequests.some(r => r.from === fromUsername)) return { error: 'Forespørsel allerede sendt' };
+      if (from.friends.includes(toUsername)) return { error: 'You are already friends' };
+      if (from.sentRequests.includes(toUsername)) return { error: 'Request already sent' };
+      if (to.friendRequests.some(r => r.from === fromUsername)) return { error: 'Request already sent' };
 
       from.sentRequests.push(toUsername);
       to.friendRequests.push({ from: fromUsername, ts: Date.now() });
@@ -328,7 +339,7 @@ const Auth = (() => {
       const users = getUsers();
       const me   = users[myUsername];
       const from = users[fromUsername];
-      if (!me || !from) return { error: 'Bruker ikke funnet' };
+      if (!me || !from) return { error: 'User not found' };
 
       me.friends        = me.friends        || [];
       me.friendRequests = me.friendRequests  || [];
@@ -349,7 +360,7 @@ const Auth = (() => {
       const users = getUsers();
       const me   = users[myUsername];
       const from = users[fromUsername];
-      if (!me) return { error: 'Bruker ikke funnet' };
+      if (!me) return { error: 'User not found' };
 
       me.friendRequests = (me.friendRequests || []).filter(r => r.from !== fromUsername);
       if (from) from.sentRequests = (from.sentRequests || []).filter(u => u !== myUsername);
@@ -362,7 +373,7 @@ const Auth = (() => {
       const users = getUsers();
       const from = users[fromUsername];
       const to   = users[toUsername];
-      if (!from) return { error: 'Bruker ikke funnet' };
+      if (!from) return { error: 'User not found' };
 
       from.sentRequests = (from.sentRequests || []).filter(u => u !== toUsername);
       if (to) to.friendRequests = (to.friendRequests || []).filter(r => r.from !== fromUsername);
@@ -371,11 +382,43 @@ const Auth = (() => {
       return { success: true };
     },
 
+    // Skriv en INNKOMMENDE venneforespørsel inn i den innlogga brukarens eigen
+    // record. Venneforespørslar kjem berre over Gun som eit varsel (Notify) — utan
+    // dette landar dei aldri i mottakaren si `friendRequests`-liste, og
+    // getFriendStatus() gir 'none' i staden for 'pending_received' (so Aksepter/
+    // Avslå-knappane på profilen aldri dukkar opp). Idempotent på `from`.
+    receiveFriendRequest(myUsername, fromUsername, ts) {
+      const users = getUsers();
+      const me = users[myUsername];
+      if (!me || myUsername === fromUsername) return { error: 'User not found' };
+      me.friends        = me.friends        || [];
+      me.friendRequests = me.friendRequests || [];
+      if (me.friends.includes(fromUsername)) return { success: false };        // allereie venner
+      if (me.friendRequests.some(r => r.from === fromUsername)) return { success: false };
+      me.friendRequests.push({ from: fromUsername, ts: ts || Date.now() });
+      saveUsers(users);
+      return { success: true };
+    },
+
+    // Fullfør vennskapet på AVSENDAR-sida når mottakaren har akseptert (kjem over
+    // Gun som eit friend_accept-varsel). Sendarens `sentRequests` → `friends`.
+    confirmFriendAccept(myUsername, otherUsername) {
+      const users = getUsers();
+      const me = users[myUsername];
+      if (!me || myUsername === otherUsername) return { error: 'User not found' };
+      me.friends      = me.friends      || [];
+      me.sentRequests = me.sentRequests || [];
+      me.sentRequests = me.sentRequests.filter(u => u !== otherUsername);
+      if (!me.friends.includes(otherUsername)) me.friends.push(otherUsername);
+      saveUsers(users);
+      return { success: true };
+    },
+
     removeFriend(myUsername, targetUsername) {
       const users = getUsers();
       const me     = users[myUsername];
       const target = users[targetUsername];
-      if (!me) return { error: 'Bruker ikke funnet' };
+      if (!me) return { error: 'User not found' };
 
       me.friends     = (me.friends     || []).filter(u => u !== targetUsername);
       if (target) target.friends = (target.friends || []).filter(u => u !== myUsername);
@@ -411,7 +454,7 @@ const Auth = (() => {
     importQRUser(data) {
       const users = getUsers();
       if (users[data.username]) {
-        if (users[data.username].password !== data.password) return { error: 'Bruker finnes allerede med annet passord' };
+        if (users[data.username].password !== data.password) return { error: 'User already exists with a different password' };
         localStorage.setItem(SESSION_KEY, JSON.stringify({ username: data.username, ts: Date.now() }));
         return { success: true, user: users[data.username] };
       }

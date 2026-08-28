@@ -21,7 +21,7 @@ const AccountServer = (() => {
       if (res.status === 404 || res.status === 503) return { offline: true };
       let data = {};
       try { data = await res.json(); } catch (_) {}
-      if (!res.ok) return { error: data.error || 'Serverfeil', notActivated: !!data.notActivated };
+      if (!res.ok) return { error: data.error || 'Server error', notActivated: !!data.notActivated };
       return data;
     } catch (_) {
       // Nettverksfeil (offline / API utilgjengelig) → lokal fallback.

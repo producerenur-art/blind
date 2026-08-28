@@ -54,7 +54,7 @@ function load(extra) {
   U.render('Test@Epost.no');
   ok(U.isOptedOut('test@epost.no'), 'opt-out registreres (normalisert til lowercase)');
   ok(U.isOptedOut('  TEST@epost.no  '), 'isOptedOut trimmer + ignorerer store/små bokstaver');
-  ok(/Du er avmeldt/.test(appNode.innerHTML), 'bekreftelsesvisning sier «Du er avmeldt»');
+  ok(/You are unsubscribed/.test(appNode.innerHTML), 'bekreftelsesvisning sier «You are unsubscribed»');
   ok(appNode.innerHTML.includes('test@epost.no'), 'e-posten vises i bekreftelsen');
 }
 
@@ -67,7 +67,9 @@ function load(extra) {
   ok(!U.isOptedOut('a@b.com'), 'opt-in fjerner opt-out');
 }
 
-// ── 3) uten e-post men innlogget → bruker brukerens e-post + setter flagg ─
+// ── 3) uten e-post men innlogget → INGEN auto-avmelding, vis skjema ───────
+// Å bare åpne #/unsubscribe (uten e-post i lenka) skal ikke avmelde en innlogget
+// bruker som bivirkning av navigasjon — avmelding skal være en eksplisitt handling.
 {
   const AuthFactory = (onUpdate) => ({
     current: () => ({ username: 'dj_emanuel', email: 'emanuel@sound.no' }),
@@ -75,20 +77,18 @@ function load(extra) {
   });
   const { U, appNode, getUpdate } = load({ Auth: AuthFactory });
   U.render();   // ingen e-post-arg
-  ok(U.isOptedOut('emanuel@sound.no'), 'faller tilbake til innlogget brukers e-post');
-  ok(appNode.innerHTML.includes('emanuel@sound.no'), 'brukerens e-post vises i bekreftelsen');
-  const up = getUpdate();
-  ok(up && up.username === 'dj_emanuel' && up.data.marketingOptOut === true,
-     'setter marketingOptOut=true på den innloggede brukeren');
+  ok(!U.isOptedOut('emanuel@sound.no'), 'innlogget bruker blir IKKE avmeldt bare av å åpne siden');
+  ok(/Unsubscribe from promotions/.test(appNode.innerHTML), 'viser skjemaet (eksplisitt handling kreves)');
+  ok(getUpdate() === null, 'setter ingen marketingOptOut-flagg som bivirkning');
 }
 
 // ── 4) uten e-post og ikke innlogget → skjema-visning ────────────────────
 {
   const { U, appNode } = load();   // ingen Auth
   U.render();
-  ok(/Avmeld reklame/.test(appNode.innerHTML), 'viser skjema-tittel «Avmeld reklame»');
+  ok(/Unsubscribe from promotions/.test(appNode.innerHTML), 'viser skjema-tittel «Unsubscribe from promotions»');
   ok(/id="unsub-email"/.test(appNode.innerHTML), 'skjema har e-post-felt');
-  ok(!/Du er avmeldt/.test(appNode.innerHTML), 'ingen bekreftelse uten e-post');
+  ok(!/You are unsubscribed/.test(appNode.innerHTML), 'ingen bekreftelse uten e-post');
 }
 
 // ── 5) tom/ugyldig e-post melder ikke av ─────────────────────────────────

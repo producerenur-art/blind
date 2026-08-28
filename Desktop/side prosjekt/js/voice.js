@@ -5,7 +5,7 @@
    • Ta opp     → lagrar tekst-logg + ekte lydopptak (MediaRecorder), av/på
    Mikrofon-knapp: GRØN når den lyttar, raud/nøytral når av.
    Opptak-knapp:   GRØN når den tek opp, raud når av.
-   Alt gratis, ingen eksterne avhengnader. Brukt av aiAssistant.js og a1.js.
+   Alt gratis, ingen eksterne avhengnader. Brukt av a1.js.
    ═══════════════════════════════════════════════ */
 const Voice = (() => {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
@@ -27,9 +27,43 @@ const Voice = (() => {
   };
   function bcp47(code) { return BCP[code] || code || 'en-US'; }
 
-  // ── Språkliste (delt med lang.js) ────────────────────────────────────
-  function langList() { return (typeof LANGUAGES !== 'undefined' && LANGUAGES.length) ? LANGUAGES : [{ code:'no', name:'Norwegian — Norsk', flag:'🇳🇴' }]; }
-  function langNameFor(code) { const l = langList().find(x => x.code === code); return l ? l.name.split(' — ')[0].trim() : 'Norwegian'; }
+  // ── Språkliste for TALE (kva brukaren snakkar til assistenten på).
+  // Sida sjølv er berre engelsk; dette er ikkje ein omsetjar, berre kva
+  // språk mikrofonen og talesyntesa skal bruke. Sjølvstendig liste. ─────
+  const SPEECH_LANGUAGES = [
+    { code:'en',    name:'English',                flag:'🇬🇧' },
+    { code:'ar',    name:'Arabic — العربية',        flag:'🇸🇦' },
+    { code:'bn',    name:'Bengali — বাংলা',          flag:'🇧🇩' },
+    { code:'zh-CN', name:'Chinese — 简体中文',        flag:'🇨🇳' },
+    { code:'cs',    name:'Czech — Čeština',         flag:'🇨🇿' },
+    { code:'da',    name:'Danish — Dansk',          flag:'🇩🇰' },
+    { code:'nl',    name:'Dutch — Nederlands',      flag:'🇳🇱' },
+    { code:'fi',    name:'Finnish — Suomi',         flag:'🇫🇮' },
+    { code:'fr',    name:'French — Français',       flag:'🇫🇷' },
+    { code:'de',    name:'German — Deutsch',        flag:'🇩🇪' },
+    { code:'el',    name:'Greek — Ελληνικά',        flag:'🇬🇷' },
+    { code:'he',    name:'Hebrew — עברית',          flag:'🇮🇱' },
+    { code:'hi',    name:'Hindi — हिन्दी',            flag:'🇮🇳' },
+    { code:'hu',    name:'Hungarian — Magyar',      flag:'🇭🇺' },
+    { code:'id',    name:'Indonesian — Indonesia',  flag:'🇮🇩' },
+    { code:'it',    name:'Italian — Italiano',      flag:'🇮🇹' },
+    { code:'ja',    name:'Japanese — 日本語',         flag:'🇯🇵' },
+    { code:'ko',    name:'Korean — 한국어',           flag:'🇰🇷' },
+    { code:'ms',    name:'Malay — Melayu',          flag:'🇲🇾' },
+    { code:'no',    name:'Norwegian — Norsk',       flag:'🇳🇴' },
+    { code:'pl',    name:'Polish — Polski',         flag:'🇵🇱' },
+    { code:'pt',    name:'Portuguese — Português',  flag:'🇵🇹' },
+    { code:'ro',    name:'Romanian — Română',       flag:'🇷🇴' },
+    { code:'ru',    name:'Russian — Русский',       flag:'🇷🇺' },
+    { code:'es',    name:'Spanish — Español',       flag:'🇪🇸' },
+    { code:'sv',    name:'Swedish — Svenska',       flag:'🇸🇪' },
+    { code:'th',    name:'Thai — ไทย',              flag:'🇹🇭' },
+    { code:'tr',    name:'Turkish — Türkçe',        flag:'🇹🇷' },
+    { code:'uk',    name:'Ukrainian — Українська',  flag:'🇺🇦' },
+    { code:'vi',    name:'Vietnamese — Tiếng Việt', flag:'🇻🇳' },
+  ];
+  function langList() { return SPEECH_LANGUAGES; }
+  function langNameFor(code) { const l = langList().find(x => x.code === code); return l ? l.name.split(' — ')[0].trim() : 'English'; }
   function langOptions(sel) { return langList().map(l => `<option value="${l.code}" ${l.code === sel ? 'selected' : ''}>${l.flag} ${l.name}</option>`).join(''); }
 
   // ── Talesyntese-stemmer (lastar ofte asynkront) ──────────────────────
@@ -75,14 +109,14 @@ const Voice = (() => {
     const el = document.createElement('div');
     el.className = 'voice-tb';
     const langSelHtml = config.withLang
-      ? `<select class="voice-lang" title="Språk / Language">${langOptions(initialLang())}</select>` : '';
+      ? `<select class="voice-lang" title="Language">${langOptions(initialLang())}</select>` : '';
     el.innerHTML = `
       ${langSelHtml}
-      <button type="button" class="voice-btn voice-mic" title="Snakk – trykk og snakk (alle språk)">${ic('mic')}</button>
-      <button type="button" class="voice-btn voice-spk${speakerOn ? ' is-on' : ''}" title="AI leser opp svarene">${ic(speakerOn ? 'volume' : 'volume-x')}</button>
-      <button type="button" class="voice-btn voice-rec" title="Ta opp samtale (tekst + lyd)">${ic('circle-dot')}</button>
-      <button type="button" class="voice-btn voice-dl voice-dl-txt hidden" title="Last ned tekst-logg">${ic('download')}</button>
-      <button type="button" class="voice-btn voice-dl voice-dl-aud hidden" title="Last ned lydopptak">${ic('music')}</button>
+      <button type="button" class="voice-btn voice-mic" title="Speak – tap and talk (all languages)">${ic('mic')}</button>
+      <button type="button" class="voice-btn voice-spk${speakerOn ? ' is-on' : ''}" title="AI reads out the answers">${ic(speakerOn ? 'volume' : 'volume-x')}</button>
+      <button type="button" class="voice-btn voice-rec" title="Record conversation (text + audio)">${ic('circle-dot')}</button>
+      <button type="button" class="voice-btn voice-dl voice-dl-txt hidden" title="Download text log">${ic('download')}</button>
+      <button type="button" class="voice-btn voice-dl voice-dl-aud hidden" title="Download audio recording">${ic('music')}</button>
       <span class="voice-status" aria-live="polite"></span>`;
 
     const micBtn  = el.querySelector('.voice-mic');
@@ -99,11 +133,11 @@ const Voice = (() => {
     function initialLang() {
       const saved = localStorage.getItem(LANG_KEY);
       if (saved) return saved;
-      return (config.defaultLang && config.defaultLang()) || localStorage.getItem('stellar-lang') || 'no';
+      return (config.defaultLang && config.defaultLang()) || localStorage.getItem('stellar-lang') || 'en';
     }
     function langCode() {
       if (langSel) return langSel.value;
-      return (config.getLangCode && config.getLangCode()) || 'no';
+      return (config.getLangCode && config.getLangCode()) || 'en';
     }
     if (langSel) langSel.addEventListener('change', () => { try { localStorage.setItem(LANG_KEY, langSel.value); } catch {} });
 
@@ -133,7 +167,7 @@ const Voice = (() => {
     function setListening(on) {
       ctrl.listening = on;
       micBtn.classList.toggle('is-listening', on);
-      setStatus(on ? 'Lytter…' : (ctrl.recording ? 'Tar opp' : ''));
+      setStatus(on ? 'Listening…' : (ctrl.recording ? 'Recording' : ''));
     }
     function startListening() {
       if (!SR || ctrl.listening) return;
@@ -153,7 +187,7 @@ const Voice = (() => {
         }
         setStatus('“' + (finalText + interim).trim().slice(0, 40) + '”');
       };
-      rec.onerror = ev => { setListening(false); if (ev && ev.error === 'not-allowed') setStatus('Mikrofon blokkert'); };
+      rec.onerror = ev => { setListening(false); if (ev && ev.error === 'not-allowed') setStatus('Microphone blocked'); };
       rec.onend = () => {
         setListening(false); ctrl._sr = null;
         const t = finalText.trim();
@@ -195,7 +229,7 @@ const Voice = (() => {
     function setRecording(on) {
       ctrl.recording = on;
       recBtn.classList.toggle('is-on', on);
-      if (on) { saveLog(); startAudio(); setStatus('Tar opp'); }
+      if (on) { saveLog(); startAudio(); setStatus('Recording'); }
       else { stopAudio(); setStatus(''); }
       updateExports();
     }
@@ -203,7 +237,7 @@ const Voice = (() => {
 
     dlTxt.addEventListener('click', () => {
       if (!ctrl._log.length) return;
-      const lines = ctrl._log.map(m => `${m.role === 'user' ? '🧑 Du' : '🤖 AI'}: ${m.text}`);
+      const lines = ctrl._log.map(m => `${m.role === 'user' ? '🧑 You' : '🤖 AI'}: ${m.text}`);
       download(new Blob([lines.join('\n\n')], { type: 'text/plain;charset=utf-8' }), `samtale-${ns}-${stamp()}.txt`);
     });
     dlAud.addEventListener('click', () => { if (ctrl._audioBlob) download(ctrl._audioBlob, `samtale-${ns}-${stamp()}.webm`); });

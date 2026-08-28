@@ -11,8 +11,8 @@ const Shows = (() => {
       startHour: 22, endHour: 2,
       genre: 'Psytrance · Psychedelic',
       emoji: '🌠',
-      color: '#7c3aed',
-      desc: 'Den ukentlige turen ut i psykedelisk dub og trance-universet.',
+      color: '#22c55e',
+      desc: 'The weekly trip out into the psychedelic dub and trance universe.',
       stream: 'stellar-psy',
     },
     {
@@ -24,7 +24,7 @@ const Shows = (() => {
       genre: 'Ambient · Drone',
       emoji: '🌌',
       color: '#4f46e5',
-      desc: 'Start uken rolig — dyp atmosfærisk drone for meditasjon og fokus.',
+      desc: 'Start the week calmly — deep atmospheric drone for meditation and focus.',
       stream: 'dronezone',
     },
     {
@@ -36,7 +36,7 @@ const Shows = (() => {
       genre: 'Techno · Minimal',
       emoji: '💊',
       color: '#ef4444',
-      desc: 'Hypnotisk techno og minimale grooves fra undergrunnens dypeste haller.',
+      desc: 'Hypnotic techno and minimal grooves from the underground’s deepest halls.',
       stream: 'digitalis',
     },
     {
@@ -48,7 +48,7 @@ const Shows = (() => {
       genre: 'Chill · Downtempo',
       emoji: '🌿',
       color: '#16a34a',
-      desc: 'Sensuelt og sakte bevegelige grooves for midt-uken.',
+      desc: 'Sensual, slow-moving grooves for midweek.',
       stream: 'lush',
     },
     {
@@ -60,7 +60,7 @@ const Shows = (() => {
       genre: 'Space Music · Ambient',
       emoji: '🛸',
       color: '#0ea5e9',
-      desc: 'Intergalaktisk reise gjennom elektronisk rommusikk og spaceambient.',
+      desc: 'An intergalactic journey through electronic space music and space ambient.',
       stream: 'spacestation',
     },
     {
@@ -71,8 +71,8 @@ const Shows = (() => {
       startHour: 20, endHour: 23,
       genre: 'Nu-Jazz · Trip-Hop',
       emoji: '🎷',
-      color: '#a855f7',
-      desc: 'Vinneren av helgestart — nu-jazz, IDM og sanselig trip-hop.',
+      color: '#4ade80',
+      desc: 'The winner of the weekend kickoff — nu-jazz, IDM and sensual trip-hop.',
       stream: 'sonicuniverse',
     },
     {
@@ -84,7 +84,7 @@ const Shows = (() => {
       genre: 'Deep Ambient · Electronic',
       emoji: '🌑',
       color: '#1e40af',
-      desc: 'Lørdag natt i dypt elektronisk ambient-landskap.',
+      desc: 'Saturday night in a deep electronic ambient landscape.',
       stream: 'deepspaceone',
     },
     {
@@ -96,12 +96,12 @@ const Shows = (() => {
       genre: 'Ambient Space Music',
       emoji: '🚀',
       color: '#f97316',
-      desc: 'Søndagsettermiddagen med ambientrommusikk og stille reiser.',
+      desc: 'Sunday afternoon with ambient space music and quiet journeys.',
       stream: 'missioncontrol',
     },
   ];
 
-  const DAYS_NO = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+  const DAYS_NO = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const DAYS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
   function escHtml(str) {
@@ -149,16 +149,16 @@ const Shows = (() => {
         <div class="show-card-body">
           ${highlight ? '<div class="show-on-air"><span class="show-on-air-dot"></span> ON AIR</div>' : ''}
           <div class="show-card-name">${escHtml(show.name)}</div>
-          <div class="show-card-host">med ${escHtml(show.host)}</div>
+          <div class="show-card-host">with ${escHtml(show.host)}</div>
           <div class="show-card-genre">${escHtml(show.genre)}</div>
           <div class="show-card-desc">${escHtml(show.desc)}</div>
           <div class="show-card-time">${DAYS_NO[show.day]} ${fmtHour(show.startHour)} – ${fmtHour(show.endHour)}</div>
         </div>
         <div class="show-card-actions">
           <button class="show-listen-btn" onclick="Shows.tuneIn('${show.stream}')">
-            ${highlight ? '▶ Lyt nå' : '▶ Lytt'}
+            ${highlight ? '▶ Listen now' : '▶ Listen'}
           </button>
-          <button class="show-share-btn" title="Del" onclick="Shows.shareShow('${show.id}')">${Icon('arrow-up-right')}</button>
+          <button class="show-share-btn" title="Share" onclick="Shows.shareShow('${show.id}')">${Icon('arrow-up-right')}</button>
         </div>
       </div>`;
   }
@@ -174,7 +174,7 @@ const Shows = (() => {
         <div class="sched-day ${day === today ? 'sched-day--today' : ''}">
           <div class="sched-day-header">
             <span class="sched-day-name">${DAYS_NO[day]}</span>
-            ${day === today ? '<span class="sched-today-badge">I dag</span>' : ''}
+            ${day === today ? '<span class="sched-today-badge">Today</span>' : ''}
           </div>
           <div class="sched-day-shows">
             ${dayShows.length ? dayShows.map(s => `
@@ -184,7 +184,7 @@ const Shows = (() => {
                   <div class="sched-show-name">${escHtml(s.name)}</div>
                   <div class="sched-show-time">${fmtHour(s.startHour)} – ${fmtHour(s.endHour)}</div>
                 </div>
-              </div>`).join('') : `<div class="sched-empty">Ingen show</div>`}
+              </div>`).join('') : `<div class="sched-empty">No shows</div>`}
           </div>
         </div>`;
     }).join('');
@@ -192,12 +192,12 @@ const Shows = (() => {
 
   function archiveCards() {
     const archive = [
-      { name:'Deep Frequencies Vol.4', host:'Ambient Collective', date:'18. jun 2026', emoji:'🌌', duration:'2t 14m' },
-      { name:'Psydub Underground',      host:'Stellar Collective', date:'15. jun 2026', emoji:'🌠', duration:'3t 02m' },
-      { name:'Groove Sessions 21',      host:'Nu-Jazz Collective', date:'13. jun 2026', emoji:'🎷', duration:'2t 48m' },
-      { name:'Techno Brutalism',        host:'DJ Digitalis',       date:'10. jun 2026', emoji:'💊', duration:'3t 15m' },
-      { name:'Space Odyssey #11',       host:'Cosmic Station',     date:'7. jun 2026',  emoji:'🛸', duration:'4t 00m' },
-      { name:'Chill Afternoon 33',      host:'Lush Sessions',      date:'4. jun 2026',  emoji:'🌿', duration:'2t 30m' },
+      { name:'Deep Frequencies Vol.4', host:'Ambient Collective', date:'Jun 18, 2026', emoji:'🌌', duration:'2h 14m' },
+      { name:'Psydub Underground',      host:'Stellar Collective', date:'Jun 15, 2026', emoji:'🌠', duration:'3h 02m' },
+      { name:'Groove Sessions 21',      host:'Nu-Jazz Collective', date:'Jun 13, 2026', emoji:'🎷', duration:'2h 48m' },
+      { name:'Techno Brutalism',        host:'DJ Digitalis',       date:'Jun 10, 2026', emoji:'💊', duration:'3h 15m' },
+      { name:'Space Odyssey #11',       host:'Cosmic Station',     date:'Jun 7, 2026',  emoji:'🛸', duration:'4h 00m' },
+      { name:'Chill Afternoon 33',      host:'Lush Sessions',      date:'Jun 4, 2026',  emoji:'🌿', duration:'2h 30m' },
     ];
     return archive.map(a => `
       <div class="archive-card">
@@ -224,21 +224,21 @@ const Shows = (() => {
         <div class="shows-hero">
           <div class="shows-hero-glow"></div>
           <div class="shows-hero-inner">
-            <div class="shows-hero-badge">${Icon('radio')} Sendeskjema</div>
+            <div class="shows-hero-badge">${Icon('radio')} Schedule</div>
             <h1 class="shows-hero-title">Radio Shows</h1>
-            <p class="shows-hero-sub">Utforsk ukentlige livesendinger fra Sound Core — psytrance, ambient, techno, jazz og mer.</p>
+            <p class="shows-hero-sub">Explore weekly live broadcasts from SiriusFM — psytrance, ambient, techno, and more.</p>
           </div>
           <div class="shows-hero-live">
             ${live ? `
               <div class="shows-live-pill">
-                <span class="shows-live-dot"></span> ON AIR NÅ
+                <span class="shows-live-dot"></span> ON AIR NOW
               </div>
               <div class="shows-live-name">${escHtml(live.name)}</div>
-              <div class="shows-live-host">med ${escHtml(live.host)}</div>
-              <button class="shows-live-btn" onclick="Shows.tuneIn('${live.stream}')">${Icon('play')} Lyt nå</button>
+              <div class="shows-live-host">with ${escHtml(live.host)}</div>
+              <button class="shows-live-btn" onclick="Shows.tuneIn('${live.stream}')">${Icon('play')} Listen now</button>
             ` : next ? `
               <div class="shows-live-pill shows-live-pill--soon">
-                Neste show
+                Next show
               </div>
               <div class="shows-live-name">${escHtml(next.show.name)}</div>
               <div class="shows-live-host">${DAYS_NO[next.show.day]} ${fmtHour(next.show.startHour)}</div>
@@ -251,16 +251,16 @@ const Shows = (() => {
         ${live ? `
         <div class="section" style="max-width:900px">
           <div class="section-header">
-            <div class="section-title"><span class="show-on-air-dot"></span> Sendes nå</div>
+            <div class="section-title"><span class="show-on-air-dot"></span> On air now</div>
           </div>
           ${showCard(live, true)}
         </div>` : ''}
 
         <!-- RADIO SEARCH — every web radio on the planet -->
-        <div class="section" style="max-width:900px">
+        <div class="section rsx-section" style="max-width:900px">
           <div class="section-header">
-            <div class="section-title">${Icon('search')} Søk alle verdas web-radioar</div>
-            <span class="text-muted text-sm">Psytrance · EDM · House · Chillout · Psychill · Progressive · Downtempo · Ambient · Dark Drone — og alt anna</span>
+            <div class="section-title">${Icon('search')} Search every web radio in the world</div>
+            <span class="text-muted text-sm">Psytrance · EDM · House · Chillout · Psychill · Progressive · Downtempo · Ambient · Dark Drone — and everything else</span>
           </div>
           ${RadioSearch.widget()}
         </div>
@@ -268,7 +268,7 @@ const Shows = (() => {
         <!-- WEEKLY SCHEDULE -->
         <div class="section" style="max-width:1100px">
           <div class="section-header">
-            <div class="section-title">${Icon('calendar')} Ukentlig sendeskjema</div>
+            <div class="section-title">${Icon('calendar')} Weekly schedule</div>
           </div>
           <div class="sched-grid">
             ${scheduleGrid()}
@@ -278,7 +278,7 @@ const Shows = (() => {
         <!-- ALL SHOWS -->
         <div class="section" style="max-width:900px">
           <div class="section-header">
-            <div class="section-title">${Icon('mic')} Alle programmer</div>
+            <div class="section-title">${Icon('mic')} All shows</div>
           </div>
           <div class="shows-list">
             ${SHOWS.map(s => showCard(s, s === live)).join('')}
@@ -288,73 +288,37 @@ const Shows = (() => {
         <!-- ARCHIVE -->
         <div class="section" style="max-width:900px">
           <div class="section-header">
-            <div class="section-title">${Icon('folder')} Arkiv</div>
-            <span class="text-muted text-sm">Tidligere sendinger</span>
+            <div class="section-title">${Icon('folder')} Archive</div>
+            <span class="text-muted text-sm">Past broadcasts</span>
           </div>
           <div class="archive-list">
             ${archiveCards()}
           </div>
         </div>
 
-        <!-- GOA GIL MEMORIAL -->
-        <div class="section" style="max-width:900px">
-          <div style="background:linear-gradient(135deg,#0a0a0a,#1a1010,#2a1a0a);border:1px solid rgba(180,140,80,0.25);border-radius:1rem;padding:2rem;text-align:center">
-            <div style="font-size:2.5rem;margin-bottom:0.75rem">${Icon('feather')}</div>
-            <div style="font-size:1.3rem;font-weight:700;color:#c8a96e;margin-bottom:0.5rem">Goa Gil — Resting In Peace</div>
-            <div style="font-size:0.9rem;color:rgba(200,169,110,0.6);margin-bottom:1.25rem;letter-spacing:0.05em">1950 – 2025</div>
-            <p style="color:rgba(255,255,255,0.75);line-height:1.8;max-width:600px;margin:0 auto 1.25rem">
-              Goa Gil — pioneren, sjamanen og sjela bak Goa Trance-rørsla — kviler no i fred.
-              Han vil alltid bli hugsa av alle som har dansa under stjernane til lyden av hans
-              rituelle sett. Hans ande lever vidare i kvar beat og kvar natt den psykedeliske
-              undergrunnen held i live.
-            </p>
-            <em style="color:#a07850;font-style:italic;font-size:0.95rem">
-              «Redefine the Ancient Tribal Ritual for the 21st Century.»
-            </em>
-          </div>
-        </div>
-
         <!-- FESTIVALS -->
         <div class="section" style="max-width:900px">
           <div class="section-header">
-            <div class="section-title">${Icon('star')} Kommende festivalar</div>
+            <div class="section-title">${Icon('star')} Upcoming festivals</div>
+            <span class="text-muted text-sm">AI-fresh from the whole world + our own picks</span>
           </div>
-          <a class="shows-festival-card" href="https://www.astral-projection.com/events" target="_blank" rel="noopener noreferrer"
-             style="margin-bottom:1rem">
-            <div class="shows-festival-banner" style="background:linear-gradient(135deg,#0a1628,#0e2244,#0a1628)">
-              <div class="shows-festival-emoji">${Icon('star')}</div>
-              <div class="shows-festival-dates">Live 2026</div>
-            </div>
-            <div class="shows-festival-body">
-              <div class="shows-festival-name">Astral Projection — Live Shows</div>
-              <div class="shows-festival-loc">${Icon('globe')} Turné globalt · astral-projection.com/events</div>
-              <div class="shows-festival-theme">Goa Trance · Psytrance — sidan 1991</div>
-              <div class="shows-festival-tags">
-                <span class="shows-festival-tag">${Icon('star')} Goa Trance</span>
-                <span class="shows-festival-tag">${Icon('wind')} Psytrance</span>
-                <span class="shows-festival-tag">🇮🇱 Israel</span>
-                <span class="shows-festival-tag">Dancing Galaxy</span>
-                <span class="shows-festival-tag">Another World</span>
-              </div>
-              <div class="shows-festival-cta">Sjå kommende shows ${Icon('arrow-right')}</div>
-            </div>
-          </a>
+          <div id="shows-fresh-events"></div>
           <a class="shows-festival-card" href="https://www.dacru.be/" target="_blank" rel="noopener noreferrer"
              style="margin-bottom:1rem">
             <div class="shows-festival-banner" style="background:linear-gradient(135deg,#0e0d1f,#1b1040,#0d0a2e)">
               <div class="shows-festival-emoji">${Icon('mountain')}</div>
-              <div class="shows-festival-dates">18–21 jun 2026</div>
+              <div class="shows-festival-dates">Jun 18–21, 2026</div>
             </div>
             <div class="shows-festival-body">
               <div class="shows-festival-name">Solomonari Festival 2026</div>
               <div class="shows-festival-loc">${Icon('map-pin')} Transylvania, Romania 🇷🇴</div>
-              <div class="shows-festival-theme">The Transylvanian Gathering — av DaCru Records</div>
+              <div class="shows-festival-theme">The Transylvanian Gathering — by DaCru Records</div>
               <div class="shows-festival-tags">
                 <span class="shows-festival-tag">${Icon('wind')} Psychedelic Trance</span>
                 <span class="shows-festival-tag">${Icon('zap')} Full-On</span>
                 <span class="shows-festival-tag">🇧🇪 DaCru Records</span>
               </div>
-              <div class="shows-festival-cta">Meir info på dacru.be ${Icon('arrow-right')}</div>
+              <div class="shows-festival-cta">More info at dacru.be ${Icon('arrow-right')}</div>
             </div>
           </a>
           <a class="shows-festival-card" href="https://shunyatarecords.bandcamp.com/" target="_blank" rel="noopener noreferrer"
@@ -365,33 +329,33 @@ const Shows = (() => {
             </div>
             <div class="shows-festival-body">
               <div class="shows-festival-name">Shunyata Records</div>
-              <div class="shows-festival-loc">${Icon('globe')} Djup, rituell og meditativ Goa Trance</div>
+              <div class="shows-festival-loc">${Icon('globe')} Deep, ritual and meditative Goa Trance</div>
               <div class="shows-festival-theme">VA — Active Meditation in the Memory of Goa Gil</div>
               <div class="shows-festival-tags">
                 <span class="shows-festival-tag">${Icon('sparkles')} Goa Trance</span>
-                <span class="shows-festival-tag">${Icon('user')} Meditasjon</span>
+                <span class="shows-festival-tag">${Icon('user')} Meditation</span>
                 <span class="shows-festival-tag">${Icon('feather')} Goa Gil Tribute</span>
               </div>
-              <div class="shows-festival-cta">Utforsk på Bandcamp ${Icon('arrow-right')}</div>
+              <div class="shows-festival-cta">Explore on Bandcamp ${Icon('arrow-right')}</div>
             </div>
           </a>
           <a class="shows-festival-card" href="https://youngerbrothermusic.bandcamp.com/music" target="_blank" rel="noopener noreferrer"
              style="margin-bottom:1rem">
             <div class="shows-festival-banner" style="background:linear-gradient(135deg,#0a1a2e,#122840,#1a3a5c)">
               <div class="shows-festival-emoji">${Icon('atom')}</div>
-              <div class="shows-festival-dates">Kommande 2026</div>
+              <div class="shows-festival-dates">Upcoming 2026</div>
             </div>
             <div class="shows-festival-body">
               <div class="shows-festival-name">Younger Brother</div>
-              <div class="shows-festival-loc">${Icon('globe')} Simon Posford + Benji Vaughan · Psykedelisk elektronika</div>
+              <div class="shows-festival-loc">${Icon('globe')} Simon Posford + Benji Vaughan · Psychedelic electronica</div>
               <div class="shows-festival-theme">A Flock of Bleeps · FFWD>> · Vaccine</div>
               <div class="shows-festival-tags">
                 <span class="shows-festival-tag">${Icon('atom')} Electronica</span>
-                <span class="shows-festival-tag">${Icon('zap')} Psykedelisk</span>
+                <span class="shows-festival-tag">${Icon('zap')} Psychedelic</span>
                 <span class="shows-festival-tag">${Icon('sliders')} Simon Posford</span>
                 <span class="shows-festival-tag">Bandcamp</span>
               </div>
-              <div class="shows-festival-cta">Utforsk musikken på Bandcamp ${Icon('arrow-right')}</div>
+              <div class="shows-festival-cta">Explore the music on Bandcamp ${Icon('arrow-right')}</div>
             </div>
           </a>
           <a class="shows-festival-card" href="https://www.shponglemusic.com/" target="_blank" rel="noopener noreferrer"
@@ -402,36 +366,36 @@ const Shows = (() => {
             </div>
             <div class="shows-festival-body">
               <div class="shows-festival-name">Shpongle</div>
-              <div class="shows-festival-loc">${Icon('globe')} Raja Ram + Simon Posford · Psybient sidan 1998</div>
+              <div class="shows-festival-loc">${Icon('globe')} Raja Ram + Simon Posford · Psybient since 1998</div>
               <div class="shows-festival-theme">Are You Shpongled? — Codex VI</div>
               <div class="shows-festival-tags">
                 <span class="shows-festival-tag">${Icon('sparkles')} Psybient</span>
                 <span class="shows-festival-tag">${Icon('waves')} Psychill</span>
-                <span class="shows-festival-tag">${Icon('globe')} Verdsmusikk</span>
+                <span class="shows-festival-tag">${Icon('globe')} World music</span>
                 <span class="shows-festival-tag">${Icon('crown')} T.I.P. Records</span>
               </div>
-              <div class="shows-festival-cta">Offisiell nettstad ${Icon('arrow-right')}</div>
+              <div class="shows-festival-cta">Official website ${Icon('arrow-right')}</div>
             </div>
           </a>
           <a class="shows-festival-card" href="https://hadratrancefestival.net/en/home/" target="_blank" rel="noopener noreferrer">
             <div class="shows-festival-banner" style="background:linear-gradient(135deg,#1a0a2e,#16213e,#0f3460)">
               <div class="shows-festival-emoji">${Icon('star')}</div>
-              <div class="shows-festival-dates">27–30 aug 2026</div>
+              <div class="shows-festival-dates">Aug 27–30, 2026</div>
             </div>
             <div class="shows-festival-body">
               <div class="shows-festival-name">Hadra Trance Festival 2026</div>
-              <div class="shows-festival-loc">${Icon('map-pin')} Vieure, Allier, Frankrike 🇫🇷</div>
+              <div class="shows-festival-loc">${Icon('map-pin')} Vieure, Allier, France 🇫🇷</div>
               <div class="shows-festival-theme">Solar Punk Chronicles: The Seed</div>
               <div class="shows-festival-tags">
                 <span class="shows-festival-tag">${Icon('wind')} Psytrance</span>
                 <span class="shows-festival-tag">${Icon('zap')} Techno</span>
                 <span class="shows-festival-tag">${Icon('leaf')} Downtempo</span>
                 <span class="shows-festival-tag">${Icon('music')} Live</span>
-                <span class="shows-festival-tag">4 scener</span>
-                <span class="shows-festival-tag">68 artistar</span>
-                <span class="shows-festival-tag">90t musikk</span>
+                <span class="shows-festival-tag">4 stages</span>
+                <span class="shows-festival-tag">68 artists</span>
+                <span class="shows-festival-tag">90h of music</span>
               </div>
-              <div class="shows-festival-cta">Sjå program & billettar ${Icon('arrow-right')}</div>
+              <div class="shows-festival-cta">See programme & tickets ${Icon('arrow-right')}</div>
             </div>
           </a>
         </div>
@@ -441,17 +405,25 @@ const Shows = (() => {
           <div class="shows-subscribe-banner">
             <div class="shows-subscribe-icon">${Icon('mail')}</div>
             <div class="shows-subscribe-text">
-              <div class="shows-subscribe-title">Aldri gå glipp av et show</div>
-              <p>Registrer deg for å få varsler om kommende programmer og nye utgivelser.</p>
+              <div class="shows-subscribe-title">Never miss a show</div>
+              <p>Sign up to get notified about upcoming shows and news.</p>
             </div>
             ${Auth.current()
-              ? `<button class="btn btn-primary" onclick="App.toast('Du er allerede abonnert!','success')">${Icon('check')} Abonnert</button>`
-              : `<a href="#/register" class="btn btn-primary">Registrer deg gratis</a>`
+              ? `<button class="btn btn-primary" onclick="App.toast('You are already subscribed!','success')">${Icon('check')} Subscribed</button>`
+              : `<a href="#/register" class="btn btn-primary">Sign up for free</a>`
             }
           </div>
         </div>
 
       </div>`;
+
+    // Festivaler & arrangementer i hele verden — live AI-nettsøk, rotert hver
+    // halvtime (samme kilde som magasinet og verden-siden, se js/aifresh.js).
+    if (typeof AIFresh !== 'undefined') {
+      AIFresh.reset();
+      AIFresh.mount({ id: 'shows-fresh-events', genre: 'festivals',
+        title: 'Festivals & events worldwide', emoji: '🎪', limit: 4 });
+    }
   }
 
   function tuneIn(stationId) {
@@ -465,11 +437,11 @@ const Shows = (() => {
   function shareShow(id) {
     const show = SHOWS.find(s => s.id === id);
     if (!show) return;
-    const text = `${iconForEmoji(show.emoji)} ${show.name} på Sound Core — ${DAYS_NO[show.day]} ${fmtHour(show.startHour)}`;
+    const text = `${iconForEmoji(show.emoji)} ${show.name} on SiriusFM — ${DAYS_NO[show.day]} ${fmtHour(show.startHour)}`;
     if (navigator.share) {
       navigator.share({ title: show.name, text, url: location.href });
     } else {
-      navigator.clipboard.writeText(text).then(() => App.toast('Kopiert til utklippstavlen!', 'success'));
+      navigator.clipboard.writeText(text).then(() => App.toast('Copied to clipboard!', 'success'));
     }
   }
 

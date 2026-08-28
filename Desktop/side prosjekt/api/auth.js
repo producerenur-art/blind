@@ -19,23 +19,23 @@ const crypto = require('crypto');
 const { Resend } = require('resend');
 const { activationHtml, resetHtml } = require('./send-email');
 
-const CANONICAL_URL = 'https://www.soundcoredevelopment.com';
+const CANONICAL_URL = 'https://www.siriusfm.no';
 
 // ── Validering (speiler reglene i js/auth.js register) ──────────────────────
 const USERNAME_RE = /^[a-zA-Z0-9_]+$/;
 const SPECIAL_RE  = /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?~`]/;
 
 function validateRegister({ username, password, email }) {
-  if (!username || username.length < 3) return 'Brukernavn må være minst 3 tegn';
-  if (!USERNAME_RE.test(username))      return 'Brukernavn kan bare ha bokstaver, tall og _';
-  if (!password || password.length < 6) return 'Passord må være minst 6 tegn';
-  if (!SPECIAL_RE.test(password))       return 'Passord må inneholde minst ett spesialtegn (f.eks. !@#$%)';
-  if (!email || !email.includes('@'))   return 'Ugyldig e-postadresse';
+  if (!username || username.length < 3) return 'Username must be at least 3 characters';
+  if (!USERNAME_RE.test(username))      return 'Username can only contain letters, numbers and _';
+  if (!password || password.length < 6) return 'Password must be at least 6 characters';
+  if (!SPECIAL_RE.test(password))       return 'Password must contain at least one special character (e.g. !@#$%)';
+  if (!email || !email.includes('@'))   return 'Invalid email address';
   return null;
 }
 function validatePassword(password) {
-  if (!password || password.length < 6) return 'Passord må være minst 6 tegn';
-  if (!SPECIAL_RE.test(password))       return 'Passord må inneholde minst ett spesialtegn (f.eks. !@#$%)';
+  if (!password || password.length < 6) return 'Password must be at least 6 characters';
+  if (!SPECIAL_RE.test(password))       return 'Password must contain at least one special character (e.g. !@#$%)';
   return null;
 }
 
@@ -87,17 +87,17 @@ function publicUser(row) {
 
 // ── Server-side e-postutsending (gjenbruker malene fra send-email.js) ───────
 async function sendAccountEmail(type, toEmail, toName, token) {
-  if (!process.env.RESEND_API_KEY) return { error: 'E-post er ikke konfigurert på serveren' };
+  if (!process.env.RESEND_API_KEY) return { error: 'Email is not configured on the server' };
   const siteUrl   = (process.env.SITE_URL || CANONICAL_URL).replace(/\/$/, '');
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'Sound Core <onboarding@resend.dev>';
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'SiriusFM <onboarding@resend.dev>';
   const resend    = new Resend(process.env.RESEND_API_KEY);
 
   let subject, html;
   if (type === 'activation') {
-    subject = `Aktiver Sound Core-kontoen din, ${toName}!`;
+    subject = `Aktiver SiriusFM-kontoen din, ${toName}!`;
     html    = activationHtml(toName, `${siteUrl}/#/activate/${token}`, siteUrl);
   } else {
-    subject = 'Tilbakestill passordet ditt på Sound Core';
+    subject = 'Tilbakestill passordet ditt på SiriusFM';
     html    = resetHtml(toName, `${siteUrl}/#/reset/${token}`);
   }
   try {
@@ -123,10 +123,10 @@ async function register(db, body) {
 
   // Eksplisitte forhåndssjekker gir presise feilmeldinger (i tillegg til DB-unikhet).
   const { data: byName } = await db.from('accounts').select('username').eq('username', username).maybeSingle();
-  if (byName) return { status: 409, body: { error: 'Brukernavn er tatt' } };
+  if (byName) return { status: 409, body: { error: 'That username is taken' } };
 
   const { data: byEmail } = await db.from('accounts').select('username').ilike('email', email).maybeSingle();
-  if (byEmail) return { status: 409, body: { error: 'E-postadressen er allerede i bruk' } };
+  if (byEmail) return { status: 409, body: { error: 'That email address is already in use' } };
 
   const activationToken = newToken();
   const row = {
@@ -144,9 +144,9 @@ async function register(db, body) {
   if (error) {
     // Unik-constraint kan slå til ved samtidige registreringer.
     if (error.code === '23505' || /duplicate|unique/i.test(error.message || '')) {
-      return { status: 409, body: { error: 'Brukernavn eller e-post er allerede i bruk' } };
+      return { status: 409, body: { error: 'That username or email is already in use' } };
     }
-    return { status: 500, body: { error: 'Kunne ikke opprette konto' } };
+    return { status: 500, body: { error: 'Could not create account' } };
   }
 
   // Send aktiverings-e-post server-side. Tokenet returneres ALDRI til klienten.
@@ -166,30 +166,30 @@ async function register(db, body) {
 async function login(db, body) {
   const id   = String(body.usernameOrEmail || body.username || '').trim();
   const pass = body.password || '';
-  if (!id || !pass) return { status: 400, body: { error: 'Mangler brukernavn/e-post eller passord' } };
+  if (!id || !pass) return { status: 400, body: { error: 'Missing username/email or password' } };
 
   // Slå opp på brukernavn ELLER e-post.
   let { data: row } = await db.from('accounts').select('*').eq('username', id).maybeSingle();
   if (!row) ({ data: row } = await db.from('accounts').select('*').ilike('email', id.toLowerCase()).maybeSingle());
 
-  if (!row)                              return { status: 401, body: { error: 'Bruker finnes ikke' } };
-  if (!verifyPassword(pass, row.password_hash)) return { status: 401, body: { error: 'Feil passord' } };
-  if (!row.activated) return { status: 403, body: { error: 'Konto ikke aktivert. Sjekk e-posten din.', notActivated: true } };
+  if (!row)                              return { status: 401, body: { error: 'Incorrect username or password' } };
+  if (!verifyPassword(pass, row.password_hash)) return { status: 401, body: { error: 'Incorrect username or password' } };
+  if (!row.activated) return { status: 403, body: { error: 'Account not activated. Check your email.', notActivated: true } };
 
   return { status: 200, body: { success: true, user: publicUser(row) } };
 }
 
 async function activate(db, body) {
   const token = String(body.token || '').trim();
-  if (!token) return { status: 400, body: { error: 'Mangler token' } };
+  if (!token) return { status: 400, body: { error: 'Missing token' } };
 
   const { data: row } = await db.from('accounts').select('*').eq('activation_token', token).maybeSingle();
-  if (!row) return { status: 400, body: { error: 'Ugyldig eller utløpt aktiveringslenke' } };
+  if (!row) return { status: 400, body: { error: 'Invalid or expired activation link' } };
 
   const { data, error } = await db.from('accounts')
     .update({ activated: true, activation_token: null })
     .eq('username', row.username).select().single();
-  if (error) return { status: 500, body: { error: 'Kunne ikke aktivere kontoen' } };
+  if (error) return { status: 500, body: { error: 'Could not activate the account' } };
 
   return { status: 200, body: { success: true, user: publicUser(data) } };
 }
@@ -216,25 +216,36 @@ async function reset(db, body) {
   const pass  = body.password || '';
   const err = validatePassword(pass);
   if (err) return { status: 400, body: { error: err } };
-  if (!token) return { status: 400, body: { error: 'Ugyldig eller utløpt lenke' } };
+  if (!token) return { status: 400, body: { error: 'Invalid or expired link' } };
 
   const { data: row } = await db.from('accounts').select('*').eq('reset_token', token).maybeSingle();
-  if (!row) return { status: 400, body: { error: 'Ugyldig eller utløpt lenke' } };
+  if (!row) return { status: 400, body: { error: 'Invalid or expired link' } };
   if (!row.reset_expiry || Date.now() > Number(row.reset_expiry)) {
-    return { status: 400, body: { error: 'Lenken har utløpt. Be om ny.' } };
+    return { status: 400, body: { error: 'The link has expired. Request a new one.' } };
   }
 
-  const { error } = await db.from('accounts')
-    .update({ password_hash: hashPassword(pass), reset_token: null, reset_expiry: null })
-    .eq('username', row.username);
-  if (error) return { status: 500, body: { error: 'Kunne ikke oppdatere passordet' } };
+  // Å fullføre en reset via et token vi sendte til e-postadressen beviser at
+  // brukeren eier e-posten — akkurat som aktiveringslenken gjør. Derfor aktiverer
+  // vi kontoen samtidig (og nuller et evt. gjenstående aktiverings-token), så en
+  // bruker som aldri rakk å aktivere ikke blir stengt ute etter en tilbakestilling.
+  const { data: updated, error } = await db.from('accounts')
+    .update({
+      password_hash:    hashPassword(pass),
+      reset_token:      null,
+      reset_expiry:     null,
+      activated:        true,
+      activation_token: null,
+    })
+    .eq('username', row.username).select().single();
+  if (error) return { status: 500, body: { error: 'Could not update the password' } };
 
-  return { status: 200, body: { success: true } };
+  // Returner brukeren så klienten kan logge inn rett etter reset om ønskelig.
+  return { status: 200, body: { success: true, user: publicUser(updated) } };
 }
 
 async function resend(db, body) {
   const id = String(body.usernameOrEmail || body.username || body.email || '').trim();
-  if (!id) return { status: 400, body: { error: 'Mangler brukernavn eller e-post' } };
+  if (!id) return { status: 400, body: { error: 'Missing username or email' } };
 
   let { data: row } = await db.from('accounts').select('*').eq('username', id).maybeSingle();
   if (!row) ({ data: row } = await db.from('accounts').select('*').ilike('email', id.toLowerCase()).maybeSingle());
@@ -260,7 +271,7 @@ async function resend(db, body) {
 // reklame, som lett kan angres via «Meld på igjen»). Påvirker ALDRI konto-e-post.
 async function setMarketingOptOut(db, body, value) {
   const email = String(body.email || '').toLowerCase().trim();
-  if (!email || !email.includes('@')) return { status: 400, body: { error: 'Ugyldig e-postadresse' } };
+  if (!email || !email.includes('@')) return { status: 400, body: { error: 'Invalid email address' } };
   const { error } = await db.from('accounts').update({ marketing_opt_out: value }).ilike('email', email);
   if (error) {
     // Kolonnen mangler (migrasjon 0004 ikke kjørt) → myk suksess; klienten beholder
@@ -286,12 +297,12 @@ module.exports = async (req, res) => {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) {
     // 503 → klienten faller pent tilbake til lokal modus (utvikling/ikke konfigurert).
-    return res.status(503).json({ error: 'Kontolagring er ikke konfigurert på serveren' });
+    return res.status(503).json({ error: 'Account storage is not configured on the server' });
   }
 
   const action = String((req.query && req.query.action) || (req.body && req.body.action) || '').trim();
   const handler = ACTIONS[action];
-  if (!handler) return res.status(400).json({ error: 'Ukjent eller manglende action' });
+  if (!handler) return res.status(400).json({ error: 'Unknown or missing action' });
 
   try {
     const db = createClient(url, serviceKey, { auth: { persistSession: false } });
@@ -304,7 +315,7 @@ module.exports = async (req, res) => {
     const probe = await db.from('accounts').select('username').limit(1);
     if (tableMissing(probe.error)) {
       console.warn('accounts-tabellen finnes ikke ennå — kjør supabase/migrations/0003_accounts.sql. Faller tilbake til lokal modus.');
-      return res.status(503).json({ error: 'Kontolagring ikke provisjonert', notProvisioned: true });
+      return res.status(503).json({ error: 'Account storage not provisioned', notProvisioned: true });
     }
 
     const body = req.body || {};
@@ -312,7 +323,7 @@ module.exports = async (req, res) => {
     return res.status(status).json(out);
   } catch (e) {
     console.error('auth-feil:', e);
-    return res.status(500).json({ error: 'Serverfeil i innlogging' });
+    return res.status(500).json({ error: 'Server error during login' });
   }
 };
 

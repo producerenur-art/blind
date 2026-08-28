@@ -54,17 +54,41 @@ const A1 = (() => {
     { key: 'wikipedia',  name: 'Wikipedia',  url: q => `https://en.wikipedia.org/w/index.php?search=${q}` },
     { key: 'brave',      name: 'Brave',      url: q => `https://search.brave.com/search?q=${q}` },
   ];
+  // Innhaldsfilter: porno/ulovleg blir stoppa før vi opnar noko eller spør A1.
+  // Returnerer true når søket er greitt, false når det er blokkert (og viser da
+  // varselet under søkefeltet).
+  function passesFilter(q) {
+    if (typeof SafeSearch === 'undefined') return true;
+    const verdict = SafeSearch.check(q);
+    if (verdict.ok) { showSearchWarn(null); return true; }
+    showSearchWarn(verdict);
+    if (typeof App !== 'undefined' && App.toast) App.toast(verdict.toast, 'error', 5000);
+    return false;
+  }
+
+  function showSearchWarn(verdict) {
+    const box = document.getElementById('a1-search-warn');
+    if (!box) return;
+    if (!verdict) { box.classList.remove('is-on'); box.textContent = ''; return; }
+    box.textContent = verdict.message;
+    box.classList.add('is-on');
+  }
+
   function searchOn(engineKey) {
     const inp = document.getElementById('a1-search-input');
     const q = (inp && inp.value.trim()) || '';
+    if (q && !passesFilter(q)) return;
     const eng = ENGINES.find(e => e.key === engineKey) || ENGINES[0];
-    const url = q ? eng.url(encodeURIComponent(q)) : eng.url('').replace(/[?&].*$/, '');
+    let url = q ? eng.url(encodeURIComponent(q)) : eng.url('').replace(/[?&].*$/, '');
+    // Slå på søkemotoren sitt eige familiefilter på resultatsida òg
+    if (typeof SafeSearch !== 'undefined') url = SafeSearch.withSafeParams(url, eng.key);
     window.open(url, '_blank', 'noopener,noreferrer');
   }
   function askA1FromSearch() {
     const inp = document.getElementById('a1-search-input');
     const q = (inp && inp.value.trim()) || '';
     if (!q) { inp && inp.focus(); return; }
+    if (!passesFilter(q)) return;
     chatAsk(q);
   }
 
@@ -73,6 +97,7 @@ const A1 = (() => {
   // ════════════════════════════════════════════════════════════════════
   const POS_KEY = 'a1_chat_pos';
   const MIN_KEY = 'a1_chat_min';
+  const HIDE_KEY = 'a1_chat_hidden';
   let chatHistory = [];
   let chatBusy = false;
   let voiceCtrl = null;   // delt stemme-lag (snakk inn / les opp / ta opp)
@@ -81,6 +106,8 @@ const A1 = (() => {
   function savePos(p) { try { localStorage.setItem(POS_KEY, JSON.stringify(p)); } catch {} }
   function loadCollapsed() { try { return localStorage.getItem(MIN_KEY) === '1'; } catch { return false; } }
   function saveCollapsed(v) { try { localStorage.setItem(MIN_KEY, v ? '1' : '0'); } catch {} }
+  function loadHidden() { try { return localStorage.getItem(HIDE_KEY) === '1'; } catch { return false; } }
+  function saveHidden(v) { try { localStorage.setItem(HIDE_KEY, v ? '1' : '0'); } catch {} }
 
   function applyCollapsed(collapsed) {
     const el = chatEl(); if (!el) return;
@@ -88,7 +115,7 @@ const A1 = (() => {
     const btn = document.getElementById('a1-chat-min');
     if (btn) {
       btn.innerHTML = Icon(collapsed ? 'chevron-up' : 'chevron-down');
-      btn.title = collapsed ? 'Opne chat' : 'Lukk chat';
+      btn.title = collapsed ? 'Open chat' : 'Close chat';
     }
   }
   function toggleChat() {
@@ -96,6 +123,20 @@ const A1 = (() => {
     const collapsed = !el.classList.contains('is-collapsed');
     saveCollapsed(collapsed);
     applyCollapsed(collapsed);
+  }
+
+  // Lukk heilt (skjul panelet) — flytande knapp nede til venstre opnar det att
+  function applyHidden(hidden) {
+    const el = chatEl(); if (el) el.classList.toggle('is-hidden', hidden);
+    const fab = document.getElementById('a1-chat-fab');
+    if (fab) fab.classList.toggle('is-on', hidden);
+  }
+  function closeChat() { saveHidden(true); applyHidden(true); }
+  function openChat(focus = true) {
+    saveHidden(false); applyHidden(false);
+    const el = chatEl();
+    if (el && el.classList.contains('is-collapsed')) { saveCollapsed(false); applyCollapsed(false); }
+    if (focus) { const inp = document.getElementById('a1-chat-input'); if (inp) inp.focus(); }
   }
 
   function chatEl() { return document.getElementById('a1-chat'); }
@@ -122,6 +163,17 @@ const A1 = (() => {
 
   async function chatSend(text) {
     if (!text || chatBusy) return;
+    // Same filter som søkefeltet — gjeld òg tekst frå mikrofonen.
+    if (typeof SafeSearch !== 'undefined') {
+      const verdict = SafeSearch.check(text);
+      if (!verdict.ok) {
+        // Ikkje push til chatHistory: blokkerte turar skal ikkje bli med vidare til AI-en.
+        chatAddMsg('user', text, false);
+        chatAddMsg('assistant', verdict.message, false);
+        if (typeof App !== 'undefined' && App.toast) App.toast(verdict.toast, 'error', 5000);
+        return;
+      }
+    }
     chatAddMsg('user', text);
     if (voiceCtrl) voiceCtrl.log('user', text);
     chatBusy = true;
@@ -138,9 +190,12 @@ const A1 = (() => {
     } catch (e) {
       if (typing) typing.remove();
       const soon = /not configured|konfigurert|503|credit|balance|billing|kreditt/i.test(String(e && e.message));
+      // Turen feila — fjern den ubesvarte bruker-meldingen frå historikken så rollane
+      // held fram med å veksle. Elles blir neste tur user,user → Anthropic 400.
+      if (chatHistory.length && chatHistory[chatHistory.length - 1].role === 'user') chatHistory.pop();
       chatAddMsg('assistant', soon
-        ? '✨ A1 er straks klar — chatten kobles på i det øyeblikket AI-nøkkelen er på plass.'
-        : 'Beklager, noe gikk galt. Prøv igjen om litt.', false);
+        ? '✨ A1 is almost ready — the chat comes online the moment the AI key is in place.'
+        : 'Sorry, something went wrong. Try again in a moment.', false);
     } finally {
       chatBusy = false;
     }
@@ -148,6 +203,7 @@ const A1 = (() => {
 
   // Offentleg: still A1 eit spørsmål (brukt av universal-søket)
   function chatAsk(text) {
+    openChat(false);                       // hent panelet fram om det er lukka
     const inp = document.getElementById('a1-chat-input');
     if (inp) inp.value = '';
     chatSend(text);
@@ -193,25 +249,29 @@ const A1 = (() => {
   function chatMarkup() {
     return `
       <div class="a1-chat" id="a1-chat">
-        <div class="a1-chat-head" id="a1-chat-head" title="Dra for å flytte">
+        <div class="a1-chat-head" id="a1-chat-head" title="Drag to move">
           <span class="a1-chat-grip">${Icon('grip')}</span>
-          <span class="a1-chat-title">${Icon('sparkles')} A1-chat</span>
-          <span class="a1-chat-hint">dra meg ↔ ↕</span>
-          <button type="button" class="a1-chat-min" id="a1-chat-min" onclick="A1.toggleChat()" title="Lukk chat" aria-label="Lukk eller opne chat">${Icon('chevron-down')}</button>
+          <span class="a1-chat-title">${Icon('sparkles')} A1 chat</span>
+          <span class="a1-chat-hint">drag me ↔ ↕</span>
+          <button type="button" class="a1-chat-min" id="a1-chat-min" onclick="A1.toggleChat()" title="Minimise chat" aria-label="Minimise or expand chat">${Icon('chevron-down')}</button>
+          <button type="button" class="a1-chat-min a1-chat-close" id="a1-chat-close" onclick="A1.closeChat()" title="Close chat" aria-label="Close chat">${Icon('x')}</button>
         </div>
         <div class="a1-chat-msgs" id="a1-chat-msgs"></div>
         <form class="a1-chat-form" id="a1-chat-form">
-          <input id="a1-chat-input" class="a1-chat-input" type="text" autocomplete="off" placeholder="Spør A1 om kva som helst…">
+          <input id="a1-chat-input" class="a1-chat-input" type="text" autocomplete="off" placeholder="Ask A1 anything…">
           <button class="a1-chat-send" type="submit" title="Send">${Icon('send')}</button>
         </form>
-      </div>`;
+      </div>
+      <button type="button" class="a1-chat-fab" id="a1-chat-fab" onclick="A1.openChat()" title="Open A1 chat" aria-label="Open A1 chat">
+        ${Icon('sparkles')}<span>A1 chat</span>
+      </button>`;
   }
 
   // ── Galleri-markup ───────────────────────────────────────────────────
   function linkCard(l, featured = false) {
     return `
-      <a class="a1-link-card${featured ? ' a1-link-card--feat' : ''}" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" title="${esc(l.name)} — opnar i ny fane">
-        ${featured ? `<span class="a1-feat-badge">${Icon('star')} Ukas nettstad</span>` : ''}
+      <a class="a1-link-card${featured ? ' a1-link-card--feat' : ''}" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" title="${esc(l.name)} — opens in a new tab">
+        ${featured ? `<span class="a1-feat-badge">${Icon('star')} Site of the week</span>` : ''}
         <img class="a1-link-logo" src="${favicon(l.url)}" alt="" loading="lazy"
              onerror="this.style.display='none'">
         <span class="a1-link-name">${esc(l.name)}</span>
@@ -222,7 +282,7 @@ const A1 = (() => {
   function videoMarkup() {
     const vids = allVideos();
     if (!vids.length) {
-      return `<div class="a1-video-empty">${Icon('film')}<p>Ingen videoar enno. Lim inn ein YouTube- eller video-lenke nedanfor — den roterer automatisk kvar veke.</p></div>`;
+      return `<div class="a1-video-empty">${Icon('film')}<p>No videos yet. Paste a YouTube or video link below — it rotates automatically every week.</p></div>`;
     }
     const feat = rotate(vids) || vids[0];
     const yt = ytId(feat.url);
@@ -239,7 +299,7 @@ const A1 = (() => {
     }).join('');
     return `
       <div class="a1-video-player">
-        <span class="a1-feat-badge">${Icon('star')} Ukas video</span>
+        <span class="a1-feat-badge">${Icon('star')} Video of the week</span>
         ${player}
         <div class="a1-video-cap">${esc(feat.title || host(feat.url))}</div>
       </div>
@@ -259,27 +319,29 @@ const A1 = (() => {
       <div class="a1-page">
         <header class="a1-hero">
           <div class="a1-hero-badge">${Icon('sparkles')} A1</div>
-          <h1>A1 — din AI + heile nettet</h1>
-          <p>Spør A1 om kva som helst, søk på heile verdsveven, og utforsk ukas utvalde nettstader og videoar. Alt gratis.</p>
+          <h1>A1 — your AI + the whole web</h1>
+          <p>Ask A1 anything, search the entire web, and explore this week's featured sites and videos. All free.</p>
         </header>
 
         <section class="a1-search-box">
           <div class="a1-search-row">
             <span class="a1-search-ico">${Icon('search')}</span>
             <input id="a1-search-input" class="a1-search-input" type="text" autocomplete="off"
-                   placeholder="Søk heile nettet, eller spør A1…"
+                   placeholder="Search the whole web, or ask A1…"
                    onkeydown="if(event.key==='Enter'){event.preventDefault();A1.askA1FromSearch();}">
-            <button class="btn btn-primary a1-search-ask" onclick="A1.askA1FromSearch()">${Icon('sparkles')} Spør A1</button>
+            <button class="btn btn-primary a1-search-ask" onclick="A1.askA1FromSearch()">${Icon('sparkles')} Ask A1</button>
           </div>
           <div class="a1-search-engines">
-            <span class="a1-search-engines-lbl">Opne i:</span>
+            <span class="a1-search-engines-lbl">Open in:</span>
             ${ENGINES.map(e => `<button class="a1-engine-btn" onclick="A1.searchOn('${e.key}')">${esc(e.name)} ${Icon('arrow-up-right')}</button>`).join('')}
           </div>
+          <p class="a1-search-warn" id="a1-search-warn" role="alert"></p>
+          <p class="a1-search-note">${Icon('lock')} Family-friendly search — adult and illegal searches are blocked, and safe search is always on.</p>
         </section>
 
         <section class="a1-section">
-          <h2>${Icon('globe')} Ukas nettstader</h2>
-          <p class="a1-section-sub">Roterer kvar veke. Klikk ein logo — nettstaden opnar i ny fane.</p>
+          <h2>${Icon('globe')} Sites of the week</h2>
+          <p class="a1-section-sub">Rotates every week. Click a logo — the site opens in a new tab.</p>
           <div class="a1-link-grid">
             ${linkCard(featLink, true)}
             ${restLinks.map(l => linkCard(l)).join('')}
@@ -287,15 +349,15 @@ const A1 = (() => {
         </section>
 
         <section class="a1-section">
-          <h2>${Icon('film')} Ukas videoar</h2>
-          <p class="a1-section-sub">Videoar roterer kvar veke. ${user ? 'Lim inn ein lenke for å leggje til din eigen.' : ''}</p>
+          <h2>${Icon('film')} Videos of the week</h2>
+          <p class="a1-section-sub">Videos rotate every week. ${user ? 'Paste a link to add your own.' : ''}</p>
           <div id="a1-video-wrap">${videoMarkup()}</div>
           ${user ? `
           <form class="a1-video-add" id="a1-video-add" onsubmit="return A1.addVideo(event)">
-            <input id="a1-vid-url" type="url" class="a1-vid-input" placeholder="https://youtube.com/watch?v=… eller .mp4-lenke" required>
-            <input id="a1-vid-title" type="text" class="a1-vid-input a1-vid-title" placeholder="Tittel (valfritt)">
-            <button type="submit" class="btn btn-gold">${Icon('plus')} Legg til</button>
-          </form>` : `<p class="a1-video-login">${Icon('sparkles')} <a href="#/register">Lag ein bruker</a> for å leggje til dine eigne videoar.</p>`}
+            <input id="a1-vid-url" type="url" class="a1-vid-input" placeholder="https://youtube.com/watch?v=… or .mp4 link" required>
+            <input id="a1-vid-title" type="text" class="a1-vid-input a1-vid-title" placeholder="Title (optional)">
+            <button type="submit" class="btn btn-gold">${Icon('plus')} Add</button>
+          </form>` : `<p class="a1-video-login">${Icon('sparkles')} <a href="#/register">Create an account</a> to add your own videos.</p>`}
         </section>
       </div>
 
@@ -315,7 +377,7 @@ const A1 = (() => {
       voiceCtrl = Voice.create({
         ns: 'a1',
         withLang: true,                                            // eigen språkveljar i panelet
-        defaultLang: () => localStorage.getItem('stellar-lang') || 'no',
+        defaultLang: () => localStorage.getItem('stellar-lang') || 'en',
         onText: (text) => chatAsk(text),
       });
       const chat = chatEl();
@@ -324,6 +386,7 @@ const A1 = (() => {
     }
 
     applyCollapsed(loadCollapsed());
+    applyHidden(loadHidden());
     const form = document.getElementById('a1-chat-form');
     if (form) form.addEventListener('submit', e => { e.preventDefault();
       const inp = document.getElementById('a1-chat-input'); const v = inp.value.trim();
@@ -331,7 +394,7 @@ const A1 = (() => {
 
     // Førstegongs-helsing om chatten er tom
     if (!chatHistory.length) {
-      chatAddMsg('assistant', 'Hei! Eg er A1 🌌 Spør meg om kva som helst — eller bruk søkefeltet over for å søke heile nettet. Dra meg dit du vil på skjermen!', false);
+      chatAddMsg('assistant', 'Hi! I am A1 🌌 Ask me anything — or use the search field above to search the whole web. Drag me anywhere on the screen!', false);
     } else {
       // gjenoppbygg synleg historikk ved retur til fana
       chatHistory.forEach(m => chatAddMsg(m.role, m.content, false));
@@ -351,7 +414,7 @@ const A1 = (() => {
     if (wrap) wrap.innerHTML = videoMarkup();
     document.getElementById('a1-vid-url').value = '';
     document.getElementById('a1-vid-title').value = '';
-    if (typeof App !== 'undefined' && App.toast) App.toast('Video lagt til ✓', 'success');
+    if (typeof App !== 'undefined' && App.toast) App.toast('Video added ✓', 'success');
     return false;
   }
 
@@ -365,8 +428,8 @@ const A1 = (() => {
       ? `<iframe class="a1-video-frame" src="https://www.youtube-nocookie.com/embed/${yt}?autoplay=1" title="${esc(v.title||'')}" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`
       : `<video class="a1-video-frame" src="${esc(v.url)}" controls autoplay playsinline></video>`;
     wrap.querySelector('.a1-video-player').innerHTML =
-      `<span class="a1-feat-badge">${Icon('star')} Spelar no</span>${player}<div class="a1-video-cap">${esc(v.title||host(v.url))}</div>`;
+      `<span class="a1-feat-badge">${Icon('star')} Now playing</span>${player}<div class="a1-video-cap">${esc(v.title||host(v.url))}</div>`;
   }
 
-  return { render, searchOn, askA1FromSearch, addVideo, featureVideo, chatAsk, toggleChat };
+  return { render, searchOn, askA1FromSearch, addVideo, featureVideo, chatAsk, toggleChat, closeChat, openChat };
 })();

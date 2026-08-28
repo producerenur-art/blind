@@ -86,9 +86,9 @@ function testGenreUrls() {
       `fanen «${key}» skal ha sin egen URL`);
   }
   assert.ok(html.includes('href="#/magazine"'), 'Alle-fanen skal peke på #/magazine');
-  // Antall faner = 12 sjangre + «Alle» = 13 (<a>-chips, ikke .mag-chips-containeren)
-  assert.strictEqual((html.match(/<a class="mag-chip/g) || []).length, 13, 'det skal være 13 faner');
-  ok('alle 13 faner er <a>-lenker med hver sin URL');
+  // Antall faner = 15 sjangre + «Alle» = 16 (<a>-chips, ikke .mag-chips-containeren)
+  assert.strictEqual((html.match(/<a class="mag-chip/g) || []).length, 16, 'det skal være 16 faner');
+  ok('alle 16 faner er <a>-lenker med hver sin URL');
 }
 
 function testFiltering() {
@@ -99,7 +99,7 @@ function testFiltering() {
   Magazine.renderGenre('psytrance');
   let html = app.innerHTML;
   assert.ok(html.includes('mag-chip active" data-g="psytrance"'), 'psytrance-fanen skal være aktiv');
-  assert.ok(html.includes('Psybient-arven'), 'en psytrance-sak skal vises');
+  assert.ok(html.includes('The psybient legacy'), 'en psytrance-sak skal vises');
   assert.ok(!html.includes('Anjunadeep 16'), 'en ikke-psytrance-sak skal IKKE vises');
   ok('renderGenre(«psytrance») viser kun psytrance-innhold + aktiv fane');
 
@@ -107,7 +107,7 @@ function testFiltering() {
   Magazine.renderGenre('finnes-ikke');
   html = app.innerHTML;
   assert.ok(html.includes('mag-chip active" data-g="alle"'), 'ukjent sjanger skal aktivere «Alle»');
-  assert.ok(html.includes('Anjunadeep 16') && html.includes('Psybient-arven'),
+  assert.ok(html.includes('Anjunadeep 16') && html.includes('The psybient legacy'),
     'fallback skal vise alle saker');
   ok('ukjent sjanger faller trygt tilbake til «Alle»');
 }

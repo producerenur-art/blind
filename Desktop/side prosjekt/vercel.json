@@ -1,0 +1,37 @@
+{
+  "rewrites": [
+    {
+      "source": "/s/:data",
+      "destination": "/api/share?d=:data"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/magazine?warm=1",
+      "schedule": "0 6,18 * * *"
+    },
+    {
+      "path": "/api/radio-fresh",
+      "schedule": "30 6,18 * * *"
+    },
+    {
+      "path": "/api/visuals-fresh",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/live-reminder",
+      "schedule": "0 16 * * 5"
+    }
+  ],
+  "functions": {
+    "api/magazine.js": {
+      "maxDuration": 120
+    },
+    "api/visuals-fresh.js": {
+      "maxDuration": 60
+    },
+    "api/live-reminder.js": {
+      "maxDuration": 300
+    }
+  }
+}

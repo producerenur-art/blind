@@ -9,14 +9,18 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const { session_id } = req.query;
-  if (!session_id) return res.status(400).json({ error: 'Mangler session_id' });
+  if (!session_id) return res.status(400).json({ error: 'Missing session_id' });
 
   try {
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
-    const paid = session.payment_status === 'paid' || session.status === 'complete';
+    // Krev at betalinga faktisk er gjennomført. `session.status === 'complete'` er IKKJE
+    // nok: utsette/asynkrone betalingsmetodar kan gi ein «complete» sesjon som framleis
+    // er `unpaid` — då skal vi ikkje låse opp Pro. `no_payment_required` dekker
+    // gratis/trial-tilfelle.
+    const paid = session.payment_status === 'paid' || session.payment_status === 'no_payment_required';
     if (!paid) {
-      return res.status(402).json({ error: 'Betaling ikke fullført' });
+      return res.status(402).json({ error: 'Payment not completed' });
     }
 
     res.status(200).json({

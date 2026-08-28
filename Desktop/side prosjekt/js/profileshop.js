@@ -32,7 +32,7 @@ const ProfileShop = (() => {
   }
 
   function price(p) {
-    if (p.is_free || (p.price_ore || 0) <= 0) return 'Gratis';
+    if (p.is_free || (p.price_ore || 0) <= 0) return 'Free';
     return `${Math.round(p.price_ore / 100)} kr`;
   }
   function dur(sec) {
@@ -54,12 +54,12 @@ const ProfileShop = (() => {
       panel.innerHTML = wrap(`
         <div class="ps-empty">
           ${storeHero()}
-          <p>Butikken er ikke koblet til ennå. Prøv igjen senere.</p>
+          <p>The store is not connected yet. Try again later.</p>
         </div>`);
       return;
     }
 
-    panel.innerHTML = wrap(`${storeHero()}<div class="ps-loading">Laster butikk…</div>`);
+    panel.innerHTML = wrap(`${storeHero()}<div class="ps-loading">Loading store…</div>`);
 
     // Hent selgerens publiserte produkter (offentlig butikk).
     const products = await Marketplace.listSellerProducts(username).catch(() => []);
@@ -84,8 +84,8 @@ const ProfileShop = (() => {
       <div class="ps-hero">
         <div class="ps-hero-icon">${icon('store')}</div>
         <div>
-          <h3 class="ps-hero-title">Butikk</h3>
-          <p class="ps-hero-sub">Kjøp og selg låter direkte fra profilen.</p>
+          <h3 class="ps-hero-title">Store</h3>
+          <p class="ps-hero-sub">Buy and sell tracks directly from the profile.</p>
         </div>
       </div>`;
   }
@@ -93,7 +93,7 @@ const ProfileShop = (() => {
   // ── Besøkende: selgerens butikk ─────────────────────────────────────────
   function visitorStore(products) {
     if (!products.length) {
-      return `<div class="ps-empty"><p>Ingen sanger til salgs her ennå.</p></div>`;
+      return `<div class="ps-empty"><p>No tracks for sale here yet.</p></div>`;
     }
     return `<div class="ps-grid">${products.map(p => productCard(p, false)).join('')}</div>`;
   }
@@ -104,10 +104,10 @@ const ProfileShop = (() => {
       : `<div class="ps-cover ps-cover-ph">${icon('music')}</div>`;
     const free = p.is_free || (p.price_ore || 0) <= 0;
     const action = owner
-      ? `<span class="ps-tag">Din</span>`
+      ? `<span class="ps-tag">Yours</span>`
       : (free
-          ? `<button class="btn btn-primary btn-sm" onclick="ProfileShop.buy('${esc(p.id)}')">${icon('download')} Gratis</button>`
-          : `<button class="btn btn-gold btn-sm" onclick="ProfileShop.buy('${esc(p.id)}')">${icon('cart')} Kjøp · ${price(p)}</button>`);
+          ? `<button class="btn btn-primary btn-sm" onclick="ProfileShop.buy('${esc(p.id)}')">${icon('download')} Free</button>`
+          : `<button class="btn btn-gold btn-sm" onclick="ProfileShop.buy('${esc(p.id)}')">${icon('cart')} Buy · ${price(p)}</button>`);
     return `
       <div class="ps-card">
         ${cover}
@@ -130,10 +130,10 @@ const ProfileShop = (() => {
     if (seq !== _renderSeq) return '';
 
     const sellerBanner = status.onboarding_complete
-      ? `<div class="ps-banner ps-banner-ok">${icon('check')} Du er klar til å selge betalte sanger. Utbetalinger går via Stripe.</div>`
+      ? `<div class="ps-banner ps-banner-ok">${icon('check')} You are ready to sell paid tracks. Payouts go via Stripe.</div>`
       : `<div class="ps-banner">
-           <div>${icon('info')} Gratis nedlasting funker for alle med en gang. For <strong>betalt salg</strong> må du fullføre Stripe-oppsett (engangs).</div>
-           <button class="btn btn-ghost btn-sm" onclick="ProfileShop.becomeSeller()">${icon('box')} Bli selger (Stripe)</button>
+           <div>${icon('info')} Free download works for everyone right away. For <strong>paid sales</strong> you must complete Stripe setup (one-time).</div>
+           <button class="btn btn-ghost btn-sm" onclick="ProfileShop.becomeSeller()">${icon('box')} Become a seller (Stripe)</button>
          </div>`;
 
     // Egne sanger fra musikkbiblioteket — kan legges ut.
@@ -141,28 +141,28 @@ const ProfileShop = (() => {
     if (seq !== _renderSeq) return '';
     const listing = songs.length
       ? `<div class="ps-list">${songs.map(s => sellRow(s)).join('')}</div>`
-      : `<p class="ps-muted">Du har ingen opplastede sanger ennå. Last opp musikk i <a href="#/edit">profileditoren</a> først, så dukker de opp her.</p>`;
+      : `<p class="ps-muted">You have no uploaded tracks yet. Upload music in the <a href="#/edit">profile editor</a> first, and they will show up here.</p>`;
 
     const myStore = products.length
       ? `<div class="ps-grid">${products.map(p => productCard(p, true)).join('')}</div>`
-      : `<p class="ps-muted">Ingen sanger lagt ut for salg ennå. Trykk «Legg ut» på en sang over.</p>`;
+      : `<p class="ps-muted">No tracks listed for sale yet. Tap "List" on a track above.</p>`;
 
     const myBuys = purchases.length
       ? `<div class="ps-list">${purchases.map(buyRow).join('')}</div>`
-      : `<p class="ps-muted">Du har ingen kjøp ennå.</p>`;
+      : `<p class="ps-muted">You have no purchases yet.</p>`;
 
     return `
       ${sellerBanner}
       <div class="ps-section">
-        <div class="ps-section-title">${icon('plus')} Legg ut en sang</div>
+        <div class="ps-section-title">${icon('plus')} List a track</div>
         ${listing}
       </div>
       <div class="ps-section">
-        <div class="ps-section-title">${icon('store')} I butikken din · ${products.length}</div>
+        <div class="ps-section-title">${icon('store')} In your store · ${products.length}</div>
         ${myStore}
       </div>
       <div class="ps-section">
-        <div class="ps-section-title">${icon('cart')} Mine kjøp</div>
+        <div class="ps-section-title">${icon('cart')} My purchases</div>
         ${myBuys}
       </div>`;
   }
@@ -185,18 +185,18 @@ const ProfileShop = (() => {
   function sellRow(rec) {
     const id = rec._id || rec.id || rec.trackId;
     const status = rec.forSale
-      ? `<span class="ps-tag ps-tag-live">${rec.saleFree ? 'Gratis' : (rec.salePriceNok || 0) + ' kr'}</span>`
+      ? `<span class="ps-tag ps-tag-live">${rec.saleFree ? 'Free' : (rec.salePriceNok || 0) + ' kr'}</span>`
       : '';
     return `
       <div class="ps-row">
         <div class="ps-row-cover">${rec.coverUrl ? `<img src="${esc(rec.coverUrl)}" alt="" loading="lazy">` : icon('music')}</div>
         <div class="ps-row-meta">
-          <div class="ps-row-title">${esc(rec.name || rec.title || 'Uten tittel')}</div>
+          <div class="ps-row-title">${esc(rec.name || rec.title || 'Untitled')}</div>
           <div class="ps-row-sub">${esc(rec.artist || '')}${rec.duration ? ' · ' + dur(rec.duration) : ''}</div>
         </div>
         ${status}
         <button class="btn btn-gold btn-sm" onclick="ProfileShop.openSellModal('${esc(id)}')">
-          ${icon('tag')} ${rec.forSale ? 'Endre' : 'Legg ut'}
+          ${icon('tag')} ${rec.forSale ? 'Edit' : 'List'}
         </button>
       </div>`;
   }
@@ -209,7 +209,7 @@ const ProfileShop = (() => {
           <div class="ps-row-title">${esc(p.title)}</div>
           <div class="ps-row-sub">${esc(p.artist || '')}${p.seller ? ' · @' + esc(p.seller) : ''}</div>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="ProfileShop.download('${esc(p.productId)}')">${icon('download')} Last ned</button>
+        <button class="btn btn-ghost btn-sm" onclick="ProfileShop.download('${esc(p.productId)}')">${icon('download')} Download</button>
       </div>`;
   }
 
@@ -217,21 +217,21 @@ const ProfileShop = (() => {
   async function openSellModal(trackId) {
     if (typeof DB === 'undefined') return;
     const rec = await DB.get('music', trackId).catch(() => null);
-    if (!rec) { toast('Fant ikke sporet', 'error'); return; }
+    if (!rec) { toast('Could not find the track', 'error'); return; }
     const box = document.getElementById('modal-box');
     if (!box) return;
 
     const free = !!rec.saleFree;
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${icon('tag')} ${rec.forSale ? 'Endre i butikken' : 'Legg ut for salg'}</h2>
-        <button class="btn-icon" onclick="App.closeModal()" aria-label="Lukk">${icon('x')}</button>
+        <h2>${icon('tag')} ${rec.forSale ? 'Edit in store' : 'List for sale'}</h2>
+        <button class="btn-icon" onclick="App.closeModal()" aria-label="Close">${icon('x')}</button>
       </div>
       <div class="ps-modal-body">
         <div class="ps-modal-track">
           <div class="ps-row-cover">${rec.coverUrl ? `<img src="${esc(rec.coverUrl)}" alt="">` : icon('music')}</div>
           <div>
-            <div class="ps-row-title">${esc(rec.name || rec.title || 'Uten tittel')}</div>
+            <div class="ps-row-title">${esc(rec.name || rec.title || 'Untitled')}</div>
             <div class="ps-row-sub">${esc(rec.artist || '')}${rec.duration ? ' · ' + dur(rec.duration) : ''}</div>
           </div>
         </div>
@@ -239,23 +239,23 @@ const ProfileShop = (() => {
         <label class="ps-check">
           <input type="checkbox" id="ps-free" ${free ? 'checked' : ''}
             onchange="document.getElementById('ps-price-wrap').style.display=this.checked?'none':'block'">
-          Gratis nedlasting (krever ikke Stripe)
+          Free download (does not require Stripe)
         </label>
 
         <div class="form-group" id="ps-price-wrap" style="display:${free ? 'none' : 'block'}">
-          <label class="form-label">Pris (NOK)</label>
+          <label class="form-label">Price (NOK)</label>
           <div class="ps-price-row">
-            <input class="form-input" id="ps-price" type="number" min="0" step="1" value="${rec.salePriceNok || ''}" placeholder="f.eks. 49">
-            <button class="btn btn-ghost btn-sm" id="ps-ai-price" onclick="ProfileShop.aiSuggestPrice('${esc(trackId)}')">${icon('sparkles')} Foreslå pris med AI</button>
+            <input class="form-input" id="ps-price" type="number" min="0" step="1" value="${rec.salePriceNok || ''}" placeholder="e.g. 49">
+            <button class="btn btn-ghost btn-sm" id="ps-ai-price" onclick="ProfileShop.aiSuggestPrice('${esc(trackId)}')">${icon('sparkles')} Suggest price with AI</button>
           </div>
           <div id="ps-ai-out" class="ps-ai-out"></div>
         </div>
 
         <div class="ps-modal-actions">
-          <button class="btn btn-gold" onclick="ProfileShop.submitListing('${esc(trackId)}')">${icon('store')} ${rec.forSale ? 'Oppdater i butikk' : 'Legg ut'}</button>
-          <button class="btn btn-ghost" onclick="App.closeModal()">Avbryt</button>
+          <button class="btn btn-gold" onclick="ProfileShop.submitListing('${esc(trackId)}')">${icon('store')} ${rec.forSale ? 'Update in store' : 'List'}</button>
+          <button class="btn btn-ghost" onclick="App.closeModal()">Cancel</button>
         </div>
-        <p class="ps-fine">Betalt salg krever fullført Stripe-oppsett («Bli selger»). Gratis nedlasting krever det ikke.</p>
+        <p class="ps-fine">Paid sales require completed Stripe setup ("Become a seller"). Free download does not.</p>
       </div>`;
     App.openModal();
   }
@@ -272,26 +272,26 @@ const ProfileShop = (() => {
   async function aiSuggestPrice(trackId) {
     const out = document.getElementById('ps-ai-out');
     const btn = document.getElementById('ps-ai-price');
-    if (typeof AI === 'undefined' || !AI.callClaude) { if (out) out.textContent = 'AI er ikke tilgjengelig.'; return; }
+    if (typeof AI === 'undefined' || !AI.callClaude) { if (out) out.textContent = 'AI is not available.'; return; }
     const rec = await DB.get('music', trackId).catch(() => null);
-    if (out) out.innerHTML = `${icon('sparkles')} AI tenker…`;
+    if (out) out.innerHTML = `${icon('sparkles')} AI is thinking…`;
     if (btn) btn.disabled = true;
     try {
-      const ctx = `Tittel: ${rec?.name || rec?.title || 'ukjent'}. Artist: ${rec?.artist || 'ukjent'}. Lengde: ${dur(rec?.duration) || 'ukjent'}. Sjanger/stil: ${rec?.genre || 'elektronisk musikk'}.`;
+      const ctx = `Title: ${rec?.name || rec?.title || 'unknown'}. Artist: ${rec?.artist || 'unknown'}. Length: ${dur(rec?.duration) || 'unknown'}. Genre/style: ${rec?.genre || 'electronic music'}.`;
       const txt = await AI.callClaude(
-        'Du er en prisrådgiver for en uavhengig musikk-markedsplass (Bandcamp-stil) i Norge. Foreslå en rimelig salgspris i NOK for en enkelt nedlastbar låt fra en uavhengig artist. Typisk spenn er 15–79 kr. Svar med JSON: {"pris": <heltall NOK>, "begrunnelse": "<én kort setning på norsk bokmål>"}. Kun JSON.',
+        'You are a pricing advisor for an independent music marketplace (Bandcamp-style) in Norway. Suggest a reasonable sale price in NOK for a single downloadable track from an independent artist. Typical range is 15–79 kr. Reply with JSON: {"pris": <integer NOK>, "begrunnelse": "<one short sentence in English>"}. JSON only.',
         ctx, 120);
       let pris = null, why = '';
       try { const o = JSON.parse(txt.match(/\{[\s\S]*\}/)?.[0] || txt); pris = parseInt(o.pris, 10); why = o.begrunnelse || ''; } catch (_) {}
       if (pris && pris > 0) {
         const inp = document.getElementById('ps-price');
         if (inp) inp.value = pris;
-        if (out) out.innerHTML = `${icon('sparkles')} AI foreslår <strong>${pris} kr</strong>${why ? ' — ' + esc(why) : ''}`;
+        if (out) out.innerHTML = `${icon('sparkles')} AI suggests <strong>${pris} kr</strong>${why ? ' — ' + esc(why) : ''}`;
       } else if (out) {
         out.textContent = txt.slice(0, 160);
       }
     } catch (e) {
-      if (out) out.textContent = 'Kunne ikke hente forslag: ' + e.message;
+      if (out) out.textContent = 'Could not get a suggestion: ' + e.message;
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -305,7 +305,7 @@ const ProfileShop = (() => {
     s.textContent = `
       .ps-wrap{padding:.5rem 0 1.5rem}
       .ps-hero{display:flex;align-items:center;gap:.85rem;margin-bottom:1.1rem}
-      .ps-hero-icon{font-size:1.8rem;color:var(--accent,#7c3aed);display:flex}
+      .ps-hero-icon{font-size:1.8rem;color:#38bdf8;display:flex}
       .ps-hero-icon svg{width:1.8rem;height:1.8rem}
       .ps-hero-title{margin:0;color:var(--text,#fff);font-size:1.15rem}
       .ps-hero-sub{margin:.1rem 0 0;color:var(--text2,#aaa);font-size:.85rem}
@@ -314,13 +314,13 @@ const ProfileShop = (() => {
       .ps-banner-ok{border-color:rgba(80,200,120,.4)}
       .ps-section{margin-bottom:1.4rem}
       .ps-section-title{display:flex;align-items:center;gap:.45rem;font-weight:600;color:var(--text,#fff);font-size:.95rem;margin-bottom:.6rem}
-      .ps-section-title svg{width:1.05rem;height:1.05rem;color:var(--accent,#7c3aed)}
+      .ps-section-title svg{width:1.05rem;height:1.05rem;color:#38bdf8}
       .ps-muted{color:var(--text3,#888);font-size:.83rem;margin:.25rem 0}
-      .ps-muted a{color:var(--accent,#7c3aed)}
+      .ps-muted a{color:#38bdf8}
       .ps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.7rem}
       .ps-card{display:flex;align-items:center;gap:.65rem;background:var(--surface,#1b1b22);border:1px solid var(--border,#333);border-radius:12px;padding:.6rem}
       .ps-cover,.ps-row-cover{width:48px;height:48px;border-radius:8px;flex-shrink:0;object-fit:cover}
-      .ps-cover-ph,.ps-row-cover{display:flex;align-items:center;justify-content:center;background:rgba(124,58,237,.12);color:var(--accent,#7c3aed)}
+      .ps-cover-ph,.ps-row-cover{display:flex;align-items:center;justify-content:center;background:rgba(34,197,94,.12);color:#38bdf8}
       .ps-row-cover img{width:100%;height:100%;object-fit:cover;border-radius:8px}
       .ps-card-meta,.ps-row-meta{flex:1;min-width:0}
       .ps-card-title,.ps-row-title{font-weight:600;color:var(--text,#fff);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

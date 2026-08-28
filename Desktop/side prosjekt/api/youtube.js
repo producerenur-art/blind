@@ -15,12 +15,12 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   if (!process.env.YOUTUBE_API_KEY) {
-    return res.status(503).json({ error: 'YouTube-søk er ikkje konfigurert på serveren' });
+    return res.status(503).json({ error: 'YouTube search is not configured on the server' });
   }
 
   const q = String((req.query && req.query.q) || '').trim();
-  if (!q) return res.status(400).json({ error: 'Mangler søkeord' });
-  if (q.length > 120) return res.status(400).json({ error: 'Søkeordet er for langt' });
+  if (!q) return res.status(400).json({ error: 'Missing search term' });
+  if (q.length > 120) return res.status(400).json({ error: 'Search term is too long' });
 
   const params = new URLSearchParams({
     part: 'snippet',
@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
     if (!r.ok) {
       const reason = data?.error?.errors?.[0]?.reason || '';
       if (reason === 'quotaExceeded')
-        return res.status(429).json({ error: 'YouTube-søkekvoten er brukt opp for i dag' });
+        return res.status(429).json({ error: 'The YouTube search quota is used up for today' });
       console.error('YouTube API feil:', r.status, data?.error?.message);
       return res.status(502).json({ error: data?.error?.message || 'YouTube-søk feilet' });
     }

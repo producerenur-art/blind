@@ -94,6 +94,18 @@ const sandbox = {
     invalidateBlobCache() {},
   },
   Community: { subscribe() {} },
+  // Sanntidslaget (js/realtime.js). profile.js sin statusBadgeHtml() les SC.statusOf
+  // ved kvar rendering, så utan denne stubben kastar renderView før noko som helst
+  // markup blir laga — og testen ser berre spinneren.
+  SC: {
+    STATUS_VALID: ['online', 'away', 'sleeping', 'offline'],
+    statusOf() { return 'online'; },
+    setStatus() {},
+    soundOn() { return false; },
+    toggleSound() {},
+    playDing() {},
+    NS: {},
+  },
 };
 sandbox.window = sandbox;
 vm.createContext(sandbox);
@@ -135,7 +147,7 @@ async function testRender() {
     const html = await renderHtml({ username: 'dj_test' }, baseUser({ musicIds: ['m1'] }));
     assert.ok(html.includes('music-delete-btn'), 'eier: slett-knappen rendres');
     assert.ok(html.includes("Profile.deleteTrack('m1','dj_test')"), 'eier: knappen kaller deleteTrack med id + brukernavn');
-    assert.ok(html.includes('Slett denne sangen'), 'eier: knappen har slett-tittel');
+    assert.ok(html.includes('Delete this song'), 'eier: knappen har slett-tittel');
     ok('eier → «Slett denne sangen»-knapp på hvert spor');
   }
 
@@ -164,7 +176,7 @@ async function testDeleteTrack() {
   const upd = updateCalls.find(c => 'musicIds' in c.patch);
   assert.ok(upd, 'brukeren oppdateres med ny musicIds');
   assert.deepStrictEqual(upd.patch.musicIds, ['m2'], 'm1 fjernet, m2 beholdt');
-  assert.ok(toasts.some(t => /slettet/i.test(t.msg)), 'gir «slettet»-toast');
+  assert.ok(toasts.some(t => /deleted/i.test(t.msg)), 'gir «deleted»-toast');
   ok('eier + bekreftet: cover + sang slettet, musicIds = [m2]');
 
   // Sang uten cover → kun sang-posten slettes (ingen media-delete)

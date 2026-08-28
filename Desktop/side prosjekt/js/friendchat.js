@@ -112,15 +112,15 @@ const FriendChat = (() => {
     const total = totalUnread();
     const badge = total > 0 ? `<span class="fc-badge">${total > 99 ? '99+' : total}</span>` : '';
     const left = (_active.type === 'list')
-      ? `<span class="fc-bar-title">${Icon('users')} Venner ${badge}</span>`
-      : `<button class="fc-bar-back" onclick="FriendChat.back()" title="Tilbake">${Icon('chevron-left') || '‹'}</button>
-         <span class="fc-bar-title">${_active.type === 'group' ? `${Icon('users')} Gruppe-lounge` : esc(_active.name || _active.friend)}</span>`;
+      ? `<span class="fc-bar-title">${Icon('users')} Friends ${badge}</span>`
+      : `<button class="fc-bar-back" onclick="FriendChat.back()" title="Back">${Icon('chevron-left') || '‹'}</button>
+         <span class="fc-bar-title">${_active.type === 'group' ? `${Icon('users')} Group lounge` : esc(_active.name || _active.friend)}</span>`;
     const sndOn = window.SC ? SC.soundOn() : true;
     bar.innerHTML = `
       <div class="fc-bar-left">${left}</div>
       <div class="fc-bar-right">
-        <button class="fc-bar-btn" onclick="FriendChat.toggleSound(this)" title="Lyd av/på">${sndOn ? Icon('volume') : (Icon('volume-x') || '🔇')}</button>
-        <button class="fc-bar-btn" id="fc-min-btn" onclick="FriendChat.toggleMin()" title="${_min ? 'Utvid' : 'Minimer'}">${_min ? '+' : '—'}</button>
+        <button class="fc-bar-btn" onclick="FriendChat.toggleSound(this)" title="Sound on/off">${sndOn ? Icon('volume') : (Icon('volume-x') || '🔇')}</button>
+        <button class="fc-bar-btn" id="fc-min-btn" onclick="FriendChat.toggleMin()" title="${_min ? 'Expand' : 'Minimize'}">${_min ? '+' : '—'}</button>
       </div>`;
   }
 
@@ -149,11 +149,11 @@ const FriendChat = (() => {
     body.innerHTML = `
       <button class="fc-friend fc-group-row" onclick="FriendChat.openGroup()">
         <span class="fc-friend-av fc-group-av">${Icon('users')}</span>
-        <span class="fc-friend-name">Gruppe-lounge <span class="fc-friend-sub">alle venner</span></span>
+        <span class="fc-friend-name">Group lounge <span class="fc-friend-sub">all friends</span></span>
         ${gUnread > 0 ? `<span class="fc-badge">${gUnread > 99 ? '99+' : gUnread}</span>` : ''}
       </button>
-      <div class="fc-list-divider">Vener (${friends.length})</div>
-      ${rows || '<div class="fc-empty">Ingen vener enno.</div>'}`;
+      <div class="fc-list-divider">Friends (${friends.length})</div>
+      ${rows || '<div class="fc-empty">No friends yet.</div>'}`;
   }
 
   function renderConversation(body) {
@@ -161,7 +161,7 @@ const FriendChat = (() => {
     body.innerHTML = `
       <div class="fc-messages" id="fc-messages"></div>
       <div class="fc-input-row">
-        <input id="fc-input" class="fc-input" placeholder="Skriv ei melding…" maxlength="600" autocomplete="off">
+        <input id="fc-input" class="fc-input" placeholder="Write a message…" maxlength="600" autocomplete="off">
         <button class="fc-send" onclick="FriendChat.send()" title="Send">${Icon('send')}</button>
       </div>`;
     const msgs = document.getElementById('fc-messages');
@@ -233,7 +233,7 @@ const FriendChat = (() => {
   }
 
   function toggle() {
-    if (!eligible()) { if (typeof App !== 'undefined') App.toast('Legg til ein venn for å bruke vennechatten', 'info'); return; }
+    if (!eligible()) { if (typeof App !== 'undefined') App.toast('Add a friend to use the friend chat', 'info'); return; }
     if (!_mounted) { mount(); subscribeAll(); _min = false; localStorage.setItem(MIN_KEY, '0'); document.getElementById('fc-dock')?.classList.remove('minimized'); renderBar(); return; }
     toggleMin();
   }
@@ -242,7 +242,7 @@ const FriendChat = (() => {
     if (!window.SC) return;
     const on = SC.toggleSound();
     if (btn) btn.innerHTML = on ? Icon('volume') : (Icon('volume-x') || '🔇');
-    if (typeof App !== 'undefined') App.toast(on ? '🔔 Lyd på' : '🔕 Lyd av', 'info', 1500);
+    if (typeof App !== 'undefined') App.toast(on ? '🔔 Sound on' : '🔕 Sound off', 'info', 1500);
   }
 
   // ── Livssyklus ────────────────────────────────────────────────────────

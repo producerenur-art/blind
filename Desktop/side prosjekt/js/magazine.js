@@ -1,6 +1,8 @@
 // Magasin — redaksjonelt magasin for den elektroniske musikkscenen.
 // Intervjuer · nye utgivelser · plateselskaper · festivaler & fester, verden over.
-// Fase 1: kuratert innhold (under). Fase 2 (senere): live AI-nettsøk via /api/magazine.
+// Kuratert innhold (under) + live AI-nettsøk via /api/magazine, som roterer hver
+// halvtime (js/aifresh.js). Sjangerfanene Psychill, Psytrance og Techno Underground
+// er de samme sporene som forsidens AI-radio og verden-siden holder ferske.
 // Egennavn (artister, labels, festivaler) er pakket i .notranslate så Google Translate
 // ikke ødelegger dem.
 const Magazine = (() => {
@@ -13,10 +15,12 @@ const Magazine = (() => {
 
   // ── Sjangre (filterchips) ────────────────────────────────────────────
   const GENRES = [
-    { key: 'psybient',          label: 'Psybient' },
+    { key: 'psychill',          label: 'Psychill' },
     { key: 'psytrance',         label: 'Psytrance' },
+    { key: 'techno-underground',label: 'Techno Underground' },
+    { key: 'psybient',          label: 'Psybient' },
     { key: 'goa',               label: 'Goa' },
-    { key: 'prog-psy',          label: 'Progressiv psytrance' },
+    { key: 'prog-psy',          label: 'Progressive psytrance' },
     { key: 'trance',            label: 'Trance' },
     { key: 'house',             label: 'House' },
     { key: 'prog-house',        label: 'Progressive house' },
@@ -25,14 +29,15 @@ const Magazine = (() => {
     { key: 'downtempo',         label: 'Downtempo' },
     { key: 'chillout',          label: 'Chill out' },
     { key: 'global-underground',label: 'Global underground' },
+    { key: 'festivals',         label: 'Festivals & events' },
   ];
   const genreLabel = (k) => (GENRES.find(g => g.key === k) || {}).label || k;
 
   // Seksjoner, i visningsrekkefølge.
-  const KATEGORIER = ['Forsidesak', 'Intervjuer', 'Nye utgivelser', 'Plateselskaper', 'Festivaler & fester'];
+  const KATEGORIER = ['Cover story', 'Interviews', 'New releases', 'Labels', 'Festivals & parties'];
   const KAT_IKON = {
-    'Forsidesak': 'star', 'Intervjuer': 'message', 'Nye utgivelser': 'disc',
-    'Plateselskaper': 'music', 'Festivaler & fester': 'calendar',
+    'Cover story': 'star', 'Interviews': 'message', 'New releases': 'disc',
+    'Labels': 'music', 'Festivals & parties': 'calendar',
   };
 
   const G = {
@@ -50,226 +55,274 @@ const Magazine = (() => {
   const MAGAZINE = [
     // ─── Forsidesaker ──────────────────────────────────────────────────
     {
-      id: 'posford-psybient-arven', kategori: 'Forsidesak', emoji: '🍄', grad: G.lilla,
-      tittel: 'Psybient-arven: fra Hallucinogen til Shpongle',
-      ingress: 'Hvordan én produsent var med på å forme både psytrancen og den drømmende psybienten.',
-      genres: ['psybient', 'psytrance', 'dub'], dato: 'Juni 2026', forfatter: 'SoundCore-redaksjonen',
+      id: 'posford-psybient-arven', kategori: 'Cover story', emoji: '🍄', grad: G.lilla,
+      tittel: 'The psybient legacy: from Hallucinogen to Shpongle',
+      ingress: 'How one producer helped shape both psytrance and the dreamy psybient sound.',
+      genres: ['psybient', 'psychill', 'psytrance', 'dub'], dato: 'June 2026', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'Wikipedia — Simon Posford', url: 'https://en.wikipedia.org/wiki/Simon_Posford' },
       brodtekst: [
-        'Få navn er like sentrale i den psykedeliske elektroniske musikken som Simon Posford. Under aliaset Hallucinogen formet han på 1990-tallet en hel generasjon goa- og psytrance-produsenter, før han med Shpongle (sammen med Raja Ram) åpnet døra mot det vi i dag kaller psybient — sakte, filmatisk og full av detaljer.',
-        'Skillet mellom dansegulv og chill-rom har aldri vært skarpt i denne scenen. Da Hallucinogen ga ut «In Dub» i 2002 — remikset av Ott — ble psytrance-strukturer smeltet sammen med dub, og psydub-begrepet fikk for alvor fotfeste.',
-        'I dag dukker Shpongle Live fortsatt opp på de store transformasjonsfestivalene, og arven lever videre i alt fra dype downtempo-utgivelser til forest-psytrance. Denne saken er et utgangspunkt — bruk sjangerfiltrene over for å grave dypere.',
+        'Few names are as central to psychedelic electronic music as Simon Posford. Under the alias Hallucinogen he shaped an entire generation of goa and psytrance producers in the 1990s, before opening the door to what we now call psybient with Shpongle (together with Raja Ram) — slow, cinematic and full of detail.',
+        'The line between the dance floor and the chill room has never been sharp in this scene. When Hallucinogen released «In Dub» in 2002 — remixed by Ott — psytrance structures were fused with dub, and the term psydub truly took hold.',
+        'Today Shpongle Live still appears at the big transformational festivals, and the legacy lives on in everything from deep downtempo releases to forest psytrance. This story is a starting point — use the genre filters above to dig deeper.',
       ],
     },
     {
-      id: 'goa-lever-videre', kategori: 'Forsidesak', emoji: '🕉️', grad: G.sol,
-      tittel: 'Goa-trancen som aldri døde',
-      ingress: 'Mens full-on overtok dansegulvene, holdt en liten gruppe ildsjeler den melodiske goa-lyden i live.',
-      genres: ['goa', 'trance', 'psytrance'], dato: 'Juni 2026', forfatter: 'SoundCore-redaksjonen',
+      id: 'goa-lever-videre', kategori: 'Cover story', emoji: '🕉️', grad: G.sol,
+      tittel: 'The goa trance that never died',
+      ingress: 'While full-on took over the dance floors, a small group of devotees kept the melodic goa sound alive.',
+      genres: ['goa', 'trance', 'psytrance'], dato: 'June 2026', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'Suntrip Records', url: 'https://www.suntriprecords.com/' },
       brodtekst: [
-        'Goa trance ble født på strendene i India og spredte seg utover på 1990-tallet, før den moderne full-on-stilen tok over mye av oppmerksomheten. Men den melodiske, syrete goa-lyden forsvant aldri helt.',
-        'Det belgiske selskapet Suntrip Records, grunnlagt i 2004, ble selve fanebæreren for goa-revival — med over 80 utgivelser og artister som Filteria, Mindsphere og Astral Projection i katalogen.',
-        'Resultatet er en levende undergrunn der nye produsenter henter fram de lange, hypnotiske melodilinjene fra goaens gullalder, side om side med klassikerne.',
+        'Goa trance was born on the beaches of India and spread outward through the 1990s, before the modern full-on style took over much of the attention. But the melodic, acid-laced goa sound never disappeared entirely.',
+        'The Belgian label Suntrip Records, founded in 2004, became the standard-bearer for the goa revival — with more than 80 releases and artists such as Filteria, Mindsphere and Astral Projection in its catalogue.',
+        'The result is a living underground where new producers bring back the long, hypnotic melody lines from goa’s golden age, side by side with the classics.',
+      ],
+    },
+
+    {
+      id: 'psychill-chillrommet', kategori: 'Cover story', emoji: '🌿', grad: G.grønn,
+      tittel: 'Psychill: the sound of the chill room',
+      ingress: 'Slow, deep and detailed — the music that carries the hours between the dance floor sets.',
+      genres: ['psychill', 'psybient', 'chillout', 'downtempo', 'dub'], dato: 'Ongoing', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'psybient.org', url: 'https://www.psybient.org/' },
+      brodtekst: [
+        'Psychill is the umbrella people in the scene reach for when the tempo drops: psybient, psydub, downtempo and ambient, played in chill rooms, domes and forest clearings rather than on the main stage.',
+        'The sound lives on labels such as Ultimae, Cosmicleaf and Ottsonic, and in the chill stages of the big gatherings — OZORA’s Dome and Boom’s ambient areas among them. Releases arrive in a steady stream, most of them on Bandcamp rather than the charts.',
+        'On SiriusFM the Psychill tab in the front-page radio rotates fresh, AI-picked sets around the clock, and the «Fresh from the web» cards here are refreshed continuously — so this page keeps up with the scene on its own.',
+      ],
+    },
+    {
+      id: 'techno-undergrunn-scenen', kategori: 'Cover story', emoji: '🏭', grad: G.natt,
+      tittel: 'The techno underground: raw, hypnotic, uncompromising',
+      ingress: 'From British factory lofts to island basements — the techno that never asked to be mainstream.',
+      genres: ['techno-underground', 'global-underground'], dato: 'Ongoing', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'Resident Advisor', url: 'https://ra.co/' },
+      brodtekst: [
+        'Underground techno is defined as much by where it is played as by how it sounds: club nights, warehouses and small labels, with long, hypnotic sets instead of festival drops. Britain has its own lineage here — Surgeon, Blawan, Perc, Andy Stott and Dave Clarke among the names that shaped it.',
+        'Resident Advisor remains the map for anyone who wants to find the parties: events, clubs and artists city by city, from London and Berlin to Athens, Tbilisi and Ibiza.',
+        'SiriusFM follows this corner of the scene in two places — the Techno Underground tab in the front-page radio, and our own Underground page with artists, venues and event links. Both stay in rotation, so the material keeps changing.',
       ],
     },
 
     // ─── Intervjuer ────────────────────────────────────────────────────
     {
-      id: 'intervju-ott', kategori: 'Intervjuer', emoji: '🎚️', grad: G.hav,
-      tittel: 'Ott om psydub og studiohåndverket',
-      ingress: 'Mannen bak «Blumenkraft» og «Hiraeth» har formet psydub-lyden i over to tiår.',
-      genres: ['dub', 'downtempo', 'psybient'], dato: 'Mai 2026', forfatter: 'SoundCore-redaksjonen',
-      kilde: { navn: 'psybient.org — intervju med Ott', url: 'https://www.psybient.org/love/interview-with-ott-2020/' },
+      id: 'intervju-ott', kategori: 'Interviews', emoji: '🎚️', grad: G.hav,
+      tittel: 'Ott on psydub and the craft of the studio',
+      ingress: 'The man behind «Blumenkraft» and «Hiraeth» has shaped the psydub sound for over two decades.',
+      genres: ['dub', 'downtempo', 'psybient', 'psychill'], dato: 'May 2026', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'psybient.org — interview with Ott', url: 'https://www.psybient.org/love/interview-with-ott-2020/' },
       brodtekst: [
-        'Ott (Otteran Langrell) har jobbet med alt fra Sinéad O’Connor og The Orb til Brian Eno og Simon Posford. Det var nettopp samarbeidet med Posford — Hallucinogens «In Dub» i 2002 — som ble en av de tydeligste tidlige eksemplene på psydub.',
-        'Siden har han bygd et eget univers gjennom album som «Blumenkraft» og «Skylon» på Twisted Records, og senere «Mir», «Fairchildren», «Heads» og «Hiraeth» på sitt eget Ottsonic.',
-        'I intervjuet hos psybient.org snakker han om studioarbeidet, miksing og hvorfor han bygger lyden lag på lag. Les hele samtalen via kildelenken nederst.',
+        'Ott (Otteran Langrell) has worked with everyone from Sinéad O’Connor and The Orb to Brian Eno and Simon Posford. It was precisely the collaboration with Posford — Hallucinogen’s «In Dub» in 2002 — that became one of the clearest early examples of psydub.',
+        'Since then he has built a universe of his own through albums like «Blumenkraft» and «Skylon» on Twisted Records, and later «Mir», «Fairchildren», «Heads» and «Hiraeth» on his own Ottsonic.',
+        'In the interview at psybient.org he talks about studio work, mixing, and why he builds the sound layer upon layer. Read the whole conversation via the source link at the bottom.',
       ],
     },
     {
-      id: 'intervju-psychill-arkiv', kategori: 'Intervjuer', emoji: '🌀', grad: G.natt,
-      tittel: 'Inn i psychill-scenen — intervjuarkivet',
-      ingress: 'Et helt arkiv med samtaler med artister fra downtempo-, psybient- og psychill-miljøet.',
-      genres: ['psybient', 'chillout', 'downtempo'], dato: 'Løpende', forfatter: 'SoundCore-redaksjonen',
-      kilde: { navn: 'psybient.org — intervjuer', url: 'https://www.psybient.org/love/category/articles/interviews/' },
+      id: 'intervju-psychill-arkiv', kategori: 'Interviews', emoji: '🌀', grad: G.natt,
+      tittel: 'Into the psychill scene — the interview archive',
+      ingress: 'A whole archive of conversations with artists from the downtempo, psybient and psychill scene.',
+      genres: ['psybient', 'psychill', 'chillout', 'downtempo'], dato: 'Ongoing', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'psybient.org — interviews', url: 'https://www.psybient.org/love/category/articles/interviews/' },
       brodtekst: [
-        'For deg som vil høre artistene fortelle med egne ord, er psybient.org en gullgruve. Nettstedet har et eget intervjuarkiv med samtaler på tvers av psychill, psybient, downtempo og psydub.',
-        'Her finner du både etablerte navn og nye produsenter — ofte med praktiske innblikk i studiooppsett, inspirasjon og hvordan en utgivelse blir til.',
-        'Bruk kildelenken for å bla i hele arkivet.',
+        'For anyone who wants to hear the artists tell it in their own words, psybient.org is a gold mine. The site has its own interview archive with conversations spanning psychill, psybient, downtempo and psydub.',
+        'Here you will find both established names and new producers — often with practical insights into studio setups, inspiration and how a release comes together.',
+        'Use the source link to browse the entire archive.',
       ],
     },
     {
-      id: 'anjunadeep-portrett', kategori: 'Intervjuer', emoji: '🌊', grad: G.hav,
-      tittel: 'Anjunadeep: melodisk house med britisk presisjon',
-      ingress: 'James Grant og Jody Wisternoff har gjort dyp, melodisk house til en global lyd.',
-      genres: ['prog-house', 'house', 'chillout'], dato: 'Februar 2026', forfatter: 'SoundCore-redaksjonen',
+      id: 'anjunadeep-portrett', kategori: 'Interviews', emoji: '🌊', grad: G.hav,
+      tittel: 'Anjunadeep: melodic house with British precision',
+      ingress: 'James Grant and Jody Wisternoff have made deep, melodic house into a global sound.',
+      genres: ['prog-house', 'house', 'chillout'], dato: 'February 2026', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'Anjunadeep — about', url: 'https://anjunadeep.com/about' },
       brodtekst: [
-        'Anjunadeep vokste ut av London-selskapet Anjunabeats og er i dag et tyngdepunkt for dyp og melodisk house verden over. Kuratorduoen James Grant og Jody Wisternoff står bak den årlige «Anjunadeep»-samleserien.',
-        'Lyden balanserer det varme og det dansbare — like hjemme i et chill-rom som på et nattklubbgulv ved soloppgang.',
-        'Vil du dykke ned i historien og filosofien bak selskapet? Start hos kilden under.',
+        'Anjunadeep grew out of the London label Anjunabeats and is today a centre of gravity for deep, melodic house worldwide. The curatorial duo James Grant and Jody Wisternoff are behind the annual «Anjunadeep» compilation series.',
+        'The sound balances the warm and the danceable — equally at home in a chill room and on a nightclub floor at sunrise.',
+        'Want to dive into the label’s history and philosophy? Start with the source below.',
       ],
     },
 
     // ─── Nye utgivelser ────────────────────────────────────────────────
     {
-      id: 'anjunadeep-16', kategori: 'Nye utgivelser', emoji: '💿', grad: G.hav,
+      id: 'anjunadeep-16', kategori: 'New releases', emoji: '💿', grad: G.hav,
       tittel: 'Anjunadeep 16 — James Grant & Jody Wisternoff',
-      ingress: 'Den seksten utgaven av samleserien, sluppet februar 2026.',
-      genres: ['prog-house', 'house', 'chillout'], dato: 'Februar 2026', forfatter: 'SoundCore-redaksjonen',
+      ingress: 'The sixteenth edition of the compilation series, released February 2026.',
+      genres: ['prog-house', 'house', 'chillout'], dato: 'February 2026', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'Anjunadeep 16 (Bandcamp)', url: 'https://anjunadeep.bandcamp.com/album/anjunadeep-16' },
       brodtekst: [
-        '«Anjunadeep 16» samler et bredt utvalg melodisk house og downtempo over to nøye satte mikser, med spor fra Anjunadeep-, Anjunachill- og Explorations-katalogene.',
-        'Som tidligere i serien er det en god inngangsport for deg som vil bli kjent med selskapets lyd — fra det dvelende til det dansbare.',
+        '«Anjunadeep 16» gathers a wide selection of melodic house and downtempo across two carefully sequenced mixes, with tracks from the Anjunadeep, Anjunachill and Explorations catalogues.',
+        'As with earlier entries in the series, it is a great way in for anyone who wants to get to know the label’s sound — from the lingering to the danceable.',
       ],
     },
     {
-      id: 'aes-dana-perimeters', kategori: 'Nye utgivelser', emoji: '🌫️', grad: G.natt,
+      id: 'aes-dana-perimeters', kategori: 'New releases', emoji: '🌫️', grad: G.natt,
       tittel: 'Aes Dana — Perimeters (Remaster 2025)',
-      ingress: 'Ultimae børster støvet av en downtempo-klassiker.',
-      genres: ['psybient', 'downtempo', 'chillout'], dato: 'Januar 2026', forfatter: 'SoundCore-redaksjonen',
+      ingress: 'Ultimae dusts off a downtempo classic.',
+      genres: ['psybient', 'psychill', 'downtempo', 'chillout'], dato: 'January 2026', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'Ultimae Records', url: 'https://ultimae.com/' },
       brodtekst: [
-        'Lyon-baserte Ultimae Records har de siste sesongene remastret flere av sine klassikere, blant dem «Perimeters» av Aes Dana — et av selskapets sentrale downtempo-/psybient-verk.',
-        'Remastringen gir den drømmende, lagdelte lyden ny tydelighet uten å miste den varme, organiske karakteren Ultimae er kjent for.',
+        'Lyon-based Ultimae Records has spent recent seasons remastering several of its classics, among them «Perimeters» by Aes Dana — one of the label’s central downtempo/psybient works.',
+        'The remaster gives the dreamy, layered sound new clarity without losing the warm, organic character Ultimae is known for.',
       ],
     },
     {
-      id: 'ott-hiraeth', kategori: 'Nye utgivelser', emoji: '🎛️', grad: G.grønn,
+      id: 'ott-hiraeth', kategori: 'New releases', emoji: '🎛️', grad: G.grønn,
       tittel: 'Ott — Hiraeth',
-      ingress: 'Nytt album fra psydub-mesteren på eget Ottsonic.',
-      genres: ['dub', 'downtempo'], dato: '2024', forfatter: 'SoundCore-redaksjonen',
+      ingress: 'A new album from the psydub master on his own Ottsonic.',
+      genres: ['dub', 'downtempo', 'psychill'], dato: '2024', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'Ott (Bandcamp)', url: 'https://ott.bandcamp.com/' },
       brodtekst: [
-        '«Hiraeth» er nok et finslepet kapittel i Otts katalog — tette, basstunge lag av dub og downtempo med den karakteristiske, håndlagde lydsignaturen hans.',
-        'Som vanlig er det like mye et lyttealbum som dansemusikk: detaljer som først åpner seg etter flere gjennomlyttinger.',
+        '«Hiraeth» is yet another finely polished chapter in Ott’s catalogue — dense, bass-heavy layers of dub and downtempo with his characteristic, handcrafted sound signature.',
+        'As always it is as much a listening album as dance music: details that only open up after several listens.',
       ],
     },
     {
-      id: 'psybient-manedens', kategori: 'Nye utgivelser', emoji: '🗓️', grad: G.lilla,
-      tittel: 'Månedens utgivelser hos psybient.org',
-      ingress: 'En oppdatert oversikt over ferske utgivelser i psychill-universet.',
-      genres: ['psybient', 'downtempo', 'chillout'], dato: 'Oppdateres månedlig', forfatter: 'SoundCore-redaksjonen',
+      id: 'psybient-manedens', kategori: 'New releases', emoji: '🗓️', grad: G.lilla,
+      tittel: 'This month’s releases on psybient.org',
+      ingress: 'An up-to-date overview of fresh releases in the psychill universe.',
+      genres: ['psybient', 'psychill', 'downtempo', 'chillout'], dato: 'Updated monthly', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'psybient.org — releases', url: 'https://www.psybient.org/love/march-2026-releases/' },
       brodtekst: [
-        'Vil du holde deg oppdatert på det som faktisk slippes akkurat nå, samler psybient.org månedlige oversikter over nye utgivelser innen psychill, psybient, psydub og downtempo.',
-        'Det er den raskeste måten å oppdage nye artister og labels på — bruk kildelenken for den nyeste måneden.',
+        'If you want to stay on top of what is actually being released right now, psybient.org gathers monthly overviews of new releases in psychill, psybient, psydub and downtempo.',
+        'It is the fastest way to discover new artists and labels — use the source link for the latest month.',
       ],
     },
     {
-      id: 'asot-trance', kategori: 'Nye utgivelser', emoji: '⚡', grad: G.rosa,
-      tittel: 'Trance på de store scenene — A State of Trance',
-      ingress: 'Der trance og EDM møtes for fullsatte arenaer.',
-      genres: ['trance', 'edm'], dato: 'Løpende', forfatter: 'SoundCore-redaksjonen',
+      id: 'asot-trance', kategori: 'New releases', emoji: '⚡', grad: G.rosa,
+      tittel: 'Trance on the big stages — A State of Trance',
+      ingress: 'Where trance and EDM meet for packed arenas.',
+      genres: ['trance', 'edm'], dato: 'Ongoing', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'A State of Trance', url: 'https://www.astateoftrance.com/' },
       brodtekst: [
-        'På den lysere, mer arenarettede siden av spekteret står trancen sterkt — med radioshow, samleplater og enorme arrangementer som samler tusenvis.',
-        'A State of Trance er et naturlig utgangspunkt for nye singler og sett fra denne delen av scenen, der trance og EDM ofte glir over i hverandre.',
+        'On the brighter, more arena-oriented side of the spectrum, trance stands strong — with radio shows, compilations and huge events that draw thousands.',
+        'A State of Trance is a natural starting point for new singles and sets from this part of the scene, where trance and EDM often blur into one another.',
       ],
     },
 
     // ─── Plateselskaper ────────────────────────────────────────────────
     {
-      id: 'label-ultimae', kategori: 'Plateselskaper', emoji: '🌌', grad: G.natt,
+      id: 'label-ultimae', kategori: 'Labels', emoji: '🌌', grad: G.natt,
       tittel: 'Ultimae Records',
-      ingress: 'Lyon-selskapet som har definert europeisk ambient og downtempo.',
-      genres: ['psybient', 'downtempo', 'chillout'], dato: 'Lyon, Frankrike', forfatter: 'SoundCore-redaksjonen',
+      ingress: 'The Lyon label that defined European ambient and downtempo.',
+      genres: ['psybient', 'psychill', 'downtempo', 'chillout'], dato: 'Lyon, France', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'ultimae.com', url: 'https://ultimae.com/' },
       brodtekst: [
-        'Ultimae Records er plateselskap, forlag, masteringstudio og platebutikk i ett — med base i Lyon. Katalogen er en bauta i ambient og downtempo, med artister som Solar Fields, Aes Dana, Carbon Based Lifeforms og Martin Nonstatic.',
-        'Lyden er gjenkjennelig: varm, romlig og filmatisk, bygget for fordypning like mye som for dansegulvet.',
+        'Ultimae Records is label, publisher, mastering studio and record store in one — based in Lyon. The catalogue is a landmark in ambient and downtempo, with artists such as Solar Fields, Aes Dana, Carbon Based Lifeforms and Martin Nonstatic.',
+        'The sound is recognisable: warm, spacious and cinematic, built for immersion as much as for the dance floor.',
       ],
     },
     {
-      id: 'label-cryo-chamber', kategori: 'Plateselskaper', emoji: '🪐', grad: G.skog,
+      id: 'label-cryo-chamber', kategori: 'Labels', emoji: '🪐', grad: G.skog,
       tittel: 'Cryo Chamber',
-      ingress: 'Filmatisk dark ambient drevet av Simon Heath (Atrium Carceri).',
-      genres: ['psybient', 'downtempo'], dato: 'Oregon, USA', forfatter: 'SoundCore-redaksjonen',
+      ingress: 'Cinematic dark ambient driven by Simon Heath (Atrium Carceri).',
+      genres: ['psybient', 'psychill', 'downtempo'], dato: 'Oregon, USA', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'Cryo Chamber (Bandcamp)', url: 'https://cryochamber.bandcamp.com/' },
       brodtekst: [
-        'Cryo Chamber drives av Simon Heath, mannen bak Atrium Carceri, og har spesialisert seg på dark ambient med en filmatisk, kvalitetsbevisst kant.',
-        'Selskapet er kjent for sine store kollaborasjonsalbum, der flere artister bygger ett sammenhengende, mørkt lydlandskap.',
+        'Cryo Chamber is run by Simon Heath, the man behind Atrium Carceri, and specialises in dark ambient with a cinematic, quality-conscious edge.',
+        'The label is known for its large collaboration albums, where several artists build one cohesive, dark soundscape.',
       ],
     },
     {
-      id: 'label-iboga', kategori: 'Plateselskaper', emoji: '🔊', grad: G.grønn,
+      id: 'label-iboga', kategori: 'Labels', emoji: '🔊', grad: G.grønn,
       tittel: 'Iboga Records',
-      ingress: 'Fra Københavns undergrunn til global progressiv kraftstasjon.',
-      genres: ['prog-psy', 'prog-house', 'psytrance'], dato: 'København, Danmark', forfatter: 'SoundCore-redaksjonen',
+      ingress: 'From the Copenhagen underground to a global progressive powerhouse.',
+      genres: ['prog-psy', 'prog-house', 'psytrance'], dato: 'Copenhagen, Denmark', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'Iboga Records', url: 'https://www.iboga-records.com/' },
       brodtekst: [
-        'Iboga Records startet i Københavns undergrunn og vokste til et av de mest kjente selskapene for progressiv psytrance og progressive house.',
-        'Beatportal kåret selskapet til «Label of the Month» i august 2025 — en bekreftelse på den fortsatte innflytelsen i den progressive scenen.',
+        'Iboga Records started in the Copenhagen underground and grew into one of the best-known labels for progressive psytrance and progressive house.',
+        'Beatportal named the label «Label of the Month» in August 2025 — a confirmation of its continued influence in the progressive scene.',
       ],
     },
     {
-      id: 'label-suntrip', kategori: 'Plateselskaper', emoji: '☀️', grad: G.sol,
+      id: 'label-suntrip', kategori: 'Labels', emoji: '☀️', grad: G.sol,
       tittel: 'Suntrip Records',
-      ingress: 'Verdens ledende selskap for melodisk goa trance.',
-      genres: ['goa', 'trance'], dato: 'Belgia', forfatter: 'SoundCore-redaksjonen',
+      ingress: 'The world’s leading label for melodic goa trance.',
+      genres: ['goa', 'trance'], dato: 'Belgium', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'suntriprecords.com', url: 'https://www.suntriprecords.com/' },
       brodtekst: [
-        'Suntrip Records ble grunnlagt i 2004 av Fabien «Mars» Marsaud og Joske «Anoebis» Vranken som et alternativ til moderne full-on — med fokus på den melodiske, syrete goa-lyden.',
-        'Med over 80 utgivelser og navn som Filteria, Mindsphere og Astral Projection er selskapet blitt selve referansen for goa-revival.',
+        'Suntrip Records was founded in 2004 by Fabien «Mars» Marsaud and Joske «Anoebis» Vranken as an alternative to modern full-on — with a focus on the melodic, acid-laced goa sound.',
+        'With more than 80 releases and names such as Filteria, Mindsphere and Astral Projection, the label has become the very reference for the goa revival.',
       ],
     },
     {
-      id: 'label-anjunadeep', kategori: 'Plateselskaper', emoji: '🌊', grad: G.hav,
+      id: 'label-anjunadeep', kategori: 'Labels', emoji: '🌊', grad: G.hav,
       tittel: 'Anjunadeep',
-      ingress: 'London-selskapet bak en av verdens mest kjente deep/melodisk house-lyder.',
-      genres: ['prog-house', 'house'], dato: 'London, Storbritannia', forfatter: 'SoundCore-redaksjonen',
+      ingress: 'The London label behind one of the world’s best-known deep/melodic house sounds.',
+      genres: ['prog-house', 'house'], dato: 'London, United Kingdom', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'anjunadeep.com', url: 'https://anjunadeep.com/' },
       brodtekst: [
-        'Anjunadeep er den dypere, mer atmosfæriske grenen av Anjuna-familien. Selskapet har bygd et globalt publikum rundt melodisk house, deep house og downtempo.',
-        'I tillegg til platene driver selskapet egne arrangementer og samleserier som har blitt referansepunkter for sjangeren.',
+        'Anjunadeep is the deeper, more atmospheric branch of the Anjuna family. The label has built a global audience around melodic house, deep house and downtempo.',
+        'Beyond the records, the label runs its own events and compilation series that have become reference points for the genre.',
+      ],
+    },
+
+    {
+      id: 'label-cosmicleaf', kategori: 'Labels', emoji: '🍃', grad: G.grønn,
+      tittel: 'Cosmicleaf Records',
+      ingress: 'The Greek label that has released psychill and downtempo for two decades.',
+      genres: ['psychill', 'psybient', 'downtempo', 'chillout'], dato: 'Athens, Greece', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'cosmicleaf.com', url: 'https://www.cosmicleaf.com/' },
+      brodtekst: [
+        'Cosmicleaf Records is one of the most productive labels in the psychill and downtempo world, run out of Athens with a catalogue spanning psybient, chillout and ambient.',
+        'The label has long released a large share of its music as free or name-your-price downloads, which has made it a natural first stop for anyone getting into the genre.',
+      ],
+    },
+    {
+      id: 'label-perc-trax', kategori: 'Labels', emoji: '🏭', grad: G.natt,
+      tittel: 'Perc Trax',
+      ingress: 'The London label at the hard, industrial end of the techno underground.',
+      genres: ['techno-underground', 'global-underground'], dato: 'London, United Kingdom', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'Perc Trax (SoundCloud)', url: 'https://soundcloud.com/perctrax' },
+      brodtekst: [
+        'Perc Trax is run by the British producer Perc and has become a reference point for raw, industrial-leaning techno — precision-built, loud and made for dark rooms rather than festival stages.',
+        'The label’s roster and back catalogue are a good map of where British techno has moved over the past two decades. Follow along via the source link.',
       ],
     },
 
     // ─── Festivaler & fester ───────────────────────────────────────────
     {
-      id: 'fest-ozora', kategori: 'Festivaler & fester', emoji: '🔥', grad: G.ild,
+      id: 'fest-ozora', kategori: 'Festivals & parties', emoji: '🔥', grad: G.ild,
       tittel: 'OZORA Festival 2026',
-      ingress: 'Dádpuszta i Ungarn fylles igjen — fra psytrance på hovedscenen til psybient i Dome.',
-      genres: ['psytrance', 'psybient', 'house', 'downtempo'], dato: '24. juli – 4. august 2026', forfatter: 'SoundCore-redaksjonen',
+      ingress: 'Dádpuszta in Hungary fills up again — from psytrance on the main stage to psybient in the Dome.',
+      genres: ['festivals', 'psytrance', 'psybient', 'psychill', 'house', 'downtempo', 'techno-underground'], dato: 'July 24 – August 4, 2026', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'ozorafestival.eu', url: 'https://ozorafestival.eu/' },
       brodtekst: [
-        'OZORA er en av Europas største psykedeliske festivaler, holdt i Dádpuszta sørvest for Budapest. Utgaven i 2026 går av stabelen 24. juli – 4. august, med åpningsseremoni 27. juli.',
-        'Programmet spenner over flere scener: hovedscenen for psytrance og progressive, Dome for downtempo og psybient, Pumpui for techno og house, samt Dragon Nest og Ambyss for liveband og atmosfæriske lydlandskap.',
-        'Blant de annonserte navnene finner du Shpongle Live, Hallucinogen, Astrix, Solar Fields og Younger Brother. Sjekk kildelenken for fullt program og billetter.',
+        'OZORA is one of Europe’s largest psychedelic festivals, held in Dádpuszta southwest of Budapest. The 2026 edition takes place July 24 – August 4, with an opening ceremony on July 27.',
+        'The programme spans several stages: the main stage for psytrance and progressive, the Dome for downtempo and psybient, Pumpui for techno and house, plus Dragon Nest and Ambyss for live bands and atmospheric soundscapes.',
+        'Among the announced names are Shpongle Live, Hallucinogen, Astrix, Solar Fields and Younger Brother. Check the source link for the full programme and tickets.',
       ],
     },
     {
-      id: 'fest-boom', kategori: 'Festivaler & fester', emoji: '🌌', grad: G.natt,
+      id: 'fest-boom', kategori: 'Festivals & parties', emoji: '🌌', grad: G.natt,
       tittel: 'Boom Festival',
-      ingress: 'Verdens mest kjente transformasjonsfestival — kunst, kultur og psykedelisk musikk i Portugal.',
-      genres: ['psytrance', 'downtempo', 'psybient'], dato: 'Annethvert år · Portugal', forfatter: 'SoundCore-redaksjonen',
+      ingress: 'The world’s most famous transformational festival — art, culture and psychedelic music in Portugal.',
+      genres: ['festivals', 'psytrance', 'downtempo', 'psybient', 'psychill'], dato: 'Every other year · Portugal', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'boomfestival.org', url: 'https://www.boomfestival.org/' },
       brodtekst: [
-        'Boom Festival i Idanha-a-Nova arrangeres annethvert år og er for mange selve definisjonen på en transformasjonsfestival — med Dance Temple, visjonær kunst og en dyp campingkultur.',
-        'Musikalsk dekker Boom hele spekteret fra psytrance til downtempo og ambient, og festivalen er like kjent for sitt miljø- og kunstfokus som for line-upen.',
+        'Boom Festival in Idanha-a-Nova is held every other year and is, for many, the very definition of a transformational festival — with the Dance Temple, visionary art and a deep camping culture.',
+        'Musically Boom covers the whole spectrum from psytrance to downtempo and ambient, and the festival is as known for its environmental and art focus as for its line-up.',
       ],
     },
     {
-      id: 'fest-anjunadeep-explorations', kategori: 'Festivaler & fester', emoji: '🏝️', grad: G.hav,
+      id: 'fest-anjunadeep-explorations', kategori: 'Festivals & parties', emoji: '🏝️', grad: G.hav,
       tittel: 'Anjunadeep Explorations 2026',
-      ingress: 'Melodisk house ved kysten i Dhërmi, Albania.',
-      genres: ['prog-house', 'house'], dato: '12. – 17. juni 2026', forfatter: 'SoundCore-redaksjonen',
+      ingress: 'Melodic house on the coast in Dhërmi, Albania.',
+      genres: ['festivals', 'prog-house', 'house'], dato: 'June 12–17, 2026', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'anjunadeep.com', url: 'https://anjunadeep.com/' },
       brodtekst: [
-        'Anjunadeep Explorations er selskapets egen festival, lagt til den vakre kysten i Dhërmi i Albania. Utgaven i 2026 går 12.–17. juni.',
-        'Line-upen ledes av navn som Nox Vahn og Eric Luttrell, hvis melodiske house og progressive lyd er blitt selve sjelen i arrangementet.',
+        'Anjunadeep Explorations is the label’s own festival, set on the beautiful coast in Dhërmi, Albania. The 2026 edition runs June 12–17.',
+        'The line-up is led by names such as Nox Vahn and Eric Luttrell, whose melodic house and progressive sound have become the very soul of the event.',
       ],
     },
     {
-      id: 'fest-global-underground', kategori: 'Festivaler & fester', emoji: '🌍', grad: G.rosa,
-      tittel: 'Global underground: klubbnettet verden over',
-      ingress: 'Fra Athen til Tbilisi — slik finner du fester og klubber i den globale undergrunnen.',
-      genres: ['global-underground', 'house', 'trance', 'edm'], dato: 'Løpende', forfatter: 'SoundCore-redaksjonen',
+      id: 'fest-global-underground', kategori: 'Festivals & parties', emoji: '🌍', grad: G.rosa,
+      tittel: 'Global underground: the club network worldwide',
+      ingress: 'From Athens to Tbilisi — how to find parties and clubs in the global underground.',
+      genres: ['festivals', 'global-underground', 'techno-underground', 'house', 'trance', 'edm'], dato: 'Ongoing', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'Resident Advisor', url: 'https://ra.co/' },
       brodtekst: [
-        'Festivalene er toppene av isfjellet — det meste av kulturen lever i klubber og enkeltfester verden over. Resident Advisor (RA) er den mest brukte oversikten over arrangementer, klubber og artister i den globale undergrunnen.',
-        'Her finner du alt fra house og techno til trance og bredere EDM, søkbart by for by. Et godt sted å starte hvis du vil oppdage scenen der du er — eller der du skal reise.',
+        'The festivals are the tips of the iceberg — most of the culture lives in clubs and individual parties worldwide. Resident Advisor (RA) is the most widely used overview of events, clubs and artists in the global underground.',
+        'Here you will find everything from house and techno to trance and broader EDM, searchable city by city. A great place to start if you want to discover the scene where you are — or where you are heading.',
       ],
     },
   ];
@@ -277,7 +330,6 @@ const Magazine = (() => {
   const byId = (id) => MAGAZINE.find(a => a.id === id);
 
   let _genre = 'alle';
-  let _liveSeq = 0;   // ignorerer utdaterte live-svar når brukeren bytter sjanger
 
   // ── Visning: listevisning ────────────────────────────────────────────
   // Hver sjanger-fane har sin egen delbare URL:
@@ -287,7 +339,7 @@ const Magazine = (() => {
     return (!key || key === 'alle') ? '#/magazine' : '#/magazine/sjanger/' + key;
   }
   function _chipsHTML() {
-    const all = [{ key: 'alle', label: 'Alle' }].concat(GENRES);
+    const all = [{ key: 'alle', label: 'All' }].concat(GENRES);
     return all.map(g =>
       `<a class="mag-chip${g.key === _genre ? ' active' : ''}" data-g="${g.key}"
         href="${genreHref(g.key)}">${esc(g.label)}</a>`
@@ -306,7 +358,7 @@ const Magazine = (() => {
           <div class="mag-card-ingress">${esc(a.ingress)}</div>
           <div class="mag-card-meta">
             <span>${esc(a.dato)}</span>
-            <span class="mag-card-cta">Les →</span>
+            <span class="mag-card-cta">Read →</span>
           </div>
         </div>
       </a>`;
@@ -325,17 +377,18 @@ const Magazine = (() => {
           <div class="mag-grid">${items.map(_card).join('')}</div>
         </div>`;
     }
-    return html || `<div class="mag-empty">Ingen saker i denne sjangeren ennå.</div>`;
+    return html || `<div class="mag-empty">No stories in this genre yet.</div>`;
   }
 
   function _listHTML() {
     return `
       <div class="mag-page">
         <div class="mag-hero">
-          <div class="mag-hero-badge">${Icon('sparkles')} SoundCore Magasin</div>
-          <h1 class="mag-hero-title notranslate">Magasin</h1>
-          <p class="mag-hero-sub">Intervjuer, nye utgivelser, plateselskaper og festivaler fra den
-            elektroniske scenen verden over — psybient, psytrance, house, trance, dub, goa og downtempo.</p>
+          <div class="mag-hero-badge">${Icon('sparkles')} SiriusFM Magazine</div>
+          <h1 class="mag-hero-title notranslate">Magazine</h1>
+          <p class="mag-hero-sub">Interviews, new releases, labels and festivals from the
+            electronic scene around the world — psychill, psytrance, techno underground, psybient,
+            house, trance, dub, goa and downtempo.</p>
         </div>
         <div class="mag-chips">${_chipsHTML()}</div>
         <div id="mag-live"></div>
@@ -349,15 +402,15 @@ const Magazine = (() => {
     if (!a) {
       return `
         <div class="mag-page">
-          <a class="mag-back" href="#/magazine">← Tilbake til magasinet</a>
-          <div class="mag-empty">Fant ikke denne saken.</div>
+          <a class="mag-back" href="#/magazine">← Back to the magazine</a>
+          <div class="mag-empty">Could not find this story.</div>
         </div>`;
     }
     const tags = (a.genres || []).map(g => `<span class="mag-tag">${esc(genreLabel(g))}</span>`).join('');
     const body = (a.brodtekst || []).map(p => `<p>${esc(p)}</p>`).join('');
     return `
       <div class="mag-page">
-        <a class="mag-back" href="#/magazine">← Tilbake til magasinet</a>
+        <a class="mag-back" href="#/magazine">← Back to the magazine</a>
         <div class="mag-article">
           <div class="mag-article-hero" style="background:${a.grad}">
             <span class="mag-article-emoji">${a.emoji}</span>
@@ -369,61 +422,29 @@ const Magazine = (() => {
           <div class="mag-article-body">${body}</div>
           <div class="mag-article-ai">
             <button class="mag-ai-btn" onclick="Magazine.askCore('${esc(a.id)}')">
-              ${Icon('sparkles')} Spør Core om denne saken
+              ${Icon('sparkles')} Ask Core about this story
             </button>
             <div id="mag-ai-out" class="mag-ai-out"></div>
           </div>
           <div class="mag-article-source">
-            Kilde: <a class="notranslate" href="${esc(a.kilde.url)}" target="_blank" rel="noopener">${esc(a.kilde.navn)} ↗</a>
+            Source: <a class="notranslate" href="${esc(a.kilde.url)}" target="_blank" rel="noopener">${esc(a.kilde.navn)} ↗</a>
           </div>
         </div>
       </div>`;
   }
 
-  // ── Live AI-saker (Fase 2): hentes fra /api/magazine, flettes inn øverst ──
-  function _liveCard(a) {
-    return `
-      <a class="mag-card mag-card--live" href="${esc(a.kilde.url)}" target="_blank" rel="noopener">
-        <div class="mag-card-art" style="background:linear-gradient(135deg,#0a2540,#11324f,#0d3a5e)">
-          <span class="mag-card-emoji">🛰️</span>
-          <span class="mag-card-cat">Fersk fra nettet</span>
-        </div>
-        <div class="mag-card-body">
-          <div class="mag-card-title notranslate">${esc(a.tittel)}</div>
-          <div class="mag-card-ingress">${esc(a.ingress)}</div>
-          <div class="mag-card-meta">
-            <span class="notranslate">${esc(a.kilde.navn || 'Kilde')}</span>
-            <span class="mag-card-cta">Åpne ↗</span>
-          </div>
-        </div>
-      </a>`;
-  }
-
-  async function _loadLive(genre) {
-    const box = document.getElementById('mag-live');
-    if (!box) return;
-    const seq = ++_liveSeq;
-    box.style.display = '';
-    box.innerHTML = `
-      <div class="mag-section">
-        <div class="mag-section-head">${Icon('sparkles')} <span>Fersk fra nettet</span></div>
-        <div style="color:var(--text3);padding:0.5rem 0 1rem;font-size:0.85rem">Henter ferske saker fra nettet …</div>
-      </div>`;
-    try {
-      const r = await fetch('/api/magazine?genre=' + encodeURIComponent(genre || 'alle'));
-      const data = await r.json().catch(() => ({}));
-      if (seq !== _liveSeq) return; // bruker byttet sjanger imens
-      const arts = (data && data.articles) || [];
-      if (!arts.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
-      box.innerHTML = `
-        <div class="mag-section">
-          <div class="mag-section-head">${Icon('sparkles')} <span>Fersk fra nettet</span></div>
-          <div class="mag-grid">${arts.map(_liveCard).join('')}</div>
-        </div>`;
-    } catch (e) {
-      if (seq !== _liveSeq) return;
-      box.style.display = 'none'; box.innerHTML = '';
-    }
+  // ── Live AI-saker (Fase 2): hentes fra /api/magazine via AIFresh ──────
+  // AIFresh henter en shortliste på inntil 8 ferske saker per sjanger og roterer
+  // utvalget hver halvtime, samme takt som forsidens AI-radio. Se js/aifresh.js.
+  function _loadLive(genre) {
+    if (typeof AIFresh === 'undefined') return;
+    AIFresh.reset();  // gammel fane skal ikke rotere videre i bakgrunnen
+    AIFresh.mount({
+      id: 'mag-live',
+      genre: genre || 'alle',
+      title: 'Fresh from the web',
+      limit: 4,
+    });
   }
 
   // ── Interaksjon ──────────────────────────────────────────────────────
@@ -438,18 +459,18 @@ const Magazine = (() => {
     const a = byId(id);
     const out = document.getElementById('mag-ai-out');
     if (!a || !out) return;
-    out.textContent = 'Core tenker …';
+    out.textContent = 'Core is thinking …';
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system: 'Du er Core, en kunnskapsrik og vennlig musikkredaktør i SoundCore. ' +
-                  'Svar kort og lett å forstå på norsk bokmål, maks 120 ord.',
+          system: 'You are Core, a knowledgeable and friendly music editor at SiriusFM. ' +
+                  'Answer briefly and in plain, easy-to-understand English, max 120 words.',
           messages: [{
             role: 'user',
-            content: 'Gi et kort, lettlest sammendrag av denne saken for en leser:\n\n' +
-                     'Tittel: ' + a.tittel + '\nSjanger: ' + (a.genres || []).map(genreLabel).join(', ') +
+            content: 'Give a short, easy-to-read summary of this story for a reader:\n\n' +
+                     'Title: ' + a.tittel + '\nGenre: ' + (a.genres || []).map(genreLabel).join(', ') +
                      '\n\n' + (a.brodtekst || []).join('\n\n'),
           }],
           max_tokens: 400,
@@ -458,9 +479,9 @@ const Magazine = (() => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
-      out.textContent = (data.text || '').trim() || 'Core hadde ikke noe å legge til akkurat nå.';
+      out.textContent = (data.text || '').trim() || 'Core had nothing to add right now.';
     } catch (e) {
-      out.textContent = 'Kunne ikke hente AI-sammendrag akkurat nå. Prøv igjen senere.';
+      out.textContent = 'Could not fetch an AI summary right now. Please try again later.';
     }
   }
 

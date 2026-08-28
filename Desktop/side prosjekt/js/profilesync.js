@@ -21,8 +21,8 @@ const ProfileSync = (() => {
   // (lokale IndexedDB-blob-id-er som er ubrukelige hos andre), friendRequests.
   const PUBLIC_FIELDS = [
     'username', 'displayName', 'bio', 'role', 'theme',
-    'bannerUrl', 'bannerPath', 'links', 'favoriteRadio',
-    'platforms', 'sites', 'mySites', 'festivals', 'events', 'broadcasts',
+    'avatarUrl', 'avatarPath', 'bannerUrl', 'bannerPath', 'bannerPos', 'links', 'favoriteRadio',
+    'platforms', 'sites', 'mySites', 'festivals', 'events',
     'profileVisibility', 'createdAt',
   ];
 

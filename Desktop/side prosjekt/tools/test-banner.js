@@ -73,6 +73,15 @@ const documentStub = {
 
 const sandbox = {
   console,
+  // Sanntidslaget (js/realtime.js). profile.js sin statusBadgeHtml() les SC.statusOf
+  // ved kvar rendering, så utan denne stubben kastar renderView før noko markup
+  // blir laga — og testen ser berre spinneren.
+  SC: {
+    STATUS_VALID: ['online', 'away', 'sleeping', 'offline'],
+    statusOf() { return 'online'; },
+    setStatus() {}, soundOn() { return false; }, toggleSound() {}, playDing() {},
+    NS: {},
+  },
   setTimeout, clearTimeout, setInterval, clearInterval,
   requestAnimationFrame: (cb) => setTimeout(cb, 0), cancelAnimationFrame() {},
   JSON, Math, Date, Promise, Object, Array, String, Number, RegExp, parseInt, parseFloat, isNaN,
@@ -152,12 +161,12 @@ async function testRender() {
     const hero = heroOf(html);
     assert.ok(hero.includes('profile-hero-banner-actions'), 'uten banner: hero har banner-handlingsfelt');
     assert.ok(hero.includes('id="profile-banner-input"'), 'uten banner: skjult fil-input på hero');
-    assert.ok(hero.includes("Profile.setBannerFromProfile(this,'dj_test')"), 'uten banner: opplasting kaller setBannerFromProfile');
-    assert.ok(hero.includes('Last opp banner'), 'uten banner: «Last opp banner» vises');
-    assert.ok(!hero.includes('Slett bakgrunn'), 'uten banner: ingen slett-knapp');
+    assert.ok(hero.includes("Profile.openBannerReposForFile(this,'dj_test')"), 'uten banner: opplasting åpner reposisjonering (openBannerReposForFile)');
+    assert.ok(hero.includes('Upload banner'), 'uten banner: «Last opp banner» vises');
+    assert.ok(!hero.includes('Delete background'), 'uten banner: ingen slett-knapp');
     // Hele banneren er klikkbar (Facebook-stil) for eier, med synlig hint når tom
     assert.ok(hero.includes('profile-hero-overlay--editable'), 'uten banner: hele banneren er klikkbar');
-    assert.ok(hero.includes('Last opp forsidebilde'), 'uten banner: klikk-hint vises på banneren');
+    assert.ok(hero.includes('Upload cover photo'), 'uten banner: klikk-hint vises på banneren');
     ok('eier uten banner → «Last opp banner» på forsidebildet');
   }
 
@@ -166,9 +175,11 @@ async function testRender() {
     const html = await renderHtml({ username: 'dj_test' }, baseUser({ bannerMediaId: 'bn_existing' }));
     const hero = heroOf(html);
     assert.ok(hero.includes('profile-hero-banner-actions'), 'med banner: hero har banner-handlingsfelt');
-    assert.ok(hero.includes('Bytt bakgrunn'), 'med banner: «Bytt bakgrunn» på hero');
-    assert.ok(hero.includes('Slett bakgrunn'), 'med banner: «Slett bakgrunn» på hero');
-    assert.ok(hero.includes("Profile.setBannerFromProfile(this,'dj_test')"), 'med banner: bytt kaller setBannerFromProfile');
+    assert.ok(hero.includes('Change background'), 'med banner: «Bytt bakgrunn» på hero');
+    assert.ok(hero.includes('Delete background'), 'med banner: «Slett bakgrunn» på hero');
+    assert.ok(hero.includes("Profile.openBannerReposForFile(this,'dj_test')"), 'med banner: bytt åpner reposisjonering (openBannerReposForFile)');
+    assert.ok(hero.includes('Adjust position'), 'med banner: «Juster posisjon» på hero');
+    assert.ok(hero.includes("Profile.repositionBanner('dj_test')"), 'med banner: juster kaller repositionBanner');
     assert.ok(hero.includes("Profile.deleteBanner('dj_test')"), 'med banner: slett kaller deleteBanner');
     assert.ok(hero.includes('profile-hero-overlay--editable'), 'med banner: hele banneren er klikkbar for bytte');
     ok('eier med banner → «Bytt/Slett bakgrunn» på forsidebildet');
@@ -179,20 +190,26 @@ async function testRender() {
     const html = await renderHtml({ username: 'dj_test' }, baseUser({ bannerUrl: 'https://cloud.example/banner/abc.jpg' }));
     const hero = heroOf(html);
     assert.ok(hero.includes('https://cloud.example/banner/abc.jpg'), 'sky-banner: hero bruker den delbare URL-en');
-    assert.ok(hero.includes('Bytt bakgrunn') && hero.includes('Slett bakgrunn'), 'sky-banner: bytt/slett vises');
+    assert.ok(hero.includes('Change background') && hero.includes('Delete background'), 'sky-banner: bytt/slett vises');
+    // REGRESJON: banneret MÅ ligge på det synlige .profile-hero-bg-laget, ellers
+    // dekker det opake tema-laget banneret helt (usynlig banner-bug, juli 2026).
+    const bgLayer = hero.match(/class="profile-hero-bg"[^>]*style="([^"]*)"/);
+    assert.ok(bgLayer, 'sky-banner: fant .profile-hero-bg-laget');
+    assert.ok(bgLayer[1].includes('https://cloud.example/banner/abc.jpg'),
+      'sky-banner: banner-URL ligger på .profile-hero-bg (det synlige laget), ikke gjemt bak tema-bakgrunnen');
     ok('eier med sky-banner → forsidebildet bruker delbar URL (synlig for alle)');
   }
 
   // Ikke-eier → ingen banner-knapper
   let html = await renderHtml({ username: 'someone_else' }, baseUser({ bannerMediaId: 'bn_existing' }));
-  assert.ok(!html.includes('profile-banner-input') && !html.includes('setBannerFromProfile') && !html.includes('deleteBanner'), 'ingen banner-markører for fremmed');
-  assert.ok(!html.includes('Bytt bakgrunn') && !html.includes('Slett bakgrunn') && !html.includes('Last opp banner'), 'fremmed ser ikke bakgrunns-knappene');
+  assert.ok(!html.includes('profile-banner-input') && !html.includes('openBannerReposForFile') && !html.includes('deleteBanner'), 'ingen banner-markører for fremmed');
+  assert.ok(!html.includes('Change background') && !html.includes('Delete background') && !html.includes('Upload banner') && !html.includes('Adjust position'), 'fremmed ser ikke bakgrunns-knappene');
   assert.ok(!html.includes('profile-hero-overlay--editable'), 'fremmed: banneren er IKKE klikkbar');
   ok('ikke-eier → ingen bakgrunns-knapper (kun eier kan endre)');
 
   // Utlogget → ingen banner-knapper
   html = await renderHtml(null, baseUser({ bannerMediaId: 'bn_existing' }));
-  assert.ok(!html.includes('setBannerFromProfile') && !html.includes('deleteBanner'), 'utlogget ser ikke bakgrunns-knappene');
+  assert.ok(!html.includes('openBannerReposForFile') && !html.includes('deleteBanner'), 'utlogget ser ikke bakgrunns-knappene');
   ok('utlogget → ingen bakgrunns-knapper');
 }
 

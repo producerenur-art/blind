@@ -108,14 +108,14 @@ const PlayerDrag = (() => {
   // ── Minimize / expand ─────────────────────────────────────────────────
   function _applyMinimize() {
     bar.classList.add('minimized');
-    if (minimizeBtn) { _setIcon(minimizeBtn, 'plus'); minimizeBtn.title = 'Utvid'; }
+    if (minimizeBtn) { _setIcon(minimizeBtn, 'plus'); minimizeBtn.title = 'Expand'; }
     isMinimized = true;
   }
 
   function toggleMinimize() {
     if (isMinimized) {
       bar.classList.remove('minimized');
-      if (minimizeBtn) { _setIcon(minimizeBtn, 'minus'); minimizeBtn.title = 'Minimer'; }
+      if (minimizeBtn) { _setIcon(minimizeBtn, 'minus'); minimizeBtn.title = 'Minimize'; }
       isMinimized = false;
     } else {
       // Minimize and enlarge are mutually exclusive.
@@ -128,14 +128,14 @@ const PlayerDrag = (() => {
   // ── Forstørre (slightly larger) ───────────────────────────────────────
   function _applyEnlarge() {
     bar.classList.add('enlarged');
-    if (maximizeBtn) { _setIcon(maximizeBtn, 'minimize-2'); maximizeBtn.title = 'Tilbakestill størrelse'; }
+    if (maximizeBtn) { _setIcon(maximizeBtn, 'minimize-2'); maximizeBtn.title = 'Reset size'; }
     isEnlarged = true;
   }
 
   function toggleMaximize() {
     if (isEnlarged) {
       bar.classList.remove('enlarged');
-      if (maximizeBtn) { _setIcon(maximizeBtn, 'maximize'); maximizeBtn.title = 'Forstørre'; }
+      if (maximizeBtn) { _setIcon(maximizeBtn, 'maximize'); maximizeBtn.title = 'Maximize'; }
       isEnlarged = false;
     } else {
       // Expand out of minimized first so the bigger controls are visible.

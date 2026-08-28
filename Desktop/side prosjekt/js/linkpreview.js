@@ -21,6 +21,13 @@
     return /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
   }
 
+  // Plukk ut den 11-tegns YouTube-video-IDen fra alle vanlige lenkeformer.
+  function youTubeId(u) {
+    const m = String(u || '').match(
+      /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : '';
+  }
+
   // ── Linkify: escape teksten og gjør URL-er om til klikkbare lenker ─────────
   // Returnerer { html, urls } der urls er rekkefølgen lenker dukket opp i.
   function linkify(raw) {
@@ -66,6 +73,17 @@
       el.removeAttribute('data-lp-idle');        // idempotent: kjør hver node én gang
       const url = el.getAttribute('data-url');
       const key = el.getAttribute('data-key');
+      // YouTube: bygg cover-bilde + spiller lokalt fra video-IDen. Da får publikum
+      // alltid et forsidebilde, uten å være avhengig av at /api/unfurl svarer.
+      const yid = youTubeId(url);
+      if (yid) {
+        _fill(el, key, url, {
+          image: 'https://i.ytimg.com/vi/' + yid + '/hqdefault.jpg',
+          embed: 'https://www.youtube.com/embed/' + yid + '?autoplay=1&rel=0',
+          site:  'YouTube',
+        });
+        return;
+      }
       fetch('/api/unfurl?url=' + encodeURIComponent(url))
         .then(function (r) { return r.json(); })
         .then(function (d) { _fill(el, key, url, d || {}); })
@@ -76,18 +94,28 @@
   function _fill(el, key, url, d) {
     const img   = safeUrl(d.image);
     const embed = safeUrl(d.embed);
-    const title = d.title || '';
-    const site  = d.site || '';
-    if (!img && !embed && !title) { el.remove(); return; }
+    let title = d.title || '';
+    let site  = d.site || '';
+    // Fallback for hvilken som helst URL: fant vi hverken bilde, embed eller
+    // tittel, viser vi likevel et minimalt kort med domenet — så ingen lenke blir
+    // stående helt uten forhåndsvisning.
+    if (!img && !embed && !title) {
+      let host = '';
+      try { host = new URL(url).hostname.replace(/^www\./, ''); } catch (_) {}
+      if (!host) { el.remove(); return; }
+      site = site || host;
+      title = host;
+    }
     if (embed) _embeds[key] = embed;
 
     const playBtn = embed
-      ? '<button class="cp-prev-play" type="button" aria-label="Spill av" ' +
+      ? '<button class="cp-prev-play" type="button" aria-label="Play" ' +
         'onclick="event.preventDefault();event.stopPropagation();LinkPreview.play(\'' +
         esc(key) + '\')">' + PLAY_SVG + '</button>'
       : '';
     const thumb = img
-      ? '<div class="cp-prev-thumb"><img src="' + esc(img) + '" loading="lazy" alt="">' + playBtn + '</div>'
+      ? '<div class="cp-prev-thumb"><img src="' + esc(img) + '" loading="lazy" alt="" ' +
+        'onerror="this.parentNode&amp;&amp;this.parentNode.classList.add(\'cp-prev-noimg\');this.remove()">' + playBtn + '</div>'
       : (embed ? '<div class="cp-prev-thumb cp-prev-noimg">' + playBtn + '</div>' : '');
 
     el.innerHTML =

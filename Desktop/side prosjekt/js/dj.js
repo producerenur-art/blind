@@ -66,27 +66,63 @@ const DJ = (() => {
   function showPMNotification(fromName, text) {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     try {
-      new Notification(`${Icon('mail')} Ny melding fra ${fromName}`, {
+      new Notification(`${Icon('mail')} New message from ${fromName}`, {
         body: text.length > 100 ? text.substring(0, 97) + '…' : text,
         tag:  'stellar-pm',
       });
     } catch (_) {}
   }
 
+  // ── Gun-synk (1:1 privat melding på tvers av ALLE brukere) ────────────────
+  // localStorage er lokal cache/historikk; Gun (SC.NS.dm) er transporten som
+  // leverer meldinga til den andre brukeren uansett enhet. Same kanal-nøkkel som
+  // FriendChat (SC.channelKey), så ei melding sendt her dukkar òg opp i vennechatten.
+  const _dmSubbed = new Set();
+  function gunChanKey(a, b) {
+    return (window.SC && SC.channelKey) ? SC.channelKey(a, b) : [a, b].sort().join('__');
+  }
+  function ensureDMSub(me, other) {
+    if (!window.SC || !SC.gun()) return;
+    const chan = gunChanKey(me, other);
+    if (_dmSubbed.has(chan)) return;
+    _dmSubbed.add(chan);
+    SC.sub(SC.gun().get(SC.NS.dm).get(chan), (msg, key) => {
+      if (!msg || !msg.text || typeof msg.ts !== 'number') return;
+      const lkey = pmChannelKey(me, other);
+      let arr;
+      try { arr = JSON.parse(localStorage.getItem(lkey) || '[]'); } catch { arr = []; }
+      // De-dup: på Gun-nøkkel ELLER identisk melding (eiga melding ekko-ar tilbake).
+      if (arr.some(m => m._k === key || (m.from === msg.from && m.ts === msg.ts && m.text === msg.text))) return;
+      arr.push({ from: msg.from, displayName: msg.fromDisplay || msg.displayName || msg.from, text: msg.text, ts: msg.ts, _k: key });
+      arr.sort((a, b) => a.ts - b.ts);
+      localStorage.setItem(lkey, JSON.stringify(arr));
+      // Den opne chatten sin 1-sekunds-poll (startPMListen) fangar opp cachen og
+      // teiknar/plinger. Om chatten ikkje er open: badge oppdaterast av App.
+      if (typeof App !== 'undefined' && App.updateNavBadge) App.updateNavBadge();
+    });
+  }
+
   // ── Private chat ───────────────────────────────────────────────────────
-  function renderPrivateChat(targetUsername) {
+  async function renderPrivateChat(targetUsername) {
     const current = Auth.current();
-    if (!current) { App.toast('Logg inn for å sende meldinger', 'error'); Router.go('/login'); return; }
-    const target = Auth.getUser(targetUsername);
+    if (!current) { App.toast('Log in to send messages', 'error'); Router.go('/login'); return; }
+    let target = Auth.getUser(targetUsername);
+    // Ikkje i lokal cache? Hent profilen frå sky så meldingsvindauget virkar for
+    // ALLE brukere (ikkje berre dei ein alt har møtt på denne eininga).
+    if (!target && window.ProfileSync && ProfileSync._enabled()) {
+      await ProfileSync.pull(targetUsername).catch(() => {});
+      target = Auth.getUser(targetUsername);
+    }
     if (!target) { Router.go('/inbox'); return; }
+    ensureDMSub(current.username, target.username);
 
     const app = document.getElementById('app');
     app.innerHTML = `
       <div class="dj-chat-page">
         <div class="dj-chat-header">
-          <a href="#/inbox" class="btn btn-ghost btn-sm">${Icon('arrow-left')} Tilbake</a>
+          <a href="#/inbox" class="btn btn-ghost btn-sm">${Icon('arrow-left')} Back</a>
           <a href="#/u/${target.username}" style="display:flex;align-items:center;gap:0.6rem;text-decoration:none;color:inherit">
-            <div class="dj-profile-av">${target.displayName.charAt(0).toUpperCase()}</div>
+            <div class="dj-profile-av" data-av-user="${target.username}" style="overflow:hidden">${target.displayName.charAt(0).toUpperCase()}</div>
             <div>
               <div style="font-weight:700">${target.displayName}</div>
               <div style="font-size:0.75rem;color:var(--text2)">@${target.username}</div>
@@ -95,7 +131,7 @@ const DJ = (() => {
         </div>
         <div id="pm-messages" class="dj-pm-messages"></div>
         <div class="dj-pm-input-row">
-          <input class="form-input" id="pm-input" placeholder="Skriv melding…" onkeydown="if(event.key==='Enter')DJ.sendPM('${target.username}')">
+          <input class="form-input" id="pm-input" placeholder="Write a message…" onkeydown="if(event.key==='Enter')DJ.sendPM('${target.username}')">
           <button class="btn btn-primary" onclick="DJ.sendPM('${target.username}')">Send</button>
         </div>
       </div>`;
@@ -104,6 +140,8 @@ const DJ = (() => {
     markConvRead(current.username, target.username);
     startPMListen(current.username, target.username);
     requestNotificationPermission();
+    // Bytt initial-plassholdaren i headeren ut med det ekte profilbildet.
+    if (window.Profile && Profile.hydrateAvatars) Profile.hydrateAvatars(app);
     document.getElementById('pm-input')?.focus();
   }
 
@@ -120,11 +158,15 @@ const DJ = (() => {
     el.scrollTop = el.scrollHeight;
   }
 
+  let _pmIv = null;
   function startPMListen(me, other) {
+    // Stopp lyttaren for førre samtale først — elles held intervallet for chat A fram
+    // og overskriv #pm-messages med A si historie medan du ser på chat B.
+    if (_pmIv) { clearInterval(_pmIv); _pmIv = null; }
     const key = pmChannelKey(me, other);
     let lastCount = JSON.parse(localStorage.getItem(key) || '[]').length;
     const iv = setInterval(() => {
-      if (!document.getElementById('pm-messages')) { clearInterval(iv); return; }
+      if (!document.getElementById('pm-messages')) { clearInterval(iv); _pmIv = null; return; }
       const msgs = JSON.parse(localStorage.getItem(key) || '[]');
       if (msgs.length > lastCount) {
         const newMsgs = msgs.slice(lastCount);
@@ -147,13 +189,32 @@ const DJ = (() => {
     const input = document.getElementById('pm-input');
     const text  = input?.value?.trim();
     if (!text) return;
+    const ts   = Date.now();
     const key  = pmChannelKey(current.username, targetUsername);
     const msgs = JSON.parse(localStorage.getItem(key) || '[]');
-    msgs.push({ from: current.username, displayName: current.displayName, text, ts: Date.now() });
+    msgs.push({ from: current.username, displayName: current.displayName, text, ts });
     localStorage.setItem(key, JSON.stringify(msgs));
     if (input) input.value = '';
     loadPMHistory(current.username, targetUsername);
     playMessageSound('send');
+
+    // Kringkast over Gun (SC.NS.dm) så mottakeren får meldinga på ALLE enheter,
+    // uansett om dei er venner. Ekko tilbake de-dup-ast i ensureDMSub.
+    if (window.SC && SC.gun()) {
+      ensureDMSub(current.username, targetUsername);
+      try {
+        SC.gun().get(SC.NS.dm).get(gunChanKey(current.username, targetUsername))
+          .set({ from: current.username, fromDisplay: current.displayName, text, ts, to: targetUsername });
+      } catch (e) { console.warn('[DJ] Gun-send feila', e); }
+    }
+
+    // Varsel-bjelle hos mottakeren (Facebook-aktig).
+    if (window.Notify && Notify.emit) {
+      Notify.emit(targetUsername, {
+        type: 'message', from: current.username, fromDisplay: current.displayName,
+        text: 'sent you a private message', link: '#/messages/' + current.username,
+      });
+    }
 
     // E-postvarsel til mottaker
     const target = Auth.getUser(targetUsername);

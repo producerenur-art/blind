@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hør live · SoundCore</title>
+<style>
+  :root { --bg:#0b0d12; --card:#141821; --line:rgba(255,255,255,.1); --text:#e8eaf0; --text2:#9aa3b2; --accent:#f59e0b; --green:#22c55e; --red:#ef4444; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.5 -apple-system,system-ui,sans-serif; background:var(--bg); color:var(--text); padding:1.5rem; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:1.75rem; max-width:420px; width:100%; text-align:center; }
+  h1 { font-size:1.4rem; margin:0 0 .5rem; }
+  p { color:var(--text2); margin:0 0 1.25rem; font-size:.92rem; }
+  .btn { width:100%; padding:1rem; border-radius:12px; border:none; background:var(--accent); color:#1a1205; font:inherit; font-weight:800; font-size:1.05rem; cursor:pointer; }
+  .btn:disabled { opacity:.5; }
+  .pill { display:inline-flex; align-items:center; gap:.45rem; font-size:.82rem; font-weight:700; padding:.3rem .8rem; border-radius:999px; background:rgba(255,255,255,.06); margin-bottom:1rem; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--text2); }
+  .dot.live { background:var(--green); animation:pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity:.3; } }
+  .meter { height:24px; border-radius:7px; background:#080a0e; overflow:hidden; position:relative; margin-top:1.25rem; }
+  .meter > i { position:absolute; inset:0 auto 0 0; width:0%; background:linear-gradient(90deg,var(--green),var(--accent),var(--red)); transition:width .05s; }
+  .small { font-size:.75rem; color:var(--text2); margin-top:.8rem; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="pill"><span class="dot" id="dot"></span><span id="status">Ikke tilkoblet</span></div>
+  <h1>🎚️ Live-sett</h1>
+  <p>Trykk for å høre DJ-en spille live. (Trykk kreves av nettleseren for å spille av lyd.)</p>
+  <button class="btn" id="join">▶︎ Hør live</button>
+  <audio id="audio" autoplay playsinline></audio>
+  <div class="meter"><i id="meter"></i></div>
+  <div class="small" id="info"></div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const ICE = { iceServers:[{ urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302'] }] };
+  const ROOM = 'live';
+  const myId = 'ln_' + Math.random().toString(36).slice(2,8);
+  let pc, es, djId=null, ctx, anal, raf;
+
+  async function signal(to, data){
+    await fetch('/signal',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ room:ROOM, to, from:myId, data }) });
+  }
+  function setStatus(t, live){ $('status').textContent=t; $('dot').classList.toggle('live', !!live); }
+
+  $('join').onclick = () => {
+    $('join').disabled = true;
+    setStatus('Kobler til…');
+    es = new EventSource(`/events?room=${ROOM}&peerId=${myId}&role=listener`);
+    es.onmessage = async ev => {
+      const msg = JSON.parse(ev.data);
+      if (msg.type==='dj-here') { djId=msg.from; $('info').textContent='Fant DJ. Venter på lyd…'; }
+      else if (msg.type==='no-dj') { setStatus('Ingen DJ sender akkurat nå'); $('info').textContent='Prøv igjen når DJ-en har trykket «Gå live».'; $('join').disabled=false; }
+      else if (msg.type==='peer-left' && msg.from===djId) { setStatus('DJ-en avsluttet'); if(pc)pc.close(); }
+      else if (msg.type==='signal') { await onSignal(msg.from, msg.data); }
+    };
+    es.onerror = () => setStatus('Tilkobling ustabil…');
+  };
+
+  async function onSignal(from, data){
+    if (data.type==='offer') {
+      djId = from;
+      pc = new RTCPeerConnection(ICE);
+      pc.onicecandidate = e => { if (e.candidate) signal(djId, { type:'ice', candidate:e.candidate }); };
+      pc.onconnectionstatechange = () => { if (pc.connectionState==='connected') setStatus('LIVE — hører settet', true); };
+      pc.ontrack = e => {
+        $('audio').srcObject = e.streams[0];
+        $('audio').play().catch(()=>{});
+        startMeter(e.streams[0]);
+        $('info').textContent = 'Lyd mottatt 🎶';
+      };
+      await pc.setRemoteDescription(data.sdp);
+      const ans = await pc.createAnswer();
+      await pc.setLocalDescription(ans);
+      await signal(djId, { type:'answer', sdp:pc.localDescription });
+    } else if (data.type==='ice' && pc) {
+      try { await pc.addIceCandidate(data.candidate); } catch(e){}
+    }
+  }
+
+  function startMeter(stream){
+    try {
+      ctx = new (window.AudioContext||window.webkitAudioContext)(); ctx.resume();
+      const src=ctx.createMediaStreamSource(stream); anal=ctx.createAnalyser(); anal.fftSize=1024; src.connect(anal);
+      const buf=new Float32Array(anal.fftSize);
+      (function loop(){ anal.getFloatTimeDomainData(buf); let s=0; for(let i=0;i<buf.length;i++)s+=buf[i]*buf[i];
+        const db=Math.sqrt(s/buf.length)>0?20*Math.log10(Math.sqrt(s/buf.length)):-Infinity;
+        $('meter').style.width=(db===-Infinity?0:Math.max(0,Math.min(100,(db+60)/60*100)))+'%';
+        raf=requestAnimationFrame(loop); })();
+    } catch(e){}
+  }
+})();
+</script>
+</body>
+</html>

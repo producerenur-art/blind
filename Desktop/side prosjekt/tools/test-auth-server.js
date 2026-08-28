@@ -97,11 +97,11 @@ function testHelpers() {
   assert.notStrictEqual(hashPassword('x!1aaa'), hashPassword('x!1aaa'), 'salt gir ulike hasher');
   ok('scrypt: roundtrip + feil/tukling avvist + unik salt');
 
-  assert.strictEqual(validateRegister({ username: 'ab', password: 'Aa!111', email: 'a@b.no' }), 'Brukernavn må være minst 3 tegn');
-  assert.strictEqual(validateRegister({ username: 'bad name', password: 'Aa!111', email: 'a@b.no' }), 'Brukernavn kan bare ha bokstaver, tall og _');
-  assert.strictEqual(validateRegister({ username: 'goodname', password: 'short', email: 'a@b.no' }), 'Passord må være minst 6 tegn');
-  assert.strictEqual(validateRegister({ username: 'goodname', password: 'nospecial1', email: 'a@b.no' }), 'Passord må inneholde minst ett spesialtegn (f.eks. !@#$%)');
-  assert.strictEqual(validateRegister({ username: 'goodname', password: 'Good!23', email: 'bad' }), 'Ugyldig e-postadresse');
+  assert.strictEqual(validateRegister({ username: 'ab', password: 'Aa!111', email: 'a@b.no' }), 'Username must be at least 3 characters');
+  assert.strictEqual(validateRegister({ username: 'bad name', password: 'Aa!111', email: 'a@b.no' }), 'Username can only contain letters, numbers and _');
+  assert.strictEqual(validateRegister({ username: 'goodname', password: 'short', email: 'a@b.no' }), 'Password must be at least 6 characters');
+  assert.strictEqual(validateRegister({ username: 'goodname', password: 'nospecial1', email: 'a@b.no' }), 'Password must contain at least one special character (e.g. !@#$%)');
+  assert.strictEqual(validateRegister({ username: 'goodname', password: 'Good!23', email: 'bad' }), 'Invalid email address');
   assert.strictEqual(validateRegister({ username: 'goodname', password: 'Good!23', email: 'a@b.no' }), null);
   assert.strictEqual(validatePassword('Good!23'), null);
   assert.ok(validatePassword('short'));
@@ -134,13 +134,13 @@ async function testRegisterLoginFlow() {
   // duplikat e-post (annet casing) avvises
   let dup = await ACTIONS.register(db, { username: 'kari2', displayName: 'K2', email: 'kari@eksempel.no', password: 'Hemmelig!23' });
   assert.strictEqual(dup.status, 409, 'duplikat e-post → 409');
-  assert.strictEqual(dup.body.error, 'E-postadressen er allerede i bruk');
+  assert.strictEqual(dup.body.error, 'That email address is already in use');
   ok('register: global unik e-post håndheves (case-insensitivt)');
 
   // duplikat brukernavn avvises
   let dupU = await ACTIONS.register(db, { username: 'kari', displayName: 'K', email: 'annen@eksempel.no', password: 'Hemmelig!23' });
   assert.strictEqual(dupU.status, 409, 'duplikat brukernavn → 409');
-  assert.strictEqual(dupU.body.error, 'Brukernavn er tatt');
+  assert.strictEqual(dupU.body.error, 'That username is taken');
   ok('register: unikt brukernavn håndheves');
 
   // e-postfeil rapporteres ærlig (konto opprettes likevel)
@@ -218,16 +218,20 @@ async function testForgotReset() {
   assert.strictEqual(rExp.status, 400, 'utløpt token → 400');
   ok('reset: utløpt token avvises');
 
-  // reset med gyldig token bytter passord
+  // reset med gyldig token bytter passord — og aktiverer kontoen (fullført reset
+  // beviser e-posteierskap, så en uaktivert bruker blir ikke stengt ute etterpå).
   store.accounts.find(a => a.username === 'ola').reset_expiry = Date.now() + 60000;
+  store.accounts.find(a => a.username === 'ola').activated = false; // simuler uaktivert konto
   let rOk = await ACTIONS.reset(db, { token: rtok, password: 'NyttPass!9' });
   assert.strictEqual(rOk.status, 200, 'gyldig reset → 200');
   assert.strictEqual(store.accounts.find(a => a.username === 'ola').reset_token, null, 'token nullstilt etter reset');
+  assert.strictEqual(store.accounts.find(a => a.username === 'ola').activated, true, 'reset aktiverer kontoen');
+  assert.ok(rOk.body.user && rOk.body.user.activated, 'reset returnerer aktivert bruker');
   let lNew = await ACTIONS.login(db, { usernameOrEmail: 'ola', password: 'NyttPass!9' });
-  assert.strictEqual(lNew.status, 200, 'login med nytt passord virker');
+  assert.strictEqual(lNew.status, 200, 'login med nytt passord virker (også uten separat aktivering)');
   let lOldGone = await ACTIONS.login(db, { usernameOrEmail: 'ola', password: 'Start!23' });
   assert.strictEqual(lOldGone.status, 401, 'gammelt passord virker ikke lenger');
-  ok('reset: gyldig token bytter passord (gammelt slutter å virke)');
+  ok('reset: gyldig token bytter passord + aktiverer kontoen (gammelt slutter å virke)');
 }
 
 function testClientWiring() {

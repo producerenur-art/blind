@@ -1,26 +1,113 @@
 // Profile — view + edit
 const Profile = (() => {
 
+  // ── Nærvær-status (online / borte / sover / frakobla) ─────────────────
+  // Brukaren vel sjølv kva profilen viser. Valet blir kringkasta via SC-presence
+  // (js/realtime.js) slik at ALLE — i alle nettlesarar og på mobil/nettbrett —
+  // ser same status. Standard er «online». «Frakobla» = usynleg i online-lista.
+  const STATUS_META = {
+    online:   { label: 'Online',   dot: '#22c55e', pulse: true  },
+    away:     { label: 'Away',    dot: '#f59e0b', pulse: false },
+    sleeping: { label: 'Asleep',    dot: '#8b5cf6', pulse: false },
+    offline:  { label: 'Offline',dot: '#6b7280', pulse: false },
+  };
+
+  // Kva status ein brukar viser no. Fell tilbake på 'offline' om SC manglar.
+  function _statusOf(username) {
+    if (window.SC && SC.statusOf) return SC.statusOf(username);
+    return (window.Auth && Auth.isOnline && Auth.isOnline(username)) ? 'online' : 'offline';
+  }
+
+  // Badge ved siden av @brukarnamn. For eigaren er den ein klikkbar velgar med
+  // nedtrekk (Online / Borte / Sover / Frakoblet). For andre berre ei etikett.
+  function statusBadgeHtml(username, isOwner) {
+    const cur  = _statusOf(username);
+    const meta = STATUS_META[cur] || STATUS_META.offline;
+    const dot  = `<span class="status-badge-dot${meta.pulse ? ' status-badge-dot--pulse' : ''}" style="background:${meta.dot};box-shadow:0 0 8px ${meta.dot}88"></span>`;
+    if (!isOwner) {
+      return `<span class="status-badge" title="Status: ${meta.label}">${dot}<span class="status-badge-label">${meta.label}</span></span>`;
+    }
+    const items = SC && SC.STATUS_VALID ? SC.STATUS_VALID : ['online','away','sleeping','offline'];
+    const menu = items.map(k => {
+      const m = STATUS_META[k];
+      return `<button type="button" class="status-menu-item${k === cur ? ' active' : ''}" onclick="Profile.setStatus('${k}')">
+                <span class="status-badge-dot" style="background:${m.dot};box-shadow:0 0 6px ${m.dot}88"></span>
+                <span>${m.label}</span>${k === cur ? ' <span class="status-menu-check">✓</span>' : ''}
+              </button>`;
+    }).join('');
+    return `<span class="status-badge status-badge--owner" id="status-badge-${esc(username)}">
+      <button type="button" class="status-badge-btn" onclick="Profile.toggleStatusMenu(event)" title="Change your status — shown to everyone">
+        ${dot}<span class="status-badge-label">${meta.label}</span><span class="status-badge-caret">▾</span>
+      </button>
+      <div class="status-menu hidden">${menu}</div>
+    </span>`;
+  }
+
+  // Vis/skjul nedtrekket. Lukkast ved klikk utanfor.
+  function toggleStatusMenu(ev) {
+    if (ev) ev.stopPropagation();
+    const badge = ev && ev.currentTarget ? ev.currentTarget.closest('.status-badge--owner') : null;
+    if (!badge) return;
+    const menu = badge.querySelector('.status-menu');
+    if (!menu) return;
+    const willOpen = menu.classList.contains('hidden');
+    document.querySelectorAll('.status-menu').forEach(m => m.classList.add('hidden'));
+    if (willOpen) {
+      menu.classList.remove('hidden');
+      setTimeout(() => {
+        const off = (e) => {
+          if (badge.contains(e.target)) return;
+          menu.classList.add('hidden');
+          document.removeEventListener('click', off, true);
+        };
+        document.addEventListener('click', off, true);
+      }, 0);
+    }
+  }
+
+  // Eigaren vel ny status → kringkast + oppdater badge live utan full re-render.
+  // Berre eigaren har ein `.status-badge--owner` på sida (si eiga profilhode),
+  // så vi oppdaterer den direkte utan å slå opp brukarnamn.
+  function setStatus(status) {
+    if (window.SC && SC.setStatus) SC.setStatus(status);
+    const meta = STATUS_META[status] || STATUS_META.online;
+    document.querySelectorAll('.status-badge--owner').forEach(badge => {
+      const btnDot = badge.querySelector('.status-badge-btn .status-badge-dot');
+      const btnLbl = badge.querySelector('.status-badge-btn .status-badge-label');
+      if (btnDot) { btnDot.style.background = meta.dot; btnDot.style.boxShadow = `0 0 8px ${meta.dot}88`; btnDot.classList.toggle('status-badge-dot--pulse', !!meta.pulse); }
+      if (btnLbl) btnLbl.textContent = meta.label;
+      badge.querySelectorAll('.status-menu-item').forEach(it => {
+        const on = it.getAttribute('onclick') || '';
+        const active = on.includes(`'${status}'`);
+        it.classList.toggle('active', active);
+        let chk = it.querySelector('.status-menu-check');
+        if (active && !chk) { chk = document.createElement('span'); chk.className = 'status-menu-check'; chk.textContent = '✓'; it.appendChild(chk); }
+        else if (!active && chk) chk.remove();
+      });
+    });
+    document.querySelectorAll('.status-menu').forEach(m => m.classList.add('hidden'));
+  }
+
   // ── Festival data ─────────────────────────────────────────────────────
   const FESTIVALS = [
-    { id: 'ozora',        emoji: '🌀', name: 'Ozora Festival',         country: 'Ungarn 🇭🇺',   url: 'https://ozorafestival.eu',              ticket: 'Billetter' },
+    { id: 'ozora',        emoji: '🌀', name: 'Ozora Festival',         country: 'Hungary 🇭🇺',   url: 'https://ozorafestival.eu',              ticket: 'Tickets' },
     { id: 'boom',         emoji: '🌙', name: 'Boom Festival',           country: 'Portugal 🇵🇹', url: 'https://boomfestival.org',              ticket: 'Info' },
-    { id: 'sensation_w',  emoji: '🤍', name: 'Sensation White',         country: 'Global 🌍',   url: 'https://www.sensation.com',             ticket: 'Påmelding' },
-    { id: 'sensation_b',  emoji: '🖤', name: 'Sensation Black',         country: 'Global 🌍',   url: 'https://www.sensation.com',             ticket: 'Påmelding' },
+    { id: 'sensation_w',  emoji: '🤍', name: 'Sensation White',         country: 'Global 🌍',   url: 'https://www.sensation.com',             ticket: 'Register' },
+    { id: 'sensation_b',  emoji: '🖤', name: 'Sensation Black',         country: 'Global 🌍',   url: 'https://www.sensation.com',             ticket: 'Register' },
     { id: 'fullmoon',     emoji: '🌕', name: 'Full Moon Party',         country: 'Thailand 🇹🇭', url: 'https://fullmoonparty-thailand.com',    ticket: 'Info' },
-    { id: 'universo',     emoji: '🌌', name: 'Universo Paralello',      country: 'Brasil 🇧🇷',   url: 'https://www.universopararello.com.br',  ticket: 'Billetter' },
-    { id: 'psy_fi',       emoji: '🔮', name: 'Psy-Fi Festival',         country: 'Nederland 🇳🇱',url: 'https://www.psy-fi.nl',                 ticket: 'Billetter' },
-    { id: 'modem',        emoji: '🎛️', name: 'Modem Festival',          country: 'Kroatia 🇭🇷',  url: 'https://modemfestival.com',             ticket: 'Billetter' },
-    { id: 'shankra',      emoji: '🕉️', name: 'Shankra Festival',        country: 'Sveits 🇨🇭',   url: 'https://www.shankra-festival.ch',       ticket: 'Billetter' },
-    { id: 'rainbow',      emoji: '🌈', name: 'Rainbow Serpent',         country: 'Australia 🇦🇺',url: 'https://rainbowserpent.net',            ticket: 'Billetter' },
-    { id: 'antaris',      emoji: '🛸', name: 'Antaris Project',         country: 'Tyskland 🇩🇪', url: 'https://www.antaris-project.de',        ticket: 'Info' },
-    { id: 'sun',          emoji: '☀️', name: 'SUN Festival',            country: 'Ungarn 🇭🇺',   url: 'https://sunfestival.hu',                ticket: 'Billetter' },
+    { id: 'universo',     emoji: '🌌', name: 'Universo Paralello',      country: 'Brazil 🇧🇷',   url: 'https://www.universopararello.com.br',  ticket: 'Tickets' },
+    { id: 'psy_fi',       emoji: '🔮', name: 'Psy-Fi Festival',         country: 'Netherlands 🇳🇱',url: 'https://www.psy-fi.nl',                 ticket: 'Tickets' },
+    { id: 'modem',        emoji: '🎛️', name: 'Modem Festival',          country: 'Croatia 🇭🇷',  url: 'https://modemfestival.com',             ticket: 'Tickets' },
+    { id: 'shankra',      emoji: '🕉️', name: 'Shankra Festival',        country: 'Switzerland 🇨🇭',   url: 'https://www.shankra-festival.ch',       ticket: 'Tickets' },
+    { id: 'rainbow',      emoji: '🌈', name: 'Rainbow Serpent',         country: 'Australia 🇦🇺',url: 'https://rainbowserpent.net',            ticket: 'Tickets' },
+    { id: 'antaris',      emoji: '🛸', name: 'Antaris Project',         country: 'Germany 🇩🇪', url: 'https://www.antaris-project.de',        ticket: 'Info' },
+    { id: 'sun',          emoji: '☀️', name: 'SUN Festival',            country: 'Hungary 🇭🇺',   url: 'https://sunfestival.hu',                ticket: 'Tickets' },
     { id: 'cosmic',       emoji: '🌠', name: 'Cosmic Convergence',      country: 'Guatemala 🇬🇹',url: 'https://cosmicconvergencefestival.org', ticket: 'Info' },
-    { id: 'burning',      emoji: '🔥', name: 'Burning Man',             country: 'USA 🇺🇸',      url: 'https://burningman.org',                ticket: 'Billetter' },
-    { id: 'earthcore',    emoji: '🌏', name: 'Earthcore',               country: 'Australia 🇦🇺',url: 'https://earthcore.com.au',              ticket: 'Billetter' },
-    { id: 'tomorrowland', emoji: '🎡', name: 'Tomorrowland',            country: 'Belgia 🇧🇪',   url: 'https://www.tomorrowland.com',          ticket: 'Billetter' },
+    { id: 'burning',      emoji: '🔥', name: 'Burning Man',             country: 'USA 🇺🇸',      url: 'https://burningman.org',                ticket: 'Tickets' },
+    { id: 'earthcore',    emoji: '🌏', name: 'Earthcore',               country: 'Australia 🇦🇺',url: 'https://earthcore.com.au',              ticket: 'Tickets' },
+    { id: 'tomorrowland', emoji: '🎡', name: 'Tomorrowland',            country: 'Belgium 🇧🇪',   url: 'https://www.tomorrowland.com',          ticket: 'Tickets' },
     { id: 'solipse',      emoji: '🌑', name: 'Solipse',                 country: 'Global 🌍',   url: 'https://solipse.info',                  ticket: 'Info' },
-    { id: 'vuuv',         emoji: '🎶', name: 'VuuV Festival',           country: 'Tyskland 🇩🇪', url: 'https://www.vuuv.de',                   ticket: 'Billetter' },
+    { id: 'vuuv',         emoji: '🎶', name: 'VuuV Festival',           country: 'Germany 🇩🇪', url: 'https://www.vuuv.de',                   ticket: 'Tickets' },
   ];
 
   // ── DAWs / music production software ─────────────────────────────────
@@ -59,11 +146,11 @@ const Profile = (() => {
   // ── Event types ───────────────────────────────────────────────────────
   const EVENT_TYPES = [
     { id: 'dj-set',   emoji: '🎛️', label: 'DJ Set' },
-    { id: 'concert',  emoji: '🎸', label: 'Konsert' },
+    { id: 'concert',  emoji: '🎸', label: 'Concert' },
     { id: 'show',     emoji: '🎙️', label: 'Show' },
     { id: 'workshop', emoji: '🎓', label: 'Workshop' },
     { id: 'festival', emoji: '🎪', label: 'Festival' },
-    { id: 'other',    emoji: '📅', label: 'Annet' },
+    { id: 'other',    emoji: '📅', label: 'Other' },
   ];
 
   // ── Helpers ──────────────────────────────────────────────────────────
@@ -87,12 +174,128 @@ const Profile = (() => {
   }
 
   // ── Avatar ────────────────────────────────────────────────────────────
-  async function avatarEl(user, size = 60) {
-    if (user.avatarMediaId) {
-      const url = await DB.getBlobUrl('media', user.avatarMediaId).catch(() => null);
-      if (url) return `<img src="${url}" alt="${user.displayName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  // Finn den beste avatar-URL-en for en bruker: sky-URL (synlig for alle) først,
+  // så lokal IndexedDB-blob. Returnerer null når brukeren ikke har noe bilde.
+  async function avatarUrlFor(user) {
+    if (!user) return null;
+    if (user.avatarUrl) return user.avatarUrl;
+    if (user.avatarMediaId) return DB.getBlobUrl('media', user.avatarMediaId).catch(() => null);
+    return null;
+  }
+
+  // Som avatarUrlFor, men slår opp på BRUKERNAVN og faller tilbake til den
+  // publiserte profilen i skyen (ProfileSync) når den lokale pv_users mangler
+  // bildet. Nøkkelen til at ANDRE brukeres profilbilder vises på tvers av
+  // enheter: localStorage er per nettleser, så en avatar lastet opp på én enhet
+  // finnes ikke i lokal pv_users på en annen — men avatarUrl er et offentlig
+  // felt i skyen. Speiler _bannerUrlFor (uten dette viste kortene bare
+  // initial-plassholderen for alle unntatt deg selv på nettopp den enheten).
+  async function _avatarUrlForName(uname) {
+    const u = Auth.getUser(uname);
+    if (u) {
+      if (u.avatarUrl) return u.avatarUrl;
+      if (u.avatarMediaId) {
+        const blob = await DB.getBlobUrl('media', u.avatarMediaId).catch(() => null);
+        if (blob) return blob;
+      }
     }
+    // Fallback: hent eierens publiserte profil fra skyen og flett den inn lokalt.
+    if (typeof ProfileSync !== 'undefined' && ProfileSync.fetch) {
+      const remote = await ProfileSync.fetch(uname).catch(() => null);
+      if (remote) {
+        if (typeof Auth.cacheRemoteProfile === 'function') Auth.cacheRemoteProfile(uname, remote);
+        if (remote.avatarUrl) return remote.avatarUrl;
+      }
+    }
+    return null;
+  }
+
+  async function avatarEl(user, size = 60) {
+    const url = user.username ? await _avatarUrlForName(user.username) : await avatarUrlFor(user);
+    if (url) return `<img src="${url}" alt="${user.displayName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
     return `<span style="font-size:${size * 0.35}px">${initials(user.displayName)}</span>`;
+  }
+
+  // Bytt initial-plassholdere ut med det ekte profilbildet, hvor som helst i
+  // appen. Marker et avatar-element med data-av-user="<brukernavn>" så fyller
+  // dette bildet inn asynkront (feed-innlegg, komponer-boks, kommentarer …).
+  // Brukes av app.js/community.js/social.js etter at HTML er satt inn.
+  async function hydrateAvatars(root) {
+    const scope = root || document;
+    const els = Array.from(scope.querySelectorAll('[data-av-user]:not([data-av-done])'));
+    // Slå opp hver brukers avatar-URL kun én gang (delt promise-cache), og fyll
+    // ALLE elementene parallelt. Viktig: en treg/feilende blob-oppslag for én
+    // bruker skal aldri blokkere at de andre avatarene fylles inn (tidligere
+    // sekvensiell løkke lot ett tregt oppslag «henge» resten på siden).
+    const cache = {};
+    await Promise.all(els.map(async (el) => {
+      el.setAttribute('data-av-done', '1');
+      const uname = el.getAttribute('data-av-user');
+      if (!uname) return;
+      if (!(uname in cache)) cache[uname] = _avatarUrlForName(uname);
+      let url = null;
+      try { url = await cache[uname]; } catch (e) { url = null; }
+      if (url) {
+        const u = Auth.getUser(uname);
+        el.innerHTML = `<img src="${url}" alt="${esc((u && u.displayName) || uname)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      }
+    }));
+  }
+
+  // Legg det ekte forside-/bannerbildet inn asynkront der en bruker vises som
+  // kort (hjem-siden «Brukere på SiriusFM», Discover → Folk osv.). Marker
+  // banner-elementet med data-banner-user="<brukernavn>" så henter dette
+  // eierens opplastede banner (remote bannerUrl, eller lokal bannerMediaId-blob)
+  // og legger det som bakgrunnsbilde oppå tema-gradienten.
+  async function hydrateBanners(root) {
+    const scope = root || document;
+    const els = scope.querySelectorAll('[data-banner-user]:not([data-banner-done])');
+    const cache = {};
+    for (const el of els) {
+      el.setAttribute('data-banner-done', '1');
+      const uname = el.getAttribute('data-banner-user');
+      if (!uname) continue;
+      let url = cache[uname];
+      if (url === undefined) {
+        url = await _bannerUrlFor(uname);
+        cache[uname] = url || null;
+      }
+      if (url) {
+        const bu = Auth.getUser(uname);
+        el.style.backgroundImage = `url("${url}")`;
+        el.style.backgroundSize = 'cover';
+        el.style.backgroundPosition = (bu && bu.bannerPos) ? bu.bannerPos : 'center';
+      }
+    }
+  }
+
+  // Finn banner-URL for en bruker. Prøver den LOKALE brukeren først (rask,
+  // fungerer offline / for egne blober), og faller så tilbake til den PUBLISERTE
+  // profilen i skyen (ProfileSync). Fallbacket er nøkkelen: localStorage er per
+  // nettleser/enhet, så en banner lastet opp på én enhet finnes ikke i lokal
+  // pv_users på en annen — men den ligger i Supabase (bannerUrl er offentlig felt).
+  // Uten dette viste kortene bare tema-gradienten for alle unntatt deg selv på
+  // nettopp den enheten der du lastet opp.
+  async function _bannerUrlFor(uname) {
+    const u = Auth.getUser(uname);
+    if (u) {
+      if (u.bannerUrl) return u.bannerUrl;
+      if (u.bannerMediaId) {
+        const blob = await DB.getBlobUrl('media', u.bannerMediaId).catch(() => null);
+        if (blob) return blob;
+      }
+    }
+    // Fallback: hent eierens publiserte profil fra skyen og flett den inn lokalt.
+    if (typeof ProfileSync !== 'undefined' && ProfileSync.fetch) {
+      const remote = await ProfileSync.fetch(uname).catch(() => null);
+      if (remote) {
+        if (typeof Auth.cacheRemoteProfile === 'function') {
+          Auth.cacheRemoteProfile(uname, remote);   // så neste oppslag er lokalt
+        }
+        if (remote.bannerUrl) return remote.bannerUrl;
+      }
+    }
+    return null;
   }
 
   // ── Festival helpers ──────────────────────────────────────────────────
@@ -103,7 +306,7 @@ const Profile = (() => {
     if (!picks.length) return '';
     return `
       <div class="profile-festivals">
-        <div class="profile-festivals-title">${Icon('star')} Festivaler</div>
+        <div class="profile-festivals-title">${Icon('star')} Festivals</div>
         <div class="festival-cards">
           ${picks.map(f => `
             <a class="festival-card" href="${f.url}" target="_blank" rel="noopener noreferrer">
@@ -122,9 +325,9 @@ const Profile = (() => {
     const ids = user.festivalIds || [];
     return `
       <div style="max-width:680px">
-        <div class="editor-section-title" style="margin-bottom:0.5rem">${Icon('star')} Festivaler på profilen din</div>
+        <div class="editor-section-title" style="margin-bottom:0.5rem">${Icon('star')} Festivals on your profile</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1.25rem;line-height:1.6">
-          Velg festivaler du drar på eller følger — de vises med billett-/påmeldingslenke på profilen din.
+          Choose festivals you attend or follow — they appear with a ticket/registration link on your profile.
         </p>
         <div class="festival-selector-grid" id="festival-grid">
           ${FESTIVALS.map(f => {
@@ -140,7 +343,7 @@ const Profile = (() => {
               </label>`;
           }).join('')}
         </div>
-        <button class="btn btn-primary" style="margin-top:1.25rem" onclick="Profile.saveFestivals()">${Icon('save')} Lagre festivaler</button>
+        <button class="btn btn-primary" style="margin-top:1.25rem" onclick="Profile.saveFestivals()">${Icon('save')} Save festivals</button>
       </div>`;
   }
 
@@ -155,14 +358,14 @@ const Profile = (() => {
       <div class="profile-platforms">
         ${dawPicks.length ? `
           <div class="profile-platforms-group">
-            <div class="profile-platforms-title">${Icon('laptop')} Musikk-program</div>
+            <div class="profile-platforms-title">${Icon('laptop')} Music software</div>
             <div class="platforms-badges">
               ${dawPicks.map(d => `<span class="platform-badge platform-badge--daw">${iconForEmoji(d.emoji)} ${d.name}</span>`).join('')}
             </div>
           </div>` : ''}
         ${platPicks.length ? `
           <div class="profile-platforms-group">
-            <div class="profile-platforms-title">${Icon('music')} Digitale plattformer</div>
+            <div class="profile-platforms-title">${Icon('music')} Digital platforms</div>
             <div class="platforms-badges">
               ${platPicks.map(p => `<span class="platform-badge platform-badge--streaming">${iconForEmoji(p.emoji)} ${p.name}</span>`).join('')}
             </div>
@@ -175,9 +378,9 @@ const Profile = (() => {
     const platforms = user.streamingPlatforms || [];
     return `
       <div style="max-width:680px">
-        <div class="editor-section-title" style="margin-bottom:0.25rem">${Icon('laptop')} Musikk-program / DAW</div>
+        <div class="editor-section-title" style="margin-bottom:0.25rem">${Icon('laptop')} Music software / DAW</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem;line-height:1.6">
-          Velg hvilke musikk-program du bruker til produksjon eller miksing.
+          Choose which music software you use for production or mixing.
         </p>
         <div class="platform-selector-grid" id="daw-grid">
           ${DAWS.map(d => {
@@ -190,9 +393,9 @@ const Profile = (() => {
               </label>`;
           }).join('')}
         </div>
-        <div class="editor-section-title" style="margin-top:1.5rem;margin-bottom:0.25rem">${Icon('music')} Digitale plattformer</div>
+        <div class="editor-section-title" style="margin-top:1.5rem;margin-bottom:0.25rem">${Icon('music')} Digital platforms</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem;line-height:1.6">
-          Hvilke strømmeplattformer eller musikk-butikker bruker du?
+          Which streaming platforms or music stores do you use?
         </p>
         <div class="platform-selector-grid" id="streaming-grid">
           ${STREAMING_PLATFORMS.map(p => {
@@ -205,7 +408,7 @@ const Profile = (() => {
               </label>`;
           }).join('')}
         </div>
-        <button class="btn btn-primary" style="margin-top:1.25rem" onclick="Profile.savePlatforms()">${Icon('save')} Lagre plattformer</button>
+        <button class="btn btn-primary" style="margin-top:1.25rem" onclick="Profile.savePlatforms()">${Icon('save')} Save platforms</button>
       </div>`;
   }
 
@@ -215,7 +418,7 @@ const Profile = (() => {
     if (!sites.length) return '';
     return `
       <div class="profile-my-sites">
-        <div class="profile-my-sites-title">${Icon('globe')} Mine Sider</div>
+        <div class="profile-my-sites-title">${Icon('globe')} My Sites</div>
         <div class="my-sites-grid">
           ${sites.map(s => `
             <a class="my-site-card" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">
@@ -234,9 +437,9 @@ const Profile = (() => {
     const sites = user.mySites || [];
     return `
       <div style="max-width:600px">
-        <div class="editor-section-title" style="margin-bottom:0.25rem">${Icon('globe')} Mine egne sider</div>
+        <div class="editor-section-title" style="margin-bottom:0.25rem">${Icon('globe')} My own sites</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1.25rem;line-height:1.6">
-          Legg til lenker til dine egne hjemmelagde sider, portfolioer, blogger eller andre steder folk kan finne deg.
+          Add links to your own homemade sites, portfolios, blogs or other places where people can find you.
         </p>
         <div style="background:var(--surface2);border-radius:14px;padding:1.25rem;margin-bottom:1.25rem">
           <div style="display:grid;grid-template-columns:auto 1fr;gap:0.75rem;align-items:start;margin-bottom:0.75rem">
@@ -245,8 +448,8 @@ const Profile = (() => {
               <input class="form-input" id="ms-emoji" value="🌐" style="width:70px;text-align:center;font-size:1.3rem" maxlength="2">
             </div>
             <div class="form-group" style="margin:0">
-              <label class="form-label">Tittel *</label>
-              <input class="form-input" id="ms-title" placeholder="f.eks. Min blogg">
+              <label class="form-label">Title *</label>
+              <input class="form-input" id="ms-title" placeholder="e.g. My blog">
             </div>
           </div>
           <div class="form-group">
@@ -254,13 +457,13 @@ const Profile = (() => {
             <input class="form-input" id="ms-url" placeholder="https://…">
           </div>
           <div class="form-group">
-            <label class="form-label">Beskrivelse (valgfri)</label>
-            <input class="form-input" id="ms-desc" placeholder="Kort beskrivelse av siden">
+            <label class="form-label">Description (optional)</label>
+            <input class="form-input" id="ms-desc" placeholder="Short description of the site">
           </div>
-          <button class="btn btn-primary" onclick="Profile.addMySite()">${Icon('plus')} Legg til side</button>
+          <button class="btn btn-primary" onclick="Profile.addMySite()">${Icon('plus')} Add site</button>
         </div>
         <div id="my-sites-list">
-          ${sites.length ? sites.map(mySiteEditorItem).join('') : '<p style="font-size:0.82rem;color:var(--text2)">Ingen sider ennå.</p>'}
+          ${sites.length ? sites.map(mySiteEditorItem).join('') : '<p style="font-size:0.82rem;color:var(--text2)">No sites yet.</p>'}
         </div>
       </div>`;
   }
@@ -274,7 +477,7 @@ const Profile = (() => {
           <div style="font-size:0.75rem;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.url)}</div>
         </div>
         <a class="btn btn-ghost btn-sm" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${Icon('arrow-up-right')}</a>
-        <button class="btn-icon btn-danger btn-sm" onclick="Profile.deleteMySite('${s.id}')" title="Slett">${Icon('trash')}</button>
+        <button class="btn-icon btn-danger btn-sm" onclick="Profile.deleteMySite('${s.id}')" title="Delete">${Icon('trash')}</button>
       </div>`;
   }
 
@@ -291,14 +494,37 @@ const Profile = (() => {
     if (window.ProfileSync && ProfileSync._enabled()) {
       const sess = Auth.current();
       if (sess && sess.username === username) {
+        // Løft ev. lokal-kun avatar/banner opp til sky, så publiser. Selve
+        // migreringen kaller Auth.updateUser (→ push) når den finner noe.
+        migrateLocalMediaToCloud(username).catch(() => {});
         ProfileSync.push(Auth.getUser(username));   // eier → publiser (fire-and-forget)
       } else {
         await ProfileSync.pull(username).catch(() => {});  // besøkende → hent ned
       }
     }
 
-    const user = Auth.getUser(username);
-    if (!user) { app.innerHTML = `<div class="empty-state" style="padding:6rem"><div class="empty-icon">${Icon('user')}</div><p>Bruker ikke funnet</p></div>`; return; }
+    let user = Auth.getUser(username);
+    // Fallback: fant vi ikkje profilen med eit direkte oppslag, hent HEILE
+    // profil-lista frå sky (list_profiles) og prøv igjen. Fangar tilfellet der
+    // get_profile bomma (transient) men profilen finst i lista.
+    if (!user && window.ProfileSync && ProfileSync._enabled()) {
+      await ProfileSync.pullAll().catch(() => {});
+      user = Auth.getUser(username);
+    }
+    if (!user) {
+      const current0 = Auth.current();
+      app.innerHTML = `
+        <div class="empty-state" style="padding:6rem;text-align:center">
+          <div class="empty-icon">${Icon('user')}</div>
+          <p style="font-size:1.05rem;font-weight:700;margin-bottom:0.4rem">User not found</p>
+          <p style="color:var(--text2);margin-bottom:1.25rem">The profile for <b>@${username}</b> isn't synced yet. Ask the user to log in once, and the profile will become visible to everyone.</p>
+          <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="Profile.renderView('${username}')">${Icon('refresh') || '↻'} Try again</button>
+            <a href="#/" class="btn btn-primary" style="display:inline-flex">${Icon('arrow-left')} To home page</a>
+          </div>
+        </div>`;
+      return;
+    }
 
     const current = Auth.current();
     const isOwner = current?.username === username;
@@ -308,9 +534,9 @@ const Profile = (() => {
       app.innerHTML = `
         <div class="empty-state" style="padding:8rem;text-align:center">
           <div class="empty-icon">${Icon('lock')}</div>
-          <p style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem">Denne profilen er privat</p>
-          <p style="color:var(--text2);margin-bottom:1.5rem">@${username} har valgt å holde profilen sin skjult.</p>
-          <a href="#/" class="btn btn-primary" style="display:inline-flex">${Icon('arrow-left')} Tilbake til forsiden</a>
+          <p style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem">This profile is private</p>
+          <p style="color:var(--text2);margin-bottom:1.5rem">@${username} has chosen to keep their profile hidden.</p>
+          <a href="#/" class="btn btn-primary" style="display:inline-flex">${Icon('arrow-left')} Back to home page</a>
         </div>`;
       return;
     }
@@ -334,7 +560,7 @@ const Profile = (() => {
       const trackUrl = trackRec ? (trackRec.audioUrl || await DB.getBlobUrl('music', trackId).catch(() => null)) : null;
       heroBgExtra = `<canvas id="profile-vis-canvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>${trackUrl ? `<audio id="profile-vis-audio" src="${trackUrl}" autoplay loop preload="auto" style="display:none"></audio>` : ''}`;
     } else if (theme.bgType === 'gradient') {
-      heroBgStyle = `background:${theme.bgGradient || 'linear-gradient(135deg,#7c3aed,#2563eb)'};`;
+      heroBgStyle = `background:${theme.bgGradient || 'linear-gradient(135deg,#22c55e,#16a34a)'};`;
     } else {
       heroBgStyle = `background:${theme.bgColor || '#0f0f1a'};`;
     }
@@ -346,29 +572,39 @@ const Profile = (() => {
     // fall tilbake til lokal IndexedDB-blob for eldre opplastinger.
     let bannerUrl = user.bannerUrl || null;
     if (!bannerUrl && user.bannerMediaId) bannerUrl = await DB.getBlobUrl('media', user.bannerMediaId).catch(() => null);
+    // Lagret fokuspunkt (opp/ned/venstre/høyre) som eieren har plassert bildet på.
+    const bannerPos = (bannerUrl && user.bannerPos) ? user.bannerPos : 'center';
 
     // ── Friend request / status button ───────────────────────────────────
     let friendBtn = '';
     if (!isOwner && current) {
       const status = Auth.getFriendStatus(current.username, username);
       if (status === 'friends') {
-        friendBtn = `<button class="btn btn-ghost btn-sm" id="friend-btn" onclick="Profile.removeFriend('${username}')">${Icon('check')} Venner</button>`;
+        friendBtn = `<button class="btn btn-ghost btn-sm" id="friend-btn" onclick="Profile.removeFriend('${username}')">${Icon('check')} Friends</button>`;
       } else if (status === 'pending_sent') {
-        friendBtn = `<button class="btn btn-ghost btn-sm" id="friend-btn" onclick="Profile.cancelFriendRequest('${username}')">${Icon('hourglass')} Avbryt</button>`;
+        friendBtn = `<button class="btn btn-ghost btn-sm" id="friend-btn" onclick="Profile.cancelFriendRequest('${username}')">${Icon('hourglass')} Cancel</button>`;
       } else if (status === 'pending_received') {
         friendBtn = `
-          <button class="btn btn-primary btn-sm" id="friend-btn-accept" onclick="Profile.acceptFriend('${username}')">${Icon('check')} Aksepter</button>
-          <button class="btn btn-ghost btn-sm" id="friend-btn-reject" onclick="Profile.rejectFriend('${username}')">${Icon('x')} Avslå</button>`;
+          <button class="btn btn-primary btn-sm" id="friend-btn-accept" onclick="Profile.acceptFriend('${username}')">${Icon('check')} Accept</button>
+          <button class="btn btn-ghost btn-sm" id="friend-btn-reject" onclick="Profile.rejectFriend('${username}')">${Icon('x')} Decline</button>`;
       } else {
-        friendBtn = `<button class="btn btn-primary btn-sm" id="friend-btn" onclick="Profile.sendFriendRequest('${username}')">${Icon('users')} Legg til venn</button>`;
+        friendBtn = `<button class="btn btn-primary btn-sm" id="friend-btn" onclick="Profile.sendFriendRequest('${username}')">${Icon('users')} Add friend</button>`;
       }
+    }
+
+    // ── Send privat melding (alle innloggede besøkende, ikke bare venner) ──
+    // Åpner den private 1:1-chatten (/messages/:username) som synkes på tvers av
+    // ALLE brukere via Gun (SC.NS.dm) — se DJ.renderPrivateChat.
+    let msgBtn = '';
+    if (!isOwner && current) {
+      msgBtn = `<button class="btn btn-ghost btn-sm" id="pm-btn" onclick="Router.go('/messages/${username}')">${Icon('message')} Send private message</button>`;
     }
 
     // ── Pending friend requests (owner only) ──────────────────────────────
     const pendingRequests = isOwner ? (user.friendRequests || []) : [];
     const pendingHtml = (isOwner && pendingRequests.length) ? `
       <div class="friend-requests-section">
-        <div class="friend-requests-title">${Icon('users')} Venneforespørsler (${pendingRequests.length})</div>
+        <div class="friend-requests-title">${Icon('users')} Friend requests (${pendingRequests.length})</div>
         ${pendingRequests.map(r => {
           const requester = Auth.getUser(r.from);
           if (!requester) return '';
@@ -376,8 +612,8 @@ const Profile = (() => {
             <div class="friend-request-row">
               <a href="#/u/${r.from}" class="friend-request-name">${requester.displayName} <span>@${r.from}</span></a>
               <div style="display:flex;gap:0.5rem">
-                <button class="btn btn-primary btn-sm" onclick="Profile.acceptFriend('${r.from}');Profile.renderView('${username}')">${Icon('check')} Aksepter</button>
-                <button class="btn btn-ghost btn-sm" onclick="Profile.rejectFriend('${r.from}');Profile.renderView('${username}')">${Icon('x')} Avslå</button>
+                <button class="btn btn-primary btn-sm" onclick="Profile.acceptFriend('${r.from}');Profile.renderView('${username}')">${Icon('check')} Accept</button>
+                <button class="btn btn-ghost btn-sm" onclick="Profile.rejectFriend('${r.from}');Profile.renderView('${username}')">${Icon('x')} Decline</button>
               </div>
             </div>`;
         }).join('')}
@@ -387,15 +623,15 @@ const Profile = (() => {
     const friendsList = Auth.getFriends(username);
     const friendsHtml = friendsList.length ? `
       <div class="friends-section">
-        <div class="friends-title">${Icon('users')} Venner (${friendsList.length})</div>
+        <div class="friends-title">${Icon('users')} Friends (${friendsList.length})</div>
         <div class="friends-list">
           ${friendsList.map(f => `
             <div class="friend-chip-wrap">
               <a class="friend-chip" href="#/u/${f.username}">
-                <div class="friend-chip-avatar">${f.displayName.charAt(0).toUpperCase()}</div>
+                <div class="friend-chip-avatar" data-av-user="${esc(f.username)}">${f.displayName.charAt(0).toUpperCase()}</div>
                 <span>${f.displayName}</span>
               </a>
-              ${current ? `<button class="friend-chip-chat-btn" onclick="event.preventDefault();Router.go('/messages/${f.username}')" title="Send privat melding">${Icon('message')}</button>` : ''}
+              ${current ? `<button class="friend-chip-chat-btn" onclick="event.preventDefault();Router.go('/messages/${f.username}')" title="Send private message">${Icon('message')}</button>` : ''}
             </div>`).join('')}
         </div>
       </div>` : '';
@@ -407,10 +643,10 @@ const Profile = (() => {
       <div class="profile-fav-radio">
         ${psychedelicCover(fr.name || fr.url, { size: 46 })}
         <div class="fav-radio-meta">
-          <div class="fav-radio-label">${Icon('radio')} Favorittkanal</div>
+          <div class="fav-radio-label">${Icon('radio')} Favorite station</div>
           <div class="fav-radio-name">${esc(fr.name || 'Radio')}</div>
         </div>
-        <button class="btn btn-ghost btn-sm fav-radio-play" onclick="Radio.playUrl('${(fr.url||'').replace(/'/g,"\\'")}','${(fr.name||'Radio').replace(/'/g,"\\'")}','${fr.emoji||'📻'}')">${Icon('play')} Lytt</button>
+        <button class="btn btn-ghost btn-sm fav-radio-play" onclick="Radio.playUrl('${(fr.url||'').replace(/'/g,"\\'")}','${(fr.name||'Radio').replace(/'/g,"\\'")}','${fr.emoji||'📻'}')">${Icon('play')} Listen</button>
       </div>`;
     })() : '';
 
@@ -419,22 +655,26 @@ const Profile = (() => {
     app.innerHTML = `
       <div class="profile-page" id="profile-root" style="background:${theme.bgColor || '#0f0f1a'}; color:${theme.textColor || '#fff'}">
         <!-- Hero -->
-        <div class="profile-hero" style="${bannerUrl ? `background-image:url(${bannerUrl});background-size:cover;background-position:center;` : ''}">
-          <div class="profile-hero-bg" style="${heroBgStyle}">${heroBgExtra}</div>
-          <div class="profile-hero-overlay${isOwner ? ' profile-hero-overlay--editable' : ''}"${isOwner ? ` onclick="document.getElementById('profile-banner-input').click()" title="${bannerUrl ? 'Bytt forsidebilde' : 'Last opp forsidebilde'}"` : ''}>
-            ${isOwner ? `<span class="profile-hero-overlay-hint"${!bannerUrl ? ' style="opacity:1"' : ''}>${Icon('camera')} ${bannerUrl ? 'Bytt forsidebilde' : 'Last opp forsidebilde'}</span>` : ''}
+        <!-- Forsidebildet (banner) MÅ ligge på .profile-hero-bg (det synlige,
+             absolutt-posisjonerte laget), IKKE på .profile-hero-forelderen —
+             ellers dekker det opake tema-laget banneret helt (usynlig banner). -->
+        <div class="profile-hero">
+          <div class="profile-hero-bg" style="${bannerUrl ? `background-image:url(${bannerUrl});background-size:cover;background-position:${bannerPos};` : heroBgStyle}">${bannerUrl ? '' : heroBgExtra}</div>
+          <div class="profile-hero-overlay${isOwner ? ' profile-hero-overlay--editable' : ''}"${isOwner ? ` onclick="document.getElementById('profile-banner-input').click()" title="${bannerUrl ? 'Change cover photo' : 'Upload cover photo'}"` : ''}>
+            ${isOwner ? `<span class="profile-hero-overlay-hint"${!bannerUrl ? ' style="opacity:1"' : ''}>${Icon('camera')} ${bannerUrl ? 'Change cover photo' : 'Upload cover photo'}</span>` : ''}
           </div>
           ${isOwner ? `<div class="profile-hero-banner-actions">
-            <input type="file" id="profile-banner-input" accept="image/*" style="display:none" onchange="Profile.setBannerFromProfile(this,'${username}')">
+            <input type="file" id="profile-banner-input" accept="image/*" style="display:none" onchange="Profile.openBannerReposForFile(this,'${username}')">
             ${bannerUrl
-              ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();document.getElementById('profile-banner-input').click()" title="Bytt forsidebilde">${Icon('camera')} Bytt bakgrunn</button>
-            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();Profile.deleteBanner('${username}')" title="Slett forsidebilde">${Icon('trash')} Slett bakgrunn</button>`
-              : `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();document.getElementById('profile-banner-input').click()" title="Last opp forsidebilde">${Icon('camera')} Last opp banner</button>`}
+              ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();document.getElementById('profile-banner-input').click()" title="Change cover photo">${Icon('camera')} Change background</button>
+            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();Profile.repositionBanner('${username}')" title="Move the image up/down/left/right">${Icon('maximize')} Adjust position</button>
+            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();Profile.deleteBanner('${username}')" title="Delete cover photo">${Icon('trash')} Delete background</button>`
+              : `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();document.getElementById('profile-banner-input').click()" title="Upload cover photo">${Icon('camera')} Upload banner</button>`}
           </div>` : ''}
           ${current ? `<div class="profile-hero-actions">
-            ${isOwner ? `<button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('edit')} Rediger profil</button>
-            <span style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(0,0,0,0.4);color:#fff;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.15)">${profileVisibility === 'private' ? '🔒 Privat' : '🌐 Offentlig'}</span>` : ''}
-            <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Logg ut">${Icon('log-out')} Logg ut</button>
+            ${isOwner ? `<button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('edit')} Edit profile</button>
+            <span style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(0,0,0,0.4);color:#fff;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.15)">${profileVisibility === 'private' ? '🔒 Private' : '🌐 Public'}</span>` : ''}
+            <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Log out">${Icon('log-out')} Log out</button>
           </div>` : ''}
         </div>
 
@@ -443,53 +683,56 @@ const Profile = (() => {
           <div class="profile-header">
             <div class="profile-avatar" style="position:relative">
               ${avHtml}
-              ${Auth.isOnline(username) && !isOwner ? '<div class="profile-online-dot" title="Online nå"></div>' : ''}
-              ${isOwner ? `<label class="profile-avatar-cam" title="${user.avatarMediaId ? 'Endre profilbilde' : 'Legg til profilbilde'}" style="position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:var(--accent,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.4);border:2px solid #0f0f1a">${Icon('camera')}<input type="file" id="profile-avatar-input" accept="image/*" style="display:none" onchange="Profile.setAvatarFromProfile(this,'${username}')"></label>` : ''}
+              ${(() => { const st = _statusOf(username); if (st === 'offline') return ''; const m = STATUS_META[st] || STATUS_META.online; return `<div class="profile-online-dot${m.pulse ? '' : ' profile-online-dot--static'}" title="${m.label}" style="background:${m.dot};box-shadow:0 0 8px ${m.dot}88"></div>`; })()}
+              ${isOwner ? `<label class="avatar-edit-overlay" title="${user.avatarMediaId ? 'Change profile photo' : 'Add profile photo'}" style="cursor:pointer">${Icon('camera')}<input type="file" id="profile-avatar-input" accept="image/*" style="display:none" onchange="Profile.setAvatarFromProfile(this,'${username}')"></label>` : ''}
             </div>
             <div class="profile-info">
               <div class="profile-display-name" style="font-family:${theme.fontFamily || 'Inter'},sans-serif">${user.displayName}</div>
-              <div class="profile-username" style="color:${theme.textColor}99">@${user.username} ${Auth.isOnline(username) ? '<span class="profile-online-badge">● Online</span>' : ''}</div>
+              <div class="profile-username" style="color:${theme.textColor}99">@${user.username} ${statusBadgeHtml(username, isOwner)}</div>
             </div>
             <div class="profile-actions">
               ${friendBtn}
+              ${msgBtn}
+              ${notifySoundBtnHtml()}
               ${isOwner ? `
-                <button class="btn btn-sm ${profileVisibility === 'private' ? 'btn-primary' : 'btn-ghost'}" onclick="Profile.toggleProfileVisibility('${username}')" title="${profileVisibility === 'private' ? 'Gjør profilen offentlig' : 'Gjør profilen privat'}">${profileVisibility === 'private' ? '🔒 Kun meg' : '🌐 Offentlig'}</button>
-                <button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('settings')} Rediger</button>` : ''}
+                <button class="btn btn-sm ${profileVisibility === 'private' ? 'btn-primary' : 'btn-ghost'}" onclick="Profile.toggleProfileVisibility('${username}')" title="${profileVisibility === 'private' ? 'Make profile public' : 'Make profile private'}">${profileVisibility === 'private' ? '🔒 Only me' : '🌐 Public'}</button>
+                <button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('settings')} Edit</button>` : ''}
             </div>
           </div>
 
           ${isOwner ? `
           <!-- Profilbilde-handlinger (kun eier) — alltid alle tre synlige -->
           <div class="profile-avatar-actions" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem">
-            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-avatar-input').click()">${Icon('plus')} Legg til bilde</button>
-            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-avatar-input').click()">${Icon('camera')} Endre bilde</button>
-            <button class="btn btn-ghost btn-sm" onclick="Profile.deleteAvatar('${username}')">${Icon('trash')} Slett bilde</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-avatar-input').click()">${Icon('plus')} Add photo</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-avatar-input').click()">${Icon('camera')} Change photo</button>
+            <button class="btn btn-ghost btn-sm" onclick="Profile.deleteAvatar('${username}')">${Icon('trash')} Delete photo</button>
           </div>` : ''}
-
-          <!-- Prominent LIVE-banner: vises tydelig øverst når brukeren sender live -->
-          ${window.BroadcastSchedule ? BroadcastSchedule.liveBanner(user, isOwner) : ''}
 
           <!-- Stats -->
           <div class="profile-stats" style="border-color:${theme.textColor}22">
-            <div class="stat"><div class="stat-value">${(user.musicIds?.length || 0) + (user.mixIds?.length || 0) + (user.mediaIds?.length || 0)}</div><div class="stat-label" style="color:${theme.textColor}88">Opplastinger</div></div>
-            <div class="stat"><div class="stat-value">${(user.friends || []).length}</div><div class="stat-label" style="color:${theme.textColor}88">Venner</div></div>
-            <div class="stat"><div class="stat-value">${wallCount}</div><div class="stat-label" style="color:${theme.textColor}88">Gjestebok</div></div>
+            <div class="stat"><div class="stat-value">${(user.musicIds?.length || 0) + (user.mixIds?.length || 0) + (user.mediaIds?.length || 0)}</div><div class="stat-label" style="color:${theme.textColor}88">Uploads</div></div>
+            <div class="stat"><div class="stat-value">${(user.friends || []).length}</div><div class="stat-label" style="color:${theme.textColor}88">Friends</div></div>
+            <div class="stat"><div class="stat-value">${wallCount}</div><div class="stat-label" style="color:${theme.textColor}88">Guestbook</div></div>
           </div>
 
           <!-- Tab bar -->
           <div class="profile-tabs" id="profile-tabs">
-            <button class="tab-btn active" data-tab="om" onclick="Profile.switchTab('om')">Om</button>
-            <button class="tab-btn" data-tab="innhold" onclick="Profile.switchTab('innhold')">${Icon('music')} Innhold</button>
-            <button class="tab-btn" data-tab="innlegg" onclick="Profile.switchTab('innlegg')">${Icon('edit')} Innlegg</button>
-            <button class="tab-btn" data-tab="vegg" onclick="Profile.switchTab('vegg')">${Icon('message')} Gjestebok${wallCount ? ` (${wallCount})` : ''}</button>
+            <button class="tab-btn active" data-tab="om" onclick="Profile.switchTab('om')">About</button>
+            <button class="tab-btn" data-tab="innhold" onclick="Profile.switchTab('innhold')">${Icon('music')} Content</button>
+            <button class="tab-btn" data-tab="innlegg" onclick="Profile.switchTab('innlegg')">${Icon('edit')} Posts</button>
+            <button class="tab-btn" data-tab="vegg" onclick="Profile.switchTab('vegg')">${Icon('message')} Guestbook${wallCount ? ` (${wallCount})` : ''}</button>
+            ${window.Community ? `<button class="tab-btn" data-tab="community" onclick="Profile.switchTab('community')" title="The community wall — music, video and people, wall to wall">${Icon('users')} Community</button>` : ''}
+            ${window.Groups ? `<button class="tab-btn" data-tab="mine-grupper" onclick="Profile.switchTab('mine-grupper')" title="Groups ${isOwner ? 'you' : esc(username)} created">${Icon('users')} ${isOwner ? 'My groups' : 'Created groups'}</button>` : ''}
+            ${window.Groups ? `<button class="tab-btn" data-tab="grupper" onclick="Profile.switchTab('grupper')">${Icon('users')} Groups</button>` : ''}
+            ${window.Groups ? `<button class="tab-btn" data-tab="alle-grupper" onclick="Profile.switchTab('alle-grupper')" title="See all groups created on SiriusFM">${Icon('globe')} See existing groups</button>` : ''}
+            ${(isOwner && window.Groups) ? `<button class="tab-btn tab-btn-create" onclick="Groups.openCreatePage()" title="Create a new group">${Icon('plus')} Create group</button>` : ''}
           </div>
 
           <!-- OM-fanen -->
           <div class="profile-tab-content" data-tab="om" id="tab-om">
-            ${(()=>{const m={lytter:'🎧 Lytter',dj:'🎛️ DJ',produsent:'🎹 Produsent',plateselskap:'🏷️ Plateselskap'};const l=m[user.role||'lytter'];return l?`<div style="margin-bottom:0.75rem"><span class="profile-role-badge" style="background:${theme.primaryColor}33;border:1px solid ${theme.primaryColor}66;color:${theme.textColor}">${l}</span></div>`:'';})()}
-            ${user.bio ? `<div class="profile-bio" style="color:${theme.textColor}cc">${user.bio}</div>` : isOwner ? `<div class="profile-bio-empty"><span style="color:${theme.textColor}55">Ingen bio ennå.</span> <a href="#/edit" style="color:${theme.primaryColor || 'var(--accent)'}">+ Legg til bio</a></div>` : ''}
+            ${(()=>{const m={lytter:'🎧 Listener',dj:'🎛️ DJ',produsent:'🎹 Producer',plateselskap:'🏷️ Record label'};const l=m[user.role||'lytter'];return l?`<div style="margin-bottom:0.75rem"><span class="profile-role-badge" style="background:${theme.primaryColor}33;border:1px solid ${theme.primaryColor}66;color:${theme.textColor}">${l}</span></div>`:'';})()}
+            ${user.bio ? `<div class="profile-bio" style="color:${theme.textColor}cc">${user.bio}</div>` : isOwner ? `<div class="profile-bio-empty"><span style="color:${theme.textColor}55">No bio yet.</span> <a href="#/edit" style="color:${theme.primaryColor || 'var(--accent)'}">+ Add bio</a></div>` : ''}
             ${user.links?.length ? `<div class="profile-links">${user.links.map(l => `<a class="profile-link" href="${l.url}" target="_blank" rel="noopener">${Icon('link')} ${l.label}</a>`).join('')}</div>` : ''}
-            ${window.BroadcastSchedule ? BroadcastSchedule.profileSection(user, isOwner, theme) : ''}
             ${favRadioHtml}
             ${pendingHtml}
             ${friendsHtml}
@@ -515,6 +758,18 @@ const Profile = (() => {
           <div class="profile-tab-content hidden" data-tab="vegg" id="tab-vegg">
             <div id="tab-wall"></div>
           </div>
+
+          <!-- COMMUNITY-fanen (heile SiriusFM-veggen — for alle innlogga, alle plattformer) -->
+          ${window.Community ? `<div class="profile-tab-content hidden" data-tab="community" id="tab-community"></div>` : ''}
+
+          <!-- MINE GRUPPER-fanen (gruppene brukeren selv har opprettet) -->
+          ${window.Groups ? `<div class="profile-tab-content hidden" data-tab="mine-grupper" id="tab-mine-grupper"></div>` : ''}
+
+          <!-- GRUPPER-fanen (brukerens grupper + søk/oppdag) -->
+          ${window.Groups ? `<div class="profile-tab-content hidden" data-tab="grupper" id="tab-grupper"></div>` : ''}
+
+          <!-- SE EKSISTERENDE GRUPPER-fanen (alle grupper opprettet på SiriusFM) -->
+          ${window.Groups ? `<div class="profile-tab-content hidden" data-tab="alle-grupper" id="tab-alle-grupper"></div>` : ''}
         </div>
       </div>
     `;
@@ -534,6 +789,9 @@ const Profile = (() => {
     renderWallTab(username, isOwner);
     if (window.Community) Community.renderProfilePosts(username, isOwner);
 
+    // Bytt initial-plassholdere (venne-chips m.m.) ut med ekte profilbilder.
+    hydrateAvatars(app);
+
     if (theme.bgType === 'music') _startProfileVisualizer(theme);
   }
 
@@ -543,7 +801,7 @@ const Profile = (() => {
     canvas.width  = canvas.offsetWidth  || 800;
     canvas.height = canvas.offsetHeight || 260;
     const ctx = canvas.getContext('2d');
-    const primary = theme.primaryColor || '#7c3aed';
+    const primary = theme.primaryColor || '#22c55e';
     const accent  = theme.accentColor  || '#f59e0b';
     let raf;
     let analyser = null;
@@ -627,7 +885,7 @@ const Profile = (() => {
 
     const ids = user.mediaIds || [];
     if (!ids.length) {
-      el.innerHTML = `<div class="empty-state"><div class="empty-icon">${Icon('image')}</div><p>${isOwner ? 'Last opp ditt første bilde eller video!' : 'Ingen medier ennå.'}</p>${isOwner ? `<button class="btn btn-primary mt-2" onclick="Router.go('/edit')">Last opp</button>` : ''}</div>`;
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">${Icon('image')}</div><p>${isOwner ? 'Upload your first photo or video!' : 'No media yet.'}</p>${isOwner ? `<button class="btn btn-primary mt-2" onclick="Profile.openEditorAt('innhold','media')">${Icon('arrow-up')} Upload</button>` : ''}</div>`;
       return;
     }
 
@@ -653,7 +911,7 @@ const Profile = (() => {
   async function fillMediaContainer(r, container) {
     if (!container) return;
     if (r.kind === 'youtube' && r.youtubeId) {
-      container.innerHTML = `<img src="https://i.ytimg.com/vi/${r.youtubeId}/hqdefault.jpg" alt="${esc(r.name || 'YouTube')}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`;
+      container.innerHTML = `<img src="https://i.ytimg.com/vi/${r.youtubeId}/hqdefault.jpg" alt="${esc(r.name || 'YouTube')}" loading="lazy" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${r.youtubeId}/mqdefault.jpg'" style="width:100%;height:100%;object-fit:cover">`;
       return;
     }
     const url = await mediaSrc(r);
@@ -678,10 +936,11 @@ const Profile = (() => {
         </div>
         ${badge}
         <div class="media-item-overlay">
-          <button class="btn-icon" onclick="openMediaModal('${r.id}')" title="Vis">${Icon('eye')}</button>
-          ${isOwner ? `<button class="btn-icon" onclick="Profile.toggleMediaVisibility('${r.id}')" title="${isPriv ? 'Privat — kun du. Klikk for å dele med alle' : 'Offentlig — alle ser den. Klikk for å gjøre privat'}">${isPriv ? '🔒' : '🌐'}</button>` : ''}
-          ${isOwner ? `<button class="btn-icon" onclick="Profile.shareMediaToCommunity('${r.id}')" title="Del til Community-veggen">📣</button>` : ''}
-          ${isOwner ? `<button class="btn-icon btn-danger" onclick="deleteMedia('${r.id}')" title="Slett">${Icon('trash')}</button>` : ''}
+          <button class="btn-icon" onclick="openMediaModal('${r.id}')" title="View">${Icon('eye')}</button>
+          ${isOwner ? `<button class="btn-icon" onclick="Profile.toggleMediaVisibility('${r.id}')" title="${isPriv ? 'Private — only you. Click to share with everyone' : 'Public — everyone sees it. Click to make private'}">${isPriv ? '🔒' : '🌐'}</button>` : ''}
+          ${isOwner ? `<button class="btn-icon" onclick="Profile.shareMediaToCommunity('${r.id}')" title="Share to the community wall">📣</button>` : ''}
+          ${isOwner ? `<button class="btn-icon" onclick="event.stopPropagation();Share.open('media','${r.id}')" title="Share further on Facebook etc.">🔗</button>` : ''}
+          ${isOwner ? `<button class="btn-icon btn-danger" onclick="deleteMedia('${r.id}')" title="Delete">${Icon('trash')}</button>` : ''}
         </div>
       </div>`;
   }
@@ -713,7 +972,7 @@ const Profile = (() => {
       { name: 'Blue Note',   email: 'info@bluenote.com' },
       { name: 'ACT Music',   email: 'demos@actmusic.com' },
     ]},
-    ambient: { label: 'Eksperimentell / Ambient', emoji: '🌌', labels: [
+    ambient: { label: 'Experimental / Ambient', emoji: '🌌', labels: [
       { name: 'Kranky Records', email: 'info@kranky.net' },
       { name: 'Touch Music',    email: 'demos@touchmusic.org.uk' },
       { name: '12k',            email: 'demos@12k.com' },
@@ -734,7 +993,8 @@ const Profile = (() => {
   function songCreditsLineHtml(c) {
     if (!c) return '';
     const parts = [];
-    if (c.label)     parts.push(`Label: ${esc(c.label)}`);
+    // Plateselskap vises som eget «🏷️»-merke over kredittlinja (se musicItem),
+    // så vi tar det ikke med her for å unngå dobbel visning.
     if (c.producer)  parts.push(`Prod: ${esc(c.producer)}`);
     if (c.mixing)    parts.push(`Mix: ${esc(c.mixing)}`);
     if (c.mastering) parts.push(`Master: ${esc(c.mastering)}`);
@@ -755,13 +1015,14 @@ const Profile = (() => {
     const title  = r.name || r.title || 'Untitled';
     return `
       <div class="music-item" id="mitem-${esc(r.id)}">
-        <div class="music-thumb" id="mthumb-${esc(r.id)}" onclick="Profile.playTrack('${esc(username)}', ${index})" style="cursor:pointer" title="Spill av">
+        <div class="music-thumb" id="mthumb-${esc(r.id)}" onclick="Profile.playTrack('${esc(username)}', ${index})" style="cursor:pointer" title="Play">
           <span class="music-thumb-fallback">${Icon('music')}</span>
           <span class="music-thumb-play">${Icon('play')}</span>
         </div>
         <div class="music-meta" onclick="Profile.playTrack('${esc(username)}', ${index})" style="cursor:pointer;flex:1;min-width:0">
           <div class="music-name">${esc(title)}</div>
-          <div class="music-artist">${esc(r.artist || 'Ukjent artist')}</div>
+          <div class="music-artist">${esc(r.artist || 'Unknown artist')}</div>
+          ${r.credits?.label ? `<div class="music-label">🏷️ ${esc(r.credits.label)}</div>` : ''}
           ${r.description ? `<div class="music-desc">${esc(r.description)}</div>` : ''}
           ${cat ? `<span class="music-cat-badge">${iconForEmoji(cat.emoji)} ${esc(cat.label)}</span>` : ''}
           ${songCreditsLineHtml(r.credits)}
@@ -769,25 +1030,27 @@ const Profile = (() => {
         </div>
         <div class="music-item-right">
           <span class="music-dur">${dur}</span>
-          ${isOwner ? `<button class="btn-icon" title="${r.visibility === 'private' ? 'Privat — kun du ser den. Klikk for å gjøre offentlig (vises i Discover for alle)' : 'Offentlig — vises i Discover for alle. Klikk for å gjøre privat'}" onclick="event.stopPropagation();Profile.toggleTrackVisibility('${esc(r.id)}','${esc(username)}')">${r.visibility === 'private' ? '🔒' : '🌐'}</button>` : ''}
-          ${isOwner ? `<button class="btn-icon" title="Del til Community-veggen" onclick="event.stopPropagation();Profile.shareTrackToCommunity('${esc(r.id)}','${esc(username)}')">📣</button>` : ''}
-          ${isOwner ? `<button class="btn-icon music-credits-btn" title="Kreditering & kjøpslenker" onclick="event.stopPropagation();Profile.openSongCreditsModal('${esc(r.id)}')">${Icon('edit')}</button>` : ''}
-          ${isOwner ? `<label class="music-cover-upload" title="Endre cover" onclick="event.stopPropagation()">${Icon('camera')}<input type="file" accept="image/*" style="display:none" onchange="Profile.uploadMusicCover('${esc(r.id)}',this.files[0])"></label>` : ''}
-          ${isOwner ? `<button class="btn-icon btn-danger music-delete-btn" title="Slett denne sangen" onclick="event.stopPropagation();Profile.deleteTrack('${esc(r.id)}','${esc(username)}')">${Icon('trash')}</button>` : ''}
+          ${!isOwner ? `<button class="btn-icon" title="Report track (stolen / already released)" onclick="event.stopPropagation();Profile.reportTrack('${esc(r.id)}','${esc(username)}')">${Icon('ban')}</button>` : ''}
+          ${isOwner ? `<button class="btn-icon" title="${r.visibility === 'private' ? 'Private — only you see it. Click to make public (shown in Discover for everyone)' : 'Public — shown in Discover for everyone. Click to make private'}" onclick="event.stopPropagation();Profile.toggleTrackVisibility('${esc(r.id)}','${esc(username)}')">${r.visibility === 'private' ? '🔒' : '🌐'}</button>` : ''}
+          ${isOwner ? `<button class="btn-icon" title="Share to the community wall" onclick="event.stopPropagation();Profile.shareTrackToCommunity('${esc(r.id)}','${esc(username)}')">📣</button>` : ''}
+          ${isOwner ? `<button class="btn-icon" title="Share further on Facebook etc." onclick="event.stopPropagation();Share.open('music','${esc(r.id)}')">🔗</button>` : ''}
+          ${isOwner ? `<button class="btn-icon music-credits-btn" title="Credits & buy links" onclick="event.stopPropagation();Profile.openSongCreditsModal('${esc(r.id)}')">${Icon('edit')}</button>` : ''}
+          ${isOwner ? `<label class="music-cover-upload" title="Change cover" onclick="event.stopPropagation()">${Icon('camera')}<input type="file" accept="image/*" style="display:none" onchange="Profile.uploadMusicCover('${esc(r.id)}',this.files[0])"></label>` : ''}
+          ${isOwner ? `<button class="btn-icon btn-danger music-delete-btn" title="Delete this song" onclick="event.stopPropagation();Profile.deleteTrack('${esc(r.id)}','${esc(username)}')">${Icon('trash')}</button>` : ''}
           ${isOwner && cat ? `
           <div class="music-demo-wrap">
-            <button class="music-demo-btn" title="Send demo til plateselskap"
+            <button class="music-demo-btn" title="Send demo to record label"
               onclick="event.stopPropagation();Profile.toggleDemoMenu('${esc(r.id)}')">${Icon('mail')} Demo</button>
             <div class="music-demo-menu" id="demo-menu-${esc(r.id)}" style="display:none">
               ${cat.labels.map(l => `
                 <a class="music-demo-link"
-                   href="mailto:${esc(l.email)}?subject=${encodeURIComponent('Demo: ' + title)}&body=${encodeURIComponent('Hei,\n\nJeg ønsker å sende deg en demo av sporet «' + title + '».\n\nMed vennlig hilsen')}">
+                   href="mailto:${esc(l.email)}?subject=${encodeURIComponent('Demo: ' + title)}&body=${encodeURIComponent('Hi,\n\nI would like to send you a demo of the track "' + title + '".\n\nBest regards')}">
                   ${esc(l.name)}
                 </a>`).join('')}
             </div>
           </div>` : ''}
           ${isOwner && !cat ? `
-          <a href="#/discover" class="music-setcat-btn" title="Velg hoved kategori">+ Kategori</a>` : ''}
+          <a href="#/discover" class="music-setcat-btn" title="Choose main category">+ Category</a>` : ''}
         </div>
       </div>`;
   }
@@ -822,7 +1085,7 @@ const Profile = (() => {
     if (!el) return;
     const ids = user.musicIds || [];
     if (!ids.length) {
-      if (isOwner) el.innerHTML = `<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">${Icon('music')}</div><p>Last opp musikk i profileditoren</p><button class="btn btn-primary btn-sm mt-2" onclick="Router.go('/edit')">Last opp</button></div>`;
+      if (isOwner) el.innerHTML = `<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">${Icon('music')}</div><p>Upload music in the profile editor</p><button class="btn btn-primary btn-sm mt-2" onclick="Profile.openEditorAt('innhold','music')">${Icon('arrow-up')} Upload</button></div>`;
       return;
     }
     const recs = await DB.getAllByIds('music', ids);
@@ -833,7 +1096,7 @@ const Profile = (() => {
     ).join('');
     el.innerHTML = `
       <div class="profile-music-section">
-        <div class="profile-music-title">${Icon('music')} Musikk</div>
+        <div class="profile-music-title">${Icon('music')} Music</div>
         <div class="music-list">${itemsHtml}</div>
       </div>`;
     loadMusicCoverArts(recs);
@@ -846,6 +1109,16 @@ const Profile = (() => {
     document.querySelectorAll('.music-item').forEach((el, i) => el.classList.toggle('playing', i === index));
   }
 
+  // Rapporter et spor for mulig opphavsrettsbrudd (stjålet / allerede utgitt).
+  async function reportTrack(trackId, username) {
+    if (typeof Report === 'undefined' || !Report.openTrack) return;
+    let r = null;
+    try { r = await DB.get('music', trackId); } catch {}
+    const title  = (r && (r.name || r.title)) || '';
+    const artist = (r && r.artist) || '';
+    Report.openTrack(trackId, title, artist, username);
+  }
+
   // ── Butikk (sanger til salgs / gratis nedlasting) ──────────────────────
   async function renderStoreSection(user, isOwner) {
     const el = document.getElementById('tab-store');
@@ -853,24 +1126,24 @@ const Profile = (() => {
     const products = await Marketplace.listSellerProducts(user.username).catch(() => []);
     if (!products.length) {
       el.innerHTML = isOwner
-        ? `<div class="profile-store-section"><div class="profile-store-title">🛒 Butikk</div>
-             <p style="font-size:0.82rem;color:var(--text2)">Du har ingen sanger til salgs ennå. Åpne en sang i editoren (✎) → «Selg denne sangen».</p></div>`
+        ? `<div class="profile-store-section"><div class="profile-store-title">🛒 Store</div>
+             <p style="font-size:0.82rem;color:var(--text2)">You have no songs for sale yet. Open a song in the editor (✎) → "Sell this song".</p></div>`
         : '';
       return;
     }
     el.innerHTML = `
       <div class="profile-store-section">
-        <div class="profile-store-title">🛒 Butikk · ${products.length} ${products.length === 1 ? 'sang' : 'sanger'}</div>
+        <div class="profile-store-title">🛒 Store · ${products.length} ${products.length === 1 ? 'song' : 'songs'}</div>
         <div class="store-list">${products.map(p => storeCard(p, isOwner)).join('')}</div>
       </div>`;
   }
 
   function storeCard(p, isOwner) {
     const dur   = p.duration_sec ? `${Math.floor(p.duration_sec / 60)}:${String(Math.floor(p.duration_sec % 60)).padStart(2,'0')}` : '';
-    const price = p.is_free ? 'Gratis' : `${(p.price_ore / 100).toFixed(0)} kr`;
+    const price = p.is_free ? 'Free' : `${(p.price_ore / 100).toFixed(0)} kr`;
     const btn   = p.is_free
-      ? `<button class="btn btn-primary btn-sm" onclick="Marketplace.buySong('${esc(p.id)}')">⬇ Gratis nedlasting</button>`
-      : `<button class="btn btn-gold btn-sm" onclick="Marketplace.buySong('${esc(p.id)}')">🛒 Kjøp · ${price}</button>`;
+      ? `<button class="btn btn-primary btn-sm" onclick="Marketplace.buySong('${esc(p.id)}')">⬇ Free download</button>`
+      : `<button class="btn btn-gold btn-sm" onclick="Marketplace.buySong('${esc(p.id)}')">🛒 Buy · ${price}</button>`;
     const cover = p.cover_path
       ? `<img src="${esc(p.cover_path)}" alt="" loading="lazy" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0">`
       : '';
@@ -883,7 +1156,7 @@ const Profile = (() => {
         </div>
         <div class="store-card-right">
           <span class="store-card-price">${price}</span>
-          ${isOwner ? `<span class="store-card-owner">Din</span>` : btn}
+          ${isOwner ? `<span class="store-card-owner">Yours</span>` : btn}
         </div>
       </div>`;
   }
@@ -901,8 +1174,8 @@ const Profile = (() => {
         .catch(() => {});
     }
 
-    if (window.Notify) Notify.emit(targetUsername, { type: 'friend_request', text: 'sendte deg en venneforespørsel', link: `#/u/${current.username}` });
-    App.toast(`Venneforespørsel sendt til @${targetUsername} ${Icon('users')}`, 'success');
+    if (window.Notify) Notify.emit(targetUsername, { type: 'friend_request', from: current.username, fromDisplay: current.displayName, text: 'sent you a friend request', link: `#/u/${current.username}` });
+    App.toast(`Friend request sent to @${targetUsername} ${Icon('users')}`, 'success');
     App.renderNav();
     renderView(targetUsername);
   }
@@ -912,9 +1185,9 @@ const Profile = (() => {
     if (!current) return;
     const result = Auth.acceptFriendRequest(current.username, fromUsername);
     if (result.error) { App.toast(result.error, 'error'); return; }
-    if (window.Notify) Notify.emit(fromUsername, { type: 'friend_accept', text: 'godtok venneforespørselen din', link: `#/u/${current.username}` });
+    if (window.Notify) Notify.emit(fromUsername, { type: 'friend_accept', from: current.username, fromDisplay: current.displayName, text: 'accepted your friend request', link: `#/u/${current.username}` });
     if (window.FriendChat) FriendChat.refresh();   // dukar opp no som dei har ein venn
-    App.toast(`Du er nå venner med @${fromUsername}! ${Icon('party')}`, 'success');
+    App.toast(`You are now friends with @${fromUsername}! ${Icon('party')}`, 'success');
     App.renderNav();
     renderView(current.username);
   }
@@ -923,7 +1196,7 @@ const Profile = (() => {
     const current = Auth.current();
     if (!current) return;
     Auth.rejectFriendRequest(current.username, fromUsername);
-    App.toast(`Venneforespørsel fra @${fromUsername} avslått`, 'info');
+    App.toast(`Friend request from @${fromUsername} declined`, 'info');
     App.renderNav();
     renderView(current.username);
   }
@@ -932,7 +1205,7 @@ const Profile = (() => {
     const current = Auth.current();
     if (!current) return;
     Auth.cancelFriendRequest(current.username, targetUsername);
-    App.toast('Venneforespørsel trukket tilbake', 'info');
+    App.toast('Friend request withdrawn', 'info');
     renderView(targetUsername);
   }
 
@@ -940,7 +1213,7 @@ const Profile = (() => {
     const current = Auth.current();
     if (!current) return;
     Auth.removeFriend(current.username, targetUsername);
-    App.toast(`@${targetUsername} fjernet fra vennelisten`, 'info');
+    App.toast(`@${targetUsername} removed from your friends list`, 'info');
     renderView(targetUsername);
   }
 
@@ -960,10 +1233,10 @@ const Profile = (() => {
       <!-- SIDEBAR -->
       <div class="editor-sidebar">
         <div class="editor-panel" style="margin-bottom:1rem">
-          <div class="editor-panel-header">${Icon('user')} Profil</div>
+          <div class="editor-panel-header">${Icon('user')} Profile</div>
           <div class="editor-panel-body">
             <div class="form-group">
-              <label class="form-label">Visningsnavn</label>
+              <label class="form-label">Display name</label>
               <input class="form-input" id="ed-displayName" value="${current.displayName}">
             </div>
             <div class="form-group">
@@ -971,62 +1244,62 @@ const Profile = (() => {
               <textarea class="form-input" id="ed-bio" rows="4">${current.bio || ''}</textarea>
             </div>
             <div class="form-group">
-              <label class="form-label">Lenker (trykk Enter for å legge til)</label>
+              <label class="form-label">Links (press Enter to add)</label>
               <div class="chip-input-wrap" id="links-wrap">
                 ${(current.links || []).map(l => chipHtml(l)).join('')}
-                <input class="chip-input" id="link-input" placeholder="https://…" title="Skriv URL og trykk Enter">
+                <input class="chip-input" id="link-input" placeholder="https://…" title="Type a URL and press Enter">
               </div>
             </div>
-            <button class="btn btn-primary w-full" onclick="Profile.saveProfile()">${Icon('save')} Lagre profil</button>
+            <button class="btn btn-primary w-full" onclick="Profile.saveProfile()">${Icon('save')} Save profile</button>
           </div>
         </div>
 
         <!-- VISIBILITY PANEL -->
         <div class="editor-panel" style="margin-bottom:1rem">
-          <div class="editor-panel-header">${Icon('lock')} Synlighet</div>
+          <div class="editor-panel-header">${Icon('lock')} Visibility</div>
           <div class="editor-panel-body">
             <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.75rem;line-height:1.5">
-              Velg hvem som kan se profilen din — uansett om du er DJ, artist, plateselskap eller bare her for å sosialisere.
+              Choose who can see your profile — whether you're a DJ, artist, record label or just here to socialize.
             </p>
             <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
-              <button id="vis-public-btn" class="btn btn-sm ${(current.profileVisibility || 'public') === 'public' ? 'btn-primary' : 'btn-ghost'}" style="flex:1" onclick="Profile.setProfileVisibility('public')">${Icon('globe')} Offentlig</button>
-              <button id="vis-private-btn" class="btn btn-sm ${(current.profileVisibility || 'public') === 'private' ? 'btn-primary' : 'btn-ghost'}" style="flex:1" onclick="Profile.setProfileVisibility('private')">${Icon('lock')} Kun meg</button>
+              <button id="vis-public-btn" class="btn btn-sm ${(current.profileVisibility || 'public') === 'public' ? 'btn-primary' : 'btn-ghost'}" style="flex:1" onclick="Profile.setProfileVisibility('public')">${Icon('globe')} Public</button>
+              <button id="vis-private-btn" class="btn btn-sm ${(current.profileVisibility || 'public') === 'private' ? 'btn-primary' : 'btn-ghost'}" style="flex:1" onclick="Profile.setProfileVisibility('private')">${Icon('lock')} Only me</button>
             </div>
             <p id="vis-desc" style="font-size:0.75rem;color:var(--text3);line-height:1.5;margin:0">
               ${(current.profileVisibility || 'public') === 'private'
-                ? 'Bare du kan se profilen din. Andre ser en låst side.'
-                : 'Alle kan finne og se profilen din.'}
+                ? 'Only you can see your profile. Others see a locked page.'
+                : 'Anyone can find and view your profile.'}
             </p>
           </div>
         </div>
 
         <!-- ROLES PANEL -->
         <div class="editor-panel" style="margin-bottom:1rem">
-          <div class="editor-panel-header">${Icon('film')} Din rolle</div>
+          <div class="editor-panel-header">${Icon('film')} Your role</div>
           <div class="editor-panel-body">
             <div class="role-selector" id="ed-role-selector">
-              ${[['lytter','🎧','Lytter'],['dj','🎛️','DJ'],['produsent','🎹','Produsent'],['plateselskap','🏷️','Plateselskap']].map(([val,emoji,label]) => `<label class="role-option" onclick="Profile.selectEditorRole('${val}',this)"><input type="radio" name="ed-role" value="${val}" ${(current.role||'lytter')===val?'checked':''} style="display:none"><div class="role-option-inner ${(current.role||'lytter')===val?'active':''}"><span class="role-option-emoji">${iconForEmoji(emoji)}</span><span class="role-option-label">${label}</span></div></label>`).join('')}
+              ${[['lytter','🎧','Listener'],['dj','🎛️','DJ'],['produsent','🎹','Producer'],['plateselskap','🏷️','Record label']].map(([val,emoji,label]) => `<label class="role-option" onclick="Profile.selectEditorRole('${val}',this)"><input type="radio" name="ed-role" value="${val}" ${(current.role||'lytter')===val?'checked':''} style="display:none"><div class="role-option-inner ${(current.role||'lytter')===val?'active':''}"><span class="role-option-emoji">${iconForEmoji(emoji)}</span><span class="role-option-label">${label}</span></div></label>`).join('')}
             </div>
-            <button class="btn btn-ghost btn-sm w-full" style="margin-top:0.75rem" onclick="Profile.saveProfile()">${Icon('save')} Lagre rolle</button>
+            <button class="btn btn-ghost btn-sm w-full" style="margin-top:0.75rem" onclick="Profile.saveProfile()">${Icon('save')} Save role</button>
           </div>
         </div>
 
         <!-- AI CHAT PANEL -->
         <div class="editor-panel">
-          <div class="editor-panel-header">${Icon('bot')} AI Design-assistent</div>
+          <div class="editor-panel-header">${Icon('bot')} AI Design Assistant</div>
           <div class="ai-chat-panel-body">
-            ${!AI.hasKey() ? `<div class="ai-no-key-banner">${Icon('alert')} <a href="#/settings" style="color:var(--accent)">Legg til Claude API-nøkkel</a> for å bruke AI-chatten.</div>` : ''}
+            ${!AI.hasKey() ? `<div class="ai-no-key-banner">${Icon('alert')} <a href="#/settings" style="color:#38bdf8">Add a Claude API key</a> to use the AI chat.</div>` : ''}
             <div class="ai-chat-window" id="ai-chat-window">
-              <div class="ai-chat-bubble ai-chat-bubble--bot">${Icon('smile')} Hei! Jeg er din AI design-assistent. Beskriv stilen du vil ha — f.eks. <em>"kosmisk og mørk"</em>, <em>"neon DJ-vibes"</em> — eller spør meg om farger, layout og bio!</div>
+              <div class="ai-chat-bubble ai-chat-bubble--bot">${Icon('smile')} Hi! I'm your AI design assistant. Describe the style you want — e.g. <em>"cosmic and dark"</em>, <em>"neon DJ vibes"</em> — or ask me about colors, layout and bio!</div>
             </div>
             <div class="ai-chat-quick">
-              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Lag en fargepalett for en psykedelisk DJ-profil')">${Icon('palette')} DJ farger</button>
-              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Skriv en bio basert på profilen min')">${Icon('edit')} Bio</button>
-              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Foreslå beste layout og font for meg')">${Icon('edit')} Layout</button>
-              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Hvilke seksjoner bør jeg ha på profilen min?')">${Icon('lightbulb')} Tips</button>
+              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Create a color palette for a psychedelic DJ profile')">${Icon('palette')} DJ colors</button>
+              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Write a bio based on my profile')">${Icon('edit')} Bio</button>
+              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Suggest the best layout and font for me')">${Icon('edit')} Layout</button>
+              <button class="ai-tip-btn" onclick="Profile.sendAiChatMsg('Which sections should I have on my profile?')">${Icon('lightbulb')} Tips</button>
             </div>
             <div class="ai-chat-input-row">
-              <input class="form-input" id="ai-chat-input" placeholder="Spør AI-en om design…"
+              <input class="form-input" id="ai-chat-input" placeholder="Ask the AI about design…"
                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();Profile.sendAiChat()}">
               <button class="btn btn-primary ai-chat-send-btn" id="ai-chat-send" onclick="Profile.sendAiChat()">${Icon('arrow-up')}</button>
             </div>
@@ -1091,7 +1364,7 @@ const Profile = (() => {
 
         <!-- Live preview -->
         <div class="editor-panel" style="margin-top:1rem">
-          <div class="editor-panel-header">${Icon('eye')} Live forhåndsvisning</div>
+          <div class="editor-panel-header">${Icon('eye')} Live preview</div>
           <div class="editor-panel-body" id="theme-preview-wrap" style="padding:0;overflow:hidden;border-radius:0 0 20px 20px">
             <div id="theme-preview" style="padding:1.5rem;min-height:120px;transition:all 0.3s">
               <div style="display:flex;align-items:center;gap:1rem">
@@ -1107,8 +1380,8 @@ const Profile = (() => {
         </div>
 
         <div style="display:flex;gap:0.75rem;margin-top:1rem">
-          <button class="btn btn-primary" onclick="Profile.saveProfile()">${Icon('save')} Lagre alle endringer</button>
-          <a href="#/u/${current.username}" class="btn btn-ghost">${Icon('eye')} Se profil</a>
+          <button class="btn btn-primary" onclick="Profile.saveProfile()">${Icon('save')} Save all changes</button>
+          <a href="#/u/${current.username}" class="btn btn-ghost">${Icon('eye')} View profile</a>
         </div>
       </div>
     </div>`;
@@ -1119,23 +1392,38 @@ const Profile = (() => {
     loadMyPurchases(current);
     loadEditorMixes(current);
     _loadBgMusicSelector(current, t);
+
+    // Åpne på en spesifikk under-fane hvis noen ba om det (f.eks. «Last opp musikk»).
+    if (_pendingEditorTab) {
+      const { group, tab } = _pendingEditorTab;
+      _pendingEditorTab = null;
+      document.querySelector(`.group-tab-btn[data-group="${group}"]`)?.click();
+      document.querySelector(`.editor-subtabs[data-group-tabs="${group}"] .tab-btn[data-tab="${tab}"]`)?.click();
+    }
+  }
+
+  // Åpne editoren rett på en gitt gruppe/under-fane i stedet for standard Tema.
+  let _pendingEditorTab = null;
+  function openEditorAt(group, tab) {
+    _pendingEditorTab = { group, tab };
+    Router.go('/edit');
   }
 
   async function _loadBgMusicSelector(user, t) {
     const sel = document.getElementById('ed-bg-music-track');
     if (!sel || !user.musicIds?.length) return;
     const recs = await DB.getAllByIds('music', user.musicIds);
-    sel.innerHTML = `<option value="">— Automatisk (første sang) —</option>` +
+    sel.innerHTML = `<option value="">— Automatic (first song) —</option>` +
       recs.map(r => `<option value="${r.id}" ${t.bgMusicTrackId === r.id ? 'selected' : ''}>${r.name || r.id}</option>`).join('');
   }
 
   // Editor-fanene gruppert i 4 kategorier (top-nivå) med under-faner.
   // Hver under-fane: [tab-id (= etab-<id>), ikon, etikett]
   const EDITOR_GROUPS = [
-    ['utseende',  'palette',  'Utseende',  [['theme','palette','Tema'],      ['avatar','user','Avatar/Banner'], ['mypage','wind','Min Side']]],
-    ['innhold',   'music',    'Innhold',   [['media','camera','Medier'],     ['music','music','Musikk'],        ['mixes','sliders','DJ Mixes']]],
-    ['aktivitet', 'calendar', 'Aktivitet', [['events','calendar','Events'],  ['festivals','star','Festivaler']]],
-    ['nettverk',  'globe',    'Nettverk',  [['labels','tag','Plateselskaper'],['platforms','laptop','Plattformer'],['mysites','globe','Mine Sider']]],
+    ['utseende',  'palette',  'Appearance',  [['theme','palette','Theme'],      ['avatar','user','Avatar/Banner'], ['mypage','wind','My Page']]],
+    ['innhold',   'music',    'Content',   [['media','camera','Media'],     ['music','music','Music'],        ['mixes','sliders','DJ Mixes']]],
+    ['aktivitet', 'calendar', 'Activity', [['events','calendar','Events'],  ['festivals','star','Festivals']]],
+    ['nettverk',  'globe',    'Network',  [['labels','tag','Record labels'],['platforms','laptop','Platforms'],['mysites','globe','My Sites']]],
   ];
 
   function editorTabNavHtml() {
@@ -1163,78 +1451,78 @@ const Profile = (() => {
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem">
         <!-- Colors -->
         <div class="editor-section">
-          <div class="editor-section-title">Farger</div>
+          <div class="editor-section-title">Colors</div>
           <div class="color-row">
-            ${colorInput('Primærfarge',    'ed-primary',   t.primaryColor)}
-            ${colorInput('Sekundærfarge',  'ed-secondary', t.secondaryColor)}
-            ${colorInput('Bakgrunnsfarge', 'ed-bg',        t.bgColor)}
-            ${colorInput('Tekstfarge',     'ed-text',      t.textColor)}
-            ${colorInput('Aksentfarge',    'ed-accent',    t.accentColor)}
+            ${colorInput('Primary color',    'ed-primary',   t.primaryColor)}
+            ${colorInput('Secondary color',  'ed-secondary', t.secondaryColor)}
+            ${colorInput('Background color', 'ed-bg',        t.bgColor)}
+            ${colorInput('Text color',     'ed-text',      t.textColor)}
+            ${colorInput('Accent color',    'ed-accent',    t.accentColor)}
           </div>
         </div>
 
         <!-- Background -->
         <div class="editor-section">
-          <div class="editor-section-title">Bakgrunn</div>
+          <div class="editor-section-title">Background</div>
           <div class="bg-type-row">
-            ${bgTypes.map(t2 => `<button class="bg-type-btn ${t.bgType === t2 ? 'active' : ''}" onclick="setBgType('${t2}',this)">${{color:'Farge',gradient:'Gradient',image:'Bilde',video:'Video',music:'🎵 Musikk'}[t2]}</button>`).join('')}
+            ${bgTypes.map(t2 => `<button class="bg-type-btn ${t.bgType === t2 ? 'active' : ''}" onclick="setBgType('${t2}',this)">${{color:'Color',gradient:'Gradient',image:'Image',video:'Video',music:'🎵 Music'}[t2]}</button>`).join('')}
           </div>
           <div id="bg-color-opt" class="${t.bgType !== 'color' ? 'hidden' : ''}">
-            ${colorInput('Bakgrunnsfarge','ed-bg2', t.bgColor)}
+            ${colorInput('Background color','ed-bg2', t.bgColor)}
           </div>
           <div id="bg-gradient-opt" class="${t.bgType !== 'gradient' ? 'hidden' : ''}">
             <div class="form-group">
               <label class="form-label">CSS Gradient</label>
-              <input class="form-input" id="ed-gradient" value="${t.bgGradient || 'linear-gradient(135deg,#7c3aed,#2563eb)'}">
+              <input class="form-input" id="ed-gradient" value="${t.bgGradient || 'linear-gradient(135deg,#22c55e,#16a34a)'}">
             </div>
           </div>
           <div id="bg-image-opt" class="${t.bgType !== 'image' ? 'hidden' : ''}">
             <div class="upload-zone" onclick="document.getElementById('bg-image-file').click()">
               <div class="upload-icon">${Icon('image')}</div>
-              <div>Klikk for å laste opp bakgrunnsbilde</div>
+              <div>Click to upload a background image</div>
             </div>
             <input type="file" id="bg-image-file" accept="image/*" style="display:none" onchange="Profile.uploadBgImage(this)">
             ${t.bgImage ? `<img src="${t.bgImage}" style="width:100%;height:80px;object-fit:cover;border-radius:8px;margin-top:0.5rem" id="bg-preview">` : '<div id="bg-preview"></div>'}
-            <button class="paint-open-btn" id="open-paint-btn" onclick="Profile.openImagePaintEditor()" ${!t.bgImage ? 'style="display:none"' : ''}>${Icon('palette')} Åpne i bilderedigerer</button>
+            <button class="paint-open-btn" id="open-paint-btn" onclick="Profile.openImagePaintEditor()" ${!t.bgImage ? 'style="display:none"' : ''}>${Icon('palette')} Open in image editor</button>
           </div>
           <div id="bg-video-opt" class="${t.bgType !== 'video' ? 'hidden' : ''}">
             <div class="upload-zone" onclick="document.getElementById('bg-video-file').click()">
               <div class="upload-icon">${Icon('film')}</div>
-              <div>Klikk for å laste opp bakgrunnsvideo</div>
+              <div>Click to upload a background video</div>
             </div>
             <input type="file" id="bg-video-file" accept="video/*" style="display:none" onchange="Profile.uploadBgVideo(this)">
           </div>
           <div id="bg-music-opt" class="${t.bgType !== 'music' ? 'hidden' : ''}">
-            <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem">Velg en av dine opplastede sanger som animert bakgrunn</div>
+            <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem">Choose one of your uploaded songs as an animated background</div>
             ${userTracks.length
               ? `<select class="form-input" id="ed-bg-music-track">
-                   <option value="">— Automatisk (første sang) —</option>
+                   <option value="">— Automatic (first song) —</option>
                    ${userTracks.map(id => `<option value="${id}" ${t.bgMusicTrackId === id ? 'selected' : ''}>${id}</option>`).join('')}
                  </select>`
-              : `<div style="color:var(--text3);font-size:0.82rem;padding:0.5rem 0">Last opp musikk i Musikk-fanen for å bruke dette.</div>`}
-            <div style="font-size:0.75rem;color:var(--text3);margin-top:0.5rem">Besøkende ser en psykedelisk lydbølge-animasjon i heltbildet ditt</div>
+              : `<div style="color:var(--text3);font-size:0.82rem;padding:0.5rem 0">Upload music in the Music tab to use this.</div>`}
+            <div style="font-size:0.75rem;color:var(--text3);margin-top:0.5rem">Visitors see a psychedelic sound-wave animation in your hero image</div>
           </div>
         </div>
 
         <!-- Image filters -->
         <div class="editor-section" id="img-filter-section">
-          <div class="editor-section-title">Bildejusteringer</div>
+          <div class="editor-section-title">Image adjustments</div>
           <div class="image-filter-row">
-            ${filterSlider('Lysstyrke', 'f-brightness', t.bgImageFilters?.brightness ?? 100, 0, 200)}
-            ${filterSlider('Kontrast',  'f-contrast',   t.bgImageFilters?.contrast  ?? 100, 0, 200)}
-            ${filterSlider('Metning',   'f-saturation', t.bgImageFilters?.saturation ?? 100, 0, 200)}
-            ${filterSlider('Fargetone', 'f-hue',        t.bgImageFilters?.hue        ?? 0, 0, 360)}
-            ${filterSlider('Svart/Hvitt','f-grayscale', t.bgImageFilters?.grayscale  ?? 0, 0, 100)}
+            ${filterSlider('Brightness', 'f-brightness', t.bgImageFilters?.brightness ?? 100, 0, 200)}
+            ${filterSlider('Contrast',  'f-contrast',   t.bgImageFilters?.contrast  ?? 100, 0, 200)}
+            ${filterSlider('Saturation',   'f-saturation', t.bgImageFilters?.saturation ?? 100, 0, 200)}
+            ${filterSlider('Hue', 'f-hue',        t.bgImageFilters?.hue        ?? 0, 0, 360)}
+            ${filterSlider('Grayscale','f-grayscale', t.bgImageFilters?.grayscale  ?? 0, 0, 100)}
           </div>
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
-            <button class="paint-open-btn" style="width:auto;padding:4px 10px;font-size:0.75rem" onclick="document.getElementById('f-grayscale').value=100;document.getElementById('f-grayscale-val').textContent=100;document.getElementById('f-saturation').value=0;document.getElementById('f-saturation-val').textContent=0;Profile.livePreview()">${Icon('square')} Svart/Hvitt</button>
-            <button class="paint-open-btn" style="width:auto;padding:4px 10px;font-size:0.75rem;background:#6d28d9" onclick="document.getElementById('f-brightness').value=100;document.getElementById('f-brightness-val').textContent=100;document.getElementById('f-contrast').value=100;document.getElementById('f-contrast-val').textContent=100;document.getElementById('f-saturation').value=100;document.getElementById('f-saturation-val').textContent=100;document.getElementById('f-hue').value=0;document.getElementById('f-hue-val').textContent=0;document.getElementById('f-grayscale').value=0;document.getElementById('f-grayscale-val').textContent=0;Profile.livePreview()">${Icon('rotate-ccw')} Tilbakestill</button>
+            <button class="paint-open-btn" style="width:auto;padding:4px 10px;font-size:0.75rem" onclick="document.getElementById('f-grayscale').value=100;document.getElementById('f-grayscale-val').textContent=100;document.getElementById('f-saturation').value=0;document.getElementById('f-saturation-val').textContent=0;Profile.livePreview()">${Icon('square')} Black & White</button>
+            <button class="paint-open-btn" style="width:auto;padding:4px 10px;font-size:0.75rem;background:#16a34a" onclick="document.getElementById('f-brightness').value=100;document.getElementById('f-brightness-val').textContent=100;document.getElementById('f-contrast').value=100;document.getElementById('f-contrast-val').textContent=100;document.getElementById('f-saturation').value=100;document.getElementById('f-saturation-val').textContent=100;document.getElementById('f-hue').value=0;document.getElementById('f-hue-val').textContent=0;document.getElementById('f-grayscale').value=0;document.getElementById('f-grayscale-val').textContent=0;Profile.livePreview()">${Icon('rotate-ccw')} Reset</button>
           </div>
         </div>
 
         <!-- Font & Layout -->
         <div class="editor-section">
-          <div class="editor-section-title">Typografi & Layout</div>
+          <div class="editor-section-title">Typography & Layout</div>
           <div class="form-group">
             <label class="form-label">Font</label>
             <select class="form-input font-select" id="ed-font">
@@ -1244,12 +1532,12 @@ const Profile = (() => {
           <div class="editor-section-title">Layout</div>
           <div class="layout-grid">
             ${layoutOption('default', 'Standard', '▤', t.layout)}
-            ${layoutOption('centered', 'Sentrert', '▥', t.layout)}
-            ${layoutOption('sidebar', 'Sidepanel', '▧', t.layout)}
+            ${layoutOption('centered', 'Centered', '▥', t.layout)}
+            ${layoutOption('sidebar', 'Sidebar', '▧', t.layout)}
           </div>
-          <div class="editor-section-title" style="margin-top:1rem">Kortstil</div>
+          <div class="editor-section-title" style="margin-top:1rem">Card style</div>
           <div class="bg-type-row">
-            ${['glass','solid','outline'].map(s => `<button class="bg-type-btn ${t.cardStyle===s?'active':''}" onclick="setCardStyle('${s}',this)">${{glass:'Glass',solid:'Solid',outline:'Kontur'}[s]}</button>`).join('')}
+            ${['glass','solid','outline'].map(s => `<button class="bg-type-btn ${t.cardStyle===s?'active':''}" onclick="setCardStyle('${s}',this)">${{glass:'Glass',solid:'Solid',outline:'Outline'}[s]}</button>`).join('')}
           </div>
         </div>
       </div>
@@ -1260,15 +1548,15 @@ const Profile = (() => {
     return `
       <div class="upload-zone" id="media-dropzone" onclick="document.getElementById('media-file-input').click()">
         <div class="upload-icon">${Icon('camera')}</div>
-        <div style="font-weight:600;margin-bottom:0.25rem">Klikk eller dra for å laste opp</div>
-        <div style="font-size:0.8rem;color:var(--text3)">Bilder og videoer fra fester &amp; events</div>
+        <div style="font-weight:600;margin-bottom:0.25rem">Click or drag to upload</div>
+        <div style="font-size:0.8rem;color:var(--text3)">Photos and videos from parties &amp; events</div>
       </div>
       <input type="file" id="media-file-input" accept="image/*,video/*" multiple style="display:none" onchange="Profile.uploadMedia(this.files)">
       <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
-        <input class="form-input" id="media-url-input" placeholder="… eller lim inn en YouTube-lenke" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();Profile.addMediaLink();}">
-        <button class="btn btn-secondary btn-sm" onclick="Profile.addMediaLink()">${Icon('plus')} Legg til</button>
+        <input class="form-input" id="media-url-input" placeholder="… or paste a YouTube link" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();Profile.addMediaLink();}">
+        <button class="btn btn-secondary btn-sm" onclick="Profile.addMediaLink()">${Icon('plus')} Add</button>
       </div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:0.75rem;width:100%" onclick="VideoEditor.open()">${Icon('film')} 🎬 Bytt lyd på en video (sett din egen sang/mix)</button>
+      <button class="btn btn-ghost btn-sm" style="margin-top:0.75rem;width:100%" onclick="VideoEditor.open()">${Icon('film')} 🎬 Swap the audio on a video (set your own song/mix)</button>
       <div id="media-upload-list" style="margin-top:1rem"></div>
       <div id="editor-media-grid" style="margin-top:1rem"></div>
     `;
@@ -1278,8 +1566,8 @@ const Profile = (() => {
     return `
       <div class="upload-zone" onclick="document.getElementById('music-file-input').click()">
         <div class="upload-icon">${Icon('music')}</div>
-        <div style="font-weight:600;margin-bottom:0.25rem">Last opp musikk</div>
-        <div style="font-size:0.8rem;color:var(--text3)">MP3, WAV, AAC, FLAC støttes</div>
+        <div style="font-weight:600;margin-bottom:0.25rem">Upload music</div>
+        <div style="font-size:0.8rem;color:var(--text3)">MP3, WAV, AAC, FLAC supported</div>
       </div>
       <input type="file" id="music-file-input" accept="audio/*" multiple style="display:none" onchange="Profile.uploadMusic(this.files)">
       <div id="music-upload-list" style="margin-top:1rem"></div>
@@ -1294,7 +1582,7 @@ const Profile = (() => {
     const purchases = await Marketplace.myPurchases(user.username).catch(() => []);
     if (!purchases.length) { el.innerHTML = ''; return; }
     el.innerHTML = `
-      <div class="profile-store-title">⬇ Mine kjøp</div>
+      <div class="profile-store-title">⬇ My purchases</div>
       <div class="store-list">${purchases.map(p => `
         <div class="store-card">
           <div class="store-card-meta">
@@ -1302,7 +1590,7 @@ const Profile = (() => {
             <div class="store-card-sub">${esc(p.artist || '')}${p.seller ? ' · @' + esc(p.seller) : ''}</div>
           </div>
           <div class="store-card-right">
-            <button class="btn btn-ghost btn-sm" onclick="Marketplace.download('${esc(p.productId)}')">⬇ Last ned</button>
+            <button class="btn btn-ghost btn-sm" onclick="Marketplace.download('${esc(p.productId)}')">⬇ Download</button>
           </div>
         </div>`).join('')}</div>`;
   }
@@ -1311,10 +1599,10 @@ const Profile = (() => {
     return `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
         <div>
-          <div class="editor-section-title">Profilbilde (Avatar)</div>
+          <div class="editor-section-title">Profile photo (Avatar)</div>
           <div class="upload-zone" onclick="document.getElementById('avatar-input').click()">
             <div class="upload-icon">${Icon('user')}</div>
-            <div>Last opp profilbilde</div>
+            <div>Upload profile photo</div>
           </div>
           <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="Profile.uploadAvatar(this)">
           <div id="avatar-preview" style="margin-top:0.75rem"></div>
@@ -1323,7 +1611,7 @@ const Profile = (() => {
           <div class="editor-section-title">Banner</div>
           <div class="upload-zone" onclick="document.getElementById('banner-input').click()">
             <div class="upload-icon">${Icon('image')}</div>
-            <div>Last opp banner</div>
+            <div>Upload banner</div>
           </div>
           <input type="file" id="banner-input" accept="image/*" style="display:none" onchange="Profile.uploadBanner(this)">
           <div id="banner-preview" style="margin-top:0.75rem"></div>
@@ -1334,7 +1622,7 @@ const Profile = (() => {
 
   // ── Small helpers ─────────────────────────────────────────────────────
   function colorInput(label, id, val) {
-    return `<div class="color-item"><input type="color" id="${id}" value="${val || '#7c3aed'}" oninput="Profile.livePreview()"><span>${label}</span></div>`;
+    return `<div class="color-item"><input type="color" id="${id}" value="${val || '#22c55e'}" oninput="Profile.livePreview()"><span>${label}</span></div>`;
   }
   function filterSlider(label, id, val, min, max) {
     return `<div class="filter-item"><div class="filter-label"><span>${label}</span><span id="${id}-val">${val}</span></div><input type="range" id="${id}" min="${min}" max="${max}" value="${val}" oninput="document.getElementById('${id}-val').textContent=this.value;Profile.livePreview()"></div>`;
@@ -1343,7 +1631,7 @@ const Profile = (() => {
     return `<div class="layout-option ${current===val?'active':''}" onclick="setLayout('${val}',this)"><span>${icon}</span>${label}</div>`;
   }
   function chipHtml(l) {
-    return `<span class="chip">${l.label || l.url}<button onclick="Profile.removeLink(this,'${l.url}')" title="Fjern">${Icon('x')}</button></span>`;
+    return `<span class="chip">${l.label || l.url}<button onclick="Profile.removeLink(this,'${l.url}')" title="Remove">${Icon('x')}</button></span>`;
   }
 
   function bindEditorEvents(t) {
@@ -1356,7 +1644,7 @@ const Profile = (() => {
         const label = url.replace(/^https?:\/\//, '').split('/')[0];
         const chip = document.createElement('span');
         chip.className = 'chip';
-        chip.innerHTML = `${label}<button onclick="Profile.removeLink(this,'${url}')" title="Fjern">${Icon('x')}</button>`;
+        chip.innerHTML = `${label}<button onclick="Profile.removeLink(this,'${url}')" title="Remove">${Icon('x')}</button>`;
         chip.dataset.url = url;
         li.parentNode.insertBefore(chip, li);
         li.value = '';
@@ -1432,7 +1720,7 @@ const Profile = (() => {
     const grid = document.getElementById('editor-media-grid');
     if (!grid) return;
     const ids = user.mediaIds || [];
-    if (!ids.length) { grid.innerHTML = '<p class="text-muted text-sm">Ingen medier ennå.</p>'; return; }
+    if (!ids.length) { grid.innerHTML = '<p class="text-muted text-sm">No media yet.</p>'; return; }
     const recs = await DB.getAllByIds('media', ids);
     grid.innerHTML = `<div class="media-grid">${recs.map(r => mediaCard(r, true)).join('')}</div>`;
     await Promise.all(recs.map(r => fillMediaContainer(r, document.getElementById(`media-${r.id}`))));
@@ -1443,7 +1731,7 @@ const Profile = (() => {
     const list = document.getElementById('editor-music-list');
     if (!list) return;
     const ids = user.musicIds || [];
-    if (!ids.length) { list.innerHTML = '<p class="text-muted text-sm">Ingen musikk ennå.</p>'; return; }
+    if (!ids.length) { list.innerHTML = '<p class="text-muted text-sm">No music yet.</p>'; return; }
     const recs = await DB.getAllByIds('music', ids);
     list.innerHTML = `<div class="music-list">${recs.map((r, i) => musicItem(r, i, user.username, true)).join('')}</div>`;
     loadMusicCoverArts(recs);
@@ -1454,61 +1742,61 @@ const Profile = (() => {
     const current = Auth.current();
     if (!current) return;
     const rec = await DB.get('music', trackId);
-    if (!rec) { App.toast('Fant ikke sporet', 'error'); return; }
+    if (!rec) { App.toast('Track not found', 'error'); return; }
     const c = rec.credits  || {};
     const b = rec.buyLinks || {};
     const box = document.getElementById('modal-box');
     if (!box) return;
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${Icon('edit')} Kreditering & kjøpslenker</h2>
+        <h2>${Icon('edit')} Credits & buy links</h2>
         <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
       </div>
       <div class="mix-edit-modal">
         <input type="hidden" id="sc-track-id" value="${esc(trackId)}">
 
-        <div class="mix-edit-section-title">Spor</div>
+        <div class="mix-edit-section-title">Track</div>
         <div class="form-group">
-          <label class="form-label">Tittel</label>
-          <input class="form-input" id="sc-title" value="${esc(rec.name || rec.title || '')}" placeholder="Sangtittel">
+          <label class="form-label">Title</label>
+          <input class="form-input" id="sc-title" value="${esc(rec.name || rec.title || '')}" placeholder="Song title">
         </div>
 
-        <div class="mix-edit-section-title">Kreditering</div>
+        <div class="mix-edit-section-title">Credits</div>
         <div class="form-group">
-          <label class="form-label">Artistnavn</label>
-          <input class="form-input" id="sc-artist" value="${esc(rec.artist || '')}" placeholder="Artistnavn">
+          <label class="form-label">Artist name</label>
+          <input class="form-input" id="sc-artist" value="${esc(rec.artist || '')}" placeholder="Artist name">
         </div>
         <div class="form-group">
-          <label class="form-label">Label (plateselskap)</label>
-          <input class="form-input" id="sc-label" value="${esc(c.label || '')}" placeholder="Plateselskap">
+          <label class="form-label">Label (record label)</label>
+          <input class="form-input" id="sc-label" value="${esc(c.label || '')}" placeholder="Record label">
         </div>
         <div class="form-group">
-          <label class="form-label">Produsent</label>
-          <input class="form-input" id="sc-producer" value="${esc(c.producer || '')}" placeholder="Produsent">
+          <label class="form-label">Producer</label>
+          <input class="form-input" id="sc-producer" value="${esc(c.producer || '')}" placeholder="Producer">
         </div>
         <div class="form-group">
           <label class="form-label">Mixing</label>
-          <input class="form-input" id="sc-mixing" value="${esc(c.mixing || '')}" placeholder="Mixing-ingeniør">
+          <input class="form-input" id="sc-mixing" value="${esc(c.mixing || '')}" placeholder="Mixing engineer">
         </div>
         <div class="form-group">
           <label class="form-label">Mastering</label>
-          <input class="form-input" id="sc-mastering" value="${esc(c.mastering || '')}" placeholder="Mastering-ingeniør">
+          <input class="form-input" id="sc-mastering" value="${esc(c.mastering || '')}" placeholder="Mastering engineer">
         </div>
 
-        <div class="mix-edit-section-title">Kjøpslenker</div>
-        <p style="font-size:0.75rem;color:var(--text3);margin:-0.25rem 0 0.5rem">Lim inn lenke til hovedsiden der sangen kan kjøpes/strømmes (valgfritt).</p>
+        <div class="mix-edit-section-title">Buy links</div>
+        <p style="font-size:0.75rem;color:var(--text3);margin:-0.25rem 0 0.5rem">Paste a link to the main page where the song can be bought/streamed (optional).</p>
         ${BUY_SERVICES.map(s => `
           <div class="form-group">
             <label class="form-label">${s.name}</label>
-            <input class="form-input" id="sc-buy-${s.key}" value="${esc(b[s.key] || '')}" placeholder="https://… (valgfritt)">
+            <input class="form-input" id="sc-buy-${s.key}" value="${esc(b[s.key] || '')}" placeholder="https://… (optional)">
           </div>`).join('')}
 
-        <div class="mix-edit-section-title">Selg denne sangen</div>
+        <div class="mix-edit-section-title">Sell this song</div>
         <div class="form-group">
-          <label class="form-label">Omslagsbilde <span style="color:var(--text3);font-weight:400;font-size:0.8rem">(valgfritt)</span></label>
+          <label class="form-label">Cover image <span style="color:var(--text3);font-weight:400;font-size:0.8rem">(optional)</span></label>
           <div class="upload-zone" style="padding:1rem" onclick="document.getElementById('sc-cover-input').click()">
             <div class="upload-icon">${Icon('image')}</div>
-            <div style="font-size:0.82rem">Klikk for å laste opp omslag</div>
+            <div style="font-size:0.82rem">Click to upload a cover</div>
           </div>
           <input type="file" id="sc-cover-input" accept="image/*" style="display:none" onchange="Profile.uploadSaleCover('${esc(trackId)}', this.files)">
           <div id="sc-cover-preview" style="margin-top:0.5rem">${rec.coverUrl ? `<img src="${esc(rec.coverUrl)}" alt="" style="max-width:120px;max-height:120px;border-radius:8px;display:block">` : ''}</div>
@@ -1516,21 +1804,21 @@ const Profile = (() => {
         <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;margin-bottom:0.5rem">
           <input type="checkbox" id="sc-sale-free" ${rec.saleFree ? 'checked' : ''}
             onchange="document.getElementById('sc-price-wrap').style.display=this.checked?'none':'block'">
-          Gratis nedlasting
+          Free download
         </label>
         <div class="form-group" id="sc-price-wrap" style="display:${rec.saleFree ? 'none' : 'block'}">
-          <label class="form-label">Pris (NOK)</label>
-          <input class="form-input" id="sc-price" type="number" min="0" step="1" value="${rec.salePriceNok || ''}" placeholder="f.eks. 49">
+          <label class="form-label">Price (NOK)</label>
+          <input class="form-input" id="sc-price" type="number" min="0" step="1" value="${rec.salePriceNok || ''}" placeholder="e.g. 49">
         </div>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-          <button class="btn btn-gold btn-sm" onclick="Marketplace.listSongFromModal('${esc(trackId)}')">🛒 ${rec.forSale ? 'Oppdater i butikk' : 'Legg ut for salg'}</button>
-          <button class="btn btn-ghost btn-sm" onclick="Marketplace.becomeSeller()">🏦 Bli selger (Stripe)</button>
+          <button class="btn btn-gold btn-sm" onclick="Marketplace.listSongFromModal('${esc(trackId)}')">🛒 ${rec.forSale ? 'Update in store' : 'List for sale'}</button>
+          <button class="btn btn-ghost btn-sm" onclick="Marketplace.becomeSeller()">🏦 Become a seller (Stripe)</button>
         </div>
-        <p style="font-size:0.72rem;color:var(--text3);margin-top:0.4rem">Betalt salg krever fullført Stripe-onboarding («Bli selger»). Gratis nedlasting krever det ikke. Lagre kreditering først.</p>
+        <p style="font-size:0.72rem;color:var(--text3);margin-top:0.4rem">Paid sales require completed Stripe onboarding ("Become a seller"). Free downloads don't. Save credits first.</p>
 
         <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
-          <button class="btn btn-primary" onclick="Profile.saveSongCredits()">${Icon('save')} Lagre</button>
-          <button class="btn btn-ghost" onclick="App.closeModal()">Avbryt</button>
+          <button class="btn btn-primary" onclick="Profile.saveSongCredits()">${Icon('save')} Save</button>
+          <button class="btn btn-ghost" onclick="App.closeModal()">Cancel</button>
         </div>
       </div>`;
     App.openModal();
@@ -1540,7 +1828,7 @@ const Profile = (() => {
     const trackId = document.getElementById('sc-track-id')?.value;
     if (!trackId) return;
     const rec = await DB.get('music', trackId);
-    if (!rec) { App.toast('Fant ikke sporet', 'error'); return; }
+    if (!rec) { App.toast('Track not found', 'error'); return; }
     const val = id => document.getElementById(id)?.value?.trim() || '';
     rec.name    = val('sc-title') || rec.name;
     rec.artist  = val('sc-artist');
@@ -1558,7 +1846,7 @@ const Profile = (() => {
     rec.buyLinks = buyLinks;
     await DB.put('music', rec);
     App.closeModal();
-    App.toast('Kreditering lagret! 🎶', 'success');
+    App.toast('Credits saved! 🎶', 'success');
     loadEditorMusic(Auth.current());
   }
 
@@ -1572,24 +1860,25 @@ const Profile = (() => {
         <div class="mix-sub-banner">
           <div class="mix-sub-banner-inner">
             <div>
-              <div class="mix-sub-title">${Icon('sliders')} DJ Mix Opplasting</div>
-              <div class="mix-sub-desc">Gratis: opptil 3 timer, offentlig synlighet · <strong>Pro:</strong> ingen tidsgrense + privat/offentlig</div>
+              <div class="mix-sub-title">${Icon('sliders')} DJ Mix Upload</div>
+              <div class="mix-sub-desc">Free: up to 3 hours, public visibility · <strong>Pro:</strong> no time limit + private/public</div>
             </div>
-            <button class="btn btn-gold btn-sm" onclick="Profile.upgradeToPro()">${Icon('star')} Oppgrader til Pro</button>
+            <button class="btn btn-gold btn-sm" onclick="Profile.upgradeToPro()">${Icon('star')} Upgrade to Pro</button>
           </div>
         </div>` : `
         <div class="mix-sub-banner mix-sub-banner--pro">
           <div class="mix-sub-banner-inner">
             <span class="mix-pro-badge">${Icon('star')} Pro</span>
-            <span style="font-size:0.85rem;color:var(--text2)">Mixes uten tidsgrense · privat/offentlig · ubegrenset lagring</span>
+            <span style="font-size:0.85rem;color:var(--text2)">Mixes with no time limit · private/public · unlimited storage</span>
           </div>
         </div>`}
         <div class="upload-zone" id="mix-dropzone" onclick="document.getElementById('mix-file-input').click()">
           <div class="upload-icon">${Icon('sliders')}</div>
-          <div style="font-weight:600;margin-bottom:0.25rem">Last opp DJ Mix</div>
-          <div style="font-size:0.8rem;color:var(--text3)">MP3, WAV, AAC, FLAC · 1 minutt – ${isPro ? '20' : '3'} timer per mix</div>
+          <div style="font-weight:600;margin-bottom:0.25rem">Upload DJ Mix</div>
+          <div style="font-size:0.8rem;color:var(--text3)">MP3, WAV, AAC, FLAC · 1 minute – ${isPro ? '20' : '3'} hours per mix</div>
         </div>
         <input type="file" id="mix-file-input" accept="audio/*" style="display:none" onchange="Profile.uploadMix(this.files)">
+        <button class="btn btn-ghost btn-sm" style="margin-top:0.6rem;width:100%" onclick="Profile.openUploadModal('url')">${Icon('link')} … or paste a link (SoundCloud, Mixcloud, YouTube …)</button>
         <div id="mix-upload-progress" style="margin-top:0.75rem"></div>
         <div id="editor-mixes-list" style="margin-top:1rem"></div>
       </div>`;
@@ -1602,7 +1891,7 @@ const Profile = (() => {
     const allIds = user.mixIds || [];
     if (!allIds.length) {
       if (isOwner) {
-        el.innerHTML = `<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">${Icon('sliders')}</div><p>Last opp din første DJ mix i profileditoren</p><button class="btn btn-primary btn-sm mt-2" onclick="Router.go('/edit')">Last opp</button></div>`;
+        el.innerHTML = `<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">${Icon('sliders')}</div><p>Upload your first DJ mix — audio file (1 min – 3 h) or link</p><button class="btn btn-primary btn-sm mt-2" onclick="Profile.openUploadModal()">${Icon('arrow-up')} Upload</button></div>`;
       } else {
         el.innerHTML = '';
       }
@@ -1634,26 +1923,27 @@ const Profile = (() => {
     return `
       <div class="mix-card" id="mixcard-${r.id}">
         <div class="mix-card-body">
-          <div class="mix-card-cover" id="mixcover-${r.id}">${Icon('sliders')}</div>
+          <div class="mix-card-cover" id="mixcover-${r.id}">${r.coverUrl ? `<img src="${esc(r.coverUrl)}" class="mix-cover-img" alt="Cover">` : Icon('sliders')}</div>
           <div class="mix-card-meta">
             <div class="mix-card-title">${r.title || r.name}</div>
             ${r.description ? `<div class="mix-card-desc">${r.description}</div>` : ''}
             <div class="mix-card-stats">
               <span>${dur}</span>
-              ${isPrivate ? '<span class="mix-badge mix-badge--private">🔒 Privat</span>' : '<span class="mix-badge mix-badge--public">🌐 Offentlig</span>'}
+              ${isPrivate ? '<span class="mix-badge mix-badge--private">🔒 Private</span>' : '<span class="mix-badge mix-badge--public">🌐 Public</span>'}
             </div>
           </div>
           <div class="mix-card-actions">
-            <button class="mix-play-btn" onclick="Profile.playMix('${r.id}','${(r.title||r.name).replace(/'/g,"\\'")}')">${Icon('play')} Spill</button>
+            <button class="mix-play-btn" onclick="Profile.playMix('${r.id}','${(r.title||r.name).replace(/'/g,"\\'")}')">${Icon('play')} Play</button>
             ${isOwner ? `
-              <button class="btn btn-ghost btn-sm" onclick="Profile.openMixEditModal('${r.id}','${username}')">${Icon('edit')} Rediger</button>
-              <button class="btn-icon" onclick="Profile.toggleMixVisibility('${r.id}','${username}')" title="${isPrivate ? 'Gjør offentlig' : 'Gjør privat'}">${isPrivate ? '🌐' : '🔒'}</button>
-              <button class="btn-icon btn-danger" onclick="Profile.deleteMix('${r.id}','${username}')" title="Slett">${Icon('trash')}</button>` : ''}
+              <button class="btn btn-ghost btn-sm" onclick="Profile.openMixEditModal('${r.id}','${username}')">${Icon('edit')} Edit</button>
+              <button class="btn-icon" onclick="Share.open('mixes','${r.id}')" title="Share further on Facebook etc.">🔗</button>
+              <button class="btn-icon" onclick="Profile.toggleMixVisibility('${r.id}','${username}')" title="${isPrivate ? 'Make public' : 'Make private'}">${isPrivate ? '🌐' : '🔒'}</button>
+              <button class="btn-icon btn-danger" onclick="Profile.deleteMix('${r.id}','${username}')" title="Delete">${Icon('trash')}</button>` : ''}
           </div>
         </div>
         ${(r.tracklist && r.tracklist.length) ? mixTracklistHtml(r.tracklist, labels) : ''}
         <div class="mix-comments-section">
-          <div class="mix-comments-title">${Icon('message')} Kommentarer (${comments.length})</div>
+          <div class="mix-comments-title">${Icon('message')} Comments (${comments.length})</div>
           <div class="mix-comments-list" id="mix-comments-${r.id}">
             ${comments.slice(-5).map(c => `
               <div class="mix-comment">
@@ -1664,9 +1954,9 @@ const Profile = (() => {
           </div>
           ${Auth.current() ? `
           <div class="mix-comment-form">
-            <input class="mix-comment-input form-input" id="mix-ci-${r.id}" placeholder="Skriv en kommentar…" onkeydown="if(event.key==='Enter')Profile.addMixComment('${r.id}')">
+            <input class="mix-comment-input form-input" id="mix-ci-${r.id}" placeholder="Write a comment…" onkeydown="if(event.key==='Enter')Profile.addMixComment('${r.id}')">
             <button class="btn btn-primary btn-sm" onclick="Profile.addMixComment('${r.id}')">Send</button>
-          </div>` : `<div style="font-size:0.78rem;color:var(--text3);margin-top:0.5rem"><a href="#/login" style="color:var(--accent)">Logg inn</a> for å kommentere</div>`}
+          </div>` : `<div style="font-size:0.78rem;color:var(--text3);margin-top:0.5rem"><a href="#/login" style="color:#38bdf8">Log in</a> to comment</div>`}
         </div>
       </div>`;
   }
@@ -1675,16 +1965,16 @@ const Profile = (() => {
     if (secs >= 3600) {
       const h = Math.floor(secs / 3600);
       const m = Math.floor((secs % 3600) / 60);
-      return `${h}t ${String(m).padStart(2,'0')}m`;
+      return `${h}h ${String(m).padStart(2,'0')}m`;
     }
     return `${Math.floor(secs/60)}:${String(Math.floor(secs%60)).padStart(2,'0')}`;
   }
 
   function timeAgo(ts) {
     const diff = Date.now() - ts;
-    if (diff < 60000)   return 'nå nettopp';
-    if (diff < 3600000) return `${Math.floor(diff/60000)} min siden`;
-    if (diff < 86400000) return `${Math.floor(diff/3600000)} t siden`;
+    if (diff < 60000)   return 'just now';
+    if (diff < 3600000) return `${Math.floor(diff/60000)} min ago`;
+    if (diff < 86400000) return `${Math.floor(diff/3600000)} h ago`;
     return new Date(ts).toLocaleDateString('no-NO');
   }
 
@@ -1695,15 +1985,15 @@ const Profile = (() => {
         <div class="tl-row">
           <span class="tl-num">${i + 1}</span>
           ${t.artist ? `<span class="tl-artist">${t.artist}</span><span class="tl-sep">–</span>` : ''}
-          <span class="tl-title">${t.title || 'Ukjent spor'}</span>
+          <span class="tl-title">${t.title || 'Unknown track'}</span>
           ${label ? `<span class="tl-label-badge">${label.name}</span>` : ''}
-          ${t.purchaseUrl ? `<a class="tl-buy-link" href="${t.purchaseUrl}" target="_blank" rel="noopener noreferrer">${Icon('cart')} Kjøp</a>` : ''}
+          ${t.purchaseUrl ? `<a class="tl-buy-link" href="${t.purchaseUrl}" target="_blank" rel="noopener noreferrer">${Icon('cart')} Buy</a>` : ''}
         </div>`;
     }).join('');
     return `
       <div class="mix-tracklist-section">
         <details>
-          <summary>▾ Sporing (${tracks.length} spor)</summary>
+          <summary>▾ Tracklist (${tracks.length} tracks)</summary>
           <div class="mix-tracklist-list">${rows}</div>
         </details>
       </div>`;
@@ -1726,8 +2016,8 @@ const Profile = (() => {
     const tracklist = rec.tracklist || [];
 
     const labelOptions = labels.length
-      ? `<option value="">— Velg plateselskap —</option>` + labels.map(l => `<option value="${l.id}">${l.name}</option>`).join('')
-      : `<option value="">Ingen plateselskaper lagt til</option>`;
+      ? `<option value="">— Choose record label —</option>` + labels.map(l => `<option value="${l.id}">${l.name}</option>`).join('')
+      : `<option value="">No record labels added</option>`;
 
     const trackRows = tracklist.map((t, i) => {
       const label = labels.find(l => l.id === t.labelId);
@@ -1735,7 +2025,7 @@ const Profile = (() => {
         <div class="tl-editor-track-row" data-track-id="${t.id}">
           <span class="tl-editor-track-num">${i + 1}</span>
           <div class="tl-editor-track-info">
-            <div class="name">${t.artist ? `${t.artist} – ` : ''}${t.title || 'Ukjent'}</div>
+            <div class="name">${t.artist ? `${t.artist} – ` : ''}${t.title || 'Unknown'}</div>
             <div class="sub">${label ? label.name : ''}${t.purchaseUrl ? ' · 🛒' : ''}</div>
           </div>
           <button class="btn-icon btn-danger btn-sm" onclick="Profile.removeTrackFromModal('${t.id}')">${Icon('trash')}</button>
@@ -1745,42 +2035,42 @@ const Profile = (() => {
     const box = document.getElementById('modal-box');
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${Icon('edit')} Rediger mix</h2>
+        <h2>${Icon('edit')} Edit mix</h2>
         <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
       </div>
       <div class="mix-edit-modal" id="mix-edit-modal-body">
         <input type="hidden" id="mxed-mix-id" value="${mixId}">
         <input type="hidden" id="mxed-username" value="${username}">
 
-        <div class="mix-edit-section-title">Cover-bilde</div>
+        <div class="mix-edit-section-title">Cover image</div>
         <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
           <div class="mix-cover-preview" id="mix-cover-preview" onclick="document.getElementById('mxed-cover-input').click()">
-            ${rec.coverMediaId ? '<span style="font-size:0.7rem;opacity:0.5">Laster…</span>' : '📷'}
+            ${rec.coverMediaId ? '<span style="font-size:0.7rem;opacity:0.5">Loading…</span>' : '📷'}
           </div>
           <div style="flex:1">
             <input type="file" id="mxed-cover-input" accept="image/*" style="display:none" onchange="Profile.uploadMixCover('${mixId}', this.files[0])">
-            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('mxed-cover-input').click()">Velg bilde</button>
-            <div style="font-size:0.72rem;opacity:0.45;margin-top:0.3rem">Klikk på bildet eller knappen for å laste opp</div>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('mxed-cover-input').click()">Choose image</button>
+            <div style="font-size:0.72rem;opacity:0.45;margin-top:0.3rem">Click the image or the button to upload</div>
           </div>
         </div>
 
-        <div class="mix-edit-section-title">Beskrivelse</div>
-        <textarea class="form-input" id="mxed-desc" rows="2" placeholder="Beskriv mixen…" style="width:100%;resize:vertical">${rec.description || ''}</textarea>
+        <div class="mix-edit-section-title">Description</div>
+        <textarea class="form-input" id="mxed-desc" rows="2" placeholder="Describe the mix…" style="width:100%;resize:vertical">${rec.description || ''}</textarea>
 
         <div class="mix-edit-section-title">Tracklist</div>
         <div class="tl-editor-add-row">
-          <input class="form-input" id="tled-title" placeholder="Sangtittel *" style="min-width:120px;flex:2">
+          <input class="form-input" id="tled-title" placeholder="Song title *" style="min-width:120px;flex:2">
           <input class="form-input" id="tled-artist" placeholder="Artist" style="min-width:100px;flex:2">
           <select class="form-input" id="tled-label" style="min-width:120px;flex:2">${labelOptions}</select>
-          <input class="form-input" id="tled-url" placeholder="Kjøpslenke (URL)" style="min-width:130px;flex:3">
-          <button class="btn btn-ghost btn-sm" title="Søk på Google" onclick="Profile.searchTrackOnGoogle()" style="flex-shrink:0">${Icon('search')}</button>
-          <button class="btn btn-primary btn-sm" onclick="Profile.addTrackToModal()">+ Legg til</button>
+          <input class="form-input" id="tled-url" placeholder="Buy link (URL)" style="min-width:130px;flex:3">
+          <button class="btn btn-ghost btn-sm" title="Search on Google" onclick="Profile.searchTrackOnGoogle()" style="flex-shrink:0">${Icon('search')}</button>
+          <button class="btn btn-primary btn-sm" onclick="Profile.addTrackToModal()">+ Add</button>
         </div>
-        <div id="tled-track-list">${trackRows || '<p style="font-size:0.8rem;opacity:0.45;margin:0">Ingen spor lagt til ennå.</p>'}</div>
+        <div id="tled-track-list">${trackRows || '<p style="font-size:0.8rem;opacity:0.45;margin:0">No tracks added yet.</p>'}</div>
 
         <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
-          <button class="btn btn-primary" onclick="Profile.saveMixEdits()">${Icon('save')} Lagre</button>
-          <button class="btn btn-ghost" onclick="App.closeModal()">Avbryt</button>
+          <button class="btn btn-primary" onclick="Profile.saveMixEdits()">${Icon('save')} Save</button>
+          <button class="btn btn-ghost" onclick="App.closeModal()">Cancel</button>
         </div>
       </div>`;
 
@@ -1800,23 +2090,33 @@ const Profile = (() => {
     if (!current) return;
     const rec = await DB.get('mixes', mixId);
     if (!rec) return;
-    const id = `mxcv_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     if (rec.coverMediaId) await DB.delete('media', rec.coverMediaId).catch(() => {});
-    await DB.storeFile('media', id, file);
-    rec.coverMediaId = id;
-    await DB.put('mixes', rec);
-    const url = await DB.getBlobUrl('media', id).catch(() => null);
-    if (url) {
-      const prev = document.getElementById('mix-cover-preview');
-      if (prev) prev.innerHTML = `<img src="${url}" class="mix-cover-img" alt="Cover">`;
+
+    // Skyen (offentlig coverUrl → deles på sosiale medier) når konfigurert,
+    // ellers lokal blob-fallback.
+    let coverUrl = null, coverMediaId = null, previewUrl = null;
+    if ((typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured()) {
+      try { const cov = await SC_Storage.upload(file, { prefix: 'mixcover' }); coverUrl = cov.url; previewUrl = cov.url; }
+      catch (e) { if (e && e.message !== 'not-configured') console.warn('Cover-sky feilet:', e.message); }
     }
-    App.toast('Cover lastet opp! 🖼️', 'success');
+    if (!coverUrl) {
+      coverMediaId = `mxcv_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      await DB.storeFile('media', coverMediaId, file);
+      previewUrl = await DB.getBlobUrl('media', coverMediaId).catch(() => null);
+    }
+    rec.coverUrl = coverUrl; rec.coverMediaId = coverMediaId;
+    await DB.put('mixes', rec);
+    if (previewUrl) {
+      const prev = document.getElementById('mix-cover-preview');
+      if (prev) prev.innerHTML = `<img src="${previewUrl}" class="mix-cover-img" alt="Cover">`;
+    }
+    App.toast('Cover uploaded! 🖼️', 'success');
   }
 
   function searchTrackOnGoogle() {
     const title  = document.getElementById('tled-title')?.value?.trim();
     const artist = document.getElementById('tled-artist')?.value?.trim();
-    if (!title && !artist) { App.toast('Skriv inn sangtittel eller artist først', 'info'); return; }
+    if (!title && !artist) { App.toast('Enter a song title or artist first', 'info'); return; }
     const q = encodeURIComponent([artist, title].filter(Boolean).join(' ') + ' buy');
     window.open('https://www.google.com/search?q=' + q, '_blank', 'noopener');
   }
@@ -1827,7 +2127,7 @@ const Profile = (() => {
     const labelEl  = document.getElementById('tled-label');
     const urlEl    = document.getElementById('tled-url');
     const title = titleEl?.value?.trim();
-    if (!title) { App.toast('Sangtittel er påkrevd', 'error'); return; }
+    if (!title) { App.toast('Song title is required', 'error'); return; }
     const track = {
       id:          `tl_${Date.now()}_${Math.random().toString(36).slice(2)}`,
       title,
@@ -1867,7 +2167,7 @@ const Profile = (() => {
     if (row) row.remove();
     const listEl = document.getElementById('tled-track-list');
     if (listEl && !listEl.querySelector('.tl-editor-track-row')) {
-      listEl.innerHTML = '<p style="font-size:0.8rem;opacity:0.45;margin:0">Ingen spor lagt til ennå.</p>';
+      listEl.innerHTML = '<p style="font-size:0.8rem;opacity:0.45;margin:0">No tracks added yet.</p>';
     }
     renumberTrackModal();
   }
@@ -1911,14 +2211,16 @@ const Profile = (() => {
     rec.tracklist   = collectMixTracklist();
     await DB.put('mixes', rec);
     App.closeModal();
-    App.toast('Mix oppdatert! ✓', 'success');
+    App.toast('Mix updated! ✓', 'success');
     renderMixesSection(current, true);
     loadEditorMixes(current);
   }
 
   async function playMix(id, title) {
-    const url = await DB.getBlobUrl('mixes', id);
-    if (!url) { App.toast('Kunne ikke laste mix', 'error'); return; }
+    const rec = await DB.get('mixes', id);
+    if (rec && rec.kind === 'url') { _playMixEmbed(rec); return; }
+    const url = (rec && rec.audioUrl) || await DB.getBlobUrl('mixes', id);
+    if (!url) { App.toast('Could not load mix', 'error'); return; }
     Player.playExternal(url, title, 'DJ Mix');
   }
 
@@ -1926,7 +2228,7 @@ const Profile = (() => {
     const current = Auth.current();
     if (!current || current.username !== username) return;
     if (current.subscription !== 'pro') {
-      App.toast('Privat synlighet krever Pro-abonnement ⭐', 'error');
+      App.toast('Private visibility requires a Pro subscription ⭐', 'error');
       return;
     }
     const rec = await DB.get('mixes', id);
@@ -1934,7 +2236,7 @@ const Profile = (() => {
     const newVis = rec.visibility === 'private' ? 'public' : 'private';
     rec.visibility = newVis;
     await DB.put('mixes', rec);
-    App.toast(newVis === 'private' ? '🔒 Mix satt til privat' : '🌐 Mix satt til offentlig', 'success');
+    App.toast(newVis === 'private' ? '🔒 Mix set to private' : '🌐 Mix set to public', 'success');
     renderMixesSection(current, true);
     loadEditorMixes(current);
   }
@@ -1948,7 +2250,7 @@ const Profile = (() => {
     if (!rec) return;
     rec.visibility = rec.visibility === 'private' ? 'public' : 'private';
     await DB.put('music', rec);
-    App.toast(rec.visibility === 'private' ? '🔒 Sang satt til privat (kun deg)' : '🌐 Sang gjort offentlig (alle)', 'success');
+    App.toast(rec.visibility === 'private' ? '🔒 Song set to private (only you)' : '🌐 Song made public (everyone)', 'success');
     renderMusicPlayer(current, true);
     loadEditorMusic(current);
   }
@@ -1959,14 +2261,14 @@ const Profile = (() => {
   async function deleteTrack(id, username) {
     const current = Auth.current();
     if (!current || current.username !== username) return;
-    if (!confirm('Vil du slette denne sangen permanent? Dette kan ikke angres.')) return;
+    if (!confirm('Delete this song permanently? This cannot be undone.')) return;
     const rec = await DB.get('music', id);
     if (rec?.coverMediaId) await DB.delete('media', rec.coverMediaId).catch(() => {});
     await DB.delete('music', id).catch(() => {});
     current.musicIds = (current.musicIds || []).filter(x => x !== id);
     Auth.updateUser(current.username, { musicIds: current.musicIds });
     document.getElementById(`mitem-${id}`)?.remove();
-    App.toast('Sang slettet', 'info');
+    App.toast('Song deleted', 'info');
     renderMusicPlayer(current, true);
     loadEditorMusic(current);
   }
@@ -1980,7 +2282,7 @@ const Profile = (() => {
     current.mixIds = (current.mixIds || []).filter(x => x !== id);
     Auth.updateUser(current.username, { mixIds: current.mixIds });
     document.getElementById(`mixcard-${id}`)?.remove();
-    App.toast('Mix slettet', 'info');
+    App.toast('Mix deleted', 'info');
     loadEditorMixes(Auth.current());
   }
 
@@ -2000,18 +2302,18 @@ const Profile = (() => {
     if (window.Notify && Auth.getUsers) {
       const owner = Object.values(Auth.getUsers()).find(u => (u.mixIds || []).includes(mixId));
       if (owner && owner.username !== current.username) {
-        Notify.emit(owner.username, { type: 'comment', text: 'kommenterte på mixen din', link: `#/u/${owner.username}` });
+        Notify.emit(owner.username, { type: 'comment', text: 'commented on your mix', link: `#/u/${owner.username}` });
       }
     }
     const listEl = document.getElementById(`mix-comments-${mixId}`);
     if (listEl) {
       const div = document.createElement('div');
       div.className = 'mix-comment';
-      div.innerHTML = `<a class="mix-comment-author" href="#/u/${comment.username}">@${comment.username}</a><span class="mix-comment-text">${comment.text}</span><span class="mix-comment-time">nå nettopp</span>`;
+      div.innerHTML = `<a class="mix-comment-author" href="#/u/${encodeURIComponent(comment.username || '')}">@${esc(comment.username)}</a><span class="mix-comment-text">${esc(comment.text)}</span><span class="mix-comment-time">just now</span>`;
       listEl.appendChild(div);
     }
     const titleEl = listEl?.closest('.mix-comments-section')?.querySelector('.mix-comments-title');
-    if (titleEl) titleEl.textContent = `${Icon('message')} Kommentarer (${comments.length})`;
+    if (titleEl) titleEl.textContent = `${Icon('message')} Comments (${comments.length})`;
   }
 
   // ── Profile tab switching ─────────────────────────────────────────────
@@ -2028,6 +2330,18 @@ const Profile = (() => {
       const me = typeof Auth !== 'undefined' ? Auth.current() : null;
       Community.renderProfilePosts(_viewUser, !!(me && me.username === _viewUser));
     }
+    if (tab === 'community' && window.Community && Community.renderInto) {
+      Community.renderInto(document.getElementById('tab-community'));
+    }
+    if (tab === 'mine-grupper' && window.Groups && Groups.renderMyGroups) {
+      Groups.renderMyGroups('tab-mine-grupper', _viewUser);
+    }
+    if (tab === 'grupper' && window.Groups && Groups.renderProfileGroups) {
+      Groups.renderProfileGroups('tab-grupper', _viewUser);
+    }
+    if (tab === 'alle-grupper' && window.Groups && Groups.renderAllGroups) {
+      Groups.renderAllGroups('tab-alle-grupper');
+    }
   }
 
   // ── Profile wall (gjestebok) — no Gun-basert via Social ────────────────
@@ -2036,7 +2350,7 @@ const Profile = (() => {
   function renderWallTab(username, isOwner) {
     const el = document.getElementById('tab-wall');
     if (!el) return;
-    if (!window.Social) { el.innerHTML = '<p class="text-muted text-sm">Lastar gjestebok…</p>'; return; }
+    if (!window.Social) { el.innerHTML = '<p class="text-muted text-sm">Loading guestbook…</p>'; return; }
     Social.setNotifyTarget('profile:' + username, username);
     el.innerHTML = `
       <div class="wall-wrap">
@@ -2049,19 +2363,20 @@ const Profile = (() => {
     const list = document.getElementById('editor-mixes-list');
     if (!list) return;
     const ids = user.mixIds || [];
-    if (!ids.length) { list.innerHTML = '<p class="text-muted text-sm">Ingen mixes ennå.</p>'; return; }
+    if (!ids.length) { list.innerHTML = '<p class="text-muted text-sm">No mixes yet.</p>'; return; }
     const recs = await DB.getAllByIds('mixes', ids);
     const isPro = user.subscription === 'pro';
     list.innerHTML = recs.map(r => `
       <div class="mix-editor-item" id="mixedit-${r.id}">
-        <div class="mix-card-cover" id="mixcover-edit-${r.id}" style="width:36px;height:36px;font-size:1.1rem;border-radius:7px;flex-shrink:0">${Icon('sliders')}</div>
+        <div class="mix-card-cover" id="mixcover-edit-${r.id}" style="width:36px;height:36px;font-size:1.1rem;border-radius:7px;flex-shrink:0">${r.coverUrl ? `<img src="${esc(r.coverUrl)}" class="mix-cover-img" alt="">` : Icon('sliders')}</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:0.88rem">${r.title || r.name}</div>
-          <div style="font-size:0.75rem;color:var(--text2)">${formatDuration(r.duration || 0)} · ${r.visibility === 'private' ? '🔒 Privat' : '🌐 Offentlig'}${(r.tracklist && r.tracklist.length) ? ` · ${r.tracklist.length} spor` : ''}</div>
+          <div style="font-size:0.75rem;color:var(--text2)">${formatDuration(r.duration || 0)} · ${r.visibility === 'private' ? '🔒 Private' : '🌐 Public'}${(r.tracklist && r.tracklist.length) ? ` · ${r.tracklist.length} tracks` : ''}</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="Profile.openMixEditModal('${r.id}','${user.username}')">${Icon('edit')}</button>
+        <button class="btn-icon" onclick="Share.open('mixes','${r.id}')" title="Share further on Facebook etc.">🔗</button>
         ${isPro ? `<button class="btn btn-ghost btn-sm" onclick="Profile.toggleMixVisibility('${r.id}','${user.username}')">${r.visibility === 'private' ? '🌐' : '🔒'}</button>` : ''}
-        <button class="btn-icon btn-danger" onclick="Profile.deleteMix('${r.id}','${user.username}')" title="Slett">${Icon('trash')}</button>
+        <button class="btn-icon btn-danger" onclick="Profile.deleteMix('${r.id}','${user.username}')" title="Delete">${Icon('trash')}</button>
       </div>`).join('');
     recs.forEach(r => {
       if (r.coverMediaId) {
@@ -2075,6 +2390,21 @@ const Profile = (() => {
   }
 
   const FREE_MIX_MAX_SECONDS = 3 * 60 * 60; // gratis-kontoer: opptil 3 timer per mix
+  const MIX_PRICE_PER_HOUR_KR = 60;          // over 3 t: 60 kr per påbegynt time (engangs)
+
+  // Effektiv per-miks-grense for en (ikke-Pro) bruker: 3 t + evt. kjøpte timer.
+  // uploadCreditSec er engangs-kreditt (kjøpt for én over-grensen-miks) og brukes
+  // opp så snart en miks over 3 t faktisk er lastet opp.
+  function mixLimitFor(current) {
+    return FREE_MIX_MAX_SECONDS + Math.max(0, (current && current.uploadCreditSec) || 0);
+  }
+  function consumeMixCredit(current, duration) {
+    if (!current || duration <= FREE_MIX_MAX_SECONDS) return;
+    if (current.uploadCreditSec) {
+      Auth.updateUser(current.username, { uploadCreditSec: 0 });
+      current.uploadCreditSec = 0;
+    }
+  }
 
   async function uploadMix(files) {
     const current = Auth.current();
@@ -2094,15 +2424,16 @@ const Profile = (() => {
         const a = new Audio(tempUrl);
         duration = await new Promise(res => { a.onloadedmetadata = () => res(a.duration); a.onerror = () => res(0); setTimeout(() => res(0), 8000); });
         URL.revokeObjectURL(tempUrl);
-        if (duration > 0 && duration < 60) { App.toast(`${file.name}: mixen er kortere enn 1 minutt`, 'error'); row.remove(); continue; }
-        if (!isPro && duration > FREE_MIX_MAX_SECONDS) {
-          App.toast(`${file.name}: mixes over 3 timer krever Pro ⭐ — oppgrader i Shop`, 'error', 6000);
-          row.remove(); continue;
+        if (duration > 0 && duration < 60) { App.toast(`${file.name}: the mix is shorter than 1 minute`, 'error'); row.remove(); continue; }
+        if (!isPro && duration > mixLimitFor(current)) {
+          row.remove();
+          openMixPaywall(duration);
+          continue;
         }
       } catch {}
 
       const titleRaw = file.name.replace(/\.[^.]+$/, '');
-      await DB.storeFile('mixes', id, file, {
+      const meta = {
         title:       titleRaw,
         description: '',
         visibility:  'public',
@@ -2110,14 +2441,317 @@ const Profile = (() => {
         uploadedAt:  Date.now(),
         duration,
         coverMediaId: null,
+        coverUrl:    null,
         tracklist:    [],
-      });
+        audioUrl:    null, storagePath: null, mime: file.type,
+      };
+      // Skylagring (offentlig URL) når konfigurert → mixen kan deles på sosiale
+      // medier. Ellers lokal blob-fallback (kan ikke forhåndsvises).
+      let shared = false;
+      if ((typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured()) {
+        try {
+          const res = await SC_Storage.upload(file, { prefix: 'mix' });
+          meta.audioUrl = res.url; meta.storagePath = res.path;
+          await DB.put('mixes', { id, ...meta });
+          shared = true;
+        } catch (e) { if (e && e.message !== 'not-configured') console.warn('Sky-opplasting av mix feilet, lagrer lokalt:', e.message); }
+      }
+      if (!shared) await DB.storeFile('mixes', id, file, meta);
       current.mixIds = [...(current.mixIds || []), id];
       Auth.updateUser(current.username, { mixIds: current.mixIds });
-      if (progressEl) { row.innerHTML = `${Icon('check-circle')} ${file.name}`; setTimeout(() => row.remove(), 2000); }
+      consumeMixCredit(current, duration);
+      if (progressEl) {
+        row.innerHTML = `${Icon('check-circle')} ${file.name}`;
+        if (shared) {
+          const b = document.createElement('button');
+          b.className = 'btn btn-ghost btn-sm'; b.style.cssText = 'margin-left:0.5rem';
+          b.innerHTML = '🔗 Share further';
+          b.onclick = () => Share.open('mixes', id);
+          row.appendChild(b);
+        } else { setTimeout(() => row.remove(), 2000); }
+      }
     }
     loadEditorMixes(Auth.current());
-    App.toast('Mix lastet opp! 🎛️', 'success');
+    App.toast('Mix uploaded! 🎛️', 'success');
+  }
+
+  // ── Samlet opplastingsmodal (lydfil 1min–3t ELLER lenke/URL) ───────────
+  // Åpnes rett fra profilen/editoren — ingen omvei via tema-editoren.
+  // Fil-modus: lyd + valgfritt cover-bilde (egen «fane» for ren lydfil).
+  // URL-modus: henter forhåndsvisningsbilde via /api/unfurl og lagrer en
+  // spillbar mix med innebygd spiller (SoundCloud/YouTube/Spotify/…).
+  let _umFile = null, _umDuration = 0, _umCoverFile = null, _umPreview = null;
+
+  function openUploadModal(mode) {
+    const current = Auth.current();
+    if (!current) { Router.go('/login'); return; }
+    _umFile = null; _umDuration = 0; _umCoverFile = null; _umPreview = null;
+    const isPro = current.subscription === 'pro';
+    const maxLabel = isPro ? '20 hours' : '3 hours';
+    const box = document.getElementById('modal-box');
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2>${Icon('sliders')} Upload DJ Mix</h2>
+        <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
+      </div>
+      <div class="upload-modal" style="padding:0.25rem 0 1rem;max-width:560px">
+        <div class="bg-type-row" style="margin-bottom:1rem">
+          <button class="bg-type-btn active" id="um-tab-file" onclick="Profile.umMode('file',this)">${Icon('music')} Audio file</button>
+          <button class="bg-type-btn" id="um-tab-url" onclick="Profile.umMode('url',this)">${Icon('link')} Link (URL)</button>
+        </div>
+
+        <!-- FIL-MODUS -->
+        <div id="um-pane-file">
+          <div class="upload-zone" onclick="document.getElementById('um-file-input').click()">
+            <div class="upload-icon">${Icon('sliders')}</div>
+            <div style="font-weight:600;margin-bottom:0.25rem">Choose audio file</div>
+            <div style="font-size:0.8rem;color:var(--text3)">MP3, WAV, AAC, FLAC · 1 minute – ${maxLabel}</div>
+          </div>
+          <input type="file" id="um-file-input" accept="audio/*" style="display:none" onchange="Profile.umFilePicked(this)">
+          <div id="um-file-info" style="margin-top:0.75rem"></div>
+
+          <!-- Cover-fane: vises når en ren lydfil er valgt -->
+          <div id="um-file-cover" class="hidden" style="margin-top:1rem">
+            <div class="editor-section-title">Cover image (optional)</div>
+            <div style="display:flex;align-items:center;gap:1rem">
+              <div class="mix-cover-preview" id="um-cover-preview" onclick="document.getElementById('um-cover-input').click()">📷</div>
+              <div style="flex:1">
+                <input type="file" id="um-cover-input" accept="image/*" style="display:none" onchange="Profile.umCoverPicked(this)">
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('um-cover-input').click()">Choose image</button>
+                <div style="font-size:0.72rem;opacity:0.5;margin-top:0.3rem">Add a cover for a plain audio file</div>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:0.75rem">
+              <label class="form-label">Title</label>
+              <input class="form-input" id="um-file-title" placeholder="Name of the mix">
+            </div>
+            <button class="btn btn-primary w-full" style="margin-top:0.75rem" onclick="Profile.submitMixFile()">${Icon('arrow-up')} Upload mix</button>
+          </div>
+        </div>
+
+        <!-- URL-MODUS -->
+        <div id="um-pane-url" class="hidden">
+          <div class="form-group">
+            <label class="form-label">Link to mix (SoundCloud, Mixcloud, YouTube, Spotify …)</label>
+            <div style="display:flex;gap:0.5rem">
+              <input class="form-input" id="um-url-input" placeholder="https://…" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();Profile.umFetchPreview();}">
+              <button class="btn btn-secondary btn-sm" onclick="Profile.umFetchPreview()">Fetch</button>
+            </div>
+          </div>
+          <div id="um-url-preview" style="margin-top:0.75rem"></div>
+          <div id="um-url-actions" class="hidden">
+            <div class="form-group" style="margin-top:0.75rem">
+              <label class="form-label">Title</label>
+              <input class="form-input" id="um-url-title" placeholder="Name of the mix">
+            </div>
+            <button class="btn btn-primary w-full" style="margin-top:0.5rem" onclick="Profile.submitMixUrl()">${Icon('plus')} Add mix</button>
+          </div>
+        </div>
+      </div>`;
+    App.openModal();
+    if (mode === 'url') { const b = document.getElementById('um-tab-url'); if (b) umMode('url', b); }
+  }
+
+  function umMode(mode) {
+    document.getElementById('um-tab-file')?.classList.toggle('active', mode === 'file');
+    document.getElementById('um-tab-url')?.classList.toggle('active', mode === 'url');
+    document.getElementById('um-pane-file')?.classList.toggle('hidden', mode !== 'file');
+    document.getElementById('um-pane-url')?.classList.toggle('hidden', mode !== 'url');
+  }
+
+  async function umFilePicked(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const current = Auth.current();
+    const isPro = current?.subscription === 'pro';
+    const info = document.getElementById('um-file-info');
+    if (info) info.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> Reading ${esc(file.name)}…`;
+    let duration = 0;
+    try {
+      const tempUrl = URL.createObjectURL(file);
+      const a = new Audio(tempUrl);
+      duration = await new Promise(res => { a.onloadedmetadata = () => res(a.duration); a.onerror = () => res(0); setTimeout(() => res(0), 8000); });
+      URL.revokeObjectURL(tempUrl);
+    } catch {}
+    if (duration > 0 && duration < 60) {
+      if (info) info.innerHTML = `<div style="color:var(--red);font-size:0.85rem">${esc(file.name)}: the mix is shorter than 1 minute</div>`;
+      _umFile = null; document.getElementById('um-file-cover')?.classList.add('hidden'); return;
+    }
+    if (!isPro && duration > mixLimitFor(current)) {
+      _umFile = null; document.getElementById('um-file-cover')?.classList.add('hidden');
+      if (info) info.innerHTML = '';
+      openMixPaywall(duration);
+      return;
+    }
+    _umFile = file; _umDuration = duration;
+    if (info) info.innerHTML = `<div style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem">${Icon('check-circle')} <span class="notranslate">${esc(file.name)}</span> · ${duration ? formatDuration(duration) : '—'}</div>`;
+    document.getElementById('um-file-cover')?.classList.remove('hidden');
+    const titleEl = document.getElementById('um-file-title');
+    if (titleEl && !titleEl.value) titleEl.value = file.name.replace(/\.[^.]+$/, '');
+  }
+
+  function umCoverPicked(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    _umCoverFile = file;
+    const prev = document.getElementById('um-cover-preview');
+    if (prev) prev.innerHTML = `<img src="${URL.createObjectURL(file)}" class="mix-cover-img" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
+  }
+
+  async function submitMixFile() {
+    const current = Auth.current();
+    if (!current || !_umFile) { App.toast('Choose an audio file first', 'error'); return; }
+    const title = (document.getElementById('um-file-title')?.value || '').trim() || _umFile.name.replace(/\.[^.]+$/, '');
+    const id = `mix_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
+
+    // Cover: skyen (offentlig coverUrl → deles) når mulig, ellers lokal blob.
+    let coverMediaId = null, coverUrl = null;
+    if (_umCoverFile) {
+      if (useCloud) {
+        try { const cov = await SC_Storage.upload(_umCoverFile, { prefix: 'mixcover' }); coverUrl = cov.url; }
+        catch (e) { if (e && e.message !== 'not-configured') console.warn('Cover-sky feilet:', e.message); }
+      }
+      if (!coverUrl) { coverMediaId = `mc_${Date.now()}_${Math.random().toString(36).slice(2)}`; await DB.storeFile('media', coverMediaId, _umCoverFile); }
+    }
+
+    const meta = {
+      title, description: '', visibility: 'public',
+      uploaderUsername: current.username, uploadedAt: Date.now(),
+      duration: _umDuration, coverMediaId, coverUrl, tracklist: [],
+      audioUrl: null, storagePath: null, mime: _umFile.type,
+    };
+    let shared = false;
+    if (useCloud) {
+      try { const res = await SC_Storage.upload(_umFile, { prefix: 'mix' }); meta.audioUrl = res.url; meta.storagePath = res.path; await DB.put('mixes', { id, ...meta }); shared = true; }
+      catch (e) { if (e && e.message !== 'not-configured') console.warn('Mix-sky feilet:', e.message); }
+    }
+    if (!shared) await DB.storeFile('mixes', id, _umFile, meta);
+
+    current.mixIds = [...(current.mixIds || []), id];
+    Auth.updateUser(current.username, { mixIds: current.mixIds });
+    consumeMixCredit(current, _umDuration);
+    App.closeModal();
+    App.toast(shared ? 'Mix uploaded! 🎛️🌐 Tap 🔗 on the mix to share it further.' : 'Mix uploaded! 🎛️', 'success');
+    _refreshMixViews(current);
+  }
+
+  async function umFetchPreview() {
+    const url = (document.getElementById('um-url-input')?.value || '').trim();
+    if (!/^https?:\/\//i.test(url)) { App.toast('Paste a valid link (https://…)', 'error'); return; }
+    const box = document.getElementById('um-url-preview');
+    if (box) box.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> Fetching preview…`;
+    let data = {};
+    try { data = await (await fetch('/api/unfurl?url=' + encodeURIComponent(url))).json(); } catch { data = {}; }
+    _umPreview = { url, title: data.title || '', image: /^https?:\/\//i.test(data.image || '') ? data.image : '', site: data.site || '', embed: /^https?:\/\//i.test(data.embed || '') ? data.embed : '' };
+    const img = _umPreview.image;
+    if (box) box.innerHTML = `
+      <div style="display:flex;gap:0.75rem;align-items:center;background:rgba(127,127,127,0.1);border-radius:10px;padding:0.6rem">
+        ${img
+          ? `<img src="${esc(img)}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:8px;flex-shrink:0">`
+          : `<div style="width:64px;height:64px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(127,127,127,0.15);flex-shrink:0">${Icon('sliders')}</div>`}
+        <div style="min-width:0">
+          ${_umPreview.site ? `<div class="notranslate" style="font-size:0.72rem;opacity:0.6">${esc(_umPreview.site)}</div>` : ''}
+          <div class="notranslate" style="font-weight:600;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(_umPreview.title || url)}</div>
+          ${_umPreview.embed ? `<div style="font-size:0.72rem;color:#38bdf8">▶ Playable in embedded player</div>` : `<div style="font-size:0.72rem;opacity:0.5">Opens the source on playback</div>`}
+        </div>
+      </div>`;
+    document.getElementById('um-url-actions')?.classList.remove('hidden');
+    const titleEl = document.getElementById('um-url-title');
+    if (titleEl && !titleEl.value) titleEl.value = _umPreview.title || '';
+  }
+
+  async function submitMixUrl() {
+    const current = Auth.current();
+    if (!current || !_umPreview) { App.toast('Fetch a preview first', 'error'); return; }
+    const title = (document.getElementById('um-url-title')?.value || '').trim() || _umPreview.title || _umPreview.url;
+    const id = `mix_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    await DB.put('mixes', {
+      id, kind: 'url',
+      title, description: '', visibility: 'public',
+      uploaderUsername: current.username, uploadedAt: Date.now(),
+      duration: 0, coverMediaId: null, coverUrl: _umPreview.image || null,
+      url: _umPreview.url, embed: _umPreview.embed || '', site: _umPreview.site || '',
+      tracklist: [],
+    });
+    current.mixIds = [...(current.mixIds || []), id];
+    Auth.updateUser(current.username, { mixIds: current.mixIds });
+    App.closeModal();
+    App.toast('Mix added! 🎛️', 'success');
+    _refreshMixViews(current);
+  }
+
+  function _refreshMixViews(user) {
+    if (document.getElementById('tab-mixes')) renderMixesSection(user, true);
+    if (document.getElementById('editor-mixes-list')) loadEditorMixes(user);
+  }
+
+  // Innebygd spiller for URL-mixes (embed-iframe, ellers åpne kilden).
+  function _playMixEmbed(rec) {
+    const embed = /^https?:\/\//i.test(rec.embed || '') ? rec.embed : '';
+    const box = document.getElementById('modal-box');
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2>${Icon('play')} <span class="notranslate">${esc(rec.title || 'Mix')}</span></h2>
+        <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
+      </div>
+      <div style="padding:0 0 1rem;max-width:640px">
+        ${embed
+          ? `<div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000"><iframe src="${esc(embed)}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`
+          : `<p style="font-size:0.9rem;color:var(--text2);margin-bottom:0.75rem">This mix has no embedded player.</p><a href="${esc(rec.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary w-full">${Icon('link')} Open in new tab</a>`}
+      </div>`;
+    App.openModal();
+  }
+
+  // ── Betalingsvegg: miks over 3 timer (per miks) ───────────────────────
+  // To valg: engangs 60 kr/time for DENNE mixen, eller bli Pro (ubegrenset).
+  let _mixPaywallHours = 1;
+  function openMixPaywall(duration) {
+    const current = Auth.current();
+    if (!current) { Router.go('/login'); return; }
+    const limit  = mixLimitFor(current);
+    const overSec = Math.max(0, duration - limit);
+    const hours  = Math.max(1, Math.ceil(overSec / 3600));
+    _mixPaywallHours = hours;
+    const kr = hours * MIX_PRICE_PER_HOUR_KR;
+    const box = document.getElementById('modal-box');
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2>${Icon('sliders')} Mix over 3 hours</h2>
+        <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
+      </div>
+      <div style="padding:1.25rem 0">
+        <p style="font-size:0.9rem;color:var(--text2);margin-bottom:1rem">
+          This mix is ${formatDuration(duration)} — ${formatDuration(overSec)} over the free limit of 3 hours. Choose how you'd like to continue:
+        </p>
+        <button class="btn btn-primary w-full" onclick="Profile.payMixHours()">
+          ${Icon('credit-card')} Pay for ${hours} hour${hours > 1 ? 's' : ''} · ${kr} kr
+        </button>
+        <div style="text-align:center;font-size:0.75rem;color:var(--text3);margin:0.85rem 0">— or —</div>
+        <div class="mix-pro-feature-list">
+          <div class="mix-pro-feature">${Icon('sliders')} Upload mixes over 3 hours (no limit)</div>
+          <div class="mix-pro-feature">${Icon('lock')} Private/public visibility on mixes</div>
+          <div class="mix-pro-feature">${Icon('star')} Pro badge on profile</div>
+        </div>
+        <button class="btn btn-gold w-full" id="stripe-pay-btn" style="margin-top:0.75rem" onclick="Profile.startStripeCheckout()">
+          ${Icon('star')} Become Pro — 149 kr/mo (unlimited)
+        </button>
+        <div id="stripe-pay-error" style="display:none;margin-top:0.75rem;font-size:0.82rem;color:var(--red)"></div>
+        <p style="font-size:0.72rem;color:var(--text3);margin-top:0.85rem;text-align:center">
+          Secure payment via Stripe. After payment: upload the mix again.
+        </p>
+      </div>`;
+    App.openModal();
+  }
+
+  async function payMixHours() {
+    const current = Auth.current();
+    if (!current) return;
+    try {
+      await Payment.startHoursCheckout(current.username, _mixPaywallHours);
+    } catch (err) {
+      App.toast('Payment error: ' + err.message, 'error');
+    }
   }
 
   function upgradeToPro() {
@@ -2126,28 +2760,28 @@ const Profile = (() => {
     const box = document.getElementById('modal-box');
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${Icon('star')} Oppgrader til Pro</h2>
+        <h2>${Icon('star')} Upgrade to Pro</h2>
         <button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button>
       </div>
       <div style="padding:1.5rem 0">
         <div class="mix-pro-feature-list">
-          <div class="mix-pro-feature">${Icon('sliders')} Last opp mixes over 3 timer (ingen grense)</div>
-          <div class="mix-pro-feature">${Icon('lock')} Privat/offentlig synlighet på mixes</div>
-          <div class="mix-pro-feature">${Icon('star')} Pro-badge på profil</div>
+          <div class="mix-pro-feature">${Icon('sliders')} Upload mixes over 3 hours (no limit)</div>
+          <div class="mix-pro-feature">${Icon('lock')} Private/public visibility on mixes</div>
+          <div class="mix-pro-feature">${Icon('star')} Pro badge on profile</div>
         </div>
-        <div class="mix-pro-price">149 kr / mnd</div>
+        <div class="mix-pro-price">149 kr / mo</div>
         <p style="font-size:0.78rem;color:var(--text3);margin-bottom:1.25rem">
-          Sikker betaling via Stripe. Avbryt når som helst.
+          Secure payment via Stripe. Cancel anytime.
         </p>
         <button class="btn btn-gold w-full" id="stripe-pay-btn" onclick="Profile.startStripeCheckout()">
-          ${Icon('credit-card')} Betal med Stripe
+          ${Icon('credit-card')} Pay with Stripe
         </button>
         <div id="stripe-pay-error" style="display:none;margin-top:0.75rem;font-size:0.82rem;color:var(--red)"></div>
         <a href="#/shop" class="shop-link-sm" style="text-align:center;width:100%;margin-top:0.85rem" onclick="App.closeModal()">
-          Spar med 3, 6 eller 12 måneder i Shop →
+          Save with 3, 6 or 12 months in Shop →
         </a>
         <p style="font-size:0.72rem;color:var(--text3);margin-top:0.75rem;text-align:center">
-          Du blir sendt til Stripe sin sikre betalingsside
+          You'll be sent to Stripe's secure payment page
         </p>
       </div>`;
     App.openModal();
@@ -2158,12 +2792,12 @@ const Profile = (() => {
     if (!current) return;
     const btn   = document.getElementById('stripe-pay-btn');
     const errEl = document.getElementById('stripe-pay-error');
-    if (btn)   { btn.disabled = true; btn.textContent = '⏳ Forbereder betaling…'; }
+    if (btn)   { btn.disabled = true; btn.textContent = '⏳ Preparing payment…'; }
     if (errEl) errEl.style.display = 'none';
     try {
       await Payment.startCheckout(current.username);
     } catch (err) {
-      if (btn)   { btn.disabled = false; btn.innerHTML = '💳 Betal med Stripe'; }
+      if (btn)   { btn.disabled = false; btn.innerHTML = '💳 Pay with Stripe'; }
       if (errEl) { errEl.textContent = err.message; errEl.style.display = 'block'; }
     }
   }
@@ -2174,7 +2808,7 @@ const Profile = (() => {
     Auth.updateUser(current.username, { subscription: 'pro' });
     current.subscription = 'pro';
     App.closeModal();
-    App.toast('⭐ Velkommen til Pro! Privat mixes er nå aktivert.', 'success');
+    App.toast('⭐ Welcome to Pro! Private mixes are now enabled.', 'success');
     Profile.renderEditor();
   }
 
@@ -2215,11 +2849,21 @@ const Profile = (() => {
       }
       current.mediaIds = [...(current.mediaIds || []), id];
       Auth.updateUser(current.username, { mediaIds: current.mediaIds });
-      if (listEl) { row.innerHTML = `${Icon('check-circle')} ${file.name}${shared ? ' · 🌐 delt' : ''}`; setTimeout(() => row.remove(), 2500); }
+      if (listEl) {
+        const canShare = shared && /^(video|audio)\//.test(file.type || '');
+        row.innerHTML = `${Icon('check-circle')} ${file.name}${shared ? ' · 🌐 shared' : ''}`;
+        if (canShare) {
+          const b = document.createElement('button');
+          b.className = 'btn btn-ghost btn-sm'; b.style.cssText = 'margin-left:0.5rem';
+          b.innerHTML = '🔗 Share further';
+          b.onclick = () => Share.open('media', id);
+          row.appendChild(b);
+        } else { setTimeout(() => row.remove(), 2500); }
+      }
     }
     loadEditorMedia(Auth.current());
-    App.toast(useCloud ? 'Medier lastet opp og delt! 🌐' : 'Medier lastet opp (lokalt)!', 'success');
-    if (window.Notify) Notify.notifyFriends(current, { type: 'upload', text: 'lastet opp nytt innhold', link: `#/u/${current.username}` });
+    App.toast(useCloud ? 'Media uploaded and shared! 🌐' : 'Media uploaded (locally)!', 'success');
+    if (window.Notify) Notify.notifyFriends(current, { type: 'upload', text: 'uploaded new content', link: `#/u/${current.username}` });
   }
 
   // Add a YouTube (or other) video link as a visual — embedded, no file upload.
@@ -2228,23 +2872,23 @@ const Profile = (() => {
     if (!current) return;
     const input = document.getElementById('media-url-input');
     const url = (input?.value || '').trim();
-    if (!url) { App.toast('Lim inn en YouTube-lenke først', 'error'); return; }
+    if (!url) { App.toast('Paste a YouTube link first', 'error'); return; }
     const ytId = parseYouTubeId(url);
     const id = `m_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const rec = ytId
-      ? { id, kind: 'youtube', youtubeId: ytId, url, name: 'YouTube-video', type: 'youtube', visibility: 'public', createdAt: Date.now() }
+      ? { id, kind: 'youtube', youtubeId: ytId, url, name: 'YouTube video', type: 'youtube', visibility: 'public', createdAt: Date.now() }
       : { id, kind: 'link', url, name: url.replace(/^https?:\/\//, '').slice(0, 60), type: 'link', visibility: 'public', createdAt: Date.now() };
     await DB.put('media', rec);
     current.mediaIds = [...(current.mediaIds || []), id];
     Auth.updateUser(current.username, { mediaIds: current.mediaIds });
     // Auto-del URL-video/lenke til Community-veggen (alltid delbar — ingen filopplasting).
     if (window.Community && Community.autoShareOn()) {
-      if (rec.kind === 'youtube') Community.shareMedia({ kind: 'youtube', name: 'YouTube-video', youtubeId: rec.youtubeId, sourceId: id, audience: 'public' });
+      if (rec.kind === 'youtube') Community.shareMedia({ kind: 'youtube', name: 'YouTube video', youtubeId: rec.youtubeId, sourceId: id, audience: 'public' });
       else Community.shareMedia({ kind: 'link', name: rec.name, url: rec.url, sourceId: id, audience: 'public' });
     }
     if (input) input.value = '';
     loadEditorMedia(Auth.current());
-    App.toast(ytId ? '▶ YouTube-video lagt til!' : 'Lenke lagt til!', 'success');
+    App.toast(ytId ? '▶ YouTube video added!' : 'Link added!', 'success');
   }
 
   // Per-media visibility (free for everyone). 🌐 public · 🔒 private.
@@ -2255,7 +2899,7 @@ const Profile = (() => {
     if (!rec) return;
     rec.visibility = rec.visibility === 'private' ? 'public' : 'private';
     await DB.put('media', rec);
-    App.toast(rec.visibility === 'private' ? '🔒 Satt til privat (kun deg)' : '🌐 Gjort offentlig (alle)', 'success');
+    App.toast(rec.visibility === 'private' ? '🔒 Set to private (only you)' : '🌐 Made public (everyone)', 'success');
     loadEditorMedia(current);
   }
 
@@ -2309,72 +2953,148 @@ const Profile = (() => {
       }
       current.musicIds = [...(current.musicIds || []), id];
       Auth.updateUser(current.username, { musicIds: current.musicIds });
-      if (listEl) { row.innerHTML = `${Icon('check-circle')} ${file.name}${shared ? ' · 🌐 delt' : ''}`; setTimeout(() => row.remove(), 2500); }
+      if (listEl) {
+        row.innerHTML = `${Icon('check-circle')} ${file.name}${shared ? ' · 🌐 shared' : ''}`;
+        if (shared) {
+          const b = document.createElement('button');
+          b.className = 'btn btn-ghost btn-sm'; b.style.cssText = 'margin-left:0.5rem';
+          b.innerHTML = '🔗 Share further';
+          b.onclick = () => Share.open('music', id);
+          row.appendChild(b);
+        } else { setTimeout(() => row.remove(), 2500); }
+      }
     }
     loadEditorMusic(Auth.current());
-    App.toast(useCloud ? 'Musikk lastet opp og delt! 🌐' : 'Musikk lastet opp (lokalt)!', 'success');
-    if (window.Notify) Notify.notifyFriends(current, { type: 'upload', text: 'lastet opp ny musikk', link: `#/u/${current.username}` });
+    App.toast(useCloud ? 'Music uploaded and shared! 🌐' : 'Music uploaded (locally)!', 'success');
+    if (window.Notify) Notify.notifyFriends(current, { type: 'upload', text: 'uploaded new music', link: `#/u/${current.username}` });
   }
 
   // Manuell deling til Community-veggen (toggle: del / fjern). Berre delbare URL-ar.
   async function shareTrackToCommunity(trackId, username) {
     const current = Auth.current();
     if (!current || !window.Community) return;
-    if (Community.isShared(trackId)) { Community.unshareMedia(trackId); App.toast('Fjernet fra Community', 'info'); return; }
+    if (Community.isShared(trackId)) { Community.unshareMedia(trackId); App.toast('Removed from Community', 'info'); return; }
     const rec = await DB.get('music', trackId);
     if (!rec) return;
-    if (!rec.audioUrl) { App.toast('Kan kun deles når fila ligg i skyen (offentleg). Last opp på nytt med skylagring på.', 'error'); return; }
-    Community.shareMedia({ kind: 'audio', name: rec.name || rec.title || 'Spor', url: rec.audioUrl, sourceId: trackId, audience: 'public' });
-    App.toast('Delt til Community! 📣', 'success');
+    if (!rec.audioUrl) { App.toast('Can only be shared when the file is in the cloud (public). Upload again with cloud storage on.', 'error'); return; }
+    Community.shareMedia({ kind: 'audio', name: rec.name || rec.title || 'Track', url: rec.audioUrl, sourceId: trackId, audience: 'public' });
+    App.toast('Shared to Community! 📣', 'success');
   }
 
   async function shareMediaToCommunity(mediaId) {
     const current = Auth.current();
     if (!current || !window.Community) return;
-    if (Community.isShared(mediaId)) { Community.unshareMedia(mediaId); App.toast('Fjernet fra Community', 'info'); return; }
+    if (Community.isShared(mediaId)) { Community.unshareMedia(mediaId); App.toast('Removed from Community', 'info'); return; }
     const rec = await DB.get('media', mediaId);
     if (!rec) return;
     let opts = null;
-    if (rec.kind === 'youtube')                              opts = { kind: 'youtube', name: 'YouTube-video', youtubeId: rec.youtubeId, sourceId: mediaId };
+    if (rec.kind === 'youtube')                              opts = { kind: 'youtube', name: 'YouTube video', youtubeId: rec.youtubeId, sourceId: mediaId };
     else if (rec.kind === 'link')                            opts = { kind: 'link', name: rec.name, url: rec.url, sourceId: mediaId };
     else if ((rec.type || '').startsWith('video/') && rec.mediaUrl) opts = { kind: 'video', name: rec.name, url: rec.mediaUrl, sourceId: mediaId };
     else if (rec.mediaUrl)                                   opts = { kind: 'blend', name: rec.name, url: rec.mediaUrl, sourceId: mediaId };
-    if (!opts) { App.toast('Kan ikkje delast — fila er kun lagra lokalt', 'error'); return; }
+    if (!opts) { App.toast('Can\'t be shared — the file is only stored locally', 'error'); return; }
     opts.audience = 'public';
     Community.shareMedia(opts);
-    App.toast('Delt til Community! 📣', 'success');
+    App.toast('Shared to Community! 📣', 'success');
   }
 
-  async function uploadAvatar(input) {
-    const file = input.files[0];
-    if (!file) return;
+  // ── Auto-migrering: lokal-kun bilde → sky ─────────────────────────────────
+  // Eldre profiler kan ha et avatar-/bannerbilde som KUN finnes som lokal
+  // IndexedDB-blob (avatarMediaId/bannerMediaId, uten avatarUrl/bannerUrl) —
+  // typisk lastet opp før Supabase var satt opp. Da ser EIEREN bildet, men
+  // ingen andre besøkende gjør det (blob-en bor i én nettleser og synces aldri).
+  //
+  // Når eieren er innlogget på enheten som HAR blob-en og sky nå er konfigurert,
+  // løfter vi blob-en opp til Supabase → setter den offentlige URL-en → nuller
+  // det lokale feltet. Auth.updateUser publiserer så profilen (ProfileSync), og
+  // fra da av ser ALLE bildet. Fire-and-forget: feiler stille, kaster aldri,
+  // og gjør ingenting hvis det allerede finnes en sky-URL.
+  let _migratedMedia = false;
+  async function migrateLocalMediaToCloud(username) {
+    if (_migratedMedia) return;                       // kun ett forsøk per sidelast
     const current = Auth.current();
-    const id = `av_${Date.now()}`;
-    await DB.storeFile('media', id, file);
-    Auth.updateUser(current.username, { avatarMediaId: id });
-    const url = await DB.getBlobUrl('media', id);
-    const prev = document.getElementById('avatar-preview');
-    if (prev) prev.innerHTML = `<img src="${url}" style="width:80px;height:80px;border-radius:50%;object-fit:cover">`;
-    App.toast('Profilbilde oppdatert!', 'success');
-  }
-
-  // Legg til / endre profilbilde direkte fra profilsiden (ikke editoren).
-  async function setAvatarFromProfile(input, username) {
-    const file = input.files[0];
-    if (!file) return;
-    const current = Auth.current();
-    if (!current || current.username !== username) return;
+    if (!current || current.username !== username) return;   // kun eieren, egen enhet
+    if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured()) return;
     const user = Auth.getUser(username);
-    // Rydd opp gammelt bilde så vi ikke samler foreldreløse blober.
+    if (!user) return;
+    _migratedMedia = true;
+
+    const jobs = [
+      { mediaId: 'avatarMediaId', url: 'avatarUrl', path: 'avatarPath', prefix: 'avatar' },
+      { mediaId: 'bannerMediaId', url: 'bannerUrl', path: 'bannerPath', prefix: 'banner' },
+    ];
+    const patch = {};
+    for (const j of jobs) {
+      if (user[j.url] || !user[j.mediaId]) continue;  // har sky-URL, eller ingen blob → hopp
+      try {
+        const rec = await DB.get('media', user[j.mediaId]);
+        if (!rec || !rec.data) continue;
+        const file = new File([rec.data], rec.name || `${j.prefix}.jpg`,
+          { type: rec.type || 'image/jpeg' });
+        const res = await SC_Storage.upload(file, { prefix: j.prefix });
+        patch[j.url]     = res.url;
+        patch[j.path]    = res.path || null;
+        patch[j.mediaId] = null;
+        DB.invalidateBlobCache('media', user[j.mediaId]);
+        await DB.delete('media', user[j.mediaId]).catch(() => {});
+      } catch (_) { /* la den ligge lokalt; nytt forsøk neste sidelast */ }
+    }
+    if (Object.keys(patch).length) {
+      Auth.updateUser(username, patch);               // publiserer via ProfileSync
+    }
+  }
+
+  // ── Profilbilde (avatar) ──────────────────────────────────────────────────
+  // ÉN felles kjerne — akkurat som banneret: sky-først (Supabase → offentlig URL
+  // som ALLE ser, på tvers av enheter), med pen tilbakefall til lokal
+  // IndexedDB-blob når sky ikke er satt opp. Rydder alltid gammelt bilde og
+  // nuller motsatt felt så profilbildet ALLTID byttes ut.
+  // Returnerer { url } ved suksess, ellers null.
+  async function applyAvatarFile(file, username) {
+    if (!file) return null;
+    const current = Auth.current();
+    if (!current || current.username !== username) return null;
+    if (file.type && !/^image\//.test(file.type)) { App.toast('Choose an image file', 'error'); return null; }
+    const user = Auth.getUser(username);
+    // Rydd opp gammel LOKAL blob så vi ikke samler foreldreløse blober.
     if (user && user.avatarMediaId) {
       DB.invalidateBlobCache('media', user.avatarMediaId);
       await DB.delete('media', user.avatarMediaId).catch(() => {});
     }
+    // Sky-først → offentlig delbar URL alle profiler/sider kan vise.
+    const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
+    if (useCloud) {
+      App.toast('Uploading profile photo…', 'info');
+      try {
+        const res = await SC_Storage.upload(file, { prefix: 'avatar' });
+        Auth.updateUser(username, { avatarUrl: res.url, avatarPath: res.path || null, avatarMediaId: null });
+        App.toast('Profile photo updated!', 'success');
+        return { url: res.url };
+      } catch (e) {
+        App.toast('Cloud unavailable — saving locally', 'info');
+      }
+    }
     const id = `av_${Date.now()}`;
     await DB.storeFile('media', id, file);
-    Auth.updateUser(username, { avatarMediaId: id });
-    App.toast('Profilbilde oppdatert!', 'success');
-    renderView(username);
+    Auth.updateUser(username, { avatarMediaId: id, avatarUrl: null, avatarPath: null });
+    App.toast('Profile photo updated!', 'success');
+    const url = await DB.getBlobUrl('media', id).catch(() => null);
+    return { url };
+  }
+
+  async function uploadAvatar(input) {
+    const current = Auth.current();
+    if (!current) return;
+    const r = await applyAvatarFile(input.files[0], current.username);
+    if (!r) return;
+    const prev = document.getElementById('avatar-preview');
+    if (prev && r.url) prev.innerHTML = `<img src="${r.url}" style="width:80px;height:80px;border-radius:50%;object-fit:cover">`;
+  }
+
+  // Legg til / endre profilbilde direkte fra profilsiden (ikke editoren).
+  async function setAvatarFromProfile(input, username) {
+    const r = await applyAvatarFile(input.files[0], username);
+    if (r) renderView(username);
   }
 
   // Slett profilbildet — faller tilbake til initialer.
@@ -2382,12 +3102,14 @@ const Profile = (() => {
     const current = Auth.current();
     if (!current || current.username !== username) return;
     const user = Auth.getUser(username);
-    if (!user || !user.avatarMediaId) { App.toast('Du har ikke noe profilbilde å slette', 'info'); return; }
-    if (!confirm('Vil du slette profilbildet?')) return;
-    DB.invalidateBlobCache('media', user.avatarMediaId);
-    await DB.delete('media', user.avatarMediaId).catch(() => {});
-    Auth.updateUser(username, { avatarMediaId: null });
-    App.toast('Profilbilde slettet', 'success');
+    if (!user || !(user.avatarMediaId || user.avatarUrl)) { App.toast('You have no profile photo to delete', 'info'); return; }
+    if (!confirm('Delete your profile photo?')) return;
+    if (user.avatarMediaId) {
+      DB.invalidateBlobCache('media', user.avatarMediaId);
+      await DB.delete('media', user.avatarMediaId).catch(() => {});
+    }
+    Auth.updateUser(username, { avatarMediaId: null, avatarUrl: null, avatarPath: null });
+    App.toast('Profile photo deleted', 'success');
     renderView(username);
   }
 
@@ -2404,7 +3126,7 @@ const Profile = (() => {
     if (!file) return null;
     const current = Auth.current();
     if (!current || current.username !== username) return null;
-    if (file.type && !/^image\//.test(file.type)) { App.toast('Velg en bildefil', 'error'); return null; }
+    if (file.type && !/^image\//.test(file.type)) { App.toast('Choose an image file', 'error'); return null; }
     const user = Auth.getUser(username);
     // Rydd opp gammel LOKAL blob så vi ikke samler foreldreløse blober.
     if (user && user.bannerMediaId) {
@@ -2415,21 +3137,21 @@ const Profile = (() => {
     // profilen kan se, også på tvers av enheter.
     const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
     if (useCloud) {
-      App.toast('Laster opp banner…', 'info');
+      App.toast('Uploading banner…', 'info');
       try {
         const res = await SC_Storage.upload(file, { prefix: 'banner' });
         Auth.updateUser(username, { bannerUrl: res.url, bannerPath: res.path || null, bannerMediaId: null });
-        App.toast('Bakgrunnsbilde oppdatert!', 'success');
+        App.toast('Background image updated!', 'success');
         return { url: res.url };
       } catch (e) {
         // Sky feilet → fall gjennom til lokal lagring under.
-        App.toast('Sky utilgjengelig — lagrer lokalt', 'info');
+        App.toast('Cloud unavailable — saving locally', 'info');
       }
     }
     const id = `bn_${Date.now()}`;
     await DB.storeFile('media', id, file);
     Auth.updateUser(username, { bannerMediaId: id, bannerUrl: null, bannerPath: null });
-    App.toast('Bakgrunnsbilde oppdatert!', 'success');
+    App.toast('Background image updated!', 'success');
     const url = await DB.getBlobUrl('media', id).catch(() => null);
     return { url };
   }
@@ -2457,14 +3179,163 @@ const Profile = (() => {
     if (!current || current.username !== username) return;
     const user = Auth.getUser(username);
     if (!user || !(user.bannerMediaId || user.bannerUrl)) return;
-    if (!confirm('Vil du slette bakgrunnsbildet?')) return;
+    if (!confirm('Delete the background image?')) return;
     if (user.bannerMediaId) {
       DB.invalidateBlobCache('media', user.bannerMediaId);
       await DB.delete('media', user.bannerMediaId).catch(() => {});
     }
     Auth.updateUser(username, { bannerMediaId: null, bannerUrl: null, bannerPath: null });
-    App.toast('Bakgrunnsbilde slettet', 'success');
+    App.toast('Background image deleted', 'success');
     renderView(username);
+  }
+
+  // ── Reposisjoner forsidebildet (opp/ned/venstre/høyre) ─────────────────────
+  // Lar eieren dra bildet — eller bruke pil-knappene — for å velge HVILKEN del
+  // av bildet som vises i banneret, FØR det lagres. Fungerer både for et NYTT
+  // valgt bilde (ennå ikke lastet opp) og for å justere et EKSISTERENDE banner.
+  // Fokuspunktet lagres som `bannerPos` (en CSS background-position, f.eks.
+  // "50% 30%") og brukes ved rendering av både hero-banneret og bruker-kortene.
+  let _reposState = null;
+
+  function _clampPct(v) { return Math.max(0, Math.min(100, v)); }
+
+  function _parseBannerPos(str) {
+    if (typeof str === 'string') {
+      const m = str.match(/(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%/);
+      if (m) return { x: _clampPct(parseFloat(m[1])), y: _clampPct(parseFloat(m[2])) };
+    }
+    return { x: 50, y: 50 };
+  }
+
+  function _applyReposPos() {
+    const vp = document.getElementById('banner-repos-viewport');
+    if (vp && _reposState) vp.style.backgroundPosition = `${_reposState.pos.x}% ${_reposState.pos.y}%`;
+  }
+
+  function _renderReposModal() {
+    const box = document.getElementById('modal-box');
+    if (!box || !_reposState) return;
+    const p = _reposState.pos;
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2>${Icon('camera')} Position the cover photo</h2>
+        <button class="btn-icon" onclick="Profile.cancelBannerRepos()" title="Close">${Icon('x')}</button>
+      </div>
+      <div class="banner-repos">
+        <p class="banner-repos-hint">Drag the image — or use the arrows — to choose which part is shown.</p>
+        <div class="banner-repos-viewport" id="banner-repos-viewport"
+             style="background-image:url('${_reposState.previewUrl}');background-size:cover;background-position:${p.x}% ${p.y}%"></div>
+        <div class="banner-repos-pad">
+          <button class="btn-icon banner-repos-nudge" onclick="Profile.nudgeBannerRepos(0,-1)" title="Up">${Icon('chevron-up')}</button>
+          <div class="banner-repos-pad-row">
+            <button class="btn-icon banner-repos-nudge" onclick="Profile.nudgeBannerRepos(-1,0)" title="Left">${Icon('chevron-left')}</button>
+            <button class="btn-icon banner-repos-nudge banner-repos-center" onclick="Profile.resetBannerRepos()" title="Center">${Icon('maximize')}</button>
+            <button class="btn-icon banner-repos-nudge" onclick="Profile.nudgeBannerRepos(1,0)" title="Right">${Icon('chevron-right')}</button>
+          </div>
+          <button class="btn-icon banner-repos-nudge" onclick="Profile.nudgeBannerRepos(0,1)" title="Down">${Icon('chevron-down')}</button>
+        </div>
+        <div class="banner-repos-actions">
+          <button class="btn btn-ghost" onclick="Profile.cancelBannerRepos()">Cancel</button>
+          <button class="btn btn-primary" onclick="Profile.saveBannerRepos()">${Icon('check')} Save</button>
+        </div>
+      </div>`;
+    App.openModal();
+    _bindReposDrag();
+  }
+
+  // Dra i bildet for å flytte fokuspunktet. Bruker pointer-capture, så
+  // bevegelsen følges selv utenfor viewporten — ingen globale lyttere å rydde.
+  function _bindReposDrag() {
+    const vp = document.getElementById('banner-repos-viewport');
+    if (!vp || !_reposState) return;
+    let dragging = false, lastX = 0, lastY = 0, pid = null;
+    vp.addEventListener('pointerdown', (e) => {
+      dragging = true; pid = e.pointerId; lastX = e.clientX; lastY = e.clientY;
+      vp.classList.add('dragging');
+      try { vp.setPointerCapture(e.pointerId); } catch (_) {}
+      e.stopPropagation(); e.preventDefault();
+    });
+    vp.addEventListener('pointermove', (e) => {
+      if (!dragging || (pid !== null && e.pointerId !== pid) || !_reposState) return;
+      const rect = vp.getBoundingClientRect();
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      // Å dra bildet mot høyre viser mer av venstre kant → posisjon MINKER.
+      _reposState.pos.x = _clampPct(_reposState.pos.x - (dx / rect.width) * 100);
+      _reposState.pos.y = _clampPct(_reposState.pos.y - (dy / rect.height) * 100);
+      _applyReposPos();
+      e.stopPropagation();
+    });
+    const end = () => { dragging = false; vp.classList.remove('dragging'); };
+    vp.addEventListener('pointerup', end);
+    vp.addEventListener('pointercancel', end);
+  }
+
+  function nudgeBannerRepos(dx, dy) {
+    if (!_reposState) return;
+    _reposState.pos.x = _clampPct(_reposState.pos.x + dx * 5);
+    _reposState.pos.y = _clampPct(_reposState.pos.y + dy * 5);
+    _applyReposPos();
+  }
+
+  function resetBannerRepos() {
+    if (!_reposState) return;
+    _reposState.pos = { x: 50, y: 50 };
+    _applyReposPos();
+  }
+
+  // Åpne reposisjonering for et NYTT valgt bilde (ennå ikke lastet opp).
+  function openBannerReposForFile(input, username) {
+    const current = Auth.current();
+    if (!current || current.username !== username) return;
+    const file = input.files && input.files[0];
+    if (!file) return;
+    if (file.type && !/^image\//.test(file.type)) { App.toast('Choose an image file', 'error'); input.value = ''; return; }
+    const url = URL.createObjectURL(file);
+    input.value = '';   // så samme fil kan velges på nytt senere
+    _reposState = { username, file, previewUrl: url, revokeUrl: true, isNew: true, pos: { x: 50, y: 50 } };
+    _renderReposModal();
+  }
+
+  // Åpne reposisjonering for et EKSISTERENDE banner (ingen ny opplasting).
+  async function repositionBanner(username) {
+    const current = Auth.current();
+    if (!current || current.username !== username) return;
+    const user = Auth.getUser(username);
+    let url = user.bannerUrl || null;
+    if (!url && user.bannerMediaId) url = await DB.getBlobUrl('media', user.bannerMediaId).catch(() => null);
+    if (!url) { App.toast('Upload a cover photo first', 'info'); return; }
+    _reposState = { username, file: null, previewUrl: url, revokeUrl: false, isNew: false, pos: _parseBannerPos(user.bannerPos) };
+    _renderReposModal();
+  }
+
+  async function saveBannerRepos() {
+    const st = _reposState;
+    if (!st) return;
+    const posStr = `${Math.round(st.pos.x)}% ${Math.round(st.pos.y)}%`;
+    // Nytt bilde: last opp FØRST (deler kjerne med vanlig banner-opplasting).
+    if (st.isNew && st.file) {
+      const r = await applyBannerFile(st.file, st.username);
+      if (!r) { _teardownRepos(); App.closeModal(); return; }
+    }
+    Auth.updateUser(st.username, { bannerPos: posStr });
+    const uname = st.username;
+    _teardownRepos();
+    App.closeModal();
+    App.toast('Cover photo positioned', 'success');
+    renderView(uname);
+  }
+
+  function cancelBannerRepos() {
+    _teardownRepos();
+    App.closeModal();
+  }
+
+  function _teardownRepos() {
+    if (_reposState && _reposState.revokeUrl && _reposState.previewUrl) {
+      try { URL.revokeObjectURL(_reposState.previewUrl); } catch (_) {}
+    }
+    _reposState = null;
   }
 
   async function uploadMusicCover(trackId, file) {
@@ -2473,37 +3344,59 @@ const Profile = (() => {
     if (!current) return;
     const rec = await DB.get('music', trackId);
     if (!rec) return;
-    const id = `mcover_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+    // Rydd bort et eventuelt gammelt lokalt cover-blob.
     if (rec.coverMediaId) {
       DB.invalidateBlobCache('media', rec.coverMediaId);
       await DB.delete('media', rec.coverMediaId).catch(() => {});
+      rec.coverMediaId = null;
     }
-    await DB.storeFile('media', id, file);
-    rec.coverMediaId = id;
-    await DB.put('music', rec);
-    const url = await DB.getBlobUrl('media', id).catch(() => null);
-    if (url) {
-      const el = document.getElementById(`mthumb-${trackId}`);
-      if (el) {
-        // Sett som bakgrunn så play-knapp-overlegget blir liggende oppå coveret.
-        el.style.backgroundImage = `url("${String(url).replace(/"/g, '%22')}")`;
-        el.style.backgroundSize = 'cover';
-        el.style.backgroundPosition = 'center';
-        el.classList.add('has-cover');
+
+    // Lagre coveret som en DELBAR URL slik at det også vises i Discover på tvers
+    // av enheter/besøkende — ikke bare i nettleseren som lastet det opp.
+    // Skylagring når konfigurert; ellers en nedskalert data-URL; lokal blob som
+    // aller siste utvei.
+    let url = null;
+    try {
+      const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
+      if (useCloud) {
+        try { url = (await SC_Storage.upload(file, { prefix: 'covers' })).url; }
+        catch { url = await _imageToDataUrl(file); }
+      } else {
+        url = await _imageToDataUrl(file);
       }
+    } catch { /* fall tilbake til lokal blob under */ }
+
+    if (url) {
+      rec.coverUrl = url;
+    } else {
+      const id = `mcover_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      await DB.storeFile('media', id, file);
+      rec.coverMediaId = id;
+      url = await DB.getBlobUrl('media', id).catch(() => null);
     }
-    App.toast('Cover oppdatert! 🖼️', 'success');
+    await DB.put('music', rec);
+
+    const el = document.getElementById(`mthumb-${trackId}`);
+    if (el && url) {
+      // Sett som bakgrunn så play-knapp-overlegget blir liggende oppå coveret.
+      el.style.backgroundImage = `url("${String(url).replace(/"/g, '%22')}")`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.classList.add('has-cover');
+    }
+    App.toast('Cover updated! 🖼️', 'success');
   }
 
   // Omslagsbilde for en sang lagt ut i butikken. Lagres som delbar URL (skylagring
   // når konfigurert, ellers nedskalert data-URL) slik at KJØPERE også ser omslaget.
   async function uploadSaleCover(trackId, files) {
     const file = files && files[0];
-    if (!file || !/^image\//.test(file.type)) { App.toast('Velg en bildefil', 'error'); return; }
+    if (!file || !/^image\//.test(file.type)) { App.toast('Choose an image file', 'error'); return; }
     const rec = await DB.get('music', trackId);
-    if (!rec) { App.toast('Fant ikke sporet', 'error'); return; }
+    if (!rec) { App.toast('Track not found', 'error'); return; }
     const preview = document.getElementById('sc-cover-preview');
-    if (preview) preview.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> Behandler omslag…`;
+    if (preview) preview.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> Processing cover…`;
     try {
       const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
       let url;
@@ -2516,10 +3409,10 @@ const Profile = (() => {
       rec.coverUrl = url;
       await DB.put('music', rec);
       if (preview) preview.innerHTML = `<img src="${url}" alt="" style="max-width:120px;max-height:120px;border-radius:8px;display:block">`;
-      App.toast('Omslag lagret! 🖼️', 'success');
+      App.toast('Cover saved! 🖼️', 'success');
     } catch (e) {
       if (preview) preview.innerHTML = '';
-      App.toast('Omslag feilet: ' + e.message, 'error');
+      App.toast('Cover failed: ' + e.message, 'error');
     }
   }
 
@@ -2540,7 +3433,7 @@ const Profile = (() => {
         c.getContext('2d').drawImage(img, 0, 0, width, height);
         try { resolve(c.toDataURL('image/jpeg', quality)); } catch (e) { reject(e); }
       };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Kunne ikke lese bildet')); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read the image')); };
       img.src = url;
     });
   }
@@ -2566,11 +3459,11 @@ const Profile = (() => {
     if (!file) return;
     const current = Auth.current();
     const id = `bgv_${Date.now()}`;
-    App.toast('Laster opp bakgrunnsvideo…', 'info');
+    App.toast('Uploading background video…', 'info');
     await DB.storeFile('media', id, file);
     window._pendingBgVideoId = id;
     Auth.updateUser(current.username, { theme: { ...current.theme, bgVideoId: id } });
-    App.toast('Bakgrunnsvideo lastet opp!', 'success');
+    App.toast('Background video uploaded!', 'success');
   }
 
   // ── Collect & Save ────────────────────────────────────────────────────
@@ -2581,21 +3474,21 @@ const Profile = (() => {
 
   function collectTheme() {
     const activeBgType = document.querySelector('.bg-type-btn.active')?.textContent?.toLowerCase().replace('🎵 ','');
-    const bgTypeMap    = { farge:'color', gradient:'gradient', bilde:'image', video:'video', musikk:'music' };
+    const bgTypeMap    = { color:'color', gradient:'gradient', image:'image', video:'video', music:'music' };
     const bgType       = bgTypeMap[activeBgType] || Auth.current()?.theme?.bgType || 'gradient';
 
     const activeLayout   = document.querySelector('.layout-option.active')?.dataset?.layout || document.querySelector('.layout-option.active')?.onclick?.toString()?.match(/'(\w+)'/)?.[1] || 'default';
     const cardStyleBtn = document.querySelector('.editor-panel .bg-type-row:last-of-type .bg-type-btn.active');
-    const activeCardStyle = { glass: 'glass', solid: 'solid', kontur: 'outline' }[cardStyleBtn?.textContent?.trim().toLowerCase()] || 'glass';
+    const activeCardStyle = { glass: 'glass', solid: 'solid', outline: 'outline' }[cardStyleBtn?.textContent?.trim().toLowerCase()] || 'glass';
 
     return {
-      primaryColor:   document.getElementById('ed-primary')?.value   || '#7c3aed',
+      primaryColor:   document.getElementById('ed-primary')?.value   || '#22c55e',
       secondaryColor: document.getElementById('ed-secondary')?.value || '#2563eb',
       bgColor:        document.getElementById('ed-bg')?.value        || '#0f0f1a',
       textColor:      document.getElementById('ed-text')?.value      || '#ffffff',
       accentColor:    document.getElementById('ed-accent')?.value    || '#f59e0b',
       bgType,
-      bgGradient:     document.getElementById('ed-gradient')?.value  || 'linear-gradient(135deg,#7c3aed,#2563eb)',
+      bgGradient:     document.getElementById('ed-gradient')?.value  || 'linear-gradient(135deg,#22c55e,#16a34a)',
       bgImage:        window._pendingBgImage || Auth.current()?.theme?.bgImage || null,
       bgVideoId:      window._pendingBgVideoId || Auth.current()?.theme?.bgVideoId || null,
       bgMusicTrackId: document.getElementById('ed-bg-music-track')?.value || Auth.current()?.theme?.bgMusicTrackId || null,
@@ -2630,7 +3523,7 @@ const Profile = (() => {
       role:        roleInput?.value || current.role || 'lytter',
     };
     Auth.updateUser(current.username, data);
-    App.toast('Profil lagret! ✓', 'success');
+    App.toast('Profile saved! ✓', 'success');
     Object.assign(current, data);
   }
 
@@ -2659,39 +3552,39 @@ const Profile = (() => {
   // ── AI actions ────────────────────────────────────────────────────────
   async function aiBio() {
     const keywords = document.getElementById('ai-bio-keywords')?.value?.trim();
-    if (!keywords) { App.toast('Skriv inn noen stikkord', 'error'); return; }
+    if (!keywords) { App.toast('Enter some keywords', 'error'); return; }
     const style   = document.getElementById('ai-bio-style')?.value || 'kreativ';
     const resultEl = document.getElementById('ai-result');
     if (!resultEl) return;
     resultEl.style.display = 'block';
-    resultEl.innerHTML = '<div class="ai-loading"><div class="ai-dots"><span>•</span><span>•</span><span>•</span></div> AI tenker…</div>';
+    resultEl.innerHTML = '<div class="ai-loading"><div class="ai-dots"><span>•</span><span>•</span><span>•</span></div> AI is thinking…</div>';
     try {
       const bio = await AI.generateBio(keywords, style);
-      resultEl.innerHTML = `<strong>Foreslått bio:</strong><br>${bio}<br><button class="btn btn-primary btn-sm" style="margin-top:0.5rem" onclick="document.getElementById('ed-bio').value=\`${bio.replace(/`/g, "'")}\`;Profile.livePreview()">Bruk denne</button>`;
+      resultEl.innerHTML = `<strong>Suggested bio:</strong><br>${bio}<br><button class="btn btn-primary btn-sm" style="margin-top:0.5rem" onclick="document.getElementById('ed-bio').value=\`${bio.replace(/`/g, "'")}\`;Profile.livePreview()">Use this</button>`;
     } catch (e) {
-      const msg = e.message === 'no_key' ? 'Legg til Claude API-nøkkel i Innstillinger' : e.message;
+      const msg = e.message === 'no_key' ? 'Add a Claude API key in Settings' : e.message;
       resultEl.innerHTML = `<span style="color:var(--red)">${Icon('alert')} ${msg}</span>`;
     }
   }
 
   async function aiColors() {
     const mood    = document.getElementById('ai-color-mood')?.value?.trim();
-    if (!mood) { App.toast('Beskriv en stemning', 'error'); return; }
+    if (!mood) { App.toast('Describe a mood', 'error'); return; }
     const resultEl = document.getElementById('ai-result');
     if (!resultEl) return;
     resultEl.style.display = 'block';
-    resultEl.innerHTML = '<div class="ai-loading"><div class="ai-dots"><span>•</span><span>•</span><span>•</span></div> Genererer fargepalett…</div>';
+    resultEl.innerHTML = '<div class="ai-loading"><div class="ai-dots"><span>•</span><span>•</span><span>•</span></div> Generating color palette…</div>';
     try {
       const colors = await AI.suggestColors(mood);
-      if (!colors) throw new Error('Kunne ikke tolke AI-svaret');
+      if (!colors) throw new Error('Could not parse the AI response');
       resultEl.innerHTML = `
-        <strong>Foreslåtte farger:</strong>
+        <strong>Suggested colors:</strong>
         <div style="display:flex;gap:0.4rem;margin:0.5rem 0">
           ${Object.entries(colors).map(([k,v]) => `<div title="${k}: ${v}" style="width:32px;height:32px;border-radius:6px;background:${v};border:1px solid #fff3"></div>`).join('')}
         </div>
-        <button class="btn btn-primary btn-sm" onclick="Profile.applyAiColors(${JSON.stringify(colors).replace(/"/g,'&quot;')})">Bruk disse fargene</button>`;
+        <button class="btn btn-primary btn-sm" onclick="Profile.applyAiColors(${JSON.stringify(colors).replace(/"/g,'&quot;')})">Use these colors</button>`;
     } catch (e) {
-      const msg = e.message === 'no_key' ? 'Legg til Claude API-nøkkel i Innstillinger' : e.message;
+      const msg = e.message === 'no_key' ? 'Add a Claude API key in Settings' : e.message;
       resultEl.innerHTML = `<span style="color:var(--red)">${Icon('alert')} ${msg}</span>`;
     }
   }
@@ -2703,7 +3596,7 @@ const Profile = (() => {
     if (colors.text)      { const el = document.getElementById('ed-text');      if (el) el.value = colors.text; }
     if (colors.accent)    { const el = document.getElementById('ed-accent');    if (el) el.value = colors.accent; }
     livePreview();
-    App.toast('Farger brukt!', 'success');
+    App.toast('Colors applied!', 'success');
   }
 
   async function aiLayout() {
@@ -2711,14 +3604,14 @@ const Profile = (() => {
     const resultEl = document.getElementById('ai-result');
     if (!resultEl) return;
     resultEl.style.display = 'block';
-    resultEl.innerHTML = '<div class="ai-loading"><div class="ai-dots"><span>•</span><span>•</span><span>•</span></div> Analyserer…</div>';
+    resultEl.innerHTML = '<div class="ai-loading"><div class="ai-dots"><span>•</span><span>•</span><span>•</span></div> Analyzing…</div>';
     try {
       const layout = await AI.suggestLayout(bio);
-      if (!layout) throw new Error('Ingen forslag');
-      resultEl.innerHTML = `<strong>AI foreslår:</strong><br>Layout: ${layout.layout}, Stil: ${layout.cardStyle}, Font: ${layout.fontFamily}
-        <br><button class="btn btn-primary btn-sm" style="margin-top:0.5rem" onclick="Profile.applyAiLayout(${JSON.stringify(layout).replace(/"/g,'&quot;')})">Bruk dette</button>`;
+      if (!layout) throw new Error('No suggestions');
+      resultEl.innerHTML = `<strong>AI suggests:</strong><br>Layout: ${layout.layout}, Style: ${layout.cardStyle}, Font: ${layout.fontFamily}
+        <br><button class="btn btn-primary btn-sm" style="margin-top:0.5rem" onclick="Profile.applyAiLayout(${JSON.stringify(layout).replace(/"/g,'&quot;')})">Use this</button>`;
     } catch (e) {
-      const msg = e.message === 'no_key' ? 'Legg til Claude API-nøkkel i Innstillinger' : e.message;
+      const msg = e.message === 'no_key' ? 'Add a Claude API key in Settings' : e.message;
       resultEl.innerHTML = `<span style="color:var(--red)">${Icon('alert')} ${msg}</span>`;
     }
   }
@@ -2727,7 +3620,7 @@ const Profile = (() => {
     const fontEl = document.getElementById('ed-font');
     if (fontEl && layout.fontFamily) fontEl.value = layout.fontFamily;
     livePreview();
-    App.toast('Layout brukt!', 'success');
+    App.toast('Layout applied!', 'success');
   }
 
   // ── AI Chat ───────────────────────────────────────────────────────────
@@ -2766,7 +3659,7 @@ const Profile = (() => {
 
   async function sendAiChatMsg(msg) {
     if (!AI.hasKey()) {
-      App.toast('Legg til Claude API-nøkkel i Innstillinger for å bruke AI', 'error');
+      App.toast('Add a Claude API key in Settings to use AI', 'error');
       return;
     }
 
@@ -2813,15 +3706,15 @@ const Profile = (() => {
           .map(c => `<span style="display:inline-block;width:18px;height:18px;border-radius:4px;background:${c};border:1px solid rgba(255,255,255,0.25);flex-shrink:0"></span>`)
           .join('');
         const colorsJson = JSON.stringify(actions.colors).replace(/"/g, '&quot;');
-        actionHtml += `<div class="ai-action-row"><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">${swatches}</div><button class="btn btn-primary btn-sm" onclick="Profile.applyAiColors(JSON.parse(this.dataset.c))" data-c="${colorsJson}">Bruk farger</button></div>`;
+        actionHtml += `<div class="ai-action-row"><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">${swatches}</div><button class="btn btn-primary btn-sm" onclick="Profile.applyAiColors(JSON.parse(this.dataset.c))" data-c="${colorsJson}">Use colors</button></div>`;
       }
       if (actions.bio) {
         const safeBio = actions.bio.replace(/`/g, "'").replace(/"/g, '&quot;');
-        actionHtml += `<div class="ai-action-row"><em class="ai-bio-preview">"${actions.bio.slice(0, 80)}${actions.bio.length > 80 ? '…' : ''}"</em><button class="btn btn-primary btn-sm" onclick="const b=document.getElementById('ed-bio');if(b){b.value=this.dataset.bio;Profile.livePreview()}" data-bio="${safeBio}">Bruk bio</button></div>`;
+        actionHtml += `<div class="ai-action-row"><em class="ai-bio-preview">"${actions.bio.slice(0, 80)}${actions.bio.length > 80 ? '…' : ''}"</em><button class="btn btn-primary btn-sm" onclick="const b=document.getElementById('ed-bio');if(b){b.value=this.dataset.bio;Profile.livePreview()}" data-bio="${safeBio}">Use bio</button></div>`;
       }
       if (actions.layout) {
         const layoutJson = JSON.stringify(actions.layout).replace(/"/g, '&quot;');
-        actionHtml += `<div class="ai-action-row"><span class="ai-layout-preview">${actions.layout.layout} · ${actions.layout.cardStyle} · ${actions.layout.fontFamily}</span><button class="btn btn-primary btn-sm" onclick="Profile.applyAiLayout(JSON.parse(this.dataset.l))" data-l="${layoutJson}">Bruk layout</button></div>`;
+        actionHtml += `<div class="ai-action-row"><span class="ai-layout-preview">${actions.layout.layout} · ${actions.layout.cardStyle} · ${actions.layout.fontFamily}</span><button class="btn btn-primary btn-sm" onclick="Profile.applyAiLayout(JSON.parse(this.dataset.l))" data-l="${layoutJson}">Use layout</button></div>`;
       }
 
       const safe = displayText.replace(/</g, '&lt;').replace(/\n/g, '<br>');
@@ -2829,7 +3722,7 @@ const Profile = (() => {
         `<div class="ai-chat-bubble ai-chat-bubble--bot">${safe}${actionHtml}</div>`);
     } catch (e) {
       document.getElementById(typingId)?.remove();
-      const errMsg = e.message === 'no_key' ? 'Legg til Claude API-nøkkel i Innstillinger' : e.message;
+      const errMsg = e.message === 'no_key' ? 'Add a Claude API key in Settings' : e.message;
       chatWindow.insertAdjacentHTML('beforeend',
         `<div class="ai-chat-bubble ai-chat-bubble--bot" style="color:var(--red,#f87171)">${Icon('alert')} ${errMsg.replace(/</g,'&lt;')}</div>`);
     }
@@ -2864,7 +3757,7 @@ const Profile = (() => {
     const festivalIds = Array.from(checked).map(cb => cb.value);
     Auth.updateUser(current.username, { festivalIds });
     current.festivalIds = festivalIds;
-    App.toast(`${festivalIds.length} festival${festivalIds.length !== 1 ? 'er' : ''} lagret! ${Icon('star')}`, 'success');
+    App.toast(`${festivalIds.length} festival${festivalIds.length !== 1 ? 's' : ''} saved! ${Icon('star')}`, 'success');
   }
 
   // ── Platform actions ──────────────────────────────────────────────────
@@ -2882,7 +3775,7 @@ const Profile = (() => {
     Auth.updateUser(current.username, { daws, streamingPlatforms });
     current.daws = daws;
     current.streamingPlatforms = streamingPlatforms;
-    App.toast(`Plattformer lagret! ${Icon('laptop')}`, 'success');
+    App.toast(`Platforms saved! ${Icon('laptop')}`, 'success');
   }
 
   // ── My Sites actions ──────────────────────────────────────────────────
@@ -2893,8 +3786,8 @@ const Profile = (() => {
     const title = document.getElementById('ms-title')?.value?.trim();
     const url   = document.getElementById('ms-url')?.value?.trim();
     const desc  = document.getElementById('ms-desc')?.value?.trim();
-    if (!title) { App.toast('Tittel er påkrevd', 'error'); return; }
-    if (!url || !url.startsWith('http')) { App.toast('URL må starte med http:// eller https://', 'error'); return; }
+    if (!title) { App.toast('Title is required', 'error'); return; }
+    if (!url || !url.startsWith('http')) { App.toast('URL must start with http:// or https://', 'error'); return; }
     const site = { id: `ms_${Date.now()}_${Math.random().toString(36).slice(2)}`, emoji, title, url, description: desc || '' };
     const mySites = [...(current.mySites || []), site];
     Auth.updateUser(current.username, { mySites });
@@ -2908,7 +3801,7 @@ const Profile = (() => {
       if (empty) empty.remove();
       list.insertAdjacentHTML('beforeend', mySiteEditorItem(site));
     }
-    App.toast(`"${title}" lagt til! ${Icon('globe')}`, 'success');
+    App.toast(`"${title}" added! ${Icon('globe')}`, 'success');
   }
 
   function deleteMySite(id) {
@@ -2920,9 +3813,9 @@ const Profile = (() => {
     document.getElementById(`msitem-${id}`)?.remove();
     const list = document.getElementById('my-sites-list');
     if (list && !list.querySelector('.my-site-editor-item')) {
-      list.innerHTML = '<p style="font-size:0.82rem;color:var(--text2)">Ingen sider ennå.</p>';
+      list.innerHTML = '<p style="font-size:0.82rem;color:var(--text2)">No sites yet.</p>';
     }
-    App.toast('Side fjernet', 'info');
+    App.toast('Site removed', 'info');
   }
 
   // ══════════════════════════════════════════════════════════════════════
@@ -2930,14 +3823,14 @@ const Profile = (() => {
   // ══════════════════════════════════════════════════════════════════════
 
   const CP_BLOCKS = {
-    hero:      { icon: '✦',  label: 'Hero Tittel',     defaultData: { title: 'Min Side', subtitle: '', animation: 'rainbow' } },
-    text:      { icon: '📝', label: 'Tekst',            defaultData: { content: 'Skriv noe her...', align: 'left' } },
-    quote:     { icon: '💬', label: 'Sitat',             defaultData: { text: 'Et inspirerende ord...', author: '', style: 'neon-purple' } },
-    image:     { icon: '🖼️', label: 'Bilde (URL)',       defaultData: { url: '', caption: '', filter: 'psychedelic' } },
-    links:     { icon: '🔗', label: 'Lenkeknapper',      defaultData: { buttons: [{ label: 'Besøk meg', url: 'https://', color: '#7c3aed' }] } },
-    divider:   { icon: '〰️', label: 'Skillelinje',       defaultData: { style: 'plasma' } },
-    countdown: { icon: '⏳', label: 'Nedtelling',        defaultData: { date: '', label: 'Til noe spennende' } },
-    vibes:     { icon: '🌊', label: 'Vibes-seksjon',     defaultData: { style: 'aurora', text: '✦ good vibes only ✦' } },
+    hero:      { icon: '✦',  label: 'Hero Title',     defaultData: { title: 'My Page', subtitle: '', animation: 'rainbow' } },
+    text:      { icon: '📝', label: 'Text',            defaultData: { content: 'Write something here...', align: 'left' } },
+    quote:     { icon: '💬', label: 'Quote',             defaultData: { text: 'An inspiring word...', author: '', style: 'neon-purple' } },
+    image:     { icon: '🖼️', label: 'Image (URL)',       defaultData: { url: '', caption: '', filter: 'psychedelic' } },
+    links:     { icon: '🔗', label: 'Link buttons',      defaultData: { buttons: [{ label: 'Visit me', url: 'https://', color: '#22c55e' }] } },
+    divider:   { icon: '〰️', label: 'Divider',       defaultData: { style: 'plasma' } },
+    countdown: { icon: '⏳', label: 'Countdown',        defaultData: { date: '', label: 'Until something exciting' } },
+    vibes:     { icon: '🌊', label: 'Vibes section',     defaultData: { style: 'aurora', text: '✦ good vibes only ✦' } },
     embed:     { icon: '▶️', label: 'YouTube / Spotify', defaultData: { url: '', type: 'youtube' } },
   };
 
@@ -2954,7 +3847,7 @@ const Profile = (() => {
     return `
       <div class="cp-editor">
         <div class="cp-palette">
-          <div class="cp-palette-title">Blokkbibliotek</div>
+          <div class="cp-palette-title">Block library</div>
           <div class="cp-palette-grid">
             ${Object.entries(CP_BLOCKS).map(([type, def]) => `
               <div class="cp-palette-item" onclick="Profile.addBlock('${type}')">
@@ -2962,18 +3855,18 @@ const Profile = (() => {
                 <span>${def.label}</span>
               </div>`).join('')}
           </div>
-          <div class="cp-palette-tip">${Icon('lightbulb')} Klikk for å legge til · Dra blokker for å flytte</div>
+          <div class="cp-palette-tip">${Icon('lightbulb')} Click to add · Drag blocks to move</div>
         </div>
         <div class="cp-canvas" id="cp-canvas"
              ondragover="event.preventDefault()" ondrop="Profile.cpDropCanvas(event)">
           ${_cpBlocks.length
             ? _cpBlocks.map((b, i) => cpBlockEditorHtml(b, i, _cpBlocks.length)).join('')
-            : `<div class="cp-empty"><div class="cp-empty-icon">${Icon('wind')}</div><p>Klikk på en blokk til venstre for å begynne</p></div>`}
+            : `<div class="cp-empty"><div class="cp-empty-icon">${Icon('wind')}</div><p>Click a block on the left to begin</p></div>`}
         </div>
       </div>
       <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button class="btn btn-primary" onclick="Profile.saveCustomPage()">${Icon('save')} Lagre Min Side</button>
-        <a href="#/u/${user.username}" class="btn btn-ghost">${Icon('eye')} Se profil</a>
+        <button class="btn btn-primary" onclick="Profile.saveCustomPage()">${Icon('save')} Save My Page</button>
+        <a href="#/u/${user.username}" class="btn btn-ghost">${Icon('eye')} View profile</a>
       </div>`;
   }
 
@@ -2989,9 +3882,9 @@ const Profile = (() => {
           <span class="cp-block-icon">${iconForEmoji(def.icon)}</span>
           <span class="cp-block-title">${def.label}</span>
           <div class="cp-block-actions" onclick="event.stopPropagation()">
-            ${index > 0 ? `<button class="cp-block-btn" onclick="Profile.moveBlock('${block.id}',-1)" title="Opp">${Icon('arrow-up')}</button>` : ''}
-            ${index < total - 1 ? `<button class="cp-block-btn" onclick="Profile.moveBlock('${block.id}',1)" title="Ned">${Icon('arrow-down')}</button>` : ''}
-            <button class="cp-block-btn del" onclick="Profile.deleteBlock('${block.id}')" title="Slett">${Icon('trash')}</button>
+            ${index > 0 ? `<button class="cp-block-btn" onclick="Profile.moveBlock('${block.id}',-1)" title="Up">${Icon('arrow-up')}</button>` : ''}
+            ${index < total - 1 ? `<button class="cp-block-btn" onclick="Profile.moveBlock('${block.id}',1)" title="Down">${Icon('arrow-down')}</button>` : ''}
+            <button class="cp-block-btn del" onclick="Profile.deleteBlock('${block.id}')" title="Delete">${Icon('trash')}</button>
           </div>
         </div>
         <div class="cp-block-settings" id="cpbs-${block.id}">
@@ -3005,52 +3898,52 @@ const Profile = (() => {
     switch (block.type) {
       case 'hero':
         return `
-          <div class="form-group"><label class="form-label">Tittel</label>
+          <div class="form-group"><label class="form-label">Title</label>
             <input class="form-input" value="${esc(d.title)}" oninput="Profile.updateBlock('${bid}','title',this.value)"></div>
-          <div class="form-group"><label class="form-label">Undertittel</label>
+          <div class="form-group"><label class="form-label">Subtitle</label>
             <input class="form-input" value="${esc(d.subtitle)}" oninput="Profile.updateBlock('${bid}','subtitle',this.value)"></div>
-          <div class="form-group"><label class="form-label">Animasjon</label>
+          <div class="form-group"><label class="form-label">Animation</label>
             <select class="form-input" onchange="Profile.updateBlock('${bid}','animation',this.value)">
-              <option value="rainbow" ${d.animation==='rainbow'?'selected':''}>${Icon('rainbow')} Regnbue</option>
+              <option value="rainbow" ${d.animation==='rainbow'?'selected':''}>${Icon('rainbow')} Rainbow</option>
               <option value="glitch"  ${d.animation==='glitch' ?'selected':''}>${Icon('zap')} Glitch</option>
-              <option value="pulse"   ${d.animation==='pulse'  ?'selected':''}>${Icon('heart')} Neon Puls</option>
-              <option value="none"    ${d.animation==='none'   ?'selected':''}>Ingen</option>
+              <option value="pulse"   ${d.animation==='pulse'  ?'selected':''}>${Icon('heart')} Neon Pulse</option>
+              <option value="none"    ${d.animation==='none'   ?'selected':''}>None</option>
             </select></div>`;
       case 'text':
         return `
-          <div class="form-group"><label class="form-label">Innhold</label>
+          <div class="form-group"><label class="form-label">Content</label>
             <textarea class="form-input" rows="4" oninput="Profile.updateBlock('${bid}','content',this.value)">${esc(d.content)}</textarea></div>
-          <div class="form-group"><label class="form-label">Justering</label>
+          <div class="form-group"><label class="form-label">Alignment</label>
             <select class="form-input" onchange="Profile.updateBlock('${bid}','align',this.value)">
-              <option value="left"   ${d.align==='left'  ?'selected':''}>Venstre</option>
-              <option value="center" ${d.align==='center'?'selected':''}>Senter</option>
-              <option value="right"  ${d.align==='right' ?'selected':''}>Høyre</option>
+              <option value="left"   ${d.align==='left'  ?'selected':''}>Left</option>
+              <option value="center" ${d.align==='center'?'selected':''}>Center</option>
+              <option value="right"  ${d.align==='right' ?'selected':''}>Right</option>
             </select></div>`;
       case 'quote':
         return `
-          <div class="form-group"><label class="form-label">Sitat</label>
+          <div class="form-group"><label class="form-label">Quote</label>
             <textarea class="form-input" rows="3" oninput="Profile.updateBlock('${bid}','text',this.value)">${esc(d.text)}</textarea></div>
-          <div class="form-group"><label class="form-label">Forfatter (valgfri)</label>
+          <div class="form-group"><label class="form-label">Author (optional)</label>
             <input class="form-input" value="${esc(d.author)}" oninput="Profile.updateBlock('${bid}','author',this.value)"></div>
-          <div class="form-group"><label class="form-label">Stil</label>
+          <div class="form-group"><label class="form-label">Style</label>
             <select class="form-input" onchange="Profile.updateBlock('${bid}','style',this.value)">
-              <option value="neon-purple" ${d.style==='neon-purple'?'selected':''}>${Icon('heart')} Neon Lilla</option>
+              <option value="neon-purple" ${d.style==='neon-purple'?'selected':''}>${Icon('heart')} Neon Purple</option>
               <option value="neon-cyan"   ${d.style==='neon-cyan'  ?'selected':''}>${Icon('heart')} Neon Cyan</option>
-              <option value="neon-gold"   ${d.style==='neon-gold'  ?'selected':''}>${Icon('heart')} Neon Gull</option>
+              <option value="neon-gold"   ${d.style==='neon-gold'  ?'selected':''}>${Icon('heart')} Neon Gold</option>
             </select></div>`;
       case 'image':
         return `
-          <div class="form-group"><label class="form-label">Bilde-URL</label>
+          <div class="form-group"><label class="form-label">Image URL</label>
             <input class="form-input" placeholder="https://..." value="${esc(d.url)}"
               oninput="Profile.updateBlock('${bid}','url',this.value)"></div>
-          <div class="form-group"><label class="form-label">Bildetekst (valgfri)</label>
+          <div class="form-group"><label class="form-label">Caption (optional)</label>
             <input class="form-input" value="${esc(d.caption)}"
               oninput="Profile.updateBlock('${bid}','caption',this.value)"></div>
           <div class="form-group"><label class="form-label">Filter</label>
             <select class="form-input" onchange="Profile.updateBlock('${bid}','filter',this.value)">
-              <option value="psychedelic" ${d.filter==='psychedelic'?'selected':''}>${Icon('wind')} Psykedelisk</option>
+              <option value="psychedelic" ${d.filter==='psychedelic'?'selected':''}>${Icon('wind')} Psychedelic</option>
               <option value="vhs"  ${d.filter==='vhs' ?'selected':''}>${Icon('tv')} VHS Glitch</option>
-              <option value="none" ${d.filter==='none'?'selected':''}>Ingen</option>
+              <option value="none" ${d.filter==='none'?'selected':''}>None</option>
             </select></div>`;
       case 'links': {
         const btns = d.buttons || [];
@@ -3058,45 +3951,45 @@ const Profile = (() => {
           <div id="cp-${bid}-buttons">
             ${btns.map((btn, i) => `
               <div style="display:flex;gap:0.4rem;margin-bottom:0.4rem;align-items:center">
-                <input class="form-input" placeholder="Tekst" value="${esc(btn.label)}" style="flex:1"
+                <input class="form-input" placeholder="Text" value="${esc(btn.label)}" style="flex:1"
                   oninput="Profile.updateLinkBtn('${bid}',${i},'label',this.value)">
                 <input class="form-input" placeholder="https://..." value="${esc(btn.url)}" style="flex:2"
                   oninput="Profile.updateLinkBtn('${bid}',${i},'url',this.value)">
-                <input type="color" value="${btn.color||'#7c3aed'}"
+                <input type="color" value="${btn.color||'#22c55e'}"
                   style="width:36px;height:36px;border:none;background:none;cursor:pointer;flex-shrink:0"
                   oninput="Profile.updateLinkBtn('${bid}',${i},'color',this.value)">
                 <button class="cp-block-btn del" onclick="Profile.removeLinkBtn('${bid}',${i})">${Icon('x')}</button>
               </div>`).join('')}
           </div>
           <button class="btn btn-ghost btn-sm" style="margin-top:0.25rem"
-            onclick="Profile.addLinkBtn('${bid}')">+ Legg til knapp</button>`;
+            onclick="Profile.addLinkBtn('${bid}')">+ Add button</button>`;
       }
       case 'divider':
         return `
           <div class="form-group"><label class="form-label">Stil</label>
             <select class="form-input" onchange="Profile.updateBlock('${bid}','style',this.value)">
               <option value="plasma" ${d.style==='plasma'?'selected':''}>${Icon('zap')} Plasma</option>
-              <option value="wave"   ${d.style==='wave'  ?'selected':''}>${Icon('waves')} Bølge</option>
-              <option value="stars"  ${d.style==='stars' ?'selected':''}>${Icon('sparkles')} Stjerner</option>
+              <option value="wave"   ${d.style==='wave'  ?'selected':''}>${Icon('waves')} Wave</option>
+              <option value="stars"  ${d.style==='stars' ?'selected':''}>${Icon('sparkles')} Stars</option>
             </select></div>`;
       case 'countdown':
         return `
-          <div class="form-group"><label class="form-label">Dato</label>
+          <div class="form-group"><label class="form-label">Date</label>
             <input class="form-input" type="date" value="${esc(d.date)}"
               onchange="Profile.updateBlock('${bid}','date',this.value)"></div>
-          <div class="form-group"><label class="form-label">Ledetekst</label>
+          <div class="form-group"><label class="form-label">Label</label>
             <input class="form-input" value="${esc(d.label)}"
               oninput="Profile.updateBlock('${bid}','label',this.value)"></div>`;
       case 'vibes':
         return `
-          <div class="form-group"><label class="form-label">Tekst (valgfri)</label>
+          <div class="form-group"><label class="form-label">Text (optional)</label>
             <input class="form-input" value="${esc(d.text)}" placeholder="good vibes only"
               oninput="Profile.updateBlock('${bid}','text',this.value)"></div>
-          <div class="form-group"><label class="form-label">Stil</label>
+          <div class="form-group"><label class="form-label">Style</label>
             <select class="form-input" onchange="Profile.updateBlock('${bid}','style',this.value)">
               <option value="aurora"  ${d.style==='aurora' ?'selected':''}>${Icon('sparkles')} Aurora</option>
               <option value="lava"    ${d.style==='lava'   ?'selected':''}>${Icon('mountain')} Lava</option>
-              <option value="galaxy"  ${d.style==='galaxy' ?'selected':''}>${Icon('sparkles')} Galakse</option>
+              <option value="galaxy"  ${d.style==='galaxy' ?'selected':''}>${Icon('sparkles')} Galaxy</option>
             </select></div>`;
       case 'embed':
         return `
@@ -3110,10 +4003,10 @@ const Profile = (() => {
               placeholder="${d.type==='spotify'?'https://open.spotify.com/...':'https://youtube.com/watch?v=...'}"
               oninput="Profile.updateBlock('${bid}','url',this.value)">
             <div style="font-size:0.72rem;color:var(--text3);margin-top:0.2rem">
-              Lim inn lenke fra ${d.type==='spotify'?'Spotify':'YouTube'}
+              Paste a link from ${d.type==='spotify'?'Spotify':'YouTube'}
             </div></div>`;
       default:
-        return '<p style="color:var(--text3);font-size:0.82rem">Ukjent blokktype</p>';
+        return '<p style="color:var(--text3);font-size:0.82rem">Unknown block type</p>';
     }
   }
 
@@ -3128,7 +4021,7 @@ const Profile = (() => {
     });
     return {
       html: `<div class="custom-page-section">
-        <div class="cp-page-divider"><span>${Icon('sparkles')} Min Side ${Icon('sparkles')}</span></div>
+        <div class="cp-page-divider"><span>${Icon('sparkles')} My Page ${Icon('sparkles')}</span></div>
         ${parts.join('')}
       </div>`,
       countdowns,
@@ -3161,7 +4054,7 @@ const Profile = (() => {
         return `<div class="cp-links">
           ${d.buttons.map(btn => `<a class="cp-link-btn" href="${esc(btn.url)}"
             target="_blank" rel="noopener noreferrer"
-            style="background:${btn.color||'#7c3aed'}">${esc(btn.label)}</a>`).join('')}
+            style="background:${btn.color||'#22c55e'}">${esc(btn.label)}</a>`).join('')}
         </div>`;
       case 'divider':
         return d.style === 'stars'
@@ -3171,12 +4064,12 @@ const Profile = (() => {
         if (!d.date) return '';
         const cdId = `cd-${block.id}`;
         return `<div class="cp-countdown">
-          <div class="cp-countdown-label">${esc(d.label||'Nedtelling')}</div>
+          <div class="cp-countdown-label">${esc(d.label||'Countdown')}</div>
           <div class="cp-countdown-units" id="${cdId}">
-            <div class="cp-countdown-unit"><div class="cp-countdown-val" id="${cdId}-d">--</div><div class="cp-countdown-unit-label">Dager</div></div>
-            <div class="cp-countdown-unit"><div class="cp-countdown-val" id="${cdId}-h">--</div><div class="cp-countdown-unit-label">Timer</div></div>
+            <div class="cp-countdown-unit"><div class="cp-countdown-val" id="${cdId}-d">--</div><div class="cp-countdown-unit-label">Days</div></div>
+            <div class="cp-countdown-unit"><div class="cp-countdown-val" id="${cdId}-h">--</div><div class="cp-countdown-unit-label">Hours</div></div>
             <div class="cp-countdown-unit"><div class="cp-countdown-val" id="${cdId}-m">--</div><div class="cp-countdown-unit-label">Min</div></div>
-            <div class="cp-countdown-unit"><div class="cp-countdown-val" id="${cdId}-s">--</div><div class="cp-countdown-unit-label">Sek</div></div>
+            <div class="cp-countdown-unit"><div class="cp-countdown-val" id="${cdId}-s">--</div><div class="cp-countdown-unit-label">Sec</div></div>
           </div>
         </div>`;
       }
@@ -3219,7 +4112,7 @@ const Profile = (() => {
       if (!el) return;
       const diff = new Date(dateStr).getTime() - Date.now();
       if (diff <= 0) {
-        el.innerHTML = `<div style="color:#f59e0b;font-weight:700;font-size:1.1rem">${Icon('party')} Det skjedde!</div>`;
+        el.innerHTML = `<div style="color:#f59e0b;font-weight:700;font-size:1.1rem">${Icon('party')} It happened!</div>`;
         return;
       }
       const set = (sfx, val) => { const e = document.getElementById(`${id}-${sfx}`); if (e) e.textContent = String(val).padStart(2,'0'); };
@@ -3270,7 +4163,7 @@ const Profile = (() => {
   function addLinkBtn(blockId) {
     const b = _cpBlocks.find(b => b.id === blockId);
     if (!b) return;
-    b.data.buttons = [...(b.data.buttons||[]), { label: 'Lenke', url: 'https://', color: '#7c3aed' }];
+    b.data.buttons = [...(b.data.buttons||[]), { label: 'Lenke', url: 'https://', color: '#22c55e' }];
     refreshCpCanvas();
     setTimeout(() => { const s = document.getElementById(`cpbs-${blockId}`); if (s) s.classList.add('open'); }, 10);
   }
@@ -3298,7 +4191,7 @@ const Profile = (() => {
     if (!canvas) return;
     const openIds = new Set([...document.querySelectorAll('.cp-block-settings.open')].map(el => el.id.replace('cpbs-','')));
     if (!_cpBlocks.length) {
-      canvas.innerHTML = `<div class="cp-empty"><div class="cp-empty-icon">${Icon('wind')}</div><p>Klikk på en blokk til venstre for å begynne</p></div>`;
+      canvas.innerHTML = `<div class="cp-empty"><div class="cp-empty-icon">${Icon('wind')}</div><p>Click a block on the left to begin</p></div>`;
       return;
     }
     canvas.innerHTML = _cpBlocks.map((b, i) => cpBlockEditorHtml(b, i, _cpBlocks.length)).join('');
@@ -3311,7 +4204,7 @@ const Profile = (() => {
     const customPage = { blocks: JSON.parse(JSON.stringify(_cpBlocks)) };
     Auth.updateUser(current.username, { customPage });
     current.customPage = customPage;
-    App.toast('Min Side lagret! ✓', 'success');
+    App.toast('My Page saved! ✓', 'success');
   }
 
   function cpDragStart(e, id) {
@@ -3365,19 +4258,19 @@ const Profile = (() => {
           const typeEmoji = EVENT_TYPES.find(t => t.id === e.type)?.emoji || '📅';
           const dt = new Date(`${e.date}T${e.time || '00:00'}`);
           const dateStr = dt.toLocaleDateString('no-NO', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-          const timeStr = e.time ? ` · kl. ${e.time}` : '';
+          const timeStr = e.time ? ` · at ${e.time}` : '';
           const safeTitle = (e.title || '').replace(/'/g, "\\'");
           const safeUrl   = (e.liveUrl || '').replace(/'/g, "\\'");
           return `
             <div class="event-card${e.isLive ? ' event-card--live' : ''}">
-              ${e.isLive ? '<div class="event-live-badge"><span class="event-live-dot"></span> LIVE NÅ</div>' : ''}
+              ${e.isLive ? '<div class="event-live-badge"><span class="event-live-dot"></span> LIVE NOW</div>' : ''}
               <div class="event-card-header">
                 <span class="event-type-emoji">${typeEmoji}</span>
                 <div class="event-card-info">
                   <div class="event-title">${e.title}</div>
                   ${!e.isLive ? `<div class="event-meta">${dateStr}${timeStr}${e.location ? ' · 📍 ' + e.location : ''}</div>` : (e.location ? `<div class="event-meta">${Icon('map-pin')} ${e.location}</div>` : '')}
                 </div>
-                ${e.isLive && e.liveUrl ? `<button class="event-listen-btn" onclick="Radio.playUrl('${safeUrl}','${safeTitle}','🔴')">${Icon('play')} Lytt live</button>` : ''}
+                ${e.isLive && e.liveUrl ? `<button class="event-listen-btn" onclick="Radio.playUrl('${safeUrl}','${safeTitle}','🔴')">${Icon('play')} Listen live</button>` : ''}
               </div>
               ${e.description ? `<div class="event-desc">${e.description}</div>` : ''}
             </div>`;
@@ -3390,15 +4283,15 @@ const Profile = (() => {
       new Date(`${b.date}T${b.time||'00:00'}`) - new Date(`${a.date}T${a.time||'00:00'}`));
     return `
       <div style="max-width:580px">
-        <div class="editor-section-title" style="margin-bottom:0.5rem">${Icon('calendar')} Legg til event</div>
+        <div class="editor-section-title" style="margin-bottom:0.5rem">${Icon('calendar')} Add event</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem;line-height:1.6">
-          Publiser konserter, DJ-sett og shows på profilen din. Merk som live for å la andre lytte direkte herfra.
+          Publish concerts, DJ sets and shows on your profile. Mark as live to let others listen directly from here.
         </p>
         <div style="background:var(--surface2);border-radius:14px;padding:1.25rem;margin-bottom:1.5rem">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
             <div class="form-group">
-              <label class="form-label">Tittel *</label>
-              <input class="form-input" id="ev-title" placeholder="f.eks. DJ Set på Blå">
+              <label class="form-label">Title *</label>
+              <input class="form-input" id="ev-title" placeholder="e.g. DJ Set at Blå">
             </div>
             <div class="form-group">
               <label class="form-label">Type</label>
@@ -3407,39 +4300,39 @@ const Profile = (() => {
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Dato *</label>
+              <label class="form-label">Date *</label>
               <input class="form-input" id="ev-date" type="date">
             </div>
             <div class="form-group">
-              <label class="form-label">Tid</label>
+              <label class="form-label">Time</label>
               <input class="form-input" id="ev-time" type="time">
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Sted / Venue</label>
-            <input class="form-input" id="ev-location" placeholder="f.eks. Blå, Oslo">
+            <label class="form-label">Location / Venue</label>
+            <input class="form-input" id="ev-location" placeholder="e.g. Blå, Oslo">
           </div>
           <div class="form-group">
-            <label class="form-label">Beskrivelse</label>
-            <textarea class="form-input" id="ev-desc" rows="2" placeholder="Kort info om eventet…"></textarea>
+            <label class="form-label">Description</label>
+            <textarea class="form-input" id="ev-desc" rows="2" placeholder="Short info about the event…"></textarea>
           </div>
           <div class="event-live-toggle-wrap">
             <label class="event-live-label">
               <input type="checkbox" id="ev-live" onchange="document.getElementById('ev-live-url-wrap').style.display=this.checked?'block':'none'">
               <span class="event-live-dot" style="flex-shrink:0"></span>
-              Marker som LIVE nå
+              Mark as LIVE now
             </label>
             <div id="ev-live-url-wrap" style="display:none;margin-top:0.75rem">
-              <label class="form-label">Stream-URL (valgfritt)</label>
+              <label class="form-label">Stream URL (optional)</label>
               <input class="form-input" id="ev-live-url" placeholder="https://…/stream.mp3">
-              <span class="form-hint">Besøkende kan lytte direkte fra profilen din</span>
+              <span class="form-hint">Visitors can listen directly from your profile</span>
             </div>
           </div>
-          <button class="btn btn-primary" style="margin-top:1rem" onclick="Profile.addEvent()">${Icon('plus')} Legg til event</button>
+          <button class="btn btn-primary" style="margin-top:1rem" onclick="Profile.addEvent()">${Icon('plus')} Add event</button>
         </div>
-        <div class="editor-section-title" style="margin-bottom:0.75rem">Mine events (${events.length})</div>
+        <div class="editor-section-title" style="margin-bottom:0.75rem">My events (${events.length})</div>
         <div id="events-list">
-          ${events.length ? events.map(eventsEditorItem).join('') : '<p style="font-size:0.82rem;color:var(--text2)">Ingen events ennå.</p>'}
+          ${events.length ? events.map(eventsEditorItem).join('') : '<p style="font-size:0.82rem;color:var(--text2)">No events yet.</p>'}
         </div>
       </div>`;
   }
@@ -3456,7 +4349,7 @@ const Profile = (() => {
           </div>
           <div style="font-size:0.75rem;color:var(--text2)">${e.date}${e.time ? ' ' + e.time : ''}${e.location ? ' · ' + e.location : ''}</div>
         </div>
-        <button class="btn-icon btn-danger" onclick="Profile.deleteEvent('${e.id}')" title="Slett">${Icon('trash')}</button>
+        <button class="btn-icon btn-danger" onclick="Profile.deleteEvent('${e.id}')" title="Delete">${Icon('trash')}</button>
       </div>`;
   }
 
@@ -3465,8 +4358,8 @@ const Profile = (() => {
     if (!current) return;
     const title = document.getElementById('ev-title')?.value?.trim();
     const date  = document.getElementById('ev-date')?.value;
-    if (!title) { App.toast('Tittel er påkrevd', 'error'); return; }
-    if (!date)  { App.toast('Dato er påkrevd', 'error'); return; }
+    if (!title) { App.toast('Title is required', 'error'); return; }
+    if (!date)  { App.toast('Date is required', 'error'); return; }
     const isLive = document.getElementById('ev-live')?.checked || false;
     const ev = {
       id:          `ev_${Date.now()}`,
@@ -3495,7 +4388,7 @@ const Profile = (() => {
       const sorted = [...events].sort((a, b) => new Date(`${b.date}T${b.time||'00:00'}`) - new Date(`${a.date}T${a.time||'00:00'}`));
       list.innerHTML = sorted.map(eventsEditorItem).join('');
     }
-    App.toast('Event lagt til! 📅', 'success');
+    App.toast('Event added! 📅', 'success');
   }
 
   function deleteEvent(id) {
@@ -3505,23 +4398,23 @@ const Profile = (() => {
     Auth.updateUser(current.username, { events });
     current.events = events;
     document.getElementById(`evitem-${id}`)?.remove();
-    App.toast('Event slettet', 'info');
+    App.toast('Event deleted', 'info');
   }
 
   function labelsTabHtml(user) {
     const labels = user.labels || [];
     return `
       <div style="max-width:520px">
-        <div class="editor-section-title">${Icon('tag')} Mine plateselskaper</div>
+        <div class="editor-section-title">${Icon('tag')} My record labels</div>
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem;line-height:1.6">
-          Legg til plateselskaper du bruker. Du kan tilordne dem til enkeltspor i tracklisten på dine mixes.
+          Add record labels you use. You can assign them to individual tracks in the tracklist on your mixes.
         </p>
         <div style="display:flex;gap:0.5rem;margin-bottom:1rem">
-          <input class="form-input" id="lbl-input" placeholder="f.eks. Acieeed Records" style="flex:1">
-          <button class="btn btn-primary" onclick="Profile.addLabel()">${Icon('plus')} Legg til</button>
+          <input class="form-input" id="lbl-input" placeholder="e.g. Acieeed Records" style="flex:1">
+          <button class="btn btn-primary" onclick="Profile.addLabel()">${Icon('plus')} Add</button>
         </div>
         <div id="labels-list">
-          ${labels.length ? labels.map(labelEditorItem).join('') : '<p style="font-size:0.82rem;color:var(--text2)">Ingen plateselskaper ennå.</p>'}
+          ${labels.length ? labels.map(labelEditorItem).join('') : '<p style="font-size:0.82rem;color:var(--text2)">No record labels yet.</p>'}
         </div>
       </div>`;
   }
@@ -3531,7 +4424,7 @@ const Profile = (() => {
       <div class="label-editor-item" id="lblitem-${label.id}">
         <span style="font-size:1.1rem">${Icon('tag')}</span>
         <span class="label-editor-name">${label.name}</span>
-        <button class="btn-icon btn-danger btn-sm" onclick="Profile.deleteLabel('${label.id}')" title="Slett">${Icon('trash')}</button>
+        <button class="btn-icon btn-danger btn-sm" onclick="Profile.deleteLabel('${label.id}')" title="Delete">${Icon('trash')}</button>
       </div>`;
   }
 
@@ -3540,7 +4433,7 @@ const Profile = (() => {
     if (!current) return;
     const input = document.getElementById('lbl-input');
     const name = input?.value?.trim();
-    if (!name) { App.toast('Skriv inn navn på plateselskapet', 'error'); return; }
+    if (!name) { App.toast('Enter the name of the record label', 'error'); return; }
     const label = { id: `lbl_${Date.now()}_${Math.random().toString(36).slice(2)}`, name };
     const labels = [...(current.labels || []), label];
     Auth.updateUser(current.username, { labels });
@@ -3552,7 +4445,7 @@ const Profile = (() => {
       if (emptyMsg) emptyMsg.remove();
       list.insertAdjacentHTML('beforeend', labelEditorItem(label));
     }
-    App.toast(`"${name}" lagt til ${Icon('tag')}`, 'success');
+    App.toast(`"${name}" added ${Icon('tag')}`, 'success');
   }
 
   function deleteLabel(id) {
@@ -3564,9 +4457,9 @@ const Profile = (() => {
     document.getElementById(`lblitem-${id}`)?.remove();
     const list = document.getElementById('labels-list');
     if (list && !list.querySelector('.label-editor-item')) {
-      list.innerHTML = '<p style="font-size:0.82rem;color:var(--text2)">Ingen plateselskaper ennå.</p>';
+      list.innerHTML = '<p style="font-size:0.82rem;color:var(--text2)">No record labels yet.</p>';
     }
-    App.toast('Plateselskap fjernet', 'info');
+    App.toast('Record label removed', 'info');
   }
 
   // Delete media
@@ -3577,7 +4470,7 @@ const Profile = (() => {
     current.mediaIds = (current.mediaIds || []).filter(x => x !== id);
     Auth.updateUser(current.username, { mediaIds: current.mediaIds });
     document.getElementById(`media-wrap-${id}`)?.remove();
-    App.toast('Slettet', 'info');
+    App.toast('Deleted', 'info');
   };
 
   // Open media in modal
@@ -3589,7 +4482,7 @@ const Profile = (() => {
     if (rec.kind === 'youtube' && rec.youtubeId) {
       body = `<div style="position:relative;width:100%;padding-top:56.25%;border-radius:8px;overflow:hidden"><iframe src="https://www.youtube.com/embed/${rec.youtubeId}?autoplay=1" title="YouTube" allow="autoplay; encrypted-media; fullscreen" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>`;
     } else if (rec.kind === 'link') {
-      body = `<a href="${esc(rec.url)}" target="_blank" rel="noopener" class="btn btn-primary">${Icon('external-link')} Åpne lenke</a>`;
+      body = `<a href="${esc(rec.url)}" target="_blank" rel="noopener" class="btn btn-primary">${Icon('external-link')} Open link</a>`;
     } else {
       const url = await mediaSrc(rec);
       if (!url) return;
@@ -3614,8 +4507,28 @@ const Profile = (() => {
     const newVis = (current.profileVisibility || 'public') === 'public' ? 'private' : 'public';
     Auth.updateUser(username, { profileVisibility: newVis });
     current.profileVisibility = newVis;
-    App.toast(newVis === 'private' ? '🔒 Profil satt til privat – bare du kan se den' : '🌐 Profil satt til offentlig', 'success');
+    App.toast(newVis === 'private' ? '🔒 Profile set to private – only you can see it' : '🌐 Profile set to public', 'success');
     renderView(username);
+  }
+
+  // Kort HTML for varsellyd-knappen — gjenspeiler av/på-tilstand (SC.soundOn).
+  // Ligg i alle profiler; innstillinga er per eining (localStorage: pv_sound_on)
+  // og deles med FriendChat/Messenger sin lyd-toggle.
+  function notifySoundBtnHtml() {
+    const on = window.SC ? SC.soundOn() : true;
+    return `<button class="btn btn-ghost btn-sm" id="profile-sound-toggle" onclick="Profile.toggleNotifySound(this)" title="${on ? 'Turn off notification sound' : 'Turn on notification sound'}">${on ? Icon('bell') : (Icon('volume-x') || '🔕')} ${on ? 'Notification sound on' : 'Notification sound off'}</button>`;
+  }
+
+  // Slå varsellyden av/på. Ved påslag spelast eit kort «bling» som forhåndsvisning.
+  function toggleNotifySound(btn) {
+    if (!window.SC) return;
+    const on = SC.toggleSound();
+    if (btn) {
+      btn.innerHTML = `${on ? Icon('bell') : (Icon('volume-x') || '🔕')} ${on ? 'Notification sound on' : 'Notification sound off'}`;
+      btn.title = on ? 'Turn off notification sound' : 'Turn on notification sound';
+    }
+    if (on && window.SC.playDing) SC.playDing('notif');   // kort bling ved påslag
+    if (window.App) App.toast(on ? '🔔 Notification sound on' : '🔕 Notification sound off', 'info', 2000);
   }
 
   function setProfileVisibility(value) {
@@ -3630,10 +4543,10 @@ const Profile = (() => {
     if (pubBtn)  { pubBtn.className  = `btn btn-sm ${value === 'public'  ? 'btn-primary' : 'btn-ghost'}`; pubBtn.style.flex  = '1'; }
     if (privBtn) { privBtn.className = `btn btn-sm ${value === 'private' ? 'btn-primary' : 'btn-ghost'}`; privBtn.style.flex = '1'; }
     if (desc) desc.textContent = value === 'private'
-      ? 'Bare du kan se profilen din. Andre ser en låst side.'
-      : 'Alle kan finne og se profilen din.';
+      ? 'Only you can see your profile. Others see a locked page.'
+      : 'Anyone can find and view your profile.';
 
-    App.toast(value === 'private' ? '🔒 Profil satt til privat' : '🌐 Profil satt til offentlig', 'success');
+    App.toast(value === 'private' ? '🔒 Profile set to private' : '🌐 Profile set to public', 'success');
   }
 
   // ── Paint / Image Editor ────────────────────────────────────────────
@@ -3647,32 +4560,32 @@ const Profile = (() => {
       <div class="paint-editor">
         <div class="paint-toolbar">
           <div class="paint-tools-group">
-            <button class="paint-tool active" id="ptool-pencil" onclick="window._setPaintTool('pencil',this)" title="Blyant">${Icon('edit')}</button>
-            <button class="paint-tool" id="ptool-line"   onclick="window._setPaintTool('line',this)"   title="Linje">╱</button>
-            <button class="paint-tool" id="ptool-rect"   onclick="window._setPaintTool('rect',this)"   title="Rektangel">▭</button>
-            <button class="paint-tool" id="ptool-eraser" onclick="window._setPaintTool('eraser',this)" title="Viskelær">${Icon('square')}</button>
-            <button class="paint-tool" id="ptool-text"   onclick="window._setPaintTool('text',this)"   title="Tekst">T</button>
+            <button class="paint-tool active" id="ptool-pencil" onclick="window._setPaintTool('pencil',this)" title="Pencil">${Icon('edit')}</button>
+            <button class="paint-tool" id="ptool-line"   onclick="window._setPaintTool('line',this)"   title="Line"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="19" x2="19" y2="5"/></svg></button>
+            <button class="paint-tool" id="ptool-rect"   onclick="window._setPaintTool('rect',this)"   title="Rectangle"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="1.5"/></svg></button>
+            <button class="paint-tool" id="ptool-eraser" onclick="window._setPaintTool('eraser',this)" title="Eraser"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4.3-4.3a1 1 0 0 1 0-1.4L13.6 4.4a2 2 0 0 1 2.8 0l3.2 3.2a2 2 0 0 1 0 2.8L11 21"/><path d="m5.5 12.5 6 6"/><path d="M22 21H7"/></svg></button>
+            <button class="paint-tool" id="ptool-text"   onclick="window._setPaintTool('text',this)"   title="Text">${Icon('type')}</button>
           </div>
           <div class="paint-divider"></div>
           <div class="paint-color-group">
-            <span class="paint-label">Farge</span>
-            <input type="color" id="paint-color" value="#ff0000" class="paint-color-input" title="Fargevelger">
-            <span class="paint-label">Str.</span>
+            <span class="paint-label">Color</span>
+            <input type="color" id="paint-color" value="#ff0000" class="paint-color-input" title="Color picker">
+            <span class="paint-label">Size</span>
             <input type="range" id="paint-size" min="1" max="50" value="4" class="paint-size-range">
             <span id="paint-size-val" class="paint-size-val">4</span>
           </div>
           <div class="paint-divider"></div>
           <div class="paint-text-group" id="paint-text-group" style="display:none">
-            <input type="text" id="paint-text-input" placeholder="Skriv tekst her..." class="paint-text-field">
+            <input type="text" id="paint-text-input" placeholder="Write text here..." class="paint-text-field">
             <select id="paint-font-size" class="paint-font-sel">
               ${[12,16,20,24,32,48,64,80].map(s => `<option value="${s}" ${s===24?'selected':''}>${s}px</option>`).join('')}
             </select>
             <label class="paint-bold-check"><input type="checkbox" id="paint-text-bold" checked> <b>B</b></label>
           </div>
           <div class="paint-actions">
-            <button class="paint-action-btn" onclick="window._paintUndo()">${Icon('corner-down-left')} Angre</button>
-            <button class="paint-action-btn p-danger" onclick="window._closePaintEditor(false)">${Icon('x')} Avbryt</button>
-            <button class="paint-action-btn p-primary" onclick="window._closePaintEditor(true)">${Icon('check')} Bruk</button>
+            <button class="paint-action-btn" onclick="window._paintUndo()">${Icon('corner-down-left')} Undo</button>
+            <button class="paint-action-btn p-danger" onclick="window._closePaintEditor(false)">${Icon('x')} Cancel</button>
+            <button class="paint-action-btn p-primary" onclick="window._closePaintEditor(true)">${Icon('check')} Apply</button>
           </div>
         </div>
         <div class="paint-canvas-area">
@@ -3685,7 +4598,7 @@ const Profile = (() => {
           </div>
         </div>
         <div class="paint-statusbar">
-          <span id="paint-info">Blyant — klikk og dra for å tegne</span>
+          <span id="paint-info">Pencil — click and drag to draw</span>
           <span id="paint-coords"></span>
           <span id="paint-dims" class="paint-canvas-dims"></span>
         </div>
@@ -3706,7 +4619,7 @@ const Profile = (() => {
     let history = [];
     let snapData = null;
 
-    const toolNames = {pencil:'Blyant',line:'Linje',rect:'Rektangel',eraser:'Viskelær',text:'Tekst'};
+    const toolNames = {pencil:'Pencil',line:'Line',rect:'Rectangle',eraser:'Eraser',text:'Text'};
     const toolCursors = {pencil:'crosshair',line:'crosshair',rect:'crosshair',eraser:'cell',text:'text'};
 
     function saveHistory() {
@@ -3737,7 +4650,7 @@ const Profile = (() => {
       document.querySelectorAll('.paint-tool').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('paint-text-group').style.display = tool === 'text' ? 'flex' : 'none';
-      infoEl.textContent = toolNames[tool] + (tool === 'text' ? ' — klikk på bildet for å plassere tekst' : ' — klikk og dra for å tegne');
+      infoEl.textContent = toolNames[tool] + (tool === 'text' ? ' — click the image to place text' : ' — click and drag to draw');
       canvas.style.cursor = toolCursors[tool];
     };
 
@@ -3810,7 +4723,7 @@ const Profile = (() => {
 
       if (currentTool === 'text') {
         const txt = document.getElementById('paint-text-input').value.trim();
-        if (!txt) { infoEl.textContent = 'Skriv inn tekst i feltet over først!'; return; }
+        if (!txt) { infoEl.textContent = 'Enter text in the field above first!'; return; }
         saveHistory();
         const fontSize = parseInt(document.getElementById('paint-font-size').value);
         const bold     = document.getElementById('paint-text-bold').checked;
@@ -3936,15 +4849,21 @@ const Profile = (() => {
   }
 
   return {
-    renderView, renderEditor,
+    renderView, renderEditor, openEditorAt,
     switchTab,
+    // Nærvær-status
+    setStatus, toggleStatusMenu,
     renderWallTab,
     playTrack,
+    reportTrack,
     toggleProfileVisibility, setProfileVisibility,
+    toggleNotifySound,
     saveProfile, livePreview, collectTheme,
     uploadMedia, uploadMusic, uploadMusicCover, uploadSaleCover, uploadAvatar, uploadBanner,
-    setAvatarFromProfile, deleteAvatar,
+    setAvatarFromProfile, deleteAvatar, migrateLocalMediaToCloud,
     setBannerFromProfile, deleteBanner,
+    openBannerReposForFile, repositionBanner, nudgeBannerRepos, resetBannerRepos,
+    saveBannerRepos, cancelBannerRepos,
     addMediaLink, toggleMediaVisibility,
     shareTrackToCommunity, shareMediaToCommunity,
     toggleTrackVisibility,
@@ -3967,9 +4886,13 @@ const Profile = (() => {
     // DJ Mixes
     uploadMix, deleteMix, toggleMixVisibility,
     playMix, addMixComment,
+    // Samlet opplastingsmodal (fil / URL)
+    openUploadModal, umMode, umFilePicked, umCoverPicked,
+    submitMixFile, umFetchPreview, submitMixUrl,
     openMixEditModal, saveMixEdits, uploadMixCover,
     addTrackToModal, removeTrackFromModal, searchTrackOnGoogle,
     upgradeToPro, startStripeCheckout, confirmUpgrade,
+    openMixPaywall, payMixHours,
     // Plateselskaper
     addLabel, deleteLabel,
     // Plattformer
@@ -3980,5 +4903,16 @@ const Profile = (() => {
     sendAiChat, sendAiChatMsg,
     // Music demo
     toggleDemoMenu,
+    // Delt hjelper — fyller inn ekte profilbilder i initial-plassholdere
+    hydrateAvatars,
+    // Delt hjelper — fyller inn ekte banner-/forsidebilder på bruker-kort
+    hydrateBanners,
   };
 })();
+
+// VIKTIG: eksponer på window. `const Profile` er kun en leksikalsk global og blir
+// IKKE en window-egenskap, så alle `if (window.Profile && …)`-vaktene rundt om i
+// koden (18 steder: feed, kommentarer, innlegg, venner, avatar-hydrering) var
+// alltid usanne → profilbilder ble aldri hydrert noe sted. Samme mønster som
+// window.Community/window.Social allerede bruker.
+window.Profile = Profile;

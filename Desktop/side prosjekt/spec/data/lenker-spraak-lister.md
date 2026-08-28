@@ -16,7 +16,7 @@ Label-/community-logoer (bilde-lenker): FeedFreq (feedfreq.com), Cryo Chamber
 (app.bigfreq.com/communities/groups/bigfreq-public/home).
 
 About-tab CTA-er: «Join Now» → bigfreq-public; «Watch Dates» → `#/shows`; «View Videos» →
-youtube.com. Kontakt: producerenur@gmail.com.
+youtube.com. Kontakt: post@siriusfm.no.
 
 ## Plattformbytter (`CONFIG.PLATFORM_*`)
 Mobil / Mac-laptop / App Store — URL-er fra `config.js` (fallback gjeldende URL / «kommer snart»).

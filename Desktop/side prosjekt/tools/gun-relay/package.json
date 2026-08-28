@@ -1,0 +1,16 @@
+{
+  "name": "soundcore-gun-relay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SoundCore Gun.js relay (Render/Railway/Node). Verified browser<->browser sync.",
+  "main": "relay.js",
+  "scripts": {
+    "start": "node relay.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "gun": "^0.2020.1241"
+  }
+}

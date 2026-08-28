@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "no.siriusfm.www.twa",
+        "sha256_cert_fingerprints": ["2A:A1:F6:84:6F:51:8F:B8:A9:5B:0A:6A:BC:50:71:C3:8E:84:36:3E:7E:55:1C:21:62:D9:13:F6:27:AE:07:2B"]
+      }
+    }]

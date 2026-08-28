@@ -1,19 +1,14 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // Autoritativ prisliste — klienten kan ALDRI sette beløp selv.
-// Alle planer er Sound Core Pro med påløpende (recurring) betaling.
+// Alle planer er SiriusFM Pro med påløpende (recurring) betaling.
 // Lengre bindingstid = lavere månedspris. Beløp i øre (NOK).
 const PLANS = {
-  monthly: { amount:  14900, interval: 'month', interval_count: 1, label: '1 måned'    }, // 149 kr/mnd
-  quarter: { amount:  39900, interval: 'month', interval_count: 3, label: '3 måneder'  }, // 133 kr/mnd
-  half:    { amount:  74900, interval: 'month', interval_count: 6, label: '6 måneder'  }, // 125 kr/mnd
-  year:    { amount: 129000, interval: 'year',  interval_count: 1, label: '12 måneder' }, // 108 kr/mnd
+  monthly: { amount:  14900, interval: 'month', interval_count: 1, label: '1 month'    }, // 149 kr/mnd
+  quarter: { amount:  39900, interval: 'month', interval_count: 3, label: '3 months'   }, // 133 kr/mnd
+  half:    { amount:  74900, interval: 'month', interval_count: 6, label: '6 months'   }, // 125 kr/mnd
+  year:    { amount: 129000, interval: 'year',  interval_count: 1, label: '12 months'  }, // 108 kr/mnd
 };
-
-// Live Mix-tid: engangsbetaling, per booka time. 150 kr/time (15000 øre).
-// Speiler js/livemix.js (RATE_ORE) — autoritativt her, klienten kan ALDRI sette beløp.
-const LIVEMIX_RATE_ORE = 15000;
-const LIVEMIX_MAX_HOURS = 8;
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -23,37 +18,39 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { username, plan, product } = req.body || {};
-  if (!username) return res.status(400).json({ error: 'Mangler brukernavn' });
+  const { username, plan, product, hours } = req.body || {};
+  if (!username) return res.status(400).json({ error: 'Missing username' });
 
   const siteUrl = process.env.SITE_URL || `https://${req.headers.host}`;
 
-  // ── Live Mix-tid: engangsbetaling (mode:'payment'), per booka time ──
-  if (product === 'livemix') {
-    const hours = Math.max(1, Math.min(LIVEMIX_MAX_HOURS, parseInt(req.body.hours, 10) || 1));
-    const slot  = typeof req.body.slot === 'string' ? req.body.slot.slice(0, 40) : '';
+  // Engangskjøp: ekstra opplastingstimer for én DJ-mix over 3 timer (60 kr/time).
+  // mode:'payment' (ikke abonnement). Beløpet settes autoritativt server-side.
+  if (product === 'upload-hours') {
+    const h = Math.max(1, Math.min(24, parseInt(hours, 10) || 1));
     try {
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
+        // payment_method_types utelates med vilje: Stripe viser da metodene som er
+        // aktivert i Dashboard (Kort + PayPal m.fl.) og som er gyldige for valuta/modus.
+        // Engangskjøp i NOK støtter PayPal når det er skrudd på i Dashboard.
         line_items: [{
           price_data: {
             currency: 'nok',
             product_data: {
-              name: `Sound Core — Live Mix-tid (${hours} ${hours > 1 ? 'timer' : 'time'})`,
-              description: 'Reservert direktesendt mikse-slot. Opptaket lagres på profilen din etterpå.',
+              name: `Extra upload time — ${h} hour${h > 1 ? 's' : ''}`,
+              description: 'Lets you upload one DJ mix longer than 3 hours on SiriusFM.',
             },
-            unit_amount: LIVEMIX_RATE_ORE,
+            unit_amount: 6000, // 60 kr per time
           },
-          quantity: hours,
+          quantity: h,
         }],
         mode: 'payment',
         success_url: `${siteUrl}?payment_success={CHECKOUT_SESSION_ID}`,
-        cancel_url:  `${siteUrl}/`,
-        metadata: { username, product: 'livemix', hours: String(hours), slot },
+        cancel_url:  `${siteUrl}#/shop`,
+        metadata: { username, product: 'upload-hours', hours: String(h) },
       });
       return res.status(200).json({ url: session.url });
     } catch (err) {
-      console.error('Stripe livemix checkout error:', err.message);
+      console.error('Stripe hours checkout error:', err.message);
       return res.status(500).json({ error: err.message });
     }
   }
@@ -63,13 +60,15 @@ module.exports = async (req, res) => {
 
   try {
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      // payment_method_types utelates med vilje — se kommentar i upload-hours over.
+      // NB: PayPal for ABONNEMENT (mode:'subscription') i NOK er ofte ikke tilgjengelig;
+      // da filtrerer Stripe det bort automatisk og viser kun kort. Ingen feil kastes.
       line_items: [{
         price_data: {
           currency: 'nok',
           product_data: {
-            name: `Sound Core Pro — ${p.label}`,
-            description: 'Pro: DJ-mixes over 3 timer, privat/offentlig synlighet, Pro-badge og ubegrenset lagring',
+            name: `SiriusFM Pro — ${p.label}`,
+            description: 'Pro: DJ mixes over 3 hours, private/public visibility, Pro badge and unlimited storage',
             images: [],
           },
           unit_amount: p.amount,

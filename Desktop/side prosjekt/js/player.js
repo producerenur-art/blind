@@ -77,6 +77,18 @@ const Player = (() => {
     return url;
   }
 
+  // Resolve the cover/artwork for a music record. Uploads across the site store
+  // the cover as coverUrl (Supabase cloud) or coverMediaId/coverId (local blob in
+  // the "media" store). Fall back to the legacy artworkUrl field for old records.
+  async function resolveCoverUrl(rec) {
+    if (!rec) return null;
+    if (rec.coverUrl)   return rec.coverUrl;
+    if (rec.artworkUrl) return rec.artworkUrl;
+    const blobId = rec.coverMediaId || rec.coverId;
+    if (blobId) return await DB.getBlobUrl('media', blobId).catch(() => null);
+    return null;
+  }
+
   async function loadTrack(id, autoPlay = true) {
     if (typeof Radio !== 'undefined') Radio.stopForMusicPlayer?.();
     const rec = await DB.get('music', id);
@@ -89,16 +101,20 @@ const Player = (() => {
     $('player-artist').textContent = rec.artist || 'Ukjent artist';
 
     const artEl = $('player-artwork');
-    if (rec.artworkUrl) {
-      artEl.style.backgroundImage = `url(${rec.artworkUrl})`;
-      artEl.querySelector('.artwork-note').style.display = 'none';
+    const coverUrl = await resolveCoverUrl(rec);
+    if (coverUrl) {
+      artEl.style.backgroundImage = `url("${coverUrl}")`;
+      artEl.style.backgroundSize = 'cover';
+      artEl.style.backgroundPosition = 'center';
+      const note = artEl.querySelector('.artwork-note');
+      if (note) note.style.display = 'none';
     } else {
       artEl.style.backgroundImage = '';
       const note = artEl.querySelector('.artwork-note');
-      note.style.display = ''; note.innerHTML = Icon('music');
+      if (note) { note.style.display = ''; note.innerHTML = Icon('music'); }
     }
 
-    $('player-bar').classList.remove('hidden');
+    $('player-bar').classList.remove('hidden', 'idle');
     renderQueue();
 
     if (autoPlay) audio.play().catch(() => {});
@@ -112,6 +128,12 @@ const Player = (() => {
 
   function togglePlay() {
     if (window._radioMode) { Radio.togglePlay(); return; }
+    // Spelaren står no på alle ruter, så play kan bli trykt før noko er lasta.
+    if (!audio.src) {
+      App.toast('Choose a station or a track first', 'info');
+      Router.go('/radio');
+      return;
+    }
     if (isPlaying) audio.pause();
     else audio.play().catch(() => {});
   }
@@ -158,11 +180,11 @@ const Player = (() => {
   function renderQueue() {
     const list = $('queue-list');
     if (!list) return;
-    if (!queue.length) { list.innerHTML = '<div class="empty-state" style="padding:1rem"><p>Ingen sanger i køen</p></div>'; return; }
+    if (!queue.length) { list.innerHTML = '<div class="empty-state" style="padding:1rem"><p>No songs in the queue</p></div>'; return; }
     list.innerHTML = queue.map((id, i) => `
       <div class="queue-item ${i === currentIndex ? 'active' : ''}" onclick="Player.jumpTo(${i})">
         <span class="queue-num">${i === currentIndex ? Icon('play', { cls: 'icon-xs' }) : i + 1}</span>
-        <span class="queue-label" id="ql-${id}">Laster…</span>
+        <span class="queue-label" id="ql-${id}">Loading…</span>
       </div>
     `).join('');
     // fill names async
@@ -206,7 +228,7 @@ const Player = (() => {
       const note = artEl.querySelector('.artwork-note');
       if (note) { note.style.display = ''; note.innerHTML = Icon('sliders'); }
     }
-    $('player-bar').classList.remove('hidden');
+    $('player-bar').classList.remove('hidden', 'idle');
     audio.play().catch(() => {});
     queue = [];
     currentIndex = -1;

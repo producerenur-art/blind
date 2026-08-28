@@ -1,14 +1,12 @@
-// Chat — Gun.js real-time P2P chat + inline Radio + YouTube embed
+// Chat — Gun.js real-time P2P chat (kun chat: radio- og YouTube-panelet er fjerna)
 const Chat = (() => {
 
   // ── Gun.js setup ──────────────────────────────────────────────────────
-  // Verifiserte oppe 2026-06-28 (funksjonell relay-test). Legacy heroku/wallie
-  // er sovna (Heroku free-tier borte) — haldne som fallback om dei vaknar.
+  // Verifiserte oppe 2026-06-28 (funksjonell relay-test). Døde legacy-peers
+  // (gun-manhattan.herokuapp.com, peer.wallie.io) fjerna — laga konsollstøy.
   const GUN_PEERS = [
     'https://relay.peer.ooo/gun',              // ✓ browser-verifisert oppe
     'https://gun.defucc.me/gun',               // ✓ browser-verifisert oppe
-    'https://gun-manhattan.herokuapp.com/gun', // legacy fallback (kan vakne)
-    'https://peer.wallie.io/gun',              // legacy fallback (kan vakne)
   ];
   const CHAT_KEY  = 'profilverse_radio_chat_v1';
   const MAX_MSGS  = 120;
@@ -20,27 +18,27 @@ const Chat = (() => {
   let myColor     = localStorage.getItem('pv_chat_color') || randomColor();
   let connected   = false;
   let lastSent    = 0;
-  let ytVideoId   = localStorage.getItem('pv_yt_stream') || '';
-  let activeTab   = 'radio';
-  let radioSearchResults = [];
-  let radioSearchTimer   = null;
 
   // ── Floating window state ─────────────────────────────────────────────
   let floatAbort = null;
   let _inputListenersAttached = false;
   let _msgSubscribed = false;
 
+  // Kun chat-panelet igjen → smalare standardvindu. Nøkkelen er bumpa til _v2
+  // slik at gamle (breie) posisjonar frå radio/YouTube-tida ikkje blir arva.
+  const FLOAT_KEY = 'pv_chat_float_v2';
+
   function defaultFloatState() {
-    const w = Math.min(680, window.innerWidth - 32);
-    const h = Math.min(520, window.innerHeight - 120);
+    const w = Math.min(420, window.innerWidth - 32);
+    const h = Math.min(560, window.innerHeight - 120);
     return { x: Math.max(0, window.innerWidth - w - 16), y: 76, w, h, minimized: false };
   }
 
-  let floatState = JSON.parse(localStorage.getItem('pv_chat_float') || 'null') || defaultFloatState();
+  let floatState = JSON.parse(localStorage.getItem(FLOAT_KEY) || 'null') || defaultFloatState();
   let chatMinimized = floatState.minimized || false;
 
   function saveFloatState() {
-    localStorage.setItem('pv_chat_float', JSON.stringify(floatState));
+    localStorage.setItem(FLOAT_KEY, JSON.stringify(floatState));
   }
 
   function applyFloatState(win) {
@@ -52,7 +50,7 @@ const Chat = (() => {
       win.classList.add('minimized');
       chatMinimized = true;
       const btn = document.getElementById('chat-minimize-btn');
-      if (btn) { btn.textContent = '+'; btn.title = 'Utvid'; }
+      if (btn) { btn.textContent = '+'; btn.title = 'Expand'; }
     }
   }
 
@@ -62,13 +60,27 @@ const Chat = (() => {
     if (!win) return;
     chatMinimized = !chatMinimized;
     win.classList.toggle('minimized', chatMinimized);
-    if (btn) { btn.textContent = chatMinimized ? '+' : '—'; btn.title = chatMinimized ? 'Utvid' : 'Minimer'; }
+    if (btn) { btn.textContent = chatMinimized ? '+' : '—'; btn.title = chatMinimized ? 'Expand' : 'Minimize'; }
     floatState.minimized = chatMinimized;
     saveFloatState();
   }
 
+  // Lukk chat-vinduet – tilgjengelig for alle (gjester og innloggede).
+  // Radioen spilles av det globale <audio id="audio-engine"> som ligger utenfor
+  // dette vinduet, så musikken fortsetter uendret når chatten lukkes.
+  function closeFloat() {
+    const win = document.getElementById('chat-float-window');
+    if (win) win.remove();
+    if (floatAbort) { floatAbort.abort(); floatAbort = null; }
+    _inputListenersAttached = false;   // slik at Enter-lyttere kobles på igjen ved reåpning
+    const btn = document.getElementById('nav-chat-bubble');
+    if (btn) btn.classList.remove('active');
+    // Var vi på chat-siden er #app tomt nå – send brukeren til forsiden.
+    if (location.hash.startsWith('#/chat')) location.hash = '#/';
+  }
+
   function randomColor() {
-    const colors = ['#a78bfa','#60a5fa','#34d399','#f472b6','#fb923c','#38bdf8','#c084fc','#4ade80'];
+    const colors = ['#86efac','#60a5fa','#34d399','#f472b6','#fb923c','#38bdf8','#c084fc','#4ade80'];
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
@@ -85,24 +97,6 @@ const Chat = (() => {
     gun = Gun({ peers: GUN_PEERS, localStorage: false });
     messagesRef = gun.get(CHAT_KEY).get('messages');
     connected = true;
-  }
-
-  // ── YouTube helpers ───────────────────────────────────────────────────
-  function extractYtId(input) {
-    if (!input) return null;
-    const patterns = [
-      /(?:v=|\/v\/|youtu\.be\/|\/embed\/|\/live\/)([A-Za-z0-9_-]{11})/,
-      /^([A-Za-z0-9_-]{11})$/,
-    ];
-    for (const p of patterns) {
-      const m = input.match(p);
-      if (m) return m[1];
-    }
-    return null;
-  }
-
-  function buildEmbedUrl(videoId) {
-    return `https://www.youtube.com/embed/${videoId}?autoplay=0&modestbranding=1&rel=0&playsinline=1`;
   }
 
   // ── Persistent float: lift window out of #app so it survives navigation ──
@@ -132,73 +126,21 @@ const Chat = (() => {
   function renderFloat() {
     const nickChosen = !!localStorage.getItem('pv_chat_nick');
     if (!myNick) myNick = randomNick();
-    const stations    = (typeof Radio !== 'undefined' && Radio.stations) ? Radio.stations : [];
-    const currentSt   = (typeof Radio !== 'undefined') ? Radio.currentStation : null;
-    const radioPlaying = (typeof Radio !== 'undefined') ? Radio.isPlaying : false;
 
     const tmp = document.createElement('div');
     tmp.innerHTML = `<div id="chat-float-window" class="chat-float-window">
       <div id="chat-float-drag-bar" class="chat-float-drag-bar">
         <span class="chat-float-grip" aria-hidden="true">${Icon('grip')}</span>
-        <span class="chat-float-title">${Icon('radio')} Sound Core — Live Chat</span>
-        <button class="chat-float-btn" id="chat-minimize-btn" onclick="Chat.toggleMinimize()" title="Minimer">—</button>
+        <span class="chat-float-title">${Icon('radio')} SiriusFM — Live Chat</span>
+        <button class="chat-float-btn" id="chat-minimize-btn" onclick="Chat.toggleMinimize()" title="Minimize">—</button>
+        <button class="chat-float-btn chat-float-close" id="chat-close-btn" onclick="Chat.closeFloat()" title="Lukk chat" aria-label="Lukk chat">×</button>
       </div>
       <div class="chat-page">
-        <div class="chat-stream-panel">
-          <div class="chat-panel-tabs">
-            <button class="chat-panel-tab ${activeTab === 'radio' ? 'active' : ''}" id="tab-radio" onclick="Chat.showTab('radio')">${Icon('radio')} Radio</button>
-            <button class="chat-panel-tab ${activeTab === 'youtube' ? 'active' : ''}" id="tab-youtube" onclick="Chat.showTab('youtube')">${Icon('tv')} YouTube</button>
-          </div>
-          <div class="chat-radio-tab" id="chat-radio-tab" style="${activeTab !== 'radio' ? 'display:none' : ''}">
-            <div class="chat-radio-search-wrap">
-              <input class="chat-radio-search-input" id="chat-radio-search"
-                     placeholder="Søk etter radiokanal…" autocomplete="off"
-                     oninput="Chat.onRadioSearch(this.value)">
-              <div class="chat-radio-search-results hidden" id="chat-radio-search-results"></div>
-            </div>
-            <div class="chat-radio-list" id="chat-radio-list">
-              ${stations.length ? stations.map(s => `
-                <button class="chat-radio-station ${currentSt?.id === s.id ? 'active' : ''}"
-                        id="crbtn-${s.id}" style="--scolor:${s.color}"
-                        onclick="Chat.playRadioStation('${s.id}')">
-                  <span class="crs-emoji">${iconForEmoji(s.emoji)}</span>
-                  <span class="crs-info">
-                    <span class="crs-name">${s.name}</span>
-                    <span class="crs-desc">${s.desc}</span>
-                  </span>
-                  ${currentSt?.id === s.id && radioPlaying ? '<span class="station-live-dot"></span>' : ''}
-                </button>`).join('') : '<div class="crs-empty-hint">Søk etter en kanal ↑</div>'}
-            </div>
-            <div class="chat-radio-now-playing" id="chat-radio-np">
-              <span id="chat-rnp-emoji">${iconForEmoji(currentSt && currentSt.emoji, 'radio')}</span>
-              <span id="chat-rnp-name">${currentSt ? currentSt.name : 'Velg en stasjon ▲'}</span>
-              <button class="chat-rnp-play-btn" id="chat-rnp-play" onclick="Chat.toggleRadioPlay()">
-                ${currentSt && radioPlaying ? '⏸' : '▶'}
-              </button>
-            </div>
-          </div>
-          <div class="chat-yt-tab" id="chat-yt-tab" style="${activeTab !== 'youtube' ? 'display:none' : ''}">
-            <div class="chat-stream-header">
-              <span class="yt-live-badge">● LIVE</span>
-              <input class="form-input stream-url-input" id="yt-url-input"
-                placeholder="Lim inn YouTube Live URL…"
-                value="${ytVideoId ? 'https://www.youtube.com/watch?v=' + ytVideoId : ''}"
-                style="font-size:0.82rem">
-              <button class="btn btn-primary btn-sm" onclick="Chat.loadYoutube()">Last inn</button>
-              <button class="btn btn-ghost btn-sm" onclick="Chat.clearYoutube()" title="Fjern">${Icon('x')}</button>
-            </div>
-            <div id="yt-iframe-wrap">
-              ${ytVideoId
-                ? `<iframe src="${buildEmbedUrl(ytVideoId)}" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"></iframe>`
-                : `<div class="yt-placeholder"><div class="yt-icon">${Icon('play')}</div><p>Lim inn en YouTube Live-lenke ovenfor.</p></div>`}
-            </div>
-          </div>
-        </div>
         <div class="chat-panel">
           <div class="chat-header">
             <h2>${Icon('message')} Chat</h2>
             <div class="online-count"><span class="online-dot"></span><span id="online-count">Live</span></div>
-            <button class="btn-icon" title="Tøm chat" onclick="Chat.clearMessages()">${Icon('trash')}</button>
+            <button class="btn-icon" title="Clear chat" onclick="Chat.clearMessages()">${Icon('trash')}</button>
           </div>
           <div class="nick-bar" id="nick-bar">
             <label>Nick:</label>
@@ -208,7 +150,7 @@ const Chat = (() => {
               <span style="font-size:0.75rem;color:var(--text3)">${Icon('edit')}</span>
             </div>
             <div class="nick-edit-form ${!nickChosen ? '' : 'hidden'}" id="nick-edit-form">
-              <input class="form-input" id="nick-input" value="${myNick}" maxlength="24" placeholder="Ditt nick" style="font-size:0.82rem">
+              <input class="form-input" id="nick-input" value="${myNick}" maxlength="24" placeholder="Your nick" style="font-size:0.82rem">
               <div class="nick-color-wrap">
                 <input type="color" id="nick-color" value="${myColor}" style="width:32px;height:32px;border:none;border-radius:50%;cursor:pointer;padding:2px;background:none">
               </div>
@@ -221,14 +163,14 @@ const Chat = (() => {
               ${EMOJIS.map(e => `<button class="emoji-pill" onclick="Chat.insertEmoji('${e}')">${e}</button>`).join('')}
             </div>
             <div class="chat-input-row">
-              <label class="chat-color-swatch" style="background:${myColor}" title="Velg tekstfarge">
+              <label class="chat-color-swatch" style="background:${myColor}" title="Choose text color">
                 <input type="color" id="quick-color-picker" value="${myColor}"
                        oninput="Chat.quickColor(this.value)" onchange="Chat.quickColor(this.value)">
               </label>
-              <input id="chat-text" placeholder="Skriv en melding… (Enter)" maxlength="400" autocomplete="off">
+              <input id="chat-text" placeholder="Write a message… (Enter)" maxlength="400" autocomplete="off">
               <button id="chat-send" onclick="Chat.sendMessage()">${Icon('send')}</button>
             </div>
-            <div class="chat-status" id="chat-status">${connected ? '🟢 Tilkoblet' : '🟡 Kobler til…'}</div>
+            <div class="chat-status" id="chat-status">${connected ? '🟢 Connected' : '🟡 Connecting…'}</div>
           </div>
         </div>
       </div>
@@ -255,7 +197,7 @@ const Chat = (() => {
     }
 
     initGun();
-    if (gun) { subscribeMessages(); updateStatus('🟢 Tilkoblet via P2P'); } else { useFallback(); }
+    if (gun) { subscribeMessages(); updateStatus('🟢 Connected via P2P'); } else { useFallback(); }
     initDragResize();
 
     const btn = document.getElementById('nav-chat-bubble');
@@ -277,88 +219,18 @@ const Chat = (() => {
     const nickChosen = !!localStorage.getItem('pv_chat_nick');
     if (!myNick) myNick = randomNick();
 
-    const stations    = (typeof Radio !== 'undefined' && Radio.stations) ? Radio.stations : [];
-    const currentSt   = (typeof Radio !== 'undefined') ? Radio.currentStation : null;
-    const radioPlaying = (typeof Radio !== 'undefined') ? Radio.isPlaying : false;
-
     app.innerHTML = `
       <div id="chat-float-window" class="chat-float-window">
         <div id="chat-float-drag-bar" class="chat-float-drag-bar">
           <span class="chat-float-grip" aria-hidden="true">${Icon('grip')}</span>
-          <span class="chat-float-title">${Icon('radio')} Sound Core — Live Chat</span>
+          <span class="chat-float-title">${Icon('radio')} SiriusFM — Live Chat</span>
           <button class="chat-float-btn" id="chat-minimize-btn" onclick="Chat.toggleMinimize()" title="Minimer">—</button>
+          <button class="chat-float-btn chat-float-close" id="chat-close-btn" onclick="Chat.closeFloat()" title="Lukk chat" aria-label="Lukk chat">×</button>
         </div>
 
         <div class="chat-page">
 
-        <!-- ── LEFT: Radio + YouTube tabs ── -->
-        <div class="chat-stream-panel">
-
-          <!-- Tab switcher -->
-          <div class="chat-panel-tabs">
-            <button class="chat-panel-tab ${activeTab === 'radio' ? 'active' : ''}" id="tab-radio" onclick="Chat.showTab('radio')">${Icon('radio')} Radio</button>
-            <button class="chat-panel-tab ${activeTab === 'youtube' ? 'active' : ''}" id="tab-youtube" onclick="Chat.showTab('youtube')">${Icon('tv')} YouTube</button>
-          </div>
-
-          <!-- RADIO TAB -->
-          <div class="chat-radio-tab" id="chat-radio-tab" style="${activeTab !== 'radio' ? 'display:none' : ''}">
-            <div class="chat-radio-search-wrap">
-              <input class="chat-radio-search-input" id="chat-radio-search"
-                     placeholder="Søk etter radiokanal…" autocomplete="off"
-                     oninput="Chat.onRadioSearch(this.value)">
-              <div class="chat-radio-search-results hidden" id="chat-radio-search-results"></div>
-            </div>
-
-            <div class="chat-radio-list" id="chat-radio-list">
-              ${stations.length ? stations.map(s => `
-                <button class="chat-radio-station ${currentSt?.id === s.id ? 'active' : ''}"
-                        id="crbtn-${s.id}"
-                        style="--scolor:${s.color}"
-                        onclick="Chat.playRadioStation('${s.id}')">
-                  <span class="crs-emoji">${iconForEmoji(s.emoji)}</span>
-                  <span class="crs-info">
-                    <span class="crs-name">${s.name}</span>
-                    <span class="crs-desc">${s.desc}</span>
-                  </span>
-                  ${currentSt?.id === s.id && radioPlaying ? '<span class="station-live-dot"></span>' : ''}
-                </button>
-              `).join('') : '<div class="crs-empty-hint">Søk etter en kanal ovenfor ↑</div>'}
-            </div>
-
-            <!-- Now-playing footer -->
-            <div class="chat-radio-now-playing" id="chat-radio-np">
-              <span id="chat-rnp-emoji">${iconForEmoji(currentSt && currentSt.emoji, 'radio')}</span>
-              <span id="chat-rnp-name">${currentSt ? currentSt.name : 'Velg en stasjon ▲'}</span>
-              <button class="chat-rnp-play-btn" id="chat-rnp-play" onclick="Chat.toggleRadioPlay()">
-                ${currentSt && radioPlaying ? '⏸' : '▶'}
-              </button>
-            </div>
-          </div>
-
-          <!-- YOUTUBE TAB -->
-          <div class="chat-yt-tab" id="chat-yt-tab" style="${activeTab !== 'youtube' ? 'display:none' : ''}">
-            <div class="chat-stream-header">
-              <span class="yt-live-badge">● LIVE</span>
-              <input class="form-input stream-url-input" id="yt-url-input"
-                placeholder="Lim inn YouTube Live URL…"
-                value="${ytVideoId ? 'https://www.youtube.com/watch?v=' + ytVideoId : ''}"
-                style="font-size:0.82rem">
-              <button class="btn btn-primary btn-sm" onclick="Chat.loadYoutube()">Last inn</button>
-              <button class="btn btn-ghost btn-sm" onclick="Chat.clearYoutube()" title="Fjern">${Icon('x')}</button>
-            </div>
-            <div id="yt-iframe-wrap">
-              ${ytVideoId
-                ? `<iframe src="${buildEmbedUrl(ytVideoId)}" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"></iframe>`
-                : `<div class="yt-placeholder">
-                    <div class="yt-icon">${Icon('play')}</div>
-                    <p>Lim inn en YouTube Live-lenke ovenfor og klikk <strong>Last inn</strong>.</p>
-                    <div class="text-muted text-xs" style="margin-top:0.5rem">Eks: https://www.youtube.com/watch?v=XXXXXXXXXX</div>
-                  </div>`}
-            </div>
-          </div>
-        </div>
-
-        <!-- ── RIGHT: Chat ── -->
+        <!-- ── Chat ── -->
         <div class="chat-panel">
           <div class="chat-header">
             <h2>${Icon('message')} Chat</h2>
@@ -366,7 +238,7 @@ const Chat = (() => {
               <span class="online-dot"></span>
               <span id="online-count">Live</span>
             </div>
-            <button class="btn-icon" title="Tøm chat" onclick="Chat.clearMessages()">${Icon('trash')}</button>
+            <button class="btn-icon" title="Clear chat" onclick="Chat.clearMessages()">${Icon('trash')}</button>
           </div>
 
           <!-- Nick + color bar -->
@@ -378,8 +250,8 @@ const Chat = (() => {
               <span style="font-size:0.75rem;color:var(--text3)">${Icon('edit')}</span>
             </div>
             <div class="nick-edit-form ${!nickChosen ? '' : 'hidden'}" id="nick-edit-form">
-              <input class="form-input" id="nick-input" value="${myNick}" maxlength="24" placeholder="Ditt nick" style="font-size:0.82rem">
-              <div class="nick-color-wrap" title="Velg farge på nick og tekst">
+              <input class="form-input" id="nick-input" value="${myNick}" maxlength="24" placeholder="Your nick" style="font-size:0.82rem">
+              <div class="nick-color-wrap" title="Choose nick and text color">
                 <input type="color" id="nick-color" value="${myColor}"
                        style="width:32px;height:32px;border:none;border-radius:50%;cursor:pointer;padding:2px;background:none">
               </div>
@@ -389,7 +261,7 @@ const Chat = (() => {
 
           <!-- Messages -->
           <div id="chat-messages">
-            <div class="chat-system-msg">Kobler til chat… ${Icon('link')}</div>
+            <div class="chat-system-msg">Connecting to chat… ${Icon('link')}</div>
           </div>
 
           <!-- Input -->
@@ -398,15 +270,15 @@ const Chat = (() => {
               ${EMOJIS.map(e => `<button class="emoji-pill" onclick="Chat.insertEmoji('${e}')">${e}</button>`).join('')}
             </div>
             <div class="chat-input-row">
-              <label class="chat-color-swatch" style="background:${myColor}" title="Velg tekstfarge (klikk)">
+              <label class="chat-color-swatch" style="background:${myColor}" title="Choose text color (click)">
                 <input type="color" id="quick-color-picker" value="${myColor}"
                        oninput="Chat.quickColor(this.value)" onchange="Chat.quickColor(this.value)">
               </label>
-              <input id="chat-text" placeholder="Skriv en melding… (Enter for å sende)" maxlength="400" autocomplete="off">
+              <input id="chat-text" placeholder="Write a message… (Enter to send)" maxlength="400" autocomplete="off">
               <button id="chat-send" onclick="Chat.sendMessage()">${Icon('send')}</button>
             </div>
             <div class="chat-status" id="chat-status">
-              ${connected ? '🟢 Tilkoblet' : '🟡 Kobler til…'}
+              ${connected ? '🟢 Connected' : '🟡 Connecting…'}
             </div>
           </div>
         </div>
@@ -437,7 +309,7 @@ const Chat = (() => {
     initGun();
     if (gun) {
       subscribeMessages();
-      updateStatus('🟢 Tilkoblet via P2P');
+      updateStatus('🟢 Connected via P2P');
     } else {
       useFallback();
     }
@@ -534,108 +406,6 @@ const Chat = (() => {
     document.addEventListener('pointercancel', endAction, { signal: sig });
   }
 
-  // ── Tab switching ─────────────────────────────────────────────────────
-  function showTab(tab) {
-    activeTab = tab;
-    const radioEl   = document.getElementById('chat-radio-tab');
-    const ytEl      = document.getElementById('chat-yt-tab');
-    const radioBtn  = document.getElementById('tab-radio');
-    const ytBtn     = document.getElementById('tab-youtube');
-    if (tab === 'radio') {
-      if (radioEl) radioEl.style.display = '';
-      if (ytEl)    ytEl.style.display    = 'none';
-      radioBtn?.classList.add('active');
-      ytBtn?.classList.remove('active');
-    } else {
-      if (radioEl) radioEl.style.display = 'none';
-      if (ytEl)    ytEl.style.display    = '';
-      ytBtn?.classList.add('active');
-      radioBtn?.classList.remove('active');
-    }
-  }
-
-  // ── Radio integration ─────────────────────────────────────────────────
-  function playRadioStation(id) {
-    if (typeof Radio === 'undefined') return;
-    Radio.playStation(id);
-    setTimeout(updateChatRadioUI, 200);
-  }
-
-  function toggleRadioPlay() {
-    if (typeof Radio === 'undefined') return;
-    Radio.togglePlay();
-    setTimeout(updateChatRadioUI, 200);
-  }
-
-  function updateChatRadioUI() {
-    if (typeof Radio === 'undefined') return;
-    const st = Radio.currentStation;
-    // Update active station button
-    document.querySelectorAll('.chat-radio-station').forEach(b => b.classList.remove('active'));
-    if (st) {
-      const activeBtn = document.getElementById('crbtn-' + st.id);
-      if (activeBtn) activeBtn.classList.add('active');
-    }
-    // Update now-playing bar
-    const emojiEl = document.getElementById('chat-rnp-emoji');
-    const nameEl  = document.getElementById('chat-rnp-name');
-    const playEl  = document.getElementById('chat-rnp-play');
-    if (st) {
-      if (emojiEl) emojiEl.innerHTML = iconForEmoji(st.emoji, 'radio');
-      if (nameEl)  nameEl.textContent  = st.name  || 'Radio';
-    }
-    if (playEl) playEl.textContent = Radio.isPlaying ? '⏸' : '▶';
-  }
-
-  async function onRadioSearch(val) {
-    clearTimeout(radioSearchTimer);
-    const resultsEl = document.getElementById('chat-radio-search-results');
-    if (!val || val.length < 2) {
-      radioSearchResults = [];
-      if (resultsEl) resultsEl.classList.add('hidden');
-      return;
-    }
-    radioSearchTimer = setTimeout(async () => {
-      if (resultsEl) {
-        resultsEl.classList.remove('hidden');
-        resultsEl.innerHTML = '<div class="crs-loading">Søker…</div>';
-      }
-      if (typeof Radio === 'undefined') { if (resultsEl) resultsEl.innerHTML = '<div class="crs-empty">Radio ikke tilgjengelig</div>'; return; }
-      radioSearchResults = await Radio.fetchStations(val);
-      if (!resultsEl) return;
-      if (!radioSearchResults.length) {
-        resultsEl.innerHTML = '<div class="crs-empty">Ingen kanaler funnet</div>';
-        return;
-      }
-      resultsEl.innerHTML = radioSearchResults.map((s, i) => `
-        <div class="crs-result" onclick="Chat.playSearchRadio(${i})">
-          <div class="crs-result-name">${escHtml(s.name)}</div>
-          <div class="crs-result-meta">${escHtml(s.country || '')}${s.tags ? ' · ' + s.tags.split(',').slice(0,2).join(', ') : ''}</div>
-        </div>
-      `).join('');
-    }, 350);
-  }
-
-  function playSearchRadio(i) {
-    const s = radioSearchResults[i];
-    if (!s || !s.url_resolved) { App.toast('Ingen gyldig stream-URL', 'error'); return; }
-    if (typeof Radio === 'undefined') return;
-    const stInfo = {
-      id:    'search_' + s.stationuuid,
-      name:  s.name,
-      emoji: '📡',
-      color: '#7c3aed',
-      desc:  [s.country, s.tags?.split(',')[0]].filter(Boolean).join(' · ') || 'Nettradio',
-    };
-    Radio.playUrl(s.url_resolved, stInfo);
-    setTimeout(updateChatRadioUI, 200);
-    const resultsEl = document.getElementById('chat-radio-search-results');
-    if (resultsEl) resultsEl.classList.add('hidden');
-    const searchEl = document.getElementById('chat-radio-search');
-    if (searchEl) searchEl.value = '';
-    App.toast(`Spiller: ${s.name}`, 'success');
-  }
-
   // ── Quick color picker (in input row) ────────────────────────────────
   function quickColor(color) {
     myColor = color;
@@ -684,7 +454,7 @@ const Chat = (() => {
       const textColor = msg.color || 'var(--text)';
       el.innerHTML = `
         <span class="chat-msg-time">${time}</span>
-        <span class="chat-msg-nick ${isSelf ? 'is-self' : ''}" style="color:${msg.color || '#7c3aed'}">${escHtml(msg.nick)}:</span>
+        <span class="chat-msg-nick ${isSelf ? 'is-self' : ''}" style="color:${msg.color || '#22c55e'}">${escHtml(msg.nick)}:</span>
         <span class="chat-msg-text" style="color:${textColor}">${formatText(msg.text)}</span>`;
       container.appendChild(el);
     }
@@ -711,9 +481,9 @@ const Chat = (() => {
     const inp  = document.getElementById('chat-text');
     const text = inp?.value?.trim();
     if (!text) return;
-    if (!myNick) { showNickEdit(); App.toast('Sett et nick først', 'info'); return; }
+    if (!myNick) { showNickEdit(); App.toast('Set a nick first', 'info'); return; }
     const now = Date.now();
-    if (now - lastSent < 800) { App.toast('Ikke så fort! ⚡', 'info'); return; }
+    if (now - lastSent < 800) { App.toast('Not so fast! ⚡', 'info'); return; }
     lastSent = now;
     const msg = { nick: myNick, color: myColor, text, ts: now, type: 'msg' };
     if (gun && messagesRef) {
@@ -742,7 +512,7 @@ const Chat = (() => {
     const colorEl  = document.getElementById('nick-color');
     const newNick  = inp?.value?.trim();
     const newColor = colorEl?.value || myColor;
-    if (!newNick || newNick.length < 2) { App.toast('Nick må være minst 2 tegn', 'error'); return; }
+    if (!newNick || newNick.length < 2) { App.toast('Nick must be at least 2 characters', 'error'); return; }
     const oldNick = myNick;
     myNick  = newNick;
     myColor = newColor;
@@ -763,37 +533,16 @@ const Chat = (() => {
     if (quickPicker) quickPicker.value = myColor;
 
     if (oldNick && oldNick !== myNick) {
-      const sysMsg = { type:'system', text:`${oldNick} er nå ${myNick}`, ts: Date.now() };
+      const sysMsg = { type:'system', text:`${oldNick} is now ${myNick}`, ts: Date.now() };
       if (gun && messagesRef) messagesRef.set(sysMsg);
       else appendMessage(sysMsg);
     }
-    App.toast(`Nick satt til ${myNick} ${Icon('palette')}`, 'success');
+    App.toast(`Nick set to ${myNick} ${Icon('palette')}`, 'success');
   }
 
   function clearMessages() {
     const container = document.getElementById('chat-messages');
-    if (container) container.innerHTML = '<div class="chat-system-msg">Chat tømt lokalt</div>';
-  }
-
-  // ── YouTube ───────────────────────────────────────────────────────────
-  function loadYoutube() {
-    const input = document.getElementById('yt-url-input')?.value?.trim();
-    const id    = extractYtId(input);
-    if (!id) { App.toast('Ugyldig YouTube URL', 'error'); return; }
-    ytVideoId = id;
-    localStorage.setItem('pv_yt_stream', id);
-    const wrap = document.getElementById('yt-iframe-wrap');
-    if (wrap) wrap.innerHTML = `<iframe src="${buildEmbedUrl(id)}" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"></iframe>`;
-    App.toast('Stream lastet inn!', 'success');
-  }
-
-  function clearYoutube() {
-    ytVideoId = '';
-    localStorage.removeItem('pv_yt_stream');
-    const wrap = document.getElementById('yt-iframe-wrap');
-    if (wrap) wrap.innerHTML = `<div class="yt-placeholder"><div class="yt-icon">${Icon('play')}</div><p>Lim inn en YouTube Live-lenke ovenfor.</p></div>`;
-    const urlInput = document.getElementById('yt-url-input');
-    if (urlInput) urlInput.value = '';
+    if (container) container.innerHTML = '<div class="chat-system-msg">Chat cleared locally</div>';
   }
 
   // ── Status + Fallback ─────────────────────────────────────────────────
@@ -805,11 +554,11 @@ const Chat = (() => {
   const FALLBACK_KEY = 'pv_chat_fallback';
 
   function useFallback() {
-    updateStatus('🟡 Offline-modus (kun lokal)');
+    updateStatus('🟡 Offline mode (local only)');
     const msgs = JSON.parse(localStorage.getItem(FALLBACK_KEY) || '[]');
     const container = document.getElementById('chat-messages');
     if (container) {
-      container.innerHTML = '<div class="chat-system-msg">Offline-modus — meldinger lagres lokalt</div>';
+      container.innerHTML = '<div class="chat-system-msg">Offline mode — messages are saved locally</div>';
       msgs.forEach(m => appendMessage(m));
     }
   }
@@ -824,8 +573,6 @@ const Chat = (() => {
   return {
     render, sendMessage, insertEmoji,
     showNickEdit, saveNick, clearMessages,
-    loadYoutube, clearYoutube,
-    showTab, playRadioStation, toggleRadioPlay, updateChatRadioUI,
-    onRadioSearch, playSearchRadio, quickColor, toggleMinimize, toggleFloat,
+    quickColor, toggleMinimize, toggleFloat, closeFloat,
   };
 })();

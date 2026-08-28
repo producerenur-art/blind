@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   About SoundCore — pull-out tab on the right edge.
+   About SiriusFM — pull-out tab on the right edge.
    Toggles the slide-out panel; closes on outside click,
    Escape, the close button, or following an in-app link.
    ═══════════════════════════════════════════ */

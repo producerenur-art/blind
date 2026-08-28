@@ -31,10 +31,10 @@ const Email = (() => {
         body: JSON.stringify({ type, toEmail, toName, token, ...extra }),
       });
       const data = await res.json();
-      if (!res.ok) return { error: data.error || 'Serverfeil' };
+      if (!res.ok) return { error: data.error || 'Server error' };
       return { success: true };
     } catch {
-      return { error: 'Nettverksfeil mot e-postserver' };
+      return { error: 'Network error contacting email server' };
     }
   }
 
@@ -53,7 +53,7 @@ const Email = (() => {
           to_email:     toEmail,
           to_name:      username,
           activate_url: link,
-          site_name:    'Sound Core',
+          site_name:    'SiriusFM',
         });
         return { success: true };
       } catch (e) {
@@ -70,7 +70,7 @@ const Email = (() => {
       Auth.activate(token);
       return { success: true, devMode: true };
     }
-    return { error: apiRes.error || 'Kunne ikke sende aktiverings-e-post akkurat nå. Prøv igjen senere.' };
+    return { error: apiRes.error || 'Could not send activation email right now. Try again later.' };
   }
 
   async function sendPasswordReset(toEmail, username, token) {
@@ -86,7 +86,7 @@ const Email = (() => {
           to_email:  toEmail,
           to_name:   username,
           reset_url: link,
-          site_name: 'Sound Core',
+          site_name: 'SiriusFM',
         });
         return { success: true };
       } catch (e) {
@@ -100,7 +100,7 @@ const Email = (() => {
       console.info(`[DEV] Tilbakestillingslenke for ${username}:\n${link}`);
       return { success: true, devMode: true, link };
     }
-    return { error: apiRes.error || 'Kunne ikke sende e-post akkurat nå. Prøv igjen senere.' };
+    return { error: apiRes.error || 'Could not send email right now. Try again later.' };
   }
 
   async function sendPurchaseConfirmation(toEmail, username, plan, orderRef) {
@@ -117,26 +117,47 @@ const Email = (() => {
     const unsub = unsubscribeUrl || `${base}/#/unsubscribe`;
     const apiRes = await callApi('promo', toEmail, username, null, { unsubscribeUrl: unsub });
     if (apiRes.success) return { success: true };
-    return { error: apiRes.error || 'Kunne ikke sende reklame-e-post akkurat nå.' };
+    return { error: apiRes.error || 'Could not send promotional email right now.' };
+  }
+
+  // Påminning til ein innlogga brukar: kva som spelar akkurat no, radioprogramma
+  // som kjem, nye magasinsaker og intervju, og festivalar/fester som står for tur.
+  // Serveren hentar innhaldet sjølv frå magasin-cachen, så vi treng berre
+  // mottakaren — alt i `extra` er valfri overstyring. Respekterer avmelding.
+  async function sendLiveNow(toEmail, username, extra = {}) {
+    const base = (CONFIG.CANONICAL_URL || window.location.origin).replace(/\/$/, '');
+    const unsub = extra.unsubscribeUrl || `${base}/#/unsubscribe/${encodeURIComponent(toEmail)}`;
+    const apiRes = await callApi('live_now', toEmail, username, null, {
+      unsubscribeUrl: unsub,
+      stations:   extra.stations,
+      shows:      extra.shows,
+      magazine:   extra.magazine,
+      festivals:  extra.festivals,
+      interviews: extra.interviews,
+      events:     extra.events,
+    });
+    if (apiRes.success) return { success: true };
+    return { error: apiRes.error || 'Could not send the reminder email right now.' };
   }
 
   async function sendMessageNotification(toEmail, toName, fromName, fromUsername, previewText) {
     if (!isEmailJSConfigured() || !CONFIG.EMAILJS_TEMPLATE_MESSAGE) return { skip: true };
-    if (!initEmailJS()) return { error: 'EmailJS ikke tilgjengelig' };
+    if (!initEmailJS()) return { error: 'EmailJS not available' };
     try {
+      const preview = String(previewText || '');   // null-sikker — kall utan forhåndstekst skal ikkje kaste
       await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_MESSAGE, {
         to_email:        toEmail,
         to_name:         toName,
         from_name:       fromName,
         from_username:   fromUsername,
-        message_preview: previewText.length > 150 ? previewText.substring(0, 147) + '…' : previewText,
+        message_preview: preview.length > 150 ? preview.substring(0, 147) + '…' : preview,
         inbox_url:       window.location.origin + '/#/inbox',
-        site_name:       'Sound Core',
+        site_name:       'SiriusFM',
       });
       return { success: true };
     } catch (e) {
       console.error('EmailJS meldings-feil:', e);
-      return { error: e?.text || 'Kunne ikke sende varsel' };
+      return { error: e?.text || 'Could not send notification' };
     }
   }
 
@@ -150,30 +171,30 @@ const Email = (() => {
       });
       const data = await res.json();
       if (res.ok) return { success: true };
-      return { error: data.error || 'Feil ved sending' };
+      return { error: data.error || 'Error sending' };
     } catch {
-      return { error: 'Nettverksfeil' };
+      return { error: 'Network error' };
     }
   }
 
   async function sendTestEmail(toEmail, username) {
     const apiRes = await callApi('activation', toEmail, username, 'test-token');
     if (apiRes.success) return { success: true };
-    if (!isEmailJSConfigured()) return { error: 'Verken server-e-post eller EmailJS er konfigurert' };
-    if (!initEmailJS()) return { error: 'EmailJS ikke tilgjengelig' };
+    if (!isEmailJSConfigured()) return { error: 'Neither server email nor EmailJS is configured' };
+    if (!initEmailJS()) return { error: 'EmailJS not available' };
     try {
       await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ACTIVATION, {
         to_email:     toEmail,
         to_name:      username,
         activate_url: window.location.origin,
-        site_name:    'Sound Core',
+        site_name:    'SiriusFM',
       });
       return { success: true };
     } catch (e) {
       console.error('EmailJS test-feil:', e);
-      return { error: e?.text || 'Kunne ikke sende test-e-post' };
+      return { error: e?.text || 'Could not send test email' };
     }
   }
 
-  return { sendActivation, sendPasswordReset, sendPurchaseConfirmation, sendFriendRequest, sendTestEmail, sendMessageNotification, sendPromo, isConfigured: isEmailJSConfigured };
+  return { sendActivation, sendPasswordReset, sendPurchaseConfirmation, sendFriendRequest, sendTestEmail, sendMessageNotification, sendPromo, sendLiveNow, isConfigured: isEmailJSConfigured };
 })();

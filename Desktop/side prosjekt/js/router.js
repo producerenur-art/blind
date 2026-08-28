@@ -32,25 +32,27 @@ const Router = (() => {
     const myId  = ++dispatchSeq;
     const hash  = window.location.hash;
     const path  = (hash || '').replace(/^#/, '') || '/';
-    // Mark the front page so cosmos-only flourishes (the flying UFO) can stay on
-    // the home screen but leave when you open a tab. The starfield is unaffected.
+    // Mark the front page so home-only flourishes (e.g. the whiter starfield)
+    // can key off it and leave when you open a tab.
     document.body.classList.toggle('route-home', path === '/');
     const found = parse(hash);
     if (found) {
       currentRoute = hash;
       await found.handler(found.params);
       // A faster, newer navigation may have started while this async handler was
-      // awaiting and left stale content in #app — re-render the current route so
-      // the latest page always wins (prevents pages stacking/overwriting).
-      if (myId !== dispatchSeq) dispatch();
+      // awaiting and left stale content in #app — re-render if the location changed
+      // while we were awaiting, so the latest page always wins. NB: compare the actual
+      // hash (not dispatchSeq) — a seq compare leap-frogs forever when two async
+      // dispatches overlap (each completion spawns a permanently-"stale" re-dispatch).
+      if (window.location.hash !== hash) dispatch();
     } else {
       // 404
       document.getElementById('app').innerHTML = `
         <div class="empty-state" style="padding:8rem">
           <div class="empty-icon">${Icon('search')}</div>
-          <p style="font-size:1.1rem;font-weight:600;margin-bottom:0.5rem">Side ikke funnet</p>
-          <p>Sjekk nettadressen og prøv igjen.</p>
-          <a href="#/" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">${Icon('arrow-left')} Hjem</a>
+          <p style="font-size:1.1rem;font-weight:600;margin-bottom:0.5rem">Page not found</p>
+          <p>Check the URL and try again.</p>
+          <a href="#/" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">${Icon('arrow-left')} Home</a>
         </div>`;
     }
   }
@@ -62,3 +64,8 @@ const Router = (() => {
 
   return { define, go, init, dispatch };
 })();
+// Eksporter til window — mange moduler vaktar på `if (window.Router)` før dei
+// navigerer (Groups «Opprett gruppe», innloggings-redirect i Social/Friends/Share,
+// Payment.dispatch). Utan denne er Router eit leksikalsk const og window.Router
+// undefined, så alle desse navigeringane feila stille. Sjå window-global-gotcha.
+window.Router = Router;

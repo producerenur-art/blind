@@ -6,7 +6,7 @@
  *
  * Dekker:
  *   1) Server-e-posten (api/send-email.js) bygger en aktiveringslenke som peker til
- *      www.soundcoredevelopment.com — aldri til preview-/request-hosten.
+ *      www.siriusfm.no — aldri til preview-/request-hosten.
  *   2) E-post-teksten er Sound Core-tilpasset (merkenavn + aktiveringsknapp).
  *   3) Auth-flyten (js/auth.js): registrer → konto er IKKE aktivert → innlogging
  *      blokkeres → aktiver med token → innlogging fungerer (må logge inn på nytt).
@@ -42,9 +42,9 @@ async function testServerEmail() {
 
   const handler = require(path.join(ROOT, 'api', 'send-email.js'));
 
-  assert.strictEqual(handler.CANONICAL_URL, 'https://www.soundcoredevelopment.com',
-    'CANONICAL_URL skal være www.soundcoredevelopment.com');
-  ok('CANONICAL_URL = https://www.soundcoredevelopment.com');
+  assert.strictEqual(handler.CANONICAL_URL, 'https://www.siriusfm.no',
+    'CANONICAL_URL skal være www.siriusfm.no');
+  ok('CANONICAL_URL = https://www.siriusfm.no');
 
   // Simuler et kall fra en Vercel-preview-host — lenken skal LIKEVEL bli kanonisk.
   const req = {
@@ -66,16 +66,16 @@ async function testServerEmail() {
   ok('aktiverings-e-post sendt (mocket) → 200 success');
 
   assert.ok(captured, 'resend.emails.send skal ha blitt kalt');
-  const link = 'https://www.soundcoredevelopment.com/#/activate/TOK-123-ABC';
+  const link = 'https://www.siriusfm.no/#/activate/TOK-123-ABC';
   assert.ok(captured.html.includes(link), `e-posten skal inneholde lenken ${link}`);
-  ok('e-posten inneholder lenke til www.soundcoredevelopment.com/#/activate/<token>');
+  ok('e-posten inneholder lenke til www.siriusfm.no/#/activate/<token>');
 
   assert.ok(!captured.html.includes('profilverse.vercel.app'),
     'e-posten skal IKKE inneholde preview-hosten');
   ok('e-posten lekker ikke preview-/request-hosten');
 
-  assert.ok(/Sound\s*Core|SoundCore/i.test(captured.html), 'teksten skal nevne Sound Core');
-  assert.ok(/Aktiver kontoen min/.test(captured.html), 'teksten skal ha en aktiveringsknapp');
+  assert.ok(/SiriusFM/i.test(captured.html), 'teksten skal nevne SiriusFM');
+  assert.ok(/Activate my account/.test(captured.html), 'teksten skal ha en aktiveringsknapp');
   assert.ok(/TestBruker/.test(captured.subject), 'emnet skal være personlig (navn)');
   ok('e-post-teksten er Sound Core-tilpasset (merkenavn + aktiveringsknapp + emne)');
 }
@@ -151,7 +151,7 @@ function testActivatePage() {
   ok('går videre etter et par sekund (kvittering + auto-login)');
 
   assert.ok(body.includes('CANONICAL_URL'), 'siden skal sende brukeren til det kanoniske domenet');
-  ok('sender brukeren til www.soundcoredevelopment.com (CONFIG.CANONICAL_URL)');
+  ok('sender brukeren til www.siriusfm.no (CONFIG.CANONICAL_URL)');
 }
 
 (async () => {

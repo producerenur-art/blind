@@ -38,16 +38,16 @@ const SRC = fs.readFileSync(path.join(ROOT, 'js', 'profile.js'), 'utf8');
 function testSource() {
   console.log('\nKilde (js/profile.js) — knapper + eksport');
 
-  assert.ok(/Legg til bilde/.test(SRC),  'mangler «Legg til bilde»-knapp');
-  assert.ok(/Endre bilde/.test(SRC),     'mangler «Endre bilde»-knapp');
-  assert.ok(/Slett bilde/.test(SRC),     'mangler «Slett bilde»-knapp');
+  assert.ok(/Add photo/.test(SRC),     'mangler «Add photo»-knapp');
+  assert.ok(/Change photo/.test(SRC),  'mangler «Change photo»-knapp');
+  assert.ok(/Delete photo/.test(SRC),  'mangler «Delete photo»-knapp');
   ok('alle tre knappene finnes i eier-visningen');
 
   assert.ok(/id="profile-avatar-input"/.test(SRC), 'mangler skjult fil-input');
   assert.ok(/Profile\.setAvatarFromProfile\(this,'\$\{username\}'\)/.test(SRC), 'input kobler ikke til setAvatarFromProfile');
   ok('skjult fil-input kobler til Profile.setAvatarFromProfile');
 
-  assert.ok(/profile-avatar-cam/.test(SRC), 'mangler kamera-overlegg på avataren');
+  assert.ok(/avatar-edit-overlay/.test(SRC), 'mangler kamera-overlegg på avataren');
   ok('kamera-overlegg finnes på avataren');
 
   // Knappene skal være eier-gated (ligge inne i en isOwner-blokk).

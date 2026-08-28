@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy – SiriusFM</title>
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="icon" href="/assets/icon-192.png">
+  <meta property="og:title" content="SiriusFM">
+  <meta property="og:description" content="Privacy Policy – SiriusFM">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SiriusFM">
+  <meta property="og:url" content="https://www.siriusfm.no/personvern.html">
+  <meta property="og:image" content="https://www.siriusfm.no/assets/og-cover.png?v=4">
+  <meta property="og:image:secure_url" content="https://www.siriusfm.no/assets/og-cover.png?v=4">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="SiriusFM — web radio">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SiriusFM">
+  <meta name="twitter:description" content="Privacy Policy – SiriusFM">
+  <meta name="twitter:image" content="https://www.siriusfm.no/assets/og-cover.png?v=4">
+  <style>
+    :root{
+      --bg:#0a0a0f; --card:#14141c; --border:#26263a;
+      --text:#e8e8f0; --muted:#9a9ab0; --accent:#a78bfa; --accent2:#34d399;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      line-height:1.65; -webkit-font-smoothing:antialiased;
+    }
+    .wrap{max-width:760px; margin:0 auto; padding:48px 22px 96px}
+    header{border-bottom:1px solid var(--border); padding-bottom:22px; margin-bottom:32px}
+    .brand{display:flex; align-items:center; gap:12px; margin-bottom:18px}
+    .brand img{width:40px; height:40px; border-radius:10px}
+    .brand span{font-size:20px; font-weight:700;
+      background:linear-gradient(90deg,var(--accent),#f472b6);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent}
+    h1{font-size:28px; margin:0 0 6px; letter-spacing:-.5px}
+    h2{font-size:19px; margin:36px 0 10px; color:var(--accent2)}
+    .updated{color:var(--muted); font-size:14px}
+    p,li{color:var(--text)}
+    a{color:#38bdf8}
+    ul{padding-left:20px}
+    li{margin:6px 0}
+    .card{background:var(--card); border:1px solid var(--border);
+      border-radius:14px; padding:18px 20px; margin:18px 0}
+    .muted{color:var(--muted)}
+    footer{margin-top:48px; padding-top:22px; border-top:1px solid var(--border);
+      color:var(--muted); font-size:14px}
+    a.back{display:inline-block; margin-top:14px; color:var(--accent2); text-decoration:none}
+
+    /* Samme roterende bakgrunnsbilde som resten av siriusfm.no (denne siden er en
+       egen HTML-fil utenfor SPA-en, så laget gjentas her i lettvekts-form).
+       Bildesettet leses fra localStorage-cachen BgManager skriver — samme bilder
+       som appen viser i dag, uten AI-/API-kall. */
+    #pv-bg{position:fixed; inset:-12%; z-index:0; overflow:hidden; background:#050510; pointer-events:none}
+    #pv-bg img{width:100%; height:100%; object-fit:cover; display:block; opacity:0;
+      filter:brightness(.42) saturate(1.6);
+      transition:opacity 1.6s ease-in-out; animation:pvBreathe 32s ease-in-out infinite}
+    #pv-scrim{position:fixed; inset:0; z-index:0; pointer-events:none;
+      background:radial-gradient(120% 90% at 50% 30%, rgba(10,10,15,.55) 0%, rgba(10,10,15,.86) 100%)}
+    @keyframes pvBreathe{0%,100%{transform:scale(1.03) translate(0,0)} 50%{transform:scale(1.07) translate(-1.5%,1%)}}
+    .wrap{position:relative; z-index:1}
+    @media (prefers-reduced-motion:reduce){ #pv-bg img{animation:none} }
+  </style>
+</head>
+<body>
+  <div id="pv-bg"><img id="pv-bg-img" alt="" draggable="false"></div>
+  <div id="pv-scrim"></div>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <img src="/assets/icon-192.png" alt="SiriusFM">
+        <span>SiriusFM</span>
+      </div>
+      <h1>Privacy Policy</h1>
+      <div class="updated">Last updated: 12 July 2026</div>
+    </header>
+
+    <p>This privacy policy explains how <strong>SiriusFM</strong> ("we", "us",
+      "the service") collects, uses and protects information about you when you use our website
+      and app (web, Android, Windows and iOS). We comply with the General Data Protection Regulation (GDPR).</p>
+
+    <h2>1. Who is responsible</h2>
+    <p>SiriusFM is operated by a private party in Norway. Contact for privacy questions:
+      <a href="mailto:post@siriusfm.no">post@siriusfm.no</a>.</p>
+
+    <h2>2. What information we collect</h2>
+    <ul>
+      <li><strong>Account information:</strong> email address and password (encrypted) when you create a profile.</li>
+      <li><strong>Profile content:</strong> display name, biography, banner image, theme and content you choose to share (posts, music, mixes).</li>
+      <li><strong>Purchase information:</strong> when you buy in the marketplace, payment is handled by Stripe. We do not store your card number.</li>
+      <li><strong>Technical information:</strong> necessary cookies and similar for login and operation.</li>
+    </ul>
+    <p class="muted">We never sell your information, and we do not use it for advertising.</p>
+
+    <h2>3. Why we process the information</h2>
+    <ul>
+      <li>To create and operate your user account.</li>
+      <li>To deliver the service: radio, social feed, chat, sharing of music.</li>
+      <li>To carry out purchases and sales in the marketplace.</li>
+      <li>To send necessary emails (e.g. confirmation and login).</li>
+    </ul>
+
+    <h2>4. Data processors we use</h2>
+    <div class="card">
+      <ul style="margin:0">
+        <li><strong>Supabase</strong> – login, database and profile storage.</li>
+        <li><strong>Stripe</strong> – payments in the marketplace.</li>
+        <li><strong>Resend</strong> – sending of email.</li>
+        <li><strong>Gun.js</strong> – decentralized storage of parts of the social content.</li>
+        <li><strong>Vercel</strong> – operation and hosting of the website.</li>
+      </ul>
+    </div>
+    <p>These process information on our behalf under data processing agreements. Some may store data
+      outside the EU/EEA; in that case lawful transfer mechanisms are used.</p>
+
+    <h2>5. Retention period</h2>
+    <p>We store the information for as long as you have an active account. If you delete your account, your
+      personal data is removed, except for what we are legally required to keep (e.g. purchase history for accounting).</p>
+
+    <h2>6. Your rights</h2>
+    <p>You have the right to access, rectification, erasure, restriction and data portability, as well as to withdraw
+      consent. Contact us at <a href="mailto:post@siriusfm.no">post@siriusfm.no</a> to exercise your rights.
+      You can also complain to the <a href="https://www.datatilsynet.no" target="_blank" rel="noopener">Norwegian Data Protection Authority</a>.</p>
+
+    <h2>7. Children</h2>
+    <p>The service is not directed at children under 13, and we do not knowingly collect information about them.</p>
+
+    <h2>8. Changes</h2>
+    <p>We may update this policy. Significant changes will be announced on the website, and the date at the top is updated.</p>
+
+    <footer>
+      Do you have questions about privacy? Contact <a href="mailto:post@siriusfm.no">post@siriusfm.no</a>.
+      <br>
+      <a class="back" href="/">← Back to SiriusFM</a>
+    </footer>
+  </div>
+
+  <script>
+  // Dagens bildesett — samme nøkkel og dag-frø som js/background.js, så denne siden
+  // viser de samme bildene som appen. Er cachen tom (bruker landet her først),
+  // hentes to dag-valgte søkeord direkte fra Openverse (keyless, CORS *).
+  (function () {
+    var DAY_MS = 864e5, KEY = 'pv_bg_slides_v2';
+    var day = Math.floor(Date.now() / DAY_MS);
+    var PSY = ['psychedelic art','visionary art painting','fractal art deep zoom','sacred geometry mandala',
+               'trippy mushroom art','blacklight fluorescent art','kaleidoscope pattern','cosmic nebula painting',
+               'surreal dreamscape art','liquid light show','digital fractal flame','psychedelic mandala tapestry',
+               'third eye visionary painting','iridescent abstract swirl','aura light painting','psytrance festival decor',
+               'holographic prism abstract','ayahuasca vision art','op art optical illusion','galaxy watercolor abstract'];
+    var NAT = ['mountain lake reflection','misty forest sunrise','northern lights landscape','alpine valley autumn',
+               'tropical waterfall','desert dunes at dusk','starry night milky way landscape','glacier ice cave',
+               'volcano lava night','rice terraces morning fog','fjord cliffs norway','bioluminescent ocean waves',
+               'redwood forest light rays','lavender field sunset','iceland black sand beach','canyon river aerial',
+               'cherry blossom mountain','thunderstorm over prairie','coral reef underwater','rainforest waterfall moss'];
+    var img = document.getElementById('pv-bg-img'), list = [], i = 0;
+
+    function show(url) { var p = new Image(); p.onload = function () { img.src = url; img.style.opacity = 1; }; p.src = url; }
+    function next() {
+      if (list.length < 2 || document.hidden) return;
+      i = (i + 1) % list.length;
+      var url = list[i], p = new Image();
+      p.onload = function () { img.style.opacity = 0; setTimeout(function () { img.src = url; img.style.opacity = 1; }, 1600); };
+      p.onerror = next;
+      p.src = url;
+    }
+    function start() {
+      if (!list.length) return;
+      i = Math.floor(Math.random() * list.length);
+      show(list[i]);
+      if (list.length > 1) setInterval(next, 14000);
+    }
+    function fetchTerm(q) {
+      return fetch('https://api.openverse.org/v1/images/?q=' + encodeURIComponent(q) +
+                   '&size=large&page_size=20&page=1&mature=false', { headers: { Accept: 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : { results: [] }; })
+        .then(function (d) { return (d.results || []).map(function (x) { return x.url; })
+                               .filter(function (u) { return typeof u === 'string' && /^https:\/\//.test(u); }).slice(0, 6); })
+        .catch(function () { return []; });
+    }
+
+    try {
+      var c = JSON.parse(localStorage.getItem(KEY));
+      if (c && c.day === day && c.list && c.list.length) list = c.list;
+    } catch (e) {}
+
+    if (list.length) start();
+    else Promise.all([fetchTerm(PSY[(day * 5) % PSY.length]), fetchTerm(NAT[(day * 5) % NAT.length])])
+      .then(function (r) {
+        for (var k = 0; k < 6; k++) { if (r[0][k]) list.push(r[0][k]); if (r[1][k]) list.push(r[1][k]); }
+        start();
+      });
+  })();
+  </script>
+</body>
+</html>

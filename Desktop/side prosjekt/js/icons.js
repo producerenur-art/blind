@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   SoundCore — Icon System
+   SiriusFM — Icon System
    Thin line icons (Lucide / Feather style, 24-viewBox, currentColor stroke).
    Replaces the old emoji-as-icon UI. Decorative/data-driven emoji are mapped
    to the nearest icon via iconForEmoji() so per-item distinction is preserved.
@@ -269,45 +269,12 @@
   ensurePsyStyles();
 
   // ── Profil "Butikk"-fane ─────────────────────────────────────────────
-  // Tab-knapp + panel injiseres her (profile.js skrives om samtidig). Selve
-  // innholdet — ekte kjøp/salg for ALLE brukere — rendres av window.ProfileShop
-  // (js/profileshop.js). switchTab er generisk (toggler paa data-tab).
-  function injectShopTab() {
-    if (typeof document === 'undefined') return;
-    var tabs = document.getElementById('profile-tabs');
-    if (tabs && !tabs.querySelector('[data-tab="butikk"]')) {
-      var btn = document.createElement('button');
-      btn.className = 'tab-btn';
-      btn.setAttribute('data-tab', 'butikk');
-      // Bytt fane OG render butikk-innholdet (lazy + frisk hver gang).
-      btn.setAttribute('onclick', "Profile.switchTab('butikk');window.ProfileShop&&ProfileShop.render()");
-      btn.innerHTML = svg('store') + ' Butikk';
-      tabs.appendChild(btn);
-    }
-    var vegg = document.getElementById('tab-vegg');
-    if (vegg && !document.getElementById('tab-butikk')) {
-      var panel = document.createElement('div');
-      panel.className = 'profile-tab-content hidden';
-      panel.setAttribute('data-tab', 'butikk');
-      panel.id = 'tab-butikk';
-      panel.innerHTML =
-        '<div style="text-align:center;padding:2.75rem 1.25rem;color:var(--text2)">'
-        + '<div style="font-size:2.6rem;color:var(--accent,#7c3aed);margin-bottom:.6rem">' + svg('store') + '</div>'
-        + '<p style="font-size:.9rem">Laster butikk…</p></div>';
-      vegg.parentNode.insertBefore(panel, vegg.nextSibling);
-      // Render det ekte innholdet med en gang panelet finnes.
-      if (window.ProfileShop) { try { ProfileShop.render(); } catch (e) {} }
-    }
-  }
-  function watchForProfile() {
-    if (typeof document === 'undefined' || !document.body) return;
-    injectShopTab();
-    var app = document.getElementById('app');
-    try {
-      new MutationObserver(function () { injectShopTab(); })
-        .observe(app || document.body, app ? { childList: true } : { childList: true, subtree: true });
-    } catch (e) {}
-  }
+  // FJERNET: «Butikk»-fanen ble tatt bort fra profilen. Tab-knapp/panel
+  // injiseres ikke lenger, og MutationObserver-en droppes. ProfileShop-modulen
+  // (js/profileshop.js) blir liggende passiv — render() no-oper når #tab-butikk
+  // ikke finnes — så den kan enkelt gjenoppstå ved å reversere denne endringen.
+  function injectShopTab() { /* Butikk-fanen fjernet fra profilen. */ }
+  function watchForProfile() { /* Ingen ting å injisere/observere lenger. */ }
 
   window.psychedelicCover = psychedelicCover;
   window.Icon = svg;

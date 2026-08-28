@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   BugHelp — global feilfangar for Sound Core.
+   BugHelp — global feilfangar for SiriusFM.
    Fangar uventa JS-feil (window error + unhandledrejection), viser eit vennleg
    varsel nede til venstre, og lèt brukaren anten spørje Core (AI) om hjelp eller
    rapportere feilen til teamet (e-post via /api/send-email type=bug_report).
@@ -16,8 +16,8 @@ const BugHelp = (() => {
     try {
       return localStorage.getItem('ai_assistant_lang')
           || localStorage.getItem('stellar-lang')
-          || 'no';
-    } catch { return 'no'; }
+          || 'en';
+    } catch { return 'en'; }
   }
   // Enkel to-språks-tekst: engelsk for 'en', elles norsk (assistenten tek resten på chat).
   function t(no, en) { return langCode() === 'en' ? en : no; }
@@ -41,7 +41,7 @@ const BugHelp = (() => {
       username = u ? u.username : null;
     } catch {}
     return {
-      message:   (info.message || 'Ukjent feil').slice(0, 500),
+      message:   (info.message || 'Unknown error').slice(0, 500),
       stack:     (info.stack || '').slice(0, 4000),
       source:    info.source || '',
       line:      info.line || '',
@@ -80,10 +80,9 @@ const BugHelp = (() => {
         <span class="bug-toast-ico">⚠️</span>
         <strong>${t('Noko gjekk gale', 'Something went wrong')}</strong>
       </div>
-      <p class="bug-toast-msg">${t('Core kan hjelpe deg vidare — eller du kan sende feilen til teamet.',
-                                   'Core can help you out — or you can send the error to the team.')}</p>
+      <p class="bug-toast-msg">${t('Du kan sende feilen til teamet, så ser vi på det.',
+                                   'You can send the error to the team and we\'ll look into it.')}</p>
       <div class="bug-toast-actions">
-        <button class="bug-toast-btn bug-toast-btn--ai">${t('Spør Core', 'Ask Core')}</button>
         <button class="bug-toast-btn bug-toast-btn--report">${t('Rapporter feil', 'Report bug')}</button>
       </div>`;
 
@@ -92,15 +91,6 @@ const BugHelp = (() => {
                           if (currentToast === el) currentToast = null; };
 
     el.querySelector('.bug-toast-x').addEventListener('click', close);
-
-    // «Spør Core» — opnar AI-assistenten med feilen som kontekst
-    el.querySelector('.bug-toast-btn--ai').addEventListener('click', () => {
-      try {
-        if (typeof Assistant !== 'undefined' && Assistant.openWithBug) Assistant.openWithBug(ctx);
-        else if (typeof Assistant !== 'undefined' && Assistant.open)   Assistant.open();
-      } catch {}
-      close();
-    });
 
     // «Rapporter feil» — send detaljane til teamet
     el.querySelector('.bug-toast-btn--report').addEventListener('click', (e) => {
@@ -148,7 +138,7 @@ const BugHelp = (() => {
       try {
         if (typeof App !== 'undefined' && App.toast) {
           App.toast(ok ? t('Takk! Feilen er sendt til teamet.', 'Thanks! The error was sent to the team.')
-                       : t('Klarte ikkje sende rapporten. Prøv igjen seinare.', "Couldn't send the report. Try again later."),
+                       : t('Klarte ikke å sende rapporten. Prøv igjen senere.', "Couldn't send the report. Try again later."),
                     ok ? 'success' : 'error');
         }
       } catch {}

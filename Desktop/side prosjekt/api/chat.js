@@ -1,6 +1,8 @@
 // Serverless Claude proxy — keeps ANTHROPIC_API_KEY server-side so it is never
 // exposed in the browser. Used by all AI features (js/ai.js) + the assistant.
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
+// Same innhaldsfilter som nettlesaren brukar — her kan det ikkje omgåast.
+const SafeSearch = require('../js/safesearch.js');
 
 // Only allow models we actually use, so a tampered client can't pick an expensive one.
 const ALLOWED_MODELS = new Set([
@@ -17,19 +19,34 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(503).json({ error: 'AI er ikke konfigurert på serveren (mangler ANTHROPIC_API_KEY).' });
-  }
-
   const body = req.body || {};
   const { system, messages } = body;
 
   if (!Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({ error: 'Mangler meldinger' });
+    return res.status(400).json({ error: 'Missing messages' });
   }
   // Basic shape + size guard
   if (messages.length > 40) {
-    return res.status(400).json({ error: 'For mange meldinger' });
+    return res.status(400).json({ error: 'Too many messages' });
+  }
+
+  // Innhaldsfilteret køyrer FØR nøkkelsjekken, så sperra gjeld uansett om AI-en
+  // er konfigurert eller ikkje. Berre siste bruker-melding blir sjekka — eldre
+  // turar er allereie filtrerte.
+  const lastUser = [...messages].reverse().find((m) => m && m.role === 'user');
+  const lastText = typeof lastUser?.content === 'string'
+    ? lastUser.content
+    : (Array.isArray(lastUser?.content)
+        ? lastUser.content.map((c) => (c && typeof c.text === 'string' ? c.text : '')).join(' ')
+        : '');
+  const verdict = SafeSearch.check(lastText);
+  if (!verdict.ok) {
+    // 200 med teksten, slik at alle klientar viser meldinga som eit vanleg svar.
+    return res.status(200).json({ text: verdict.message, blocked: verdict.category });
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: 'AI is not configured on the server (missing ANTHROPIC_API_KEY).' });
   }
 
   const model = ALLOWED_MODELS.has(body.model) ? body.model : DEFAULT_MODEL;
@@ -62,6 +79,6 @@ module.exports = async (req, res) => {
     return res.status(200).json({ text });
   } catch (e) {
     console.error('chat proxy error:', e?.message || e);
-    return res.status(500).json({ error: 'Kunne ikke kontakte AI-tjenesten' });
+    return res.status(500).json({ error: 'Could not reach the AI service' });
   }
 };

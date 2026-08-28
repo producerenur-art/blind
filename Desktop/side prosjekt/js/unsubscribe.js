@@ -46,6 +46,7 @@ const Unsubscribe = (() => {
     const app = document.getElementById('app');
     if (!app) return;
 
+    const fromLink = !!_norm(email);   // e-posten kom frå sjølve avmeldingslenka
     // E-post fra lenka, ellers den innloggede brukerens e-post.
     let target = _norm(email);
     if (!target && typeof Auth !== 'undefined' && Auth.current) {
@@ -56,6 +57,11 @@ const Unsubscribe = (() => {
     // Uten e-post: be om den (f.eks. åpnet lenka uten parameter og ikke innlogget).
     if (!target) { app.innerHTML = _formView(); _wireForm(); return; }
 
+    // Meld berre av automatisk når e-posten kom frå lenka. Ein innlogga brukar som
+    // berre opnar sida skal IKKJE avmeldast som bivirkning av navigasjon — vis skjemaet
+    // så avmeldinga blir ei eksplisitt handling.
+    if (!fromLink) { app.innerHTML = _formView(); _wireForm(); return; }
+
     optOut(target);
     app.innerHTML = _doneView(target, false);
     _wireDone(target);
@@ -64,17 +70,17 @@ const Unsubscribe = (() => {
   function _formView() {
     return `<div class="auth-page"><div class="auth-card">
       <div style="text-align:center;font-size:3rem;margin-bottom:0.5rem">${_i('mail')}</div>
-      <h2 style="font-weight:800;text-align:center;margin-bottom:0.5rem">Avmeld reklame</h2>
+      <h2 style="font-weight:800;text-align:center;margin-bottom:0.5rem">Unsubscribe from promotions</h2>
       <p style="color:var(--text2);line-height:1.6;text-align:center;margin-bottom:1.25rem">
-        Skriv inn e-postadressen din for å melde deg av reklame- og markedsførings-e-poster.
+        Enter your email address to unsubscribe from promotional and marketing emails.
       </p>
       <div class="form-group">
-        <label class="form-label">E-postadresse</label>
-        <input class="form-input" id="unsub-email" type="email" placeholder="din@epost.no" autocomplete="email">
+        <label class="form-label">Email address</label>
+        <input class="form-input" id="unsub-email" type="email" placeholder="you@email.com" autocomplete="email">
       </div>
       <div id="unsub-error" class="form-error" style="margin-bottom:0.75rem;display:none"></div>
-      <button class="btn btn-primary w-full" id="unsub-go">${_i('x')} Avmeld meg</button>
-      <p style="text-align:center;margin-top:1rem"><a href="#/" style="color:var(--text3);font-size:0.85rem">Tilbake til Sound Core</a></p>
+      <button class="btn btn-primary w-full" id="unsub-go">${_i('x')} Unsubscribe me</button>
+      <p style="text-align:center;margin-top:1rem"><a href="#/" style="color:var(--text3);font-size:0.85rem">Back to SiriusFM</a></p>
     </div></div>`;
   }
 
@@ -85,7 +91,7 @@ const Unsubscribe = (() => {
     const submit = () => {
       const e = _norm(inp && inp.value);
       if (!e || !e.includes('@')) {
-        if (err) { err.textContent = 'Skriv inn en gyldig e-postadresse.'; err.style.display = 'block'; }
+        if (err) { err.textContent = 'Enter a valid email address.'; err.style.display = 'block'; }
         return;
       }
       render(e);
@@ -99,25 +105,25 @@ const Unsubscribe = (() => {
     if (resubscribed) {
       return `<div class="auth-page"><div class="auth-card" style="text-align:center">
         <div style="font-size:3.5rem;margin-bottom:0.75rem">${_i('bell')}</div>
-        <h2 style="font-weight:800;margin-bottom:0.5rem">Du er påmeldt igjen ✓</h2>
+        <h2 style="font-weight:800;margin-bottom:0.5rem">You are subscribed again ✓</h2>
         <p style="color:var(--text2);line-height:1.6;margin-bottom:1.5rem">
-          <strong>${_esc(email)}</strong> vil igjen motta nyheter, fester og tilbud fra Sound Core.
+          <strong>${_esc(email)}</strong> will again receive news, parties and offers from SiriusFM.
         </p>
-        <button class="btn" id="unsub-redo" style="display:inline-flex">${_i('x')} Avmeld likevel</button>
-        <div style="margin-top:1rem"><a href="#/" class="btn btn-primary" style="display:inline-flex">${_i('arrow-right')} Til Sound Core</a></div>
+        <button class="btn" id="unsub-redo" style="display:inline-flex">${_i('x')} Unsubscribe anyway</button>
+        <div style="margin-top:1rem"><a href="#/" class="btn btn-primary" style="display:inline-flex">${_i('arrow-right')} To SiriusFM</a></div>
       </div></div>`;
     }
     return `<div class="auth-page"><div class="auth-card" style="text-align:center">
       <div style="font-size:3.5rem;margin-bottom:0.75rem">${_i('check-circle')}</div>
-      <h2 style="font-weight:800;margin-bottom:0.5rem">Du er avmeldt 👋</h2>
+      <h2 style="font-weight:800;margin-bottom:0.5rem">You are unsubscribed 👋</h2>
       <p style="color:var(--text2);line-height:1.6;margin-bottom:0.35rem">
-        <strong>${_esc(email)}</strong> vil ikke lenger motta reklame- og markedsførings-e-poster fra Sound Core.
+        <strong>${_esc(email)}</strong> will no longer receive promotional and marketing emails from SiriusFM.
       </p>
       <p style="color:var(--text3);font-size:0.85rem;margin-bottom:1.5rem">
-        Du får fortsatt viktige konto-e-poster (aktivering, kvitteringer og passord).
+        You will still receive important account emails (activation, receipts and passwords).
       </p>
-      <button class="btn btn-primary" id="unsub-undo" style="display:inline-flex">${_i('bell')} Meld på igjen</button>
-      <div style="margin-top:1rem"><a href="#/" class="btn" style="display:inline-flex">${_i('arrow-left')} Til Sound Core</a></div>
+      <button class="btn btn-primary" id="unsub-undo" style="display:inline-flex">${_i('bell')} Subscribe again</button>
+      <div style="margin-top:1rem"><a href="#/" class="btn" style="display:inline-flex">${_i('arrow-left')} To SiriusFM</a></div>
     </div></div>`;
   }
 
@@ -125,7 +131,7 @@ const Unsubscribe = (() => {
     const undo = document.getElementById('unsub-undo');
     if (undo) undo.onclick = () => {
       optIn(email);
-      _toast('Du er meldt på reklame igjen ✓', 'success');
+      _toast('You are subscribed to promotions again ✓', 'success');
       const app = document.getElementById('app');
       if (app) { app.innerHTML = _doneView(email, true); _wireResub(email); }
     };
@@ -135,7 +141,7 @@ const Unsubscribe = (() => {
     const redo = document.getElementById('unsub-redo');
     if (redo) redo.onclick = () => {
       optOut(email);
-      _toast('Du er avmeldt reklame ✓', 'success');
+      _toast('You are unsubscribed from promotions ✓', 'success');
       const app = document.getElementById('app');
       if (app) { app.innerHTML = _doneView(email, false); _wireDone(email); }
     };

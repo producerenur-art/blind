@@ -11,9 +11,9 @@ const World = (() => {
   const FESTIVALS = [
     {
       emoji: '🌌', name: 'Boom Festival', loc: 'Idanha-a-Nova, Portugal 🇵🇹',
-      dates: 'Biennial · Jul',
+      dates: '18 – 25 Jul 2027 · 30 years',
       grad: 'linear-gradient(135deg,#0d0829,#1a0b3d,#2a0d5e)',
-      theme: 'Verdas mest kjende transformasjonsfestival — Dance Temple, visionær kunst & djup campingkultur.',
+      theme: 'The world’s most famous transformational festival — Dance Temple, Chill Out Gardens, visionary art & deep camping culture. The 2027 edition celebrates 30 years of Boom, with ~70 % newly booked projects.',
       tags: ['Psytrance', 'Downtempo', 'Ambient', 'Visionary Art', 'Biennial'],
       links: [
         { label: 'boomfestival.org', kind: 'web', url: 'https://www.boomfestival.org/' },
@@ -24,7 +24,7 @@ const World = (() => {
       emoji: '🔥', name: 'OZORA Festival', loc: 'Dádpuszta, Hungary 🇭🇺',
       dates: '27 Jul – 4 Aug 2026',
       grad: 'linear-gradient(135deg,#1a0a05,#3a1a0a,#5e2a0d)',
-      theme: 'Ein av Europas største — kulturelt mangfaldig kunst- og trance-samling.',
+      theme: 'One of Europe’s largest — a culturally diverse art and trance gathering.',
       tags: ['Psytrance', 'Progressive', 'Chill Dome', 'Art'],
       links: [
         { label: 'ozorafestival.eu', kind: 'web', url: 'https://ozorafestival.eu/' },
@@ -35,7 +35,7 @@ const World = (() => {
       emoji: '🌲', name: 'Mo:Dem Festival', loc: 'Primišlje, Croatia 🇭🇷',
       dates: '3 – 9 Aug 2026',
       grad: 'linear-gradient(135deg,#04130a,#0a2e16,#11402a)',
-      theme: 'Momento Demento — kjend for underground forest, hitech og darkpsy av høg kvalitet.',
+      theme: 'Momento Demento — known for high-quality underground forest, hi-tech and darkpsy.',
       tags: ['Forest', 'Darkpsy', 'Hi-Tech', 'Experimental'],
       links: [
         { label: 'modemfestival.com', kind: 'web', url: 'https://modemfestival.com/' },
@@ -44,9 +44,9 @@ const World = (() => {
     },
     {
       emoji: '🌞', name: 'Universo Paralello', loc: 'Pratigi, Bahia, Brazil 🇧🇷',
-      dates: 'Biennial · Nyttår',
+      dates: 'Biennial · New Year',
       grad: 'linear-gradient(135deg,#05131f,#0a2a44,#0f3a5c)',
-      theme: 'Ein av verdas største nyttårsfestivalar — 9 dagar psykedelisk trance på stranda.',
+      theme: 'One of the world’s largest New Year festivals — 9 days of psychedelic trance on the beach.',
       tags: ['Psytrance', 'New Year', 'Beach', 'Biennial'],
       links: [
         { label: 'universoparalello.org', kind: 'web', url: 'https://universoparalello.org/' },
@@ -56,7 +56,7 @@ const World = (() => {
       emoji: '🏔️', name: 'Burning Mountain', loc: 'Zernez, Switzerland 🇨🇭',
       dates: '25 – 28 Jun 2026',
       grad: 'linear-gradient(135deg,#0a1020,#13243f,#1c3a5c)',
-      theme: 'Immersiv alpin progressive psytrance på 1500 moh i Engadin-dalen.',
+      theme: 'Immersive alpine progressive psytrance at 1500 m in the Engadin valley.',
       tags: ['Progressive', 'Psytrance', 'Alpine', 'Open Air'],
       links: [
         { label: 'burning-mountain.ch', kind: 'web', url: 'https://www.burning-mountain.ch/' },
@@ -66,7 +66,7 @@ const World = (() => {
       emoji: '🌏', name: 'Earth Frequency Festival', loc: 'Woodford, QLD, Australia 🇦🇺',
       dates: '23 – 26 Oct 2026',
       grad: 'linear-gradient(135deg,#0a1a0d,#143018,#1c4a26)',
-      theme: 'Stor australsk samling — psytrance, world music, kunst og miljø.',
+      theme: 'A large Australian gathering — psytrance, world music, art and the environment.',
       tags: ['Psytrance', 'World Music', 'Arts', 'Community'],
       links: [
         { label: 'earthfrequency.com.au', kind: 'web', url: 'https://www.earthfrequency.com.au/' },
@@ -76,10 +76,132 @@ const World = (() => {
       emoji: '🕉️', name: 'ZNA Gathering', loc: 'Montargil, Portugal 🇵🇹',
       dates: '15 – 22 Jul 2026',
       grad: 'linear-gradient(135deg,#1a1405,#3a2e0a,#5e4a0d)',
-      theme: 'Vigd til «retro» og klassisk Goa Trance — eit retro-futuristisk møtepunkt.',
+      theme: 'Dedicated to «retro» and classic Goa Trance — a retro-futuristic meeting point.',
       tags: ['Goa Trance', 'Retro', 'Old-School', 'Biennial'],
       links: [
         { label: 'znagathering.com', kind: 'web', url: 'https://znagathering.com/' },
+      ],
+    },
+    {
+      emoji: '🏖️', name: 'Free Earth Festival', loc: 'Asprovalta Beach, Greece 🇬🇷',
+      dates: '24 – 30 Aug 2026',
+      grad: 'linear-gradient(135deg,#03151f,#07304a,#0b4a68)',
+      theme: 'Europe’s only psytrance beach festival — three stages: Enlightenment (prog → full-on), the Parvati forest stage and Oxygen for psychedelic downtempo, dark prog & psytechno.',
+      tags: ['Beach', 'Psytrance', 'Downtempo', 'Psytechno', 'Parvati Stage'],
+      links: [
+        { label: 'freeearth-festival.com', kind: 'web', url: 'https://freeearth-festival.com/' },
+      ],
+    },
+    {
+      emoji: '🪶', name: 'Indian Spirit', loc: 'Eldena, Germany 🇩🇪',
+      dates: '26 – 31 Aug 2026',
+      grad: 'linear-gradient(135deg,#1a0f05,#3d240b,#5c3a10)',
+      theme: 'Germany’s biggest psytrance festival — Sun, Moon and Mushroom stages plus a Fire Tent and its own Chill Out stage.',
+      tags: ['Psytrance', 'Chill Out Stage', 'Open Air', 'Germany'],
+      links: [
+        { label: 'indian-spirit.de', kind: 'web', url: 'https://www.indian-spirit.de/' },
+      ],
+    },
+    {
+      emoji: '🌻', name: 'Hadra Trance Festival', loc: 'Vieure, Allier, France 🇫🇷',
+      dates: '27 – 30 Aug 2026',
+      grad: 'linear-gradient(135deg,#0d1405,#1f300a,#334d10)',
+      theme: 'France’s flagship gathering — 4 stages, 170 artists and 72 hours of psytrance, chill, techno and drum & bass. 2026 theme: «Solar Punk Chronicles: The Seed».',
+      tags: ['Psytrance', 'Chill', 'Techno', 'D&B', 'France'],
+      links: [
+        { label: 'hadratrancefestival.net', kind: 'web', url: 'https://hadratrancefestival.net/' },
+        { label: 'Hadra Records', kind: 'bandcamp', url: 'https://hadrarecords.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🛩️', name: 'VooV Experience', loc: 'Putlitz, Germany 🇩🇪',
+      dates: '16 – 19 Jul 2027',
+      grad: 'linear-gradient(135deg,#050d1f,#0b2044,#123566)',
+      theme: 'A German institution since 1992, held on an old airfield between Hamburg and Berlin — main floor, chill floor and a strong old-school Goa heritage.',
+      tags: ['Goa Trance', 'Psytrance', 'Chill Floor', 'Since 1992'],
+      links: [
+        { label: 'voov.de', kind: 'web', url: 'https://www.voov.de/' },
+      ],
+    },
+    {
+      emoji: '☀️', name: 'S.U.N. Festival', loc: 'Csobánkapuszta, Hungary 🇭🇺',
+      dates: 'Annually · Jul',
+      grad: 'linear-gradient(135deg,#1f1405,#402a0a,#634010)',
+      theme: 'Solar United Natives — a non-profit tribal gathering in the Cserhát valley run by the Mély Mosoly foundation: psytrance, chill temple, permaculture and hundreds of workshops.',
+      tags: ['Psytrance', 'Chill Temple', 'Community', 'Workshops', 'Non-profit'],
+      links: [
+        { label: 'solarunitednatives.org', kind: 'web', url: 'https://solarunitednatives.org/' },
+      ],
+    },
+    {
+      emoji: '🧘', name: 'Samsara Festival', loc: 'Hungary 🇭🇺',
+      dates: 'Winter editions · Jan & Feb 2027',
+      grad: 'linear-gradient(135deg,#0a1424,#152a44,#1f3f63)',
+      theme: 'A psybient festival, land-art space and yoga village — around 150 yoga workshops and 140+ artists across chill, downtempo, slow trance and world music. One of the scene’s few truly chill-first gatherings.',
+      tags: ['Psybient', 'Psychill', 'Downtempo', 'Yoga', 'World Music'],
+      links: [
+        { label: 'samsarafestival.eu', kind: 'web', url: 'https://samsarafestival.eu/' },
+      ],
+    },
+    {
+      emoji: '⛰️', name: 'Shankra Festival', loc: 'Lostallo, Switzerland 🇨🇭',
+      dates: 'Jun 2027',
+      grad: 'linear-gradient(135deg,#04140f,#0a2e24,#10453a)',
+      theme: 'A mystical alpine gathering in a Swiss river valley — «Your Life Is Your Message». Main floor psytrance with a deep chill area under the mountains.',
+      tags: ['Psytrance', 'Alpine', 'Transformational', 'Chill Area'],
+      links: [
+        { label: 'shankrafestival.org', kind: 'web', url: 'https://shankrafestival.org/' },
+        { label: 'SoundCloud', kind: 'soundcloud', url: 'https://soundcloud.com/shankrafestival' },
+      ],
+    },
+    {
+      emoji: '🏝️', name: 'Tribal Gathering', loc: 'Caribbean coast, Panama 🇵🇦',
+      dates: '5 – 22 Mar 2027',
+      grad: 'linear-gradient(135deg,#03161a,#073038,#0c4c52)',
+      theme: '18 days on a Caribbean beach with indigenous tribes from around the world — week one house, techno, D&B and world beats, week two full psytrance.',
+      tags: ['Psytrance', 'World Beats', 'Beach', '18 Days', 'Indigenous Cultures'],
+      links: [
+        { label: 'tribalgathering.com', kind: 'web', url: 'https://www.tribalgathering.com/' },
+      ],
+    },
+    {
+      emoji: '🦅', name: 'Origin Festival', loc: 'Helderstroom, South Africa 🇿🇦',
+      dates: '29 – 31 Jan 2027',
+      grad: 'linear-gradient(135deg,#1a0714,#330d28,#4d1440)',
+      theme: 'A deliberately small Cape gathering 125 km from Cape Town — the Origin floor curated by Nano Records and Riverside Beats by TenFold.',
+      tags: ['Psytrance', 'Nano Records', 'Riverside', 'Small Capacity'],
+      links: [
+        { label: 'originfestival.com', kind: 'web', url: 'https://originfestival.com/' },
+      ],
+    },
+    {
+      emoji: '👽', name: 'Alien Safari', loc: 'Cape Town, South Africa 🇿🇦',
+      dates: 'Season parties · Nov – Apr',
+      grad: 'linear-gradient(135deg,#04140a,#0a2e1a,#104a2c)',
+      theme: 'South Africa’s longest-running psytrance brand — open-air parties in mountain and coastal locations around the Cape through the southern summer.',
+      tags: ['Psytrance', 'Open Air', 'South Africa', 'Long-running'],
+      links: [
+        { label: 'Facebook', kind: 'web', url: 'https://www.facebook.com/aliensafari/' },
+      ],
+    },
+    {
+      emoji: '🌈', name: 'Rainbow Spirit Festival', loc: 'Victoria, Australia 🇦🇺',
+      dates: 'Annually · Australian summer',
+      grad: 'linear-gradient(135deg,#140a24,#2a1245,#3f1c66)',
+      theme: 'The continuation of the legendary Rainbow Serpent — «smaller and more connected», with music, art and village culture on Taungurung country.',
+      tags: ['Psytrance', 'Art', 'Village', 'Australia'],
+      links: [
+        { label: 'rainbowspirit.net', kind: 'web', url: 'https://rainbowspirit.net/' },
+      ],
+    },
+    {
+      emoji: '🐍', name: 'Ometeotl Festival', loc: 'Mexico 🇲🇽',
+      dates: 'Annually · Mexico',
+      grad: 'linear-gradient(135deg,#1f0805,#40140a,#63220f)',
+      theme: 'A transformational festival binding spirit, earth, art and music — 60+ live acts alongside workshops, ceremony and bio-built, ecological infrastructure.',
+      tags: ['Psytrance', 'Transformational', 'Ceremony', 'Live Acts'],
+      links: [
+        { label: 'ometeotl.mx', kind: 'web', url: 'https://ometeotl.mx/' },
       ],
     },
   ];
@@ -90,14 +212,14 @@ const World = (() => {
     {
       emoji: '🏛️', name: 'IT Athens', loc: 'Exarcheia, Athens, Greece 🇬🇷',
       grad: 'linear-gradient(135deg,#0a0a14,#1a1030,#2a0d3e)',
-      theme: '2 rom i Solomou 30 & Mpotasi 9, midt i Exarcheia — ein av Athens mest aktive underground-klubbar med 58 arrangement i 2026. Residentar: Plagger, MOSHBEAT, TYPEO, Human Cruelty & Brazi.',
+      theme: '2 rooms at Solomou 30 & Mpotasi 9, in the heart of Exarcheia — one of Athens’ most active underground clubs, with 58 events in 2026. Residents: Plagger, MOSHBEAT, TYPEO, Human Cruelty & Brazi.',
       tags: ['Underground', '2 Rooms', 'Athens', 'Live'],
       events: [
-        { name: 'Community Night III', date: '3. jul 2026', url: 'https://ra.co/events/2477945' },
-        { name: 'IT Athens Closing Season — TYPEO · MOSHBEAT · Plagger', date: '11. jul 2026', url: 'https://ra.co/events/2477950' },
+        { name: 'Community Night III', date: 'Jul 3, 2026', url: 'https://ra.co/events/2477945' },
+        { name: 'IT Athens Closing Season — TYPEO · MOSHBEAT · Plagger', date: 'Jul 11, 2026', url: 'https://ra.co/events/2477950' },
       ],
       links: [
-        { label: 'RA-profil', kind: 'web', url: 'https://ra.co/clubs/212119' },
+        { label: 'RA profile', kind: 'web', url: 'https://ra.co/clubs/212119' },
         { label: 'Instagram', kind: 'web', url: 'https://www.instagram.com/itathensexarcheia/' },
       ],
     },
@@ -176,6 +298,189 @@ const World = (() => {
         { label: 'Bandcamp', kind: 'bandcamp', url: 'https://dacrurecords.bandcamp.com/' },
       ],
     },
+    {
+      emoji: '🛋️', name: 'Sofa Beats', loc: 'Denmark 🇩🇰 · Chillgressive / Downtempo',
+      grad: 'linear-gradient(135deg,#0a1a14,#12362a)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://sofabeats.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🛰️', name: 'Astropilot Music', loc: 'Ukraine 🇺🇦 · Chillgressive / Psybient',
+      grad: 'linear-gradient(135deg,#05101f,#0b2444)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://astropilotmusic.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🔮', name: 'Visionary Shamanics', loc: 'Psychill / Psydub',
+      grad: 'linear-gradient(135deg,#140a24,#2a1245)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://visionaryshamanics.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🕯️', name: 'Altar Records', loc: 'DJ Zen’s label · Psychill / Downtempo',
+      grad: 'linear-gradient(135deg,#1a0f05,#3a2410)',
+      links: [
+        { label: 'altar-records.com', kind: 'web', url: 'https://www.altar-records.com/' },
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://altarrecords.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🌌', name: 'Microcosmos Chill-out', loc: 'Psychill / Ambient',
+      grad: 'linear-gradient(135deg,#050a1f,#101a44)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://microcosmos.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🌬️', name: 'Blue Hour Sounds', loc: 'Psychill / Downtempo',
+      grad: 'linear-gradient(135deg,#04121f,#0a2c44)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://blueHoursounds.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🧿', name: 'Merkaba Music', loc: 'Australia 🇦🇺 · Psybass / Downtempo',
+      grad: 'linear-gradient(135deg,#12051f,#280a40)',
+      links: [
+        { label: 'merkabamusic.com', kind: 'web', url: 'https://merkabamusic.com/' },
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://merkabamusic.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🌵', name: 'Desert Trax', loc: 'USA 🇺🇸 · Desert Dwellers · Tribal Downtempo',
+      grad: 'linear-gradient(135deg,#1f1205,#40270a)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://desertrax.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🍁', name: 'Interchill Records', loc: 'Canada 🇨🇦 · Psydub / Downtempo',
+      grad: 'linear-gradient(135deg,#0a1405,#1c3010)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://interchill.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🌀', name: 'TWISTED Records', loc: 'UK 🇬🇧 · Simon Posford · Psytrance / Psybient',
+      grad: 'linear-gradient(135deg,#0d0829,#221050)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://twistedrecords.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '💫', name: 'TIP Records', loc: 'UK 🇬🇧 · Raja Ram · Goa classics',
+      grad: 'linear-gradient(135deg,#1a1405,#3d3110)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://tiprecords.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🎛️', name: 'Iono Music', loc: 'Germany 🇩🇪 · Progressive Psytrance',
+      grad: 'linear-gradient(135deg,#05141a,#0b3040)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://ionomusic.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🧊', name: 'TesseracTstudio', loc: 'Progressive / Psy-Techno',
+      grad: 'linear-gradient(135deg,#0a0f1f,#161f44)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://tesseractstudio.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🌻', name: 'Hadra Records', loc: 'France 🇫🇷 · Psytrance / Chill',
+      grad: 'linear-gradient(135deg,#0d1405,#243d0a)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://hadrarecords.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🌙', name: 'Dreaming Awake Records', loc: 'Psychill / Psybient',
+      grad: 'linear-gradient(135deg,#0a0a1f,#1a1440)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://dreamingawake.bandcamp.com/' },
+      ],
+    },
+  ];
+
+  // ── Magazines, media & scene archives ─────────────────────────────────
+  const MEDIA = [
+    {
+      emoji: '🍄', name: 'mushroom magazine', loc: 'Germany 🇩🇪 · Since 1993',
+      grad: 'linear-gradient(135deg,#1a0a05,#3d1a0a)',
+      theme: 'The world’s leading psytrance magazine — print and online. Party and festival guide, new releases, artist and label features, DJ charts.',
+      tags: ['Magazine', 'Print + Online', 'Festival Guide', 'DJ Charts'],
+      links: [
+        { label: 'mushroom-magazine.com', kind: 'web', url: 'https://www.mushroom-magazine.com/' },
+      ],
+    },
+    {
+      emoji: '🌿', name: 'psybient.org', loc: 'Psychill · Psybient · Psydub',
+      grad: 'linear-gradient(135deg,#04130d,#0a2e22)',
+      theme: 'The reference site for the chill side of the scene — releases, mixes, interviews, label-of-the-year polls and an event calendar for downtempo and ambient gatherings.',
+      tags: ['Psychill', 'Downtempo', 'Reviews', 'Charts', 'Calendar'],
+      links: [
+        { label: 'psybient.org', kind: 'web', url: 'https://www.psybient.org/' },
+      ],
+    },
+    {
+      emoji: '📰', name: 'Trancentral', loc: 'Psytrance news & culture',
+      grad: 'linear-gradient(135deg,#0d0829,#2a0d5e)',
+      theme: 'Weekly release round-ups, mixes, features and scene news across the full spectrum of psychedelic sub-genres.',
+      tags: ['News', 'Weekly Releases', 'Mixes', 'Interviews'],
+      links: [
+        { label: 'trancentral.tv', kind: 'web', url: 'https://trancentral.tv/' },
+      ],
+    },
+    {
+      emoji: '💾', name: 'Ektoplazm', loc: 'Free & legal psytrance archive',
+      grad: 'linear-gradient(135deg,#04131f,#0a2a44)',
+      theme: 'The scene’s largest free-music portal — thousands of Creative Commons releases in lossless quality, from Goa and full-on to psychill and downtempo.',
+      tags: ['Free Music', 'Netlabels', 'Creative Commons', 'Archive'],
+      links: [
+        { label: 'ektoplazm.com', kind: 'web', url: 'https://ektoplazm.com/free-music/' },
+      ],
+    },
+    {
+      emoji: '🗓️', name: 'PsyCalendar', loc: 'Worldwide festival calendar',
+      grad: 'linear-gradient(135deg,#1a1405,#3a2e0a)',
+      theme: 'A global calendar of psytrance festivals and parties — dates, countries and line-ups collected in one place.',
+      tags: ['Calendar', 'Festivals', 'Worldwide'],
+      links: [
+        { label: 'psycalendar.com', kind: 'web', url: 'https://www.psycalendar.com/' },
+      ],
+    },
+    {
+      emoji: '🌍', name: 'Psytrance Net', loc: 'Global events & guides',
+      grad: 'linear-gradient(135deg,#0a140d,#163024)',
+      theme: 'Event listings, festival guides and news for the international psytrance community.',
+      tags: ['Events', 'Guides', 'News'],
+      links: [
+        { label: 'psytrancenet.com', kind: 'web', url: 'https://psytrancenet.com/en' },
+      ],
+    },
+    {
+      emoji: '🦁', name: 'Psymedia', loc: 'South Africa 🇿🇦 · Scene media',
+      grad: 'linear-gradient(135deg,#1f1205,#40270a)',
+      theme: 'Festival databases, line-up news and features with a strong focus on the African and Southern-Hemisphere scene.',
+      tags: ['Festival Database', 'Africa', 'News'],
+      links: [
+        { label: 'psymedia.co.za', kind: 'web', url: 'https://psymedia.co.za/' },
+      ],
+    },
+    {
+      emoji: '💬', name: 'Psynews.org', loc: 'Community forum · Since 1997',
+      grad: 'linear-gradient(135deg,#0a0a14,#1a1030)',
+      theme: 'One of the oldest surviving psytrance communities — album reviews, deep genre discussion and decades of scene memory.',
+      tags: ['Forum', 'Reviews', 'Community', 'Since 1997'],
+      links: [
+        { label: 'psynews.org', kind: 'web', url: 'https://www.psynews.org/' },
+      ],
+    },
   ];
 
   // ── Pioneering artists ────────────────────────────────────────────────
@@ -189,6 +494,18 @@ const World = (() => {
       emoji: '✨', name: 'Shpongle', loc: 'UK 🇬🇧 · Psybient (Posford + Raja Ram)',
       grad: 'linear-gradient(135deg,#0d0829,#2a0d5e)',
       links: [{ label: 'shponglemusic.com', kind: 'web', url: 'https://www.shponglemusic.com/' }],
+    },
+    {
+      emoji: '🎛️', name: 'Tristan', loc: 'UK 🇬🇧 · Goa / Psytrance (since 1995)',
+      theme: 'Tristan Cooke — one of the UK scene\u2019s founding names. Played the Goa full-moon parties before returning to London in 1993, debuted on Matsuri Records in 1995 and released the classics Audiodrome (1999) and Substance (2002) on Twisted Records. Now a cornerstone of Nano Records, still headlining Boom, Ozora and Glastonbury.',
+      tags: ['Goa trance', 'Full-on', 'Twisted Records', 'Nano Records'],
+      grad: 'linear-gradient(135deg,#120520,#4a0f3a)',
+      links: [
+        { label: 'djtristan.com', kind: 'web', url: 'https://djtristan.com/' },
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://djtristan.bandcamp.com/' },
+        { label: 'SoundCloud', kind: 'soundcloud', url: 'https://soundcloud.com/djtristan' },
+        { label: 'Spotify', kind: 'spotify', url: 'https://open.spotify.com/artist/4dksllH87LsrZgin0ee2uc' },
+      ],
     },
     {
       emoji: '🍄', name: 'Infected Mushroom', loc: 'Israel 🇮🇱 · Psytrance / Electronica',
@@ -229,7 +546,7 @@ const World = (() => {
   ];
 
   // ── Web radios from around the world ──────────────────────────────────
-  // `play` = id of a station in Radio.js → plays directly in the SoundCore player.
+  // `play` = id of a station in Radio.js → plays directly in the SiriusFM player.
   const RADIOS = [
     {
       emoji: '🍄', name: 'DMT-FM', loc: 'Tenerife 🇪🇸 · Psytrance 24/7',
@@ -248,7 +565,7 @@ const World = (() => {
       ],
     },
     {
-      emoji: '📻', name: 'PsyRadio.fm', loc: 'Germany 🇩🇪 · 4 kanalar sidan 2004',
+      emoji: '📻', name: 'PsyRadio.fm', loc: 'Germany 🇩🇪 · 4 channels since 2004',
       grad: 'linear-gradient(135deg,#0d0829,#1f0b4d)',
       links: [{ label: 'psyradio.fm', kind: 'web', url: 'http://psyradio.fm/' }],
     },
@@ -272,7 +589,7 @@ const World = (() => {
   function linkRow(links) {
     return `<div class="world-links">${links.map(l => {
       if (l.play) {
-        return `<button class="world-link world-link--play" onclick="World.tuneIn('${l.play}')">${Icon('play')} Spill her</button>`;
+        return `<button class="world-link world-link--play" onclick="World.tuneIn('${l.play}')">${Icon('play')} Play here</button>`;
       }
       const ico = l.kind === 'soundcloud' ? Icon('disc')
                 : l.kind === 'bandcamp'   ? Icon('music')
@@ -285,7 +602,7 @@ const World = (() => {
   function eventsRow(events) {
     if (!events || !events.length) return '';
     return `<div class="world-events">
-      <div class="world-events-title">${Icon('calendar')} Planar framover</div>
+      <div class="world-events-title">${Icon('calendar')} Upcoming events</div>
       ${events.map(e => `
         <a class="world-event" href="${e.url}" target="_blank" rel="noopener noreferrer">
           <span class="world-event-date">${esc(e.date)}</span>
@@ -328,25 +645,39 @@ const World = (() => {
           <div class="shows-hero-inner">
             <div class="shows-hero-badge">${Icon('globe')} The Global Scene</div>
             <h1 class="shows-hero-title">All Over The World</h1>
-            <p class="shows-hero-sub">Det globale psytrance- og psybient-miljøet strekkjer seg over heile kloden — med store transformasjonsfestivalar, innflytelsesrike plateselskap og banebrytande artistar. Ein scene djupt rotfest i visuell kunst, spiritualitet og fleirdagars samlingar under open himmel.</p>
+            <p class="shows-hero-sub">The global psytrance and psybient scene stretches across the entire planet — with major transformational festivals, influential record labels and pioneering artists. A scene deeply rooted in visual art, spirituality and multi-day open-air gatherings.</p>
           </div>
           <div class="shows-hero-live">
             <div class="world-hero-stats">
-              <div class="world-stat"><span>${FESTIVALS.length}</span> festivalar</div>
-              <div class="world-stat"><span>${CLUBS.length}</span> klubbar</div>
-              <div class="world-stat"><span>${LABELS.length}</span> plateselskap</div>
-              <div class="world-stat"><span>${ARTISTS.length}</span> artistar</div>
-              <div class="world-stat"><span>${RADIOS.length}</span> radioar</div>
+              <div class="world-stat"><span>${FESTIVALS.length}</span> festivals</div>
+              <div class="world-stat"><span>${CLUBS.length}</span> clubs</div>
+              <div class="world-stat"><span>${LABELS.length}</span> labels</div>
+              <div class="world-stat"><span>${ARTISTS.length}</span> artists</div>
+              <div class="world-stat"><span>${MEDIA.length}</span> magazines</div>
+              <div class="world-stat"><span>${RADIOS.length}</span> radios</div>
             </div>
-            <a class="shows-live-btn" href="#/radio">${Icon('radio')} Opne radiospelaren</a>
+            <a class="shows-live-btn" href="#/radio">${Icon('radio')} Open the radio player</a>
           </div>
+        </div>
+
+        <!-- FRESH FROM THE WORLD (AI-rotasjon, se js/aifresh.js) -->
+        <div class="section" style="max-width:1100px">
+          <div class="section-header">
+            <div class="section-title"><img src="assets/logo-mark.svg?v=20260816-sfm" alt="" class="section-title-logo"> Fresh from the world</div>
+          </div>
+          <div id="world-fresh-festivals"></div>
+          <div id="world-fresh-psychill"></div>
+          <div id="world-fresh-chillgressive"></div>
+          <div id="world-fresh-psytrance"></div>
+          <div id="world-fresh-labels"></div>
+          <div id="world-fresh-techno"></div>
         </div>
 
         <!-- FESTIVALS -->
         <div class="section" style="max-width:1100px">
           <div class="section-header">
-            <div class="section-title">${Icon('star')} Store globale festivalar</div>
-            <span class="text-muted text-sm">Immersive scener · visionær kunst · campingkultur</span>
+            <div class="section-title">${Icon('star')} Major global festivals</div>
+            <span class="text-muted text-sm">Immersive stages · visionary art · camping culture</span>
           </div>
           ${grid(FESTIVALS)}
         </div>
@@ -354,8 +685,8 @@ const World = (() => {
         <!-- CLUBS -->
         <div class="section" style="max-width:1100px">
           <div class="section-header">
-            <div class="section-title">${Icon('map-pin')} Klubbar & scener</div>
-            <span class="text-muted text-sm">Underground-klubbar verda rundt — med planar framover frå Resident Advisor</span>
+            <div class="section-title">${Icon('map-pin')} Clubs & venues</div>
+            <span class="text-muted text-sm">Underground clubs around the world — with upcoming events from Resident Advisor</span>
           </div>
           ${grid(CLUBS)}
         </div>
@@ -363,17 +694,26 @@ const World = (() => {
         <!-- LABELS -->
         <div class="section" style="max-width:1100px">
           <div class="section-header">
-            <div class="section-title">${Icon('disc')} Innflytelsesrike plateselskap</div>
-            <span class="text-muted text-sm">Frå Goa-revival til forest, psybient & full-on</span>
+            <div class="section-title">${Icon('disc')} Influential record labels</div>
+            <span class="text-muted text-sm">From Goa revival to forest, psybient & full-on</span>
           </div>
           ${grid(LABELS)}
+        </div>
+
+        <!-- MAGAZINES & MEDIA -->
+        <div class="section" style="max-width:1100px">
+          <div class="section-header">
+            <div class="section-title">${Icon('book')} Magazines & scene media</div>
+            <span class="text-muted text-sm">Where the scene reads its own news — releases, charts, calendars and archives</span>
+          </div>
+          ${grid(MEDIA)}
         </div>
 
         <!-- ARTISTS -->
         <div class="section" style="max-width:1100px">
           <div class="section-header">
-            <div class="section-title">${Icon('user')} Banebrytande artistar</div>
-            <span class="text-muted text-sm">Pionerane bak lyden</span>
+            <div class="section-title">${Icon('user')} Pioneering artists</div>
+            <span class="text-muted text-sm">The pioneers behind the sound</span>
           </div>
           ${grid(ARTISTS)}
         </div>
@@ -381,8 +721,8 @@ const World = (() => {
         <!-- RADIO SEARCH — every web radio on the planet -->
         <div class="section" style="max-width:1100px">
           <div class="section-header">
-            <div class="section-title">${Icon('search')} Søk alle verdas web-radioar</div>
-            <span class="text-muted text-sm">Psytrance · EDM · House · Chillout · Psychill · Progressive · Downtempo · Ambient · Dark Drone — og alt anna</span>
+            <div class="section-title">${Icon('search')} Search every web radio in the world</div>
+            <span class="text-muted text-sm">Psytrance · EDM · House · Chillout · Psychill · Progressive · Downtempo · Ambient · Dark Drone — and everything else</span>
           </div>
           ${RadioSearch.widget()}
         </div>
@@ -390,8 +730,8 @@ const World = (() => {
         <!-- RADIOS -->
         <div class="section" style="max-width:1100px">
           <div class="section-header">
-            <div class="section-title">${Icon('radio')} Utvalde web-radioar</div>
-            <span class="text-muted text-sm">Klikk ${Icon('play')} «Spill her» for å lytte direkte i SoundCore</span>
+            <div class="section-title">${Icon('radio')} Featured web radios</div>
+            <span class="text-muted text-sm">Click ${Icon('play')} «Play here» to listen directly in SiriusFM</span>
           </div>
           ${grid(RADIOS)}
         </div>
@@ -400,12 +740,34 @@ const World = (() => {
         <div class="section" style="max-width:900px">
           <div class="world-outro">
             <div class="world-outro-icon">${Icon('sparkles')}</div>
-            <p>Sakna du ein festival, eit selskap eller ein radio? Send tips til
-              <a href="mailto:producerenur@gmail.com">producerenur@gmail.com</a> — så legg vi det inn.</p>
+            <p>Missing a festival, a label or a radio? Send a tip to
+              <a href="mailto:post@siriusfm.no">post@siriusfm.no</a> — and we’ll add it.</p>
           </div>
         </div>
 
       </div>`;
+
+    _mountFresh();
+  }
+
+  // «Fersk fra verden» — live AI-nettsøk per spor, rotert hver halvtime.
+  // Samme kilde og takt som magasinets sjangerfaner (/api/magazine → js/aifresh.js),
+  // så alt henger sammen og holdes oppdatert av samme cron.
+  function _mountFresh() {
+    if (typeof AIFresh === 'undefined') return;
+    AIFresh.reset();
+    AIFresh.mount({ id: 'world-fresh-festivals', genre: 'festivals',
+      title: 'Festivals & events worldwide', emoji: '🎪', limit: 4 });
+    AIFresh.mount({ id: 'world-fresh-psychill', genre: 'psychill',
+      title: 'Psychill', emoji: '🌿', limit: 3 });
+    AIFresh.mount({ id: 'world-fresh-chillgressive', genre: 'chillgressive',
+      title: 'Chillgressive & Downtempo', emoji: '🛋️', limit: 3 });
+    AIFresh.mount({ id: 'world-fresh-psytrance', genre: 'psytrance',
+      title: 'Psytrance', emoji: '🍄', limit: 3 });
+    AIFresh.mount({ id: 'world-fresh-labels', genre: 'labels',
+      title: 'Labels & new releases', emoji: '🏷️', limit: 3 });
+    AIFresh.mount({ id: 'world-fresh-techno', genre: 'techno-underground',
+      title: 'Techno Underground', emoji: '🏭', limit: 3 });
   }
 
   // Navigate to the radio page, then start the chosen station.

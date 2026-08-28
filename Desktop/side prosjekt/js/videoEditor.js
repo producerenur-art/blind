@@ -60,7 +60,7 @@ const VideoEditor = (() => {
 
   async function open() {
     const user = (typeof Auth !== 'undefined') && Auth.current();
-    if (!user) { App.toast('Logg inn først', 'error'); return; }
+    if (!user) { App.toast('Log in first', 'error'); return; }
 
     const mediaRecs = await DB.getAllByIds('media', user.mediaIds || []);
     const videos = mediaRecs.filter(r => (r.type || '').startsWith('video/'));  // not YouTube/images
@@ -71,19 +71,19 @@ const VideoEditor = (() => {
 
     if (!videos.length || !musicRecs.length) {
       box.innerHTML = `
-        <div class="modal-header"><h2>🎬 Video + lyd</h2><button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button></div>
+        <div class="modal-header"><h2>🎬 Video + audio</h2><button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button></div>
         <p style="color:var(--text2);line-height:1.6">
-          Du trenger minst <strong>én opplastet video</strong> og <strong>én sang/mix</strong> for å bruke dette.
-          ${!videos.length ? '<br>• Last opp en video i Media-fanen.' : ''}
-          ${!musicRecs.length ? '<br>• Last opp musikk i Musikk-fanen.' : ''}
+          You need at least <strong>one uploaded video</strong> and <strong>one song/mix</strong> to use this.
+          ${!videos.length ? '<br>• Upload a video in the Media tab.' : ''}
+          ${!musicRecs.length ? '<br>• Upload music in the Music tab.' : ''}
         </p>`;
       App.openModal();
       return;
     }
 
     box.innerHTML = `
-      <div class="modal-header"><h2>🎬 Video + lyd</h2><button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button></div>
-      <p style="color:var(--text2);margin-bottom:1rem">Velg en video og en sang — vi lager en <strong>ny video</strong> med kun den lyden du bestemmer.</p>
+      <div class="modal-header"><h2>🎬 Video + audio</h2><button class="btn-icon" onclick="App.closeModal()">${Icon('x')}</button></div>
+      <p style="color:var(--text2);margin-bottom:1rem">Choose a video and a song — we create a <strong>new video</strong> with only the audio you decide.</p>
       <div class="form-group">
         <label class="form-label">Video</label>
         <select class="form-input" id="ve-video">
@@ -91,13 +91,13 @@ const VideoEditor = (() => {
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Lyd (sang / mix)</label>
+        <label class="form-label">Audio (song / mix)</label>
         <select class="form-input" id="ve-audio">
           ${musicRecs.map(r => `<option value="${esc(r.id)}">${esc(r.name || r.id)}</option>`).join('')}
         </select>
       </div>
       <div id="ve-status" style="margin:0.75rem 0"></div>
-      <button class="btn btn-primary" id="ve-render-btn" onclick="VideoEditor.render()">${Icon('film')} Lag video</button>
+      <button class="btn btn-primary" id="ve-render-btn" onclick="VideoEditor.render()">${Icon('film')} Create video</button>
       <div id="ve-result" style="margin-top:1rem"></div>
     `;
     App.openModal();
@@ -109,7 +109,7 @@ const VideoEditor = (() => {
     if (!user) return;
     const vId = document.getElementById('ve-video')?.value;
     const aId = document.getElementById('ve-audio')?.value;
-    if (!vId || !aId) { _status('Velg både video og lyd.', 'error'); return; }
+    if (!vId || !aId) { _status('Choose both video and audio.', 'error'); return; }
 
     if (btn) btn.disabled = true;
     document.getElementById('ve-result').innerHTML = '';
@@ -118,22 +118,22 @@ const VideoEditor = (() => {
       const aRec = await DB.get('music', aId);
       const vSrc = await _srcForMedia(vRec);
       const aSrc = await _srcForMusic(aRec);
-      if (!vSrc || !aSrc) { _status('Fant ikke video- eller lydkilden.', 'error'); if (btn) btn.disabled = false; return; }
+      if (!vSrc || !aSrc) { _status('Could not find the video or audio source.', 'error'); if (btn) btn.disabled = false; return; }
 
-      _status('Laster videomotor (~30MB, kun første gang)…', 'info');
+      _status('Loading video engine (~30MB, first time only)…', 'info');
       const ff = await ensureFFmpeg();
 
       const vName = `in.${_ext(vRec.type, 'mp4')}`;
       const aName = `in.${_ext(aRec.mime || aRec.type, 'mp3')}`;
-      _status('Klargjør filer…', 'info');
+      _status('Preparing files…', 'info');
       await ff.writeFile(vName, await ff._fetchFile(vSrc));
       await ff.writeFile(aName, await ff._fetchFile(aSrc));
 
       _progressCb = p => {
         const pct = Math.max(0, Math.min(100, Math.round((p || 0) * 100)));
-        _status(`Rendrer… ${pct}%`, 'info');
+        _status(`Rendering… ${pct}%`, 'info');
       };
-      _status('Rendrer… 0%', 'info');
+      _status('Rendering… 0%', 'info');
       // Re-encode video (libx264 ultrafast) so it works for any input/container,
       // drop the original audio, use ONLY the chosen track, stop at the shorter one.
       await ff.exec([
@@ -151,17 +151,17 @@ const VideoEditor = (() => {
       _lastBlob = new Blob([data], { type: 'video/mp4' });
       _lastUrl = URL.createObjectURL(_lastBlob);
 
-      _status('Ferdig! 🎬', 'success');
+      _status('Done! 🎬', 'success');
       document.getElementById('ve-result').innerHTML = `
         <video src="${_lastUrl}" controls style="width:100%;border-radius:8px;max-height:50vh"></video>
         <div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap">
-          <button class="btn btn-primary btn-sm" onclick="VideoEditor.saveToProfile()">${Icon('upload')} Lagre på profil</button>
-          <button class="btn btn-secondary btn-sm" onclick="VideoEditor.download()">${Icon('download')} Last ned</button>
+          <button class="btn btn-primary btn-sm" onclick="VideoEditor.saveToProfile()">${Icon('upload')} Save to profile</button>
+          <button class="btn btn-secondary btn-sm" onclick="VideoEditor.download()">${Icon('download')} Download</button>
         </div>`;
     } catch (e) {
       _progressCb = null;
       console.error('VideoEditor render error:', e);
-      _status(`Noe gikk galt under rendringen: ${e && e.message ? e.message : e}`, 'error');
+      _status(`Something went wrong during rendering: ${e && e.message ? e.message : e}`, 'error');
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -171,7 +171,7 @@ const VideoEditor = (() => {
     if (!_lastBlob) return;
     const file = new File([_lastBlob], `video-lyd-${Date.now()}.mp4`, { type: 'video/mp4' });
     await Profile.uploadMedia([file]);   // handles shared (Supabase) / local + visibility
-    App.toast('Lagret på profilen din! 🎬', 'success');
+    App.toast('Saved to your profile! 🎬', 'success');
     App.closeModal();
   }
 

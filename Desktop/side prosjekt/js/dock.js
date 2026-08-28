@@ -1,7 +1,6 @@
 /* ═══════════════════════════════════════════
    Control Dock — wires the consolidated bottom-right dock.
-   Language + platform panels wire themselves (lang.js / platform.js);
-   here we only handle the social-links popover.
+   Her håndterer vi kun lenke-popoveren (sosiale lenker).
    ═══════════════════════════════════════════ */
 (function () {
   const btn   = document.getElementById('dock-links-btn');

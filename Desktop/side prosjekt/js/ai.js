@@ -22,58 +22,57 @@ const AI = (() => {
   }
 
   // ── Site knowledge base — what the assistant knows about the platform ──
-  const SITE_KNOWLEDGE = `Sound Core er en desentralisert sosial plattform for elektronisk musikk, radio og DJ-miks.
+  const SITE_KNOWLEDGE = `SiriusFM is a decentralised social platform for electronic music, radio and DJ mixes. The whole site is in English.
 
-NAVIGASJON (hash-ruter):
-- Hjem (#/): oppdag brukere og utvalgt musikk
-- Radio (#/radio): live-strømming, 40+ kanaler (psytrance, ambient, techno, deep dub m.m.) — velg kanal for å spille
-- Discover (#/discover): algoritmisk musikkoppdaging, sjangre, trender
-- Chat (#/chat): desentralisert sanntidschat (Gun.js, ingen server)
-- Private meldinger: 1-til-1 chat via innboksen (#/inbox)
-- Studio (#/studio): blend-studio for å lage visuelle komposisjoner og eksportere
-- Shows (#/shows): festivaler og arrangementer
-- Min side (#/minside): din egen profil
-- Innstillinger (#/settings): konto, abonnement, AI
-- Innboks (#/inbox): venneforespørsler og meldinger
-- A1 (#/a1): eiga AI-fane — drabar A1-chat (flyttbar fritt på skjermen), gratis universalsøk til heile nettet (opnar Google/DuckDuckGo/YouTube/Wikipedia i ny fane), og eit vekevis roterande galleri av utvalde nettstader og videoar. Gratis og open for alle.
+NAVIGATION (hash routes):
+- Home (#/): discover users and featured music
+- Radio (#/radio): live streaming, 40+ channels (psytrance, ambient, techno, deep dub and more) — pick a channel to play
+- Discover (#/discover): algorithmic music discovery, genres, trends
+- Chat (#/chat): decentralised real-time chat (Gun.js, no server)
+- Private messages: 1-to-1 chat via the inbox (#/inbox)
+- Studio (#/studio): blend studio for building visual compositions and exporting them
+- Shows (#/shows): festivals and events
+- My page (#/minside): your own profile
+- Settings (#/settings): account, subscription, AI
+- Inbox (#/inbox): friend requests and messages
+- A1 (#/a1): a dedicated AI tab — a draggable A1 chat (move it anywhere on screen), free universal search across the whole web (opens Google/DuckDuckGo/YouTube/Wikipedia in a new tab), and a weekly rotating gallery of featured sites and videos. Free and open to everyone.
 
-SLIK GJØR MAN TING:
-- Laste opp sang/musikk: Gå til profileditoren (#/edit) → fanen «Musikk» → «Last opp musikk» (lyd-filer). Musikken vises på profilen din og kan spilles i spilleren.
-- Laste opp DJ-miks: Profileditor (#/edit) → dra/slipp i «Last opp DJ Mix».
-- Laste opp bilder/video: Profileditor (#/edit) → «Media»-fanen.
-- Legge til venner: Finn en bruker (søk øverst, eller kort på Hjem/Discover) → klikk «+ Legg til venn». Du kan også gå til en profil (#/u/brukernavn). Aksepter forespørsler i Innboksen (#/inbox).
-- Tilpasse profil: Profileditor (#/edit) → endre bio, avatar, banner, farger, bakgrunn, layout, strømmelenker (Spotify, Apple Music, SoundCloud, YouTube).
-- Spille radio: #/radio → klikk en kanal. Spilleren nederst styrer av/på, neste, volum.
-- Bytte bakgrunn på siden: Klikk bilde-knappen i kontroll-dokken nede til høyre.
-- Bytte språk: Språk-knappen (globus) i dokken.
-- Pro-abonnement: #/settings → oppgrader (Sound Core Pro, månedlig) for ekstra funksjoner.
+HOW TO DO THINGS:
+- Upload a song/music: go to the profile editor (#/edit) -> "Music" tab -> "Upload music" (audio files). Your music appears on your profile and can be played in the player.
+- Upload a DJ mix: profile editor (#/edit) -> drag and drop into "Upload DJ Mix". Free accounts can upload mixes up to 3 hours; Pro unlocks up to 20 hours.
+- Upload images/video: profile editor (#/edit) -> "Media" tab.
+- Add friends: find a user (search at the top, or a card on Home/Discover) -> click "+ Add friend". You can also open a profile directly (#/u/username). Accept requests in the Inbox (#/inbox).
+- Customise your profile: profile editor (#/edit) -> change bio, avatar, banner, colours, background, layout and streaming links (Spotify, Apple Music, SoundCloud, YouTube).
+- Play the radio: #/radio -> click a channel. The player at the bottom controls play/pause, next and volume.
+- Change the site background: click the image button in the control dock at the bottom right.
+- Pro subscription: #/shop or #/settings -> upgrade to SiriusFM Pro for extra features.
 
-Dokken nede til høyre samler: AI-assistent (deg), språk, plattform, lenker og bakgrunn.
+The dock at the bottom right holds: the AI assistant (you), the info button, social links and the background switcher.
 
-FEILSØKING (når noko ikkje funkar / brukaren har fått ein feil):
-- Be brukaren laste sida på nytt, eller hard-refresh (Cmd/Ctrl + Shift + R) for å hente nyaste versjon.
-- Tøm hurtigbuffer eller prøv eit privat/inkognito-vindauge om noko heng igjen.
-- Sjekk at nettlesaren er oppdatert (siste Chrome, Safari, Firefox eller Edge).
-- Logg ut og inn att om det gjeld innlogging, profil eller lagring.
-- Sjekk nettforbindelsen om noko ikkje lastar.
-- Forklar feilen roleg og enkelt; ikkje bruk skummel teknisk sjargong, og lov aldri ein fiks du ikkje veit verkar.
-- Står feilen att? Be brukaren bruke «Rapporter feil»-knappen i feilvarselet — då får teamet detaljane og kan rette det i koden.`;
+TROUBLESHOOTING (when something does not work / the user hit an error):
+- Ask the user to reload the page, or hard-refresh (Cmd/Ctrl + Shift + R) to fetch the latest version.
+- Clear the cache or try a private/incognito window if something is stuck.
+- Check that the browser is up to date (latest Chrome, Safari, Firefox or Edge).
+- Log out and back in if the problem involves login, profile or saving.
+- Check the network connection if something will not load.
+- Explain the problem calmly and simply; avoid scary technical jargon, and never promise a fix you are not sure about.
+- Still broken? Ask the user to press the "Report bug" button in the error notice — that sends the team the details so they can fix it in the code.`;
 
   return {
     // Serverless proxy means the key is always available server-side.
     hasKey() { return true; },
 
     // Generate a polished bio from keywords
-    async generateBio(keywords, style = 'kreativ') {
+    async generateBio(keywords, style = 'creative') {
       const styles = {
-        kreativ:      'skriv kreativt og personlig',
-        profesjonell: 'skriv profesjonelt og konsist',
-        morsomt:      'skriv morsomt og lettlest',
-        poetisk:      'skriv poetisk og stemningsfullt',
+        creative:     'write creatively and personally',
+        professional: 'write professionally and concisely',
+        funny:        'write in a fun, easy-to-read way',
+        poetic:       'write poetically and atmospherically',
       };
       return callClaude(
-        'Du er en ekspert på å skrive profiltekster for sosiale medier. Svar KUN med bio-teksten, ingen forklaring. Maks 3 setninger.',
-        `Lag en ${styles[style] || 'kreativ'} bio basert på disse nøkkelordene: ${keywords}. Skriv på norsk.`,
+        'You are an expert at writing social-media profile bios. Reply with the bio text ONLY, no explanation. Max 3 sentences. Always write in English.',
+        `Write a bio based on these keywords: ${keywords}. Style: ${styles[style] || styles.creative}.`,
         200
       );
     },
@@ -81,8 +80,8 @@ FEILSØKING (når noko ikkje funkar / brukaren har fått ein feil):
     // Suggest a color palette from a mood/description
     async suggestColors(mood) {
       const result = await callClaude(
-        'Du er en fargedesigner. Returner KUN et JSON-objekt med 5 hex-farger, ingen forklaring. Format: {"primary":"#...","secondary":"#...","bg":"#...","text":"#...","accent":"#..."}',
-        `Lag en fargepalett for denne stemningen: "${mood}". Mørk, moderne estetikk.`,
+        'You are a colour designer. Return ONLY a JSON object with 5 hex colours, no explanation. Format: {"primary":"#...","secondary":"#...","bg":"#...","text":"#...","accent":"#..."}',
+        `Create a colour palette for this mood: "${mood}". Dark, modern aesthetic.`,
         150
       );
       try {
@@ -94,11 +93,24 @@ FEILSØKING (når noko ikkje funkar / brukaren har fått ein feil):
       }
     },
 
+    // AI-agent for plateselskap: skriv en kort kjøpsoppfordring til en låt +
+    // (om lenke mangler) enkelt hint om hvor de kan sette opp salg.
+    async suggestBuyCta({ title, labelName, url } = {}) {
+      const sys = 'You are a helpful music-marketing assistant for a record label on SiriusFM. ' +
+        'Write a short, enticing call to action in English (max 2 sentences) inviting the listener to buy or support the track. ' +
+        'Max one emoji. Never use the word "DJ". Reply with the text ONLY.';
+      const u = `Track: "${title || 'new track'}"\n` +
+        `Label: ${labelName || 'the label'}\n` +
+        (url ? `Buy link: ${url}\nEnd with a clear prompt to press the buy button.`
+             : 'No buy link provided yet. Write a general call to support the release.');
+      return callClaude(sys, u, 160);
+    },
+
     // Generate a caption for a media item
     async generateCaption(description) {
       return callClaude(
-        'Du er en kreativ tekstforfatter for sosiale medier. Svar KUN med en kort, engasjerende bildetekst på norsk. Maks 2 setninger.',
-        `Lag en bildetekst for: ${description}`,
+        'You are a creative social-media copywriter. Reply ONLY with a short, engaging caption in English. Max 2 sentences.',
+        `Write a caption for: ${description}`,
         120
       );
     },
@@ -106,8 +118,8 @@ FEILSØKING (når noko ikkje funkar / brukaren har fått ein feil):
     // AI playlist description
     async generatePlaylistDesc(trackNames) {
       return callClaude(
-        'Du er en musikkkritiker. Lag en kort, stemningsfull spillelistebeskrivelse. Svar KUN med beskrivelsen, maks 2 setninger, på norsk.',
-        `Spilleliste med disse sangene: ${trackNames.join(', ')}`,
+        'You are a music critic. Write a short, atmospheric playlist description. Reply with the description ONLY, max 2 sentences, in English.',
+        `Playlist with these tracks: ${trackNames.join(', ')}`,
         150
       );
     },
@@ -115,8 +127,8 @@ FEILSØKING (når noko ikkje funkar / brukaren har fått ein feil):
     // Suggest profile layout/style based on bio
     async suggestLayout(bio) {
       const result = await callClaude(
-        'Du er en UX-designer. Returner KUN et JSON-objekt: {"layout":"default|centered|sidebar","cardStyle":"glass|solid|outline","fontFamily":"Inter|Space Grotesk|Playfair Display|Rajdhani|Nunito"}',
-        `Foreslå layout for denne profilen: "${bio}"`,
+        'You are a UX designer. Return ONLY a JSON object: {"layout":"default|centered|sidebar","cardStyle":"glass|solid|outline","fontFamily":"Inter|Space Grotesk|Playfair Display|Rajdhani|Nunito"}',
+        `Suggest a layout for this profile: "${bio}"`,
         100
       );
       try {
@@ -130,28 +142,28 @@ FEILSØKING (når noko ikkje funkar / brukaren har fått ein feil):
     // Multi-turn profile design assistant
     async profileDesignChat(history, profileContext) {
       const ctx = JSON.stringify(profileContext);
-      const system = `Du er en kreativ AI design-assistent for Sound Core profilredigering. Hjelp brukeren med å lage en unik og vakker profilside.
+      const system = `You are a creative AI design assistant for the SiriusFM profile editor. Help the user build a unique, beautiful profile page.
 
-Tilgjengelige handlinger — inkluder disse taggene i svaret ditt når du foreslår noe konkret:
-- Farger: [COLORS:{"primary":"#hex","secondary":"#hex","bg":"#hex","text":"#hex","accent":"#hex"}]
-- Bio: [BIO:teksten her]
+Available actions — include these tags in your reply whenever you suggest something concrete:
+- Colours: [COLORS:{"primary":"#hex","secondary":"#hex","bg":"#hex","text":"#hex","accent":"#hex"}]
+- Bio: [BIO:the text here]
 - Layout: [LAYOUT:{"layout":"default|centered|sidebar","cardStyle":"glass|solid|outline","fontFamily":"Inter|Space Grotesk|Playfair Display|Rajdhani|Nunito"}]
 
-Brukerprofil akkurat nå: ${ctx}
+The user's profile right now: ${ctx}
 
-Instruksjoner:
-- Svar alltid på norsk
-- Vær entusiastisk, kreativ og konkret
-- Hold svarene korte (2-3 setninger + eventuell handlingstag)
-- Når du foreslår farger/bio/layout, legg ALLTID inn riktig handlingstag slik brukeren kan bruke det med ett klikk
-- Ta utgangspunkt i brukerens eksisterende info (roller, bio, etc.) når du gir råd`;
+Instructions:
+- Always reply in English (unless the user writes in another language — then match it)
+- Be enthusiastic, creative and concrete
+- Keep replies short (2-3 sentences plus any action tag)
+- When you suggest colours/bio/layout, ALWAYS include the matching action tag so the user can apply it in one click
+- Base your advice on the user's existing info (roles, bio, etc.)`;
 
       return proxyCall(system, history, 600);
     },
 
     // General site assistant (Settings AI tab — kept for backwards compat)
     async siteAssistantChat(history) {
-      const system = `Du heter Core og er en vennlig og hjelpsom AI-assistent for Sound Core. Svar kort, vennlig og konkret (maks 3 setninger). Hvis du ikke vet noe, si det ærlig. Svar alltid på norsk med mindre brukeren skriver på et annet språk.\n\n${SITE_KNOWLEDGE}`;
+      const system = `Your name is Core, a friendly and helpful AI assistant for SiriusFM. Reply briefly, warmly and concretely (max 3 sentences). If you don't know something, say so honestly. Always reply in English unless the user writes in another language, then reply in that language.\n\n${SITE_KNOWLEDGE}`;
       return proxyCall(system, history, 400);
     },
 
@@ -159,14 +171,14 @@ Instruksjoner:
     // opts: { langName: 'Norwegian', contextNote: 'innlogget som @x, på #/radio' }
     async assistantChat(history, opts = {}) {
       const langLine = opts.langName
-        ? `Svar på ${opts.langName}. Hvis brukeren tydelig skriver på et annet språk, svar på det språket i stedet.`
-        : 'Svar på samme språk som brukeren skriver på (standard norsk).';
-      const ctxLine = opts.contextNote ? `\nKontekst akkurat nå: ${opts.contextNote}` : '';
-      const system = `Du heter Core — en vennlig, kunnskapsrik AI-assistent som bor i Sound Core og hjelper brukere med å finne fram og bruke alt på siden. Du kjenner hele plattformen.
+        ? `Reply in ${opts.langName}. If the user clearly writes in another language, reply in that language instead.`
+        : 'Reply in English unless the user clearly writes in another language, then reply in that language.';
+      const ctxLine = opts.contextNote ? `\nContext right now: ${opts.contextNote}` : '';
+      const system = `Your name is Core — a friendly, knowledgeable AI assistant who lives inside SiriusFM and helps users find their way around and use everything on the site. You know the whole platform.
 
 ${langLine}
 
-Stil: varm, tydelig og konkret. Forklar steg for steg når noen spør hvordan de gjør noe (nevn riktig meny/rute, f.eks. «#/edit → Musikk-fanen»). Hold deg til det du faktisk vet om Sound Core; ikke finn på funksjoner. Hvis noe ikke finnes, si det ærlig. Hold svar til 1–5 setninger, gjerne med punktliste ved framgangsmåter.${ctxLine}
+Style: warm, clear and concrete. Explain step by step when someone asks how to do something (name the right menu/route, e.g. "#/edit -> the Music tab"). Stick to what you actually know about SiriusFM; do not invent features. If something does not exist, say so honestly. Keep replies to 1-5 sentences, using a bullet list for step-by-step instructions.${ctxLine}
 
 ${SITE_KNOWLEDGE}`;
       return proxyCall(system, history, 700);
@@ -200,17 +212,54 @@ Reply with ONLY compact JSON, no markdown: {"terms":["genre1","genre2"],"note":"
       }
     },
 
-    // Foreslå en tekststil for Blend Studio sitt tekstverktøy ut fra en fri
-    // beskrivelse/stemning. Returnerer {fontFamily,color,weight,anim} eller null.
+    // Ferske søkeord for bakgrunns-pauseskjermen: psykedelisk kunst + vakker
+    // natur. AI varierer ordene hver gang så bildene holder seg ferske.
+    // Returnerer { psychedelic:[...], nature:[...] } — faller tilbake til
+    // innebygde lister hvis AI ikke er tilgjengelig.
+    // opts.day   — dagnummer fra BgManager (nye ord hver dag, ikke per lasting)
+    // opts.avoid — søkeord som alt er i bruk; be AI om noe annet så bildene byttes
+    async ambientImageQueries(opts = {}) {
+      const fallback = {
+        psychedelic: ['psychedelic art', 'visionary fractal art', 'trippy mushroom art',
+                      'sacred geometry mandala', 'blacklight psychedelic'],
+        nature: ['mountain lake reflection', 'misty forest sunrise', 'northern lights landscape',
+                 'alpine valley autumn', 'tropical waterfall'],
+      };
+      try {
+        const txt = await callClaude(
+          `You suggest search terms for a background image gallery (screensaver) on a music website. Return ONLY one JSON object, no markdown.
+Format: {"psychedelic":["...","..."],"nature":["...","..."]}
+- "psychedelic": 4 short ENGLISH search phrases for psychedelic/visionary art (trippy, fractal, mandala, mushroom, sacred geometry, visionary, blacklight, cosmic and similar).
+- "nature": 4 short ENGLISH search phrases for beautiful nature (mountains, lakes, forests, northern lights, waterfalls, sunrise, ocean and similar).
+- Vary the wording — be creative so the images feel fresh every time.
+- Avoid these phrases (already in use today): ${(opts.avoid || []).join(', ') || '(none)'}
+- Choose completely different subjects/moods from the ones above.`,
+          `Give me fresh search terms for day ${opts.day ?? 0}. The images should differ from yesterday's.`,
+          220
+        );
+        const m   = txt.match(/\{[\s\S]*\}/);
+        const obj = JSON.parse(m ? m[0] : txt);
+        const clean = a => Array.isArray(a)
+          ? a.filter(s => typeof s === 'string' && s.trim()).map(s => s.trim()).slice(0, 6) : [];
+        const psy = clean(obj.psychedelic), nat = clean(obj.nature);
+        return { psychedelic: psy.length ? psy : fallback.psychedelic,
+                 nature:      nat.length ? nat : fallback.nature };
+      } catch {
+        return fallback;
+      }
+    },
+
+    // Suggest a text style for Blend Studio's text tool from a free-form
+    // description/mood. Returns {fontFamily,color,weight,anim} or null.
     async suggestTextStyle(description, fonts = []) {
       const fontList = (fonts.length ? fonts : ['Inter','Anton','Bebas Neue','Pacifico','Lobster']).join(', ');
       const result = await callClaude(
-        `Du er en typografi-designer for et verktøy som setter tekst på bilder. Returner KUN ett JSON-objekt, ingen forklaring.
-Format: {"fontFamily":"<ett navn fra lista>","color":"#hex","weight":400|700|900,"anim":"none|left|right|up|down|zoom-in|zoom-out|pulse"}
-- fontFamily MÅ være nøyaktig ett av disse navnene: ${fontList}
-- color er én hex-farge som passer stemningen
-- anim er bevegelsen teksten zoomer inn med`,
-        `Foreslå en tekststil som passer denne stemningen/beskrivelsen: "${description}".`,
+        `You are a typography designer for a tool that places text on images. Return ONLY one JSON object, no explanation.
+Format: {"fontFamily":"<one name from the list>","color":"#hex","weight":400|700|900,"anim":"none|left|right|up|down|zoom-in|zoom-out|pulse"}
+- fontFamily MUST be exactly one of these names: ${fontList}
+- color is a single hex colour that suits the mood
+- anim is the movement the text animates in with`,
+        `Suggest a text style that suits this mood/description: "${description}".`,
         160
       );
       try {

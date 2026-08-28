@@ -1,6 +1,7 @@
 {
-  "name": "SoundCore",
-  "short_name": "SoundCore",
+  "id": "/?source=pwa",
+  "name": "SiriusFM",
+  "short_name": "SiriusFM",
   "description": "Desentralisert sosial plattform for elektronisk musikk, radio og DJ-miks.",
   "lang": "no",
   "dir": "ltr",

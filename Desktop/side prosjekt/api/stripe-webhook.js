@@ -36,6 +36,10 @@ module.exports = async (req, res) => {
     switch (event.type) {
       case 'checkout.session.completed': {
         const s = event.data.object;
+        // Ein sesjon kan vere «completed» medan betalinga framleis er unpaid (async/
+        // bank-metodar). Marker berre som betalt når pengane faktisk er sikra.
+        const isPaid = s.payment_status === 'paid' || s.payment_status === 'no_payment_required';
+        if (!isPaid) break;
         const patch = { status: 'paid', stripe_payment_intent: s.payment_intent || null };
         if (s.metadata?.purchaseId) await db.from('purchases').update(patch).eq('id', s.metadata.purchaseId);
         else if (s.id)             await db.from('purchases').update(patch).eq('stripe_session_id', s.id);

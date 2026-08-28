@@ -69,7 +69,7 @@ const SC_Storage = (() => {
         contentType: file.type || 'application/octet-stream',
         upsert: true,
       });
-    if (error) throw new Error(error.message || 'Opplasting til lagring feilet');
+    if (error) throw new Error(error.message || 'Upload to storage failed');
 
     if (onProgress) onProgress(1);
     return { url: info.publicUrl, path: info.path, type: file.type, size: file.size, bucket: info.bucket };

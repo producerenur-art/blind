@@ -63,7 +63,7 @@ function buildSandbox() {
   };
   const getEl = (id) => { if (!els.has(id)) els.set(id, makeEl(id)); return els.get(id); };
 
-  const location = { hostname: 'www.soundcoredevelopment.com', origin: 'https://www.soundcoredevelopment.com', pathname: '/', href: '' };
+  const location = { hostname: 'www.siriusfm.no', origin: 'https://www.siriusfm.no', pathname: '/', href: '' };
 
   const document = {
     getElementById: getEl,
@@ -178,7 +178,7 @@ async function testProdFlow() {
   assert.strictEqual(sb.getStore().get('pv_session'), undefined, 'ingen økt skal finnes ennå');
   ok('konto opprettet uaktivert, med token, uten innlogging');
 
-  assert.ok(sb.el('app').innerHTML.includes('Sjekk e-posten din'), '#app skal vise «Sjekk e-posten din»');
+  assert.ok(sb.el('app').innerHTML.includes('Check your email'), '#app skal vise «Check your email»');
   assert.ok(sb.el('app').innerHTML.includes('lang.bruker@eksempel.no'), 'bekreftelsessiden skal vise e-postadressen');
   ok('bekreftelsessiden ber brukeren sjekke e-posten (ærlig — e-posten gikk ut)');
 
@@ -230,7 +230,7 @@ async function testLoginVariants() {
   await App.doLogin();
   assert.strictEqual(sb.getStore().get('pv_session'), undefined, 'feil passord skal ikke gi økt');
   const errPw = sb.el('login-error');
-  assert.ok(/feil passord/i.test((errPw.innerHTML || '') + (errPw.textContent || '')), 'feilmelding skal vises ved feil passord');
+  assert.ok(/wrong password/i.test((errPw.innerHTML || '') + (errPw.textContent || '')), 'feilmelding skal vises ved feil passord');
   ok('feil passord avvises uten økt');
 
   // C2) uaktivert konto → notActivated + «send på nytt»-knapp
@@ -245,7 +245,7 @@ async function testLoginVariants() {
   sb.el('login-pass').value = PASS;
   await App.doLogin();
   assert.strictEqual(sb.getStore().get('pv_session'), undefined, 'uaktivert konto skal ikke få økt');
-  assert.ok(/aktiver/i.test(sb.el('login-error').innerHTML) && /resendActivationByEmail/.test(sb.el('login-error').innerHTML),
+  assert.ok(/activat/i.test(sb.el('login-error').innerHTML) && /resendActivationByEmail/.test(sb.el('login-error').innerHTML),
     'uaktivert innlogging skal tilby «send aktiveringslenke på nytt»');
   ok('uaktivert konto avvises og tilbyr ny aktiveringslenke');
 

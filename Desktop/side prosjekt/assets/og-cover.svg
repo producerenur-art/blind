@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" fill="none" role="img" aria-label="SiriusFM">
+  <defs>
+    <radialGradient id="og-bg" cx="28%" cy="42%" r="85%">
+      <stop offset="0%"   stop-color="#16264d"/>
+      <stop offset="52%"  stop-color="#080d20"/>
+      <stop offset="100%" stop-color="#04060f"/>
+    </radialGradient>
+    <radialGradient id="og-core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"  stop-color="#ffffff"/>
+      <stop offset="38%" stop-color="#bfeaff"/>
+      <stop offset="72%" stop-color="#6fd3ff"/>
+      <stop offset="100%" stop-color="#a98bff"/>
+    </radialGradient>
+    <radialGradient id="og-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#6fd3ff" stop-opacity=".55"/>
+      <stop offset="45%"  stop-color="#a98bff" stop-opacity=".18"/>
+      <stop offset="100%" stop-color="#a98bff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="og-ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#6fd3ff" stop-opacity=".9"/>
+      <stop offset="55%"  stop-color="#a98bff" stop-opacity=".45"/>
+      <stop offset="100%" stop-color="#6fd3ff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="og-word" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#ffffff"/>
+      <stop offset="58%"  stop-color="#6fd3ff"/>
+      <stop offset="100%" stop-color="#a98bff"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#og-bg)"/>
+
+  <!-- stjernestøv -->
+  <g fill="#eaf2ff">
+    <circle cx="118" cy="92"  r="2.4" opacity=".5"/><circle cx="1064" cy="128" r="2.2" opacity=".45"/>
+    <circle cx="196" cy="548" r="2.6" opacity=".45"/><circle cx="980"  cy="520" r="2"   opacity=".4"/>
+    <circle cx="700" cy="70"  r="1.8" opacity=".32"/><circle cx="1140" cy="330" r="1.8" opacity=".3"/>
+    <circle cx="60"  cy="330" r="1.8" opacity=".3"/> <circle cx="856"  cy="596" r="1.8" opacity=".28"/>
+  </g>
+
+  <!-- Nova-merket -->
+  <g transform="translate(322 315) scale(2.72) translate(-50 -50)">
+    <circle cx="50" cy="50" r="46" fill="url(#og-glow)"/>
+    <ellipse cx="50" cy="50" rx="40" ry="14.5" stroke="url(#og-ring)" stroke-width="1.6"
+             transform="rotate(-24 50 50)" opacity=".85"/>
+    <path d="M50 18 Q52.4 47.6 82 50 Q52.4 52.4 50 82 Q47.6 52.4 18 50 Q47.6 47.6 50 18 Z"
+          fill="#a98bff" opacity=".5" transform="rotate(45 50 50)"/>
+    <path d="M50 3 Q53 47 97 50 Q53 53 50 97 Q47 53 3 50 Q47 47 50 3 Z" fill="url(#og-core)"/>
+    <circle cx="50" cy="50" r="7" fill="#ffffff" opacity=".95"/>
+    <circle cx="50" cy="50" r="11.5" fill="url(#og-core)" opacity=".35"/>
+  </g>
+
+  <!-- ordmerke -->
+  <text x="556" y="300" fill="url(#og-word)"
+        font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-weight="800"
+        font-size="118" letter-spacing="10">SIRIUS</text>
+  <text x="562" y="356" fill="#93a4c7"
+        font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-weight="600"
+        font-size="27" letter-spacing="12">WEB&#160;&#160;&#160;RADIO</text>
+
+  <rect x="558" y="404" width="300" height="58" rx="29" fill="rgba(14,20,40,0.6)"
+        stroke="rgba(140,170,230,0.24)"/>
+  <text x="708" y="442" text-anchor="middle" fill="#eaf2ff"
+        font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-weight="600"
+        font-size="26" letter-spacing="3">siriusfm.no</text>
+</svg>

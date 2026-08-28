@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) {
     return res.status(503).json({
-      error: 'Lagring er ikke konfigurert på serveren (mangler SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).'
+      error: 'Storage is not configured on the server (missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).'
     });
   }
 
@@ -35,18 +35,18 @@ module.exports = async (req, res) => {
   const bucket = (typeof body.bucket === 'string' && body.bucket.trim()) ? body.bucket.trim() : PUBLIC_BUCKET;
 
   if (!ALLOWED_BUCKETS.has(bucket)) {
-    return res.status(400).json({ error: 'Ukjent lagringsbøtte' });
+    return res.status(400).json({ error: 'Unknown storage bucket' });
   }
   // Reject path traversal / leading slashes / empties — keep uploads inside the bucket.
   if (!path || path.includes('..') || path.startsWith('/') || path.length > 256) {
-    return res.status(400).json({ error: 'Ugyldig filsti' });
+    return res.status(400).json({ error: 'Invalid file path' });
   }
 
   try {
     const supabase = createClient(url, serviceKey, { auth: { persistSession: false } });
     const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(path);
     if (error) {
-      return res.status(500).json({ error: error.message || 'Kunne ikke lage opplastings-URL' });
+      return res.status(500).json({ error: error.message || 'Could not create upload URL' });
     }
     // Only public buckets get a shareable public URL; private (paid) stay gated.
     const publicUrl = (bucket === PUBLIC_BUCKET)
@@ -61,6 +61,6 @@ module.exports = async (req, res) => {
     });
   } catch (e) {
     console.error('upload-url error:', e?.message || e);
-    return res.status(500).json({ error: 'Kunne ikke kontakte lagringstjenesten' });
+    return res.status(500).json({ error: 'Could not reach the storage service' });
   }
 };

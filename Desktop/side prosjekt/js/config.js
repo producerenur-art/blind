@@ -18,12 +18,12 @@ const CONFIG = {
 
   // Kanonisk, offentlig domene — brukes i e-postlenker (aktivering/tilbakestilling)
   // slik at de alltid peker hit, uansett hvilken host brukeren registrerte seg fra.
-  CANONICAL_URL: 'https://www.soundcoredevelopment.com',
+  CANONICAL_URL: 'https://www.siriusfm.no',
 
-  // Platform URLs — update these when you have real links
-  PLATFORM_MOBILE_URL:   '',   // e.g. 'https://m.soundcore.app'
-  PLATFORM_DESKTOP_URL:  '',   // e.g. 'https://soundcore.app'
-  PLATFORM_APPSTORE_URL: '',   // e.g. 'https://apps.apple.com/app/soundcore/id...'
+  // Moderator-kontoer: brukernavn som kan slette HVILKET SOM HELST innlegg
+  // (ikke bare sine egne). Samme klientside-tryggleiksmodell som resten av appen.
+  // Legg til flere brukernavn ved behov — sammenligning er ikke-følsom for store/små.
+  ADMIN_USERS: ['ADMIN'],
 
   // Supabase Storage — deler store filer (60-min lyd, video) på tvers av ALLE brukere.
   // URL + anon-nøkkel er offentlige og trygge i frontend (beskyttes av bucket-regler).
@@ -32,12 +32,6 @@ const CONFIG = {
   SUPABASE_URL:      localStorage.getItem('sc_supabase_url')    || 'https://qefdyxpyjwpohsmmmksf.supabase.co',
   SUPABASE_ANON_KEY: localStorage.getItem('sc_supabase_anon')   || 'sb_publishable_JEV-NS9FGZ_KpSvQTPwlZg_LlyVy_eS',  // offentlig publishable key (trygg i frontend)
   SUPABASE_BUCKET:   localStorage.getItem('sc_supabase_bucket') || 'soundcore-media',
-
-  // TURN-server for live DJ-kringkasting (js/livebroadcast.js) over internett.
-  // Tomt = bruk gratis test-TURN. I produksjon: lim inn egen (coturn/Twilio/metered).
-  TURN_URL:        localStorage.getItem('sc_turn_url')        || '',
-  TURN_USERNAME:   localStorage.getItem('sc_turn_user')       || '',
-  TURN_CREDENTIAL: localStorage.getItem('sc_turn_cred')       || '',
 
   save(anthropicKey, ejsService, ejsTmplAct, ejsTmplRst, ejsTmplMsg, ejsPubKey) {
     localStorage.setItem('pv_anthropic_key',   anthropicKey);

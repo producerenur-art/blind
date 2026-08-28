@@ -21,7 +21,7 @@
 
     /* Profileditor-faner: tydeligere «åpen» fane (fylt pill, ikke bare en strek under) */
     .editor-panel-header .tab-btn.active {
-      background: var(--accent, #7c3aed);
+      background: var(--accent, #22c55e);
       color: #fff !important;
       border-radius: 8px 8px 0 0;
     }
