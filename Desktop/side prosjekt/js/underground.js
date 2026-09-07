@@ -7,7 +7,7 @@ const Underground = (() => {
       city: 'Birmingham',
       desc: 'Birmingham-based techno pioneer. Known for raw, industrial sound and a massive presence behind the decks.',
       ra: 'https://ra.co/dj/surgeon',
-      sc: 'https://anthony-child.bandcamp.com/', // var soundcloud.com/surgeon-official (404), retta 07.09.2026
+      sc: 'https://soundcloud.com/dynamic-tension', // Surgeons ekte SoundCloud-handle (verifisert via sidetittel), retta 07.09.2026
       tag: 'Industrial Techno',
     },
     {
@@ -23,7 +23,7 @@ const Underground = (() => {
       city: 'London',
       desc: 'Founder of Perc Trax. Raw, precision techno with industrial elements and intense energy.',
       ra: 'https://ra.co/dj/perc',
-      sc: 'https://perctrax.bandcamp.com/', // var soundcloud.com/perctrax (404), retta 07.09.2026
+      sc: 'https://soundcloud.com/perc', // Perc sin ekte SoundCloud-handle (verifisert via sidetittel), retta 07.09.2026
       tag: 'Hard Techno',
     },
     {
@@ -31,7 +31,7 @@ const Underground = (() => {
       city: 'Manchester',
       desc: 'Modern Love artist from Manchester. Atmospheric, heavy and deep techno that burrows into the soul.',
       ra: 'https://ra.co/dj/andystott',
-      sc: 'https://soundcloud.com/andy-stott',
+      sc: 'https://soundcloud.com/andystott-music', // var soundcloud.com/andy-stott, feil brukar (878andy12), retta 07.09.2026
       tag: 'Dark Techno',
     },
     {
@@ -74,7 +74,7 @@ const Underground = (() => {
       city: 'Ibiza',
       desc: 'Founder of Desolat. A regular resident at Ibiza’s best clubs with captivating, groovy sets.',
       ra: 'https://ra.co/dj/locodice',
-      sc: 'https://soundcloud.com/loco-dice',
+      sc: 'https://soundcloud.com/locodiceofc', // var soundcloud.com/loco-dice, feil brukar (Fernando k-po), retta 07.09.2026
       tag: 'Tech House / Techno',
     },
     {
@@ -143,7 +143,7 @@ const Underground = (() => {
       name: 'DC-10',
       city: 'Ibiza',
       desc: 'Home of Circoloco. Ibiza’s rawest and most authentic underground club with an open terrace.',
-      url: 'https://circoloco.com', // www.-versjonen løyste ikke DNS, retta 07.09.2026
+      url: 'https://dc10ibiza.com/en/', // circoloco.com (utan www) løyser DNS men er ein UBESLEKTA sirkusduo, ikkje klubben — retta 07.09.2026
       tag: 'Club',
       events: 'https://ra.co/clubs/es/ibiza/dc10',
     },
