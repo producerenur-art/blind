@@ -62,6 +62,17 @@ const Radio = (() => {
       emoji: '🔥', color: '#f97316',
       desc: 'OZORA Festival radio — psytrance 24/7 · Budapest 🇭🇺',
     },
+    {
+      // Verifisert 07.09.2026: chill.out.airtime.pro/chill_a svarer 200, og
+      // chill.airtime.pro/api/live-info-v2 gir ekte live-info — same mønster
+      // som radiOzora Trance over (radiOzora har kun disse to kanalene).
+      id: 'radiozora-chill', cat: 'radiOzora',
+      name: 'radiOzora Chill',
+      url:   'https://chill.out.airtime.pro/chill_a',
+      npApi: 'https://chill.airtime.pro/api/live-info-v2',
+      emoji: '🌿', color: '#22c55e',
+      desc: 'OZORA Festival radio — chill & downtempo 24/7 · Budapest 🇭🇺',
+    },
 
     // ════════════════════════════════════════════
     // PSYTRANCE / GOA  ▲ høyest energi
