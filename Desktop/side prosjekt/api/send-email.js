@@ -382,11 +382,17 @@ const RADIO_SHOWS = [
   { day: 3, start: 21, end: 24, emoji: '💧', name: 'Fluid Chillroom',        host: 'Fluid Collective',      genre: 'Psychill · Experimental' },
   { day: 4, start: 18, end: 21, emoji: '🛋️', name: 'Chillout Lounge',        host: 'Lounge Sessions',       genre: 'Chill Out · Lounge' },
   { day: 4, start: 23, end: 3,  emoji: '🛸', name: 'Space Travel',           host: 'Cosmic Station',        genre: 'Space Music · Ambient' },
-  { day: 5, start: 0,  end: 3,  emoji: '💀', name: 'Dark Drone Ritual',      host: 'The Void Wanderer',     genre: 'Dark Ambient · Drone' },
+  { day: 5, start: 3,  end: 6,  emoji: '💀', name: 'Dark Drone Ritual',      host: 'The Void Wanderer',     genre: 'Dark Ambient · Drone' },
+  { day: 5, start: 15, end: 18, emoji: '🌀', name: 'The Trip Sessions',      host: 'The Trip',              genre: 'Psychill · Trip-Hop' },
   { day: 5, start: 20, end: 23, emoji: '🎷', name: 'Groove Friday',          host: 'Nu-Jazz Collective',    genre: 'Nu-Jazz · Trip-Hop' },
   { day: 6, start: 0,  end: 4,  emoji: '🌑', name: 'Deep Space Saturday',    host: 'Deep Space One',        genre: 'Deep Ambient · Electronic' },
   { day: 6, start: 12, end: 15, emoji: '🥗', name: 'Groove Salad Sessions',  host: 'Groove Salad',          genre: 'Downtempo · IDM' },
   { day: 6, start: 18, end: 21, emoji: '🌀', name: 'Progressive Psy Session',host: 'Trance Around',         genre: 'Progressive Psy · Trance' },
+  { day: 6, start: 21, end: 24, emoji: '🎲', name: 'Dice Radio Athens',      host: 'Dice Radio',            genre: 'Underground · Greek Electronic' },
+  { day: 3, start: 0,  end: 3,  emoji: '🍄', name: 'DMT FM Sessions',        host: 'DMT FM',                genre: 'Psytrance · Goa' },
+  { day: 0, start: 7,  end: 10, emoji: '🌙', name: 'Babaganousha Radio',     host: 'Babaganousha',          genre: 'Psytrance · Goa' },
+  { day: 4, start: 21, end: 23, emoji: '🌌', name: 'Astral Trance Radio',    host: 'ATR',                   genre: 'Progressive Psy · Trance' },
+  { day: 1, start: 15, end: 18, emoji: '🎧', name: 'n5MD Nightscapes',       host: 'n5MD Radio',            genre: 'Downtempo · Ambient' },
 ];
 
 // Faste datoar frå #/world (festivalar + klubbkveldar). `to` er ISO-datoen

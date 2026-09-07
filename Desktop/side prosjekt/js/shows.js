@@ -73,7 +73,7 @@ const Shows = (() => {
       emoji: '🎷',
       color: '#4ade80',
       desc: 'The winner of the weekend kickoff — nu-jazz, IDM and sensual trip-hop.',
-      stream: 'sonicuniverse',
+      stream: 'beatblender', // var 'sonicuniverse' — fantes ikke i STATIONS, Listen-knappen gjorde ingenting
     },
     {
       id: 'deep-space-saturday',
@@ -116,11 +116,11 @@ const Shows = (() => {
       name: 'Dark Drone Ritual',
       host: 'The Void Wanderer',
       day: 5, // Friday
-      startHour: 0, endHour: 3,
+      startHour: 3, endHour: 6,
       genre: 'Dark Ambient · Drone',
       emoji: '💀',
       color: '#7f1d1d',
-      desc: 'The darker side of deep ambient — ritual drone for staring into the abyss before the weekend.',
+      desc: 'The darker side of deep ambient — ritual drone for the small hours before the weekend.',
       stream: 'doomed',
     },
     {
@@ -194,6 +194,78 @@ const Shows = (() => {
       color: '#0d0d1a',
       desc: 'The darker side of deep ambient — music for staring into the abyss before dawn.',
       stream: 'darkzone',
+    },
+    {
+      id: 'dmt-fm-sessions',
+      name: 'DMT FM Sessions',
+      host: 'DMT FM',
+      day: 3, // Wednesday
+      startHour: 0, endHour: 3,
+      genre: 'Psytrance · Goa',
+      emoji: '🍄',
+      color: '#a855f7',
+      desc: 'Psychedelic trance around the clock — deep into Wednesday night.',
+      stream: 'dmtfm',
+    },
+    {
+      id: 'babaganousha-radio',
+      name: 'Babaganousha Radio',
+      host: 'Babaganousha',
+      day: 0, // Sunday
+      startHour: 7, endHour: 10,
+      genre: 'Psytrance · Goa',
+      emoji: '🌙',
+      color: '#f59e0b',
+      desc: 'Psychedelic goa and psytrance to open a Sunday morning.',
+      stream: 'babaganousha',
+    },
+    {
+      id: 'astral-trance-radio',
+      name: 'Astral Trance Radio',
+      host: 'ATR',
+      day: 4, // Thursday
+      startHour: 21, endHour: 23,
+      genre: 'Progressive Psy · Trance',
+      emoji: '🌌',
+      color: '#6366f1',
+      desc: 'Progressive psytrance and trance for the gap between chill and space.',
+      stream: 'atr',
+    },
+    {
+      id: 'the-trip-sessions',
+      name: 'The Trip Sessions',
+      host: 'The Trip',
+      day: 5, // Friday
+      startHour: 15, endHour: 18,
+      genre: 'Psychill · Trip-Hop',
+      emoji: '🌀',
+      color: '#22c55e',
+      desc: 'Progressive trip-hop and psychedelic electronica for a Friday afternoon.',
+      stream: 'thetrip',
+    },
+    {
+      id: 'n5md-nightscapes',
+      name: 'n5MD Nightscapes',
+      host: 'n5MD Radio',
+      day: 1, // Monday
+      startHour: 15, endHour: 18,
+      genre: 'Downtempo · Ambient',
+      emoji: '🎧',
+      color: '#6366f1',
+      desc: 'Emotional downtempo and ambient electronica to close the afternoon.',
+      stream: 'n5md',
+    },
+    {
+      id: 'dice-radio-athens',
+      name: 'Dice Radio Athens',
+      host: 'Dice Radio',
+      day: 6, // Saturday
+      startHour: 21, endHour: 24,
+      genre: 'Underground · Greek Electronic',
+      emoji: '🎲',
+      color: '#1d4ed8',
+      desc: "Greek electronic and underground radio, live from Athens.",
+      stream: 'dice-radio',
     },
   ];
 
@@ -524,9 +596,15 @@ const Shows = (() => {
 
   function tuneIn(stationId) {
     Router.go('/radio');
-    // Give the radio page a tick to render, then play
+    // Give the radio page a tick to render, then play. A show's `stream` can point
+    // at either a normal STATIONS entry (native audio) or an EXTERNAL_PLAYERS entry
+    // (iframe embed, e.g. Dice Radio) — playStation() only searches STATIONS and
+    // silently no-ops on a miss, so fall back to openEmbed() for the iframe case.
     setTimeout(() => {
-      if (typeof Radio !== 'undefined') Radio.playStation(stationId);
+      if (typeof Radio === 'undefined') return;
+      const isNativeStation = (Radio.stations || []).some(s => s.id === stationId);
+      if (isNativeStation) Radio.playStation(stationId);
+      else Radio.openEmbed(stationId);
     }, 300);
   }
 
