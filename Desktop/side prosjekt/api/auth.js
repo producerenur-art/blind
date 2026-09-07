@@ -203,7 +203,27 @@ async function activate(db, body) {
     .eq('username', row.username).select().single();
   if (error) return { status: 500, body: { error: 'Could not activate the account' } };
 
+  // Velkomst-digest: samme innhold («What's coming up») som den faste fredags-
+  // utsendelsen (api/live-reminder.js), men trigga med ein gong kontoen blir
+  // aktivert i staden for at ein splitter ny brukar skal måtte vente opptil
+  // seks dagar på å sjå shows/magasin/festivalar. Best-effort — ein feil her
+  // skal ALDRI la aktiveringa (som alt er lagra i databasen) feile for brukaren.
+  // isUnsubscribed-sjekken skjer i /api/send-email sjølv, ikkje her.
+  sendWelcomeDigest(data.email, data.display_name || data.username)
+    .catch(e => console.error('Velkomst-digest feilet (ignorert):', e && e.message ? e.message : e));
+
   return { status: 200, body: { success: true, user: publicUser(data) } };
+}
+
+async function sendWelcomeDigest(toEmail, toName) {
+  if (!toEmail) return;
+  const siteUrl = (process.env.SITE_URL || CANONICAL_URL).replace(/\/$/, '');
+  const res = await fetch(`${siteUrl}/api/send-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'live_now', toEmail, toName }),
+  });
+  if (!res.ok) throw new Error('send-email svarte ' + res.status);
 }
 
 async function forgot(db, body) {
