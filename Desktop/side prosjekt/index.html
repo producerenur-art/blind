@@ -72,7 +72,11 @@
   <!-- Gun.js — decentralized real-time chat (no server needed) -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
   <!-- QR Code generator -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <!-- qrcode@1.5+ dropped the pre-bundled build/qrcode.min.js (only ships a
+       bundler-oriented lib/browser.js with unresolved require() calls) —
+       1.4.4 is the last version with a working standalone UMD bundle,
+       verified live (loads, exposes window.QRCode, toCanvas works). -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
   <!-- Supabase JS — shared media storage (60-min audio, video) across all users -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="styles.css?v=20260907-nodiscstats">
@@ -276,7 +280,7 @@
             <img src="https://www.google.com/s2/favicons?domain=ozorafestival.eu&sz=128" alt="Ozora Festival" class="social-logo-img social-logo-img--round">
           </a>
           <a class="social-link social-link-img" href="https://hadratrancefestival.net/en/home/" target="_blank" rel="noopener noreferrer" title="Hadra Trance Festival">
-            <img src="https://hadratrancefestival.net/wp-content/uploads/2025/03/hadra-trance-festival.jpg" alt="Hadra Trance Festival" class="social-logo-img social-logo-img--round">
+            <img src="assets/link-hadra.jpg" alt="Hadra Trance Festival" class="social-logo-img social-logo-img--round">
           </a>
           <a class="social-link social-link-img" href="https://www.boomfestival.org/2027" target="_blank" rel="noopener noreferrer" title="Boom Festival">
             <img src="https://mediacdn.boomfestival.org/templates/img/BF25-image-preview-link.png" alt="Boom Festival" class="social-logo-img">
