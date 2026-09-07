@@ -132,15 +132,21 @@ async function register(db, body) {
   const row = {
     username,
     email,
-    password_hash:    hashPassword(password),
-    display_name:     displayName,
+    password_hash:     hashPassword(password),
+    display_name:      displayName,
     role,
-    activated:        false,
-    activation_token: activationToken,
-    created_at:       Date.now(),
+    activated:         false,
+    activation_token:  activationToken,
+    activation_expiry: Date.now() + 24 * 3600_000, // matcher "valid for 24 hours" i e-postmalen
+    created_at:        Date.now(),
   };
 
-  const { data, error } = await db.from('accounts').insert(row).select().single();
+  let { data, error } = await db.from('accounts').insert(row).select().single();
+  if (error && columnMissing(error)) {
+    // Migrasjon 0014 ikke kjørt ennå — registrer uten utløpstid i stedet for å feile heilt.
+    const { activation_expiry, ...withoutExpiry } = row;
+    ({ data, error } = await db.from('accounts').insert(withoutExpiry).select().single());
+  }
   if (error) {
     // Unik-constraint kan slå til ved samtidige registreringer.
     if (error.code === '23505' || /duplicate|unique/i.test(error.message || '')) {
@@ -185,6 +191,12 @@ async function activate(db, body) {
 
   const { data: row } = await db.from('accounts').select('*').eq('activation_token', token).maybeSingle();
   if (!row) return { status: 400, body: { error: 'Invalid or expired activation link' } };
+  // NULL (kolonne ikke migrert ennå, eller konto fra før 0014) = ingen utløpstid — se
+  // begrunnelse i supabase/migrations/0014_activation_expiry.sql. Bare blokker når en
+  // frist faktisk er satt OG er passert.
+  if (row.activation_expiry && Date.now() > Number(row.activation_expiry)) {
+    return { status: 400, body: { error: 'The activation link has expired. Request a new one.' } };
+  }
 
   const { data, error } = await db.from('accounts')
     .update({ activated: true, activation_token: null })
@@ -253,8 +265,13 @@ async function resend(db, body) {
   // Generisk svar (ikke avslør eksistens). Gjør jobben kun hvis konto finnes + uaktivert.
   if (row && !row.activated) {
     let token = row.activation_token;
-    if (!token) {
-      token = newToken();
+    if (!token) token = newToken();
+    // Frisk 24t-frist hver gang lenken sendes på nytt (både ved nytt og gjenbrukt token) —
+    // en gammel "utløpt" lenke som brukeren ber om på nytt, skal fungere igjen.
+    const { error: updErr } = await db.from('accounts')
+      .update({ activation_token: token, activation_expiry: Date.now() + 24 * 3600_000 })
+      .eq('username', row.username);
+    if (updErr && columnMissing(updErr)) {
       await db.from('accounts').update({ activation_token: token }).eq('username', row.username);
     }
     const mail = await sendAccountEmail('activation', row.email, row.display_name || row.username, token);

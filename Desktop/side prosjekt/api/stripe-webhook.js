@@ -64,6 +64,47 @@ module.exports = async (req, res) => {
         await db.from('purchases').update({ status: 'failed' }).eq('stripe_payment_intent', pi.id);
         break;
       }
+
+      // ── Abonnement-livssyklus (SiriusFM Pro) ────────────────────────────────
+      // Registrerer/oppdaterer den server-side sannhetskilden i `subscriptions`-
+      // tabellen. Selve Pro-opplåsinga skjer framleis client-side rett etter
+      // checkout (js/payment.js) — dette gjer berre at eit abonnement som går ut,
+      // blir kansellert eller feilar utanfor appen kan oppdagast og nedgraderast
+      // via /api/subscription-status.js (kalla ved app-init, sjå js/app.js).
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated': {
+        const sub = event.data.object;
+        const username = sub.metadata?.username;
+        if (!username) break; // abonnement oppretta utanfor Checkout — ingen brukar å knyte til
+        await db.from('subscriptions').upsert({
+          stripe_subscription_id: sub.id,
+          username,
+          stripe_customer_id: sub.customer || null,
+          plan: sub.metadata?.plan || null,
+          status: sub.cancel_at_period_end ? 'active' : (sub.status === 'active' || sub.status === 'trialing' ? 'active' : sub.status),
+          current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'stripe_subscription_id' });
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object;
+        await db.from('subscriptions').update({
+          status: 'canceled',
+          updated_at: new Date().toISOString(),
+        }).eq('stripe_subscription_id', sub.id);
+        break;
+      }
+      case 'invoice.payment_failed': {
+        const inv = event.data.object;
+        if (inv.subscription) {
+          await db.from('subscriptions').update({
+            status: 'past_due',
+            updated_at: new Date().toISOString(),
+          }).eq('stripe_subscription_id', inv.subscription);
+        }
+        break;
+      }
     }
     res.status(200).json({ received: true });
   } catch (err) {

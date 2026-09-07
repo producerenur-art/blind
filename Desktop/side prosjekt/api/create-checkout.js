@@ -80,6 +80,11 @@ module.exports = async (req, res) => {
       success_url: `${siteUrl}?payment_success={CHECKOUT_SESSION_ID}`,
       cancel_url:  `${siteUrl}#/shop`,
       metadata: { username, plan: planKey },
+      // subscription_data.metadata kopieres til selve Subscription-objektet (i motsetning
+      // til metadata over, som kun ligger på Checkout Session). Uten dette har
+      // customer.subscription.updated/deleted-webhooks ingen måte å vite hvem
+      // abonnementet tilhører — se api/stripe-webhook.js.
+      subscription_data: { metadata: { username, plan: planKey } },
       allow_promotion_codes: true,
     });
 

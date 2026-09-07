@@ -193,6 +193,33 @@ const Payment = (() => {
     }
   }
 
+  // Avstem lokal Pro-status mot Stripe via api/subscription-status.js. Kalt ved app-init
+  // (kun når brukeren allerede har `subscription:'pro'` lokalt). Nedgraderer bare ved et
+  // eksplisitt 'canceled'/'past_due'-svar fra serveren — 'unknown' (manglende rad, DB nede,
+  // webhook ikke rukket å kjøre ennå) rører ALDRI lokal status. Fanger opp abonnement som
+  // er kansellert/utløpt/feilet utenfor appen (Stripe dashboard, utløpt kort).
+  async function reconcileSubscription() {
+    const current = Auth.current();
+    if (!current || current.subscription !== 'pro' || !current.stripeSubId) return;
+    try {
+      const res  = await fetch(`/api/subscription-status?username=${encodeURIComponent(current.username)}`);
+      const data = await res.json();
+      if (data.status === 'canceled' || data.status === 'past_due') {
+        Auth.updateUser(current.username, { subscription: 'free', proCancelPending: false, proPeriodEnd: null });
+        Object.assign(current, { subscription: 'free' });
+        App.toast(
+          data.status === 'past_due'
+            ? 'Your Pro payment failed — please update your payment method.'
+            : 'Your Pro subscription has ended.',
+          'error', 8000
+        );
+        if (window.Router) Router.dispatch();
+      }
+    } catch (err) {
+      console.error('Subscription reconcile failed (ignored, fail-open):', err.message);
+    }
+  }
+
   // Angre en planlagt kansellering — behold Pro løpende.
   async function reactivateSubscription() {
     const current = Auth.current();
@@ -216,5 +243,5 @@ const Payment = (() => {
     }
   }
 
-  return { startCheckout, startHoursCheckout, verifySession, handleSuccessRedirect, showReceipt, cancelSubscription, reactivateSubscription };
+  return { startCheckout, startHoursCheckout, verifySession, handleSuccessRedirect, showReceipt, cancelSubscription, reactivateSubscription, reconcileSubscription };
 })();

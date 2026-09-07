@@ -26,7 +26,7 @@ const MODEL = 'claude-haiku-4-5-20251001';
 // så miksen aldri kollapser til bare romfilm eller bare fraktaler.
 // Søkeord på engelsk gir best YouTube-treff. Året settes inn dynamisk.
 //
-// ANTALL SØK ER BEVISST LAVT (11 til sammen): YouTube-prosjektet har ~100 søk
+// ANTALL SØK ER BEVISST LAVT (12 til sammen): YouTube-prosjektet har ~100 søk
 // per DAG (dagskvoten «Search Queries per day»), delt med /api/radio-fresh og
 // søket i appen. Hvert søk henter 15 treff, så én spørring per gruppe gir nok
 // å velge blant.
@@ -63,6 +63,10 @@ const GROUPS = [
       'earth from space 4k iss live footage',
       'hubble webb telescope nebula footage 4k',
     ],
+  },
+  {
+    key: 'darkdrone', want: 2, hint: 'dark ambient / ritual drone visuals',
+    queries: ['dark ambient background 4k loop no text'],
   },
 ];
 

@@ -49,6 +49,16 @@ const GENRE_QUERIES = {
   ambient:     ['psybient ambient mix', 'deep ambient space mix'],
   goa:         ['goa trance dj set', 'classic goa trance mix'],
   dub:         ['psydub dub reggae mix', 'dub techno mix'],
+  chillout: [
+    'chillout lounge mix',
+    'chillout downtempo dj set',
+    'sunset chillout session',
+  ],
+  'dark-drone': [
+    'dark ambient drone mix',
+    'ritual dark ambient set',
+    'dark drone atmospheric mix',
+  ],
 };
 const GENRES = Object.keys(GENRE_QUERIES);
 

@@ -22,8 +22,12 @@ const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const MODEL = 'claude-haiku-4-5-20251001';
 
 // Sjanger-nøkkel → engelske søkeord (bedre web-treff).
-// Nøklene «psychill», «techno-underground» og «world» er hovedsporene bruker vil ha
+// Nøklene «psychill» og «techno-underground» er hovedsporene bruker vil ha
 // oppdatert hele tiden (magasin + verden-siden + undergrunn-siden).
+// (Merk: hver nøkkel her varmes automatisk av cron — se WARM under. En nøkkel som
+// ingen side faktisk mounter via AIFresh er bortkastet AI-søk to ganger daglig;
+// «world» ble fjernet herfra 2026-09-07 av nettopp den grunn — innholdet dekkes
+// allerede av festivals/psychill/chillgressive/psytrance/labels/techno-underground.)
 const GENRES = {
   'alle':               'electronic music: psychill, psytrance, underground techno, psybient, house, trance, downtempo, dub',
   'psychill':           'psychill / psybient / psydub downtempo scene',
@@ -42,8 +46,7 @@ const GENRES = {
   'chillgressive':      'chillgressive and slow/deep trance downtempo: chillgressive, psychill, psybient and downtempo releases, compilations and mixes',
   'labels':             'record labels in psytrance, psychill, psybient, chillgressive and downtempo: new releases, compilations, label news and signings',
   'global-underground': 'global underground electronic / club scene',
-  // Samlespor for «All Over The World»-siden.
-  'world':              'the global psychedelic and underground electronic scene worldwide: psychill, psytrance and underground techno — festivals, clubs, labels and releases',
+  'dark-drone':         'dark ambient, dark drone and ritual/ambient industrial music: dark ambient labels, drone artists, ritual ambient and horror-ambient releases',
   // Festivaler & arrangementer i hele verden (verden-siden, Radio Shows, magasinet).
   'festivals':          'psychedelic and electronic music festivals, parties and club events worldwide: dates, line-ups, programme and ticket news (psytrance, psychill, downtempo, underground techno)',
 };

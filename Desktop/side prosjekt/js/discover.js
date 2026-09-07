@@ -3527,6 +3527,16 @@ const Discover = (() => {
           </div>
           <div class="dz-artists-grid">${artistsHtml}</div>
         </div>
+
+        <div class="dz-section">
+          <div class="dz-section-header">
+            <h2 class="dz-section-title">${Icon('music')} Labels</h2>
+            <span class="dz-section-count">${DRONE_LABELS.length} labels</span>
+          </div>
+          <div class="dz-artists-grid">${labelsHtml}</div>
+        </div>
+
+        <div id="disc-drone-fresh"></div>
       </div>
     `;
   }
@@ -3551,6 +3561,13 @@ const Discover = (() => {
       // kan gjenopprette det — renderDroneZone() slettar #disc-track-grid heilt.
       if (_droneSavedHTML == null) _droneSavedHTML = content.innerHTML;
       content.innerHTML = renderDroneZone();
+      // Discover hadde ingen AI-rotasjon i det heile teke — dette er det første
+      // «Fresh from the web»-innslaget her, same kjelde/mønster som Magazine/World.
+      if (typeof AIFresh !== 'undefined') {
+        AIFresh.reset();
+        AIFresh.mount({ id: 'disc-drone-fresh', genre: 'dark-drone',
+          title: 'Fresh from the web', emoji: '🌑', limit: 3 });
+      }
     }
   }
 

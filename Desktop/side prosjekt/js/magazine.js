@@ -28,6 +28,7 @@ const Magazine = (() => {
     { key: 'dub',               label: 'Dub' },
     { key: 'downtempo',         label: 'Downtempo' },
     { key: 'chillout',          label: 'Chill out' },
+    { key: 'dark-drone',        label: 'Dark Drone' },
     { key: 'global-underground',label: 'Global underground' },
     { key: 'festivals',         label: 'Festivals & events' },
   ];

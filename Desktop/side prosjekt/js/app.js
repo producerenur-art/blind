@@ -864,6 +864,8 @@ const App = (() => {
           <button class="hr-tab" onclick="HomeRadio.setGenre('ambient',this)">${Icon('sparkles')} Ambient</button>
           <button class="hr-tab" onclick="HomeRadio.setGenre('goa',this)">${Icon('sparkles')} Goa</button>
           <button class="hr-tab" onclick="HomeRadio.setGenre('dub',this)">${Icon('disc')} Dub</button>
+          <button class="hr-tab" onclick="HomeRadio.setGenre('chillout',this)">${Icon('waves')} Chill Out</button>
+          <button class="hr-tab" onclick="HomeRadio.setGenre('dark-drone',this)">${Icon('sparkles')} Dark Drone</button>
         </div>
         <div class="hr-channel-grid" id="hr-channel-grid"></div>
       </div>`;
@@ -923,6 +925,8 @@ const App = (() => {
         ambient:     ['spacestation', 'deepspaceone', 'missioncontrol', 'dronezone'],
         goa:         ['suburbsofgoa', 'dmtfm', 'psyndora', 'babaganousha', 'babaganousha-labs'],
         dub:         ['stellar-psy', 'heavyweightreggae'],
+        chillout:    ['1fm-chillout', 'smoothchill', 'lush'],
+        'dark-drone':['dronezone', 'doomed', 'darkzone'],
       };
       let _currentId = null;
       let _playing = false;
@@ -3157,6 +3161,9 @@ const App = (() => {
     // Handle Stripe payment success redirect
     await Payment.handleSuccessRedirect();
     if (window.Marketplace) Marketplace.handlePurchaseRedirect();
+
+    // Avstem Pro-status mot Stripe (fanger opp abonnement kansellert/utløpt utenfor appen)
+    Payment.reconcileSubscription().catch(() => {});
 
     // Init psychedelic background
     await BgManager.init();
