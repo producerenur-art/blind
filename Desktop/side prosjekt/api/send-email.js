@@ -371,14 +371,22 @@ const FEATURED_STATIONS = [
 // Veke-programmet — speglar SHOWS i js/shows.js (#/shows). Bevisst hardkoda av
 // same grunn som stasjonane. `day`: 0 = søndag. Timane er i norsk tid.
 const RADIO_SHOWS = [
-  { day: 0, start: 14, end: 18, emoji: '🚀', name: 'Mission Control Sunday', host: 'Space Command',     genre: 'Ambient Space Music' },
-  { day: 0, start: 22, end: 2,  emoji: '🌠', name: 'Stellar PSY Night',      host: 'Stellar Collective', genre: 'Psytrance · Psychedelic' },
-  { day: 1, start: 7,  end: 10, emoji: '🌌', name: 'Drone Morning',          host: 'Ambient Collective', genre: 'Ambient · Drone' },
-  { day: 2, start: 21, end: 24, emoji: '💊', name: 'Techno Underground',     host: 'DJ Digitalis',       genre: 'Techno · Minimal' },
-  { day: 3, start: 18, end: 21, emoji: '🌿', name: 'Chill Wednesday',        host: 'Lush Sessions',      genre: 'Chill · Downtempo' },
-  { day: 4, start: 23, end: 3,  emoji: '🛸', name: 'Space Travel',           host: 'Cosmic Station',     genre: 'Space Music · Ambient' },
-  { day: 5, start: 20, end: 23, emoji: '🎷', name: 'Groove Friday',          host: 'Nu-Jazz Collective', genre: 'Nu-Jazz · Trip-Hop' },
-  { day: 6, start: 0,  end: 4,  emoji: '🌑', name: 'Deep Space Saturday',    host: 'Deep Space One',     genre: 'Deep Ambient · Electronic' },
+  { day: 0, start: 14, end: 18, emoji: '🚀', name: 'Mission Control Sunday', host: 'Space Command',        genre: 'Ambient Space Music' },
+  { day: 0, start: 22, end: 2,  emoji: '🌠', name: 'Stellar PSY Night',      host: 'Stellar Collective',    genre: 'Psytrance · Psychedelic' },
+  { day: 0, start: 4,  end: 7,  emoji: '🌑', name: 'Dark Zone Transmission', host: 'Dark Zone',             genre: 'Dark Ambient · Drone' },
+  { day: 1, start: 7,  end: 10, emoji: '🌌', name: 'Drone Morning',          host: 'Ambient Collective',    genre: 'Ambient · Drone' },
+  { day: 1, start: 12, end: 15, emoji: '🌿', name: 'Psychill Afternoon',     host: 'MultiHuman EntheoMusic',genre: 'Psychill · Psybient' },
+  { day: 2, start: 7,  end: 10, emoji: '🌅', name: 'Goa Sunrise',            host: 'Suburbs of Goa',        genre: 'Psytrance · Goa' },
+  { day: 2, start: 21, end: 24, emoji: '💊', name: 'Techno Underground',     host: 'DJ Digitalis',          genre: 'Techno · Minimal' },
+  { day: 3, start: 18, end: 21, emoji: '🌿', name: 'Chill Wednesday',        host: 'Lush Sessions',         genre: 'Chill · Downtempo' },
+  { day: 3, start: 21, end: 24, emoji: '💧', name: 'Fluid Chillroom',        host: 'Fluid Collective',      genre: 'Psychill · Experimental' },
+  { day: 4, start: 18, end: 21, emoji: '🛋️', name: 'Chillout Lounge',        host: 'Lounge Sessions',       genre: 'Chill Out · Lounge' },
+  { day: 4, start: 23, end: 3,  emoji: '🛸', name: 'Space Travel',           host: 'Cosmic Station',        genre: 'Space Music · Ambient' },
+  { day: 5, start: 0,  end: 3,  emoji: '💀', name: 'Dark Drone Ritual',      host: 'The Void Wanderer',     genre: 'Dark Ambient · Drone' },
+  { day: 5, start: 20, end: 23, emoji: '🎷', name: 'Groove Friday',          host: 'Nu-Jazz Collective',    genre: 'Nu-Jazz · Trip-Hop' },
+  { day: 6, start: 0,  end: 4,  emoji: '🌑', name: 'Deep Space Saturday',    host: 'Deep Space One',        genre: 'Deep Ambient · Electronic' },
+  { day: 6, start: 12, end: 15, emoji: '🥗', name: 'Groove Salad Sessions',  host: 'Groove Salad',          genre: 'Downtempo · IDM' },
+  { day: 6, start: 18, end: 21, emoji: '🌀', name: 'Progressive Psy Session',host: 'Trance Around',         genre: 'Progressive Psy · Trance' },
 ];
 
 // Faste datoar frå #/world (festivalar + klubbkveldar). `to` er ISO-datoen
