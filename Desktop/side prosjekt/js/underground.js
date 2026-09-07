@@ -7,7 +7,7 @@ const Underground = (() => {
       city: 'Birmingham',
       desc: 'Birmingham-based techno pioneer. Known for raw, industrial sound and a massive presence behind the decks.',
       ra: 'https://ra.co/dj/surgeon',
-      sc: 'https://soundcloud.com/surgeon-official',
+      sc: 'https://anthony-child.bandcamp.com/', // var soundcloud.com/surgeon-official (404), retta 07.09.2026
       tag: 'Industrial Techno',
     },
     {
@@ -23,7 +23,7 @@ const Underground = (() => {
       city: 'London',
       desc: 'Founder of Perc Trax. Raw, precision techno with industrial elements and intense energy.',
       ra: 'https://ra.co/dj/perc',
-      sc: 'https://soundcloud.com/perctrax',
+      sc: 'https://perctrax.bandcamp.com/', // var soundcloud.com/perctrax (404), retta 07.09.2026
       tag: 'Hard Techno',
     },
     {
@@ -58,7 +58,7 @@ const Underground = (() => {
       city: 'Ibiza / Brighton',
       desc: 'Legendary resident at Space and Music Is Revolution. The king of Ibiza techno for three decades.',
       ra: 'https://ra.co/dj/carlcox',
-      sc: 'https://soundcloud.com/carlcox-official',
+      sc: 'https://soundcloud.com/carl-cox', // var carlcox-official (404), retta 07.09.2026
       tag: 'Techno / Tech House',
     },
     {
@@ -143,7 +143,7 @@ const Underground = (() => {
       name: 'DC-10',
       city: 'Ibiza',
       desc: 'Home of Circoloco. Ibiza’s rawest and most authentic underground club with an open terrace.',
-      url: 'https://www.circoloco.com',
+      url: 'https://circoloco.com', // www.-versjonen løyste ikke DNS, retta 07.09.2026
       tag: 'Club',
       events: 'https://ra.co/clubs/es/ibiza/dc10',
     },

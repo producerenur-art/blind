@@ -252,7 +252,7 @@ const Magazine = (() => {
       tittel: 'Iboga Records',
       ingress: 'From the Copenhagen underground to a global progressive powerhouse.',
       genres: ['prog-psy', 'prog-house', 'psytrance'], dato: 'Copenhagen, Denmark', forfatter: 'SiriusFM editorial team',
-      kilde: { navn: 'Iboga Records', url: 'https://www.iboga-records.com/' },
+      kilde: { navn: 'Iboga Records', url: 'https://www.ibogarecords.com/' },
       brodtekst: [
         'Iboga Records started in the Copenhagen underground and grew into one of the best-known labels for progressive psytrance and progressive house.',
         'Beatportal named the label «Label of the Month» in August 2025 — a confirmation of its continued influence in the progressive scene.',
@@ -297,7 +297,7 @@ const Magazine = (() => {
       tittel: 'Perc Trax',
       ingress: 'The London label at the hard, industrial end of the techno underground.',
       genres: ['techno-underground', 'global-underground'], dato: 'London, United Kingdom', forfatter: 'SiriusFM editorial team',
-      kilde: { navn: 'Perc Trax (SoundCloud)', url: 'https://soundcloud.com/perctrax' },
+      kilde: { navn: 'Perc Trax (Bandcamp)', url: 'https://perctrax.bandcamp.com/' },
       brodtekst: [
         'Perc Trax is run by the British producer Perc and has become a reference point for raw, industrial-leaning techno — precision-built, loud and made for dark rooms rather than festival stages.',
         'The label’s roster and back catalogue are a good map of where British techno has moved over the past two decades. Follow along via the source link.',

@@ -2,16 +2,12 @@
 const Radio = (() => {
 
   // ── External player embeds (iframe) ──────────────────────────────────
+  // 'q37' (radioq37.com/player/) fjerna 07.09.2026: utgått SSL-sertifikat
+  // (verifisert via WebFetch — "certificate has expired"), og var uansett
+  // aldri ferdig sett opp (koden hadde kommentaren "bytt til din faktiske
+  // player-URL"). Ekte Radio Q37-lyd finst framleis via STATIONS-oppføringa
+  // 'radioq37' (radioq.radioca.st, verifisert 200 OK) — ingenting gjekk tapt.
   const EXTERNAL_PLAYERS = [
-    {
-      id: 'q37',
-      name: 'Radio Q37',
-      emoji: '📡',
-      color: '#e11d48',
-      desc: 'Radio for the mind travellers',
-      url: 'https://radioq37.com/player/', // ← bytt til din faktiske player-URL
-      live: true,
-    },
     {
       id: 'dice-radio',
       name: 'Dice Radio',
