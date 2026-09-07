@@ -19,7 +19,8 @@ const Messenger = (() => {
   const MAX_MSGS     = 300;
 
   const store   = {};        // kanal → [msg]   (msg._k = Gun-nøkkel for de-dup)
-  const subbed  = new Set(); // kanalar vi alt abonnerer på
+  const subbed  = new Set(); // kanalar vi alt abonnerer på (Gun)
+  const _dmPolled = new Set(); // kanalar vi alt poller DmSync for
   let   _rootId = null;      // container-id inne i Min side-panelet
   let   _view   = 'list';    // 'list' | 'conv' | 'notif' | 'new'
   let   _active = null;      // username for open samtale
@@ -62,11 +63,26 @@ const Messenger = (() => {
   }
 
   // ── Abonnement ────────────────────────────────────────────────────────
+  // Gun (chanRef/SC.sub) leverer IKKJE pålitelig mellom to ULIKE nettlesarar
+  // (sjå minne soundcore-gun-relay-browser-sync) — DmSync (server-autorisert,
+  // api/dm.js, delt med FriendChat/DJ-inbox) er difor den faktisk pålitelige
+  // transporten, polla ved sida av Gun-forsøket.
   function ensureSub(chan) {
-    if (!chan || subbed.has(chan) || !window.SC) return;
-    subbed.add(chan);
+    if (!chan) return;
     store[chan] = store[chan] || loadHist(chan);
-    SC.sub(chanRef(chan), (msg, key) => onIncoming(chan, msg, key));
+    if (!subbed.has(chan) && window.SC) {
+      subbed.add(chan);
+      SC.sub(chanRef(chan), (msg, key) => onIncoming(chan, msg, key));
+    }
+    if (!_dmPolled.has(chan) && typeof DmSync !== 'undefined' && DmSync._enabled()) {
+      _dmPolled.add(chan);
+      const pull = async () => {
+        const rows = await DmSync.list(chan, MAX_MSGS);
+        for (const row of rows) onIncoming(chan, row, row.id);
+      };
+      pull();
+      setInterval(pull, 6000);
+    }
   }
 
   // Abonner på alle kjende samtalar: vener + tidlegare partnarar.
@@ -81,10 +97,12 @@ const Messenger = (() => {
     if (!msg || !msg.text || typeof msg.ts !== 'number') return;
     const u = me(); if (!u) return;
     const arr = store[chan] || (store[chan] = []);
-    // De-dup på Gun-nøkkel OG på innhald (frå+ts+tekst): sistnemnde fangar både
-    // lokalt echo av eiga sending og Gun-replay av allereie cacha meldingar ved
-    // reload (då har cacha meldingar andre _k enn Gun-nøklane som kjem inn).
-    if (arr.some(m => m._k === key || (m.from === msg.from && m.ts === msg.ts && m.text === msg.text))) return;
+    // De-dup på id (delt mellom Gun- og DmSync-kjelda, sett i send()/sendTo())
+    // der det finst, elles Gun-nøkkel OG innhald (frå+ts+tekst): sistnemnde
+    // fangar både lokalt echo av eiga sending og Gun-replay av allereie
+    // cacha meldingar ved reload (då har cacha meldingar andre _k enn
+    // Gun-nøklane som kjem inn).
+    if (arr.some(m => (msg.id && m.id === msg.id) || m._k === key || (m.from === msg.from && m.ts === msg.ts && m.text === msg.text))) return;
     msg._k = key;
     arr.push(msg);
     arr.sort((a, b) => a.ts - b.ts);
@@ -357,8 +375,10 @@ const Messenger = (() => {
     _lastSent = now;
     const chan = channelWith(_active);
     const ref = chanRef(chan); if (!ref) return;
-    const payload = { from: u.username, fromDisplay: u.displayName, text, ts: now, to: _active };
+    const id = `${u.username}_${now}_${Math.random().toString(36).slice(2, 7)}`;
+    const payload = { id, from: u.username, fromDisplay: u.displayName, text, ts: now, to: _active };
     try { ref.set(payload); } catch (e) { console.warn('[Messenger] send feila', e); }
+    if (typeof DmSync !== 'undefined') DmSync.push(chan, payload).catch(() => {});
     // Lokalt: legg til med ein gong (Gun-echoet de-dupar på _k seinare).
     payload._k = 'local_' + now;
     (store[chan] = store[chan] || []).push(payload);
@@ -391,8 +411,10 @@ const Messenger = (() => {
     const now = Date.now();
     const chan = channelWith(username);
     const ref = chanRef(chan); if (!ref) return false;
-    const payload = { from: u.username, fromDisplay: u.displayName, text, ts: now, to: username };
+    const id = `${u.username}_${now}_${Math.random().toString(36).slice(2, 7)}`;
+    const payload = { id, from: u.username, fromDisplay: u.displayName, text, ts: now, to: username };
     try { ref.set(payload); } catch (e) { console.warn('[Messenger] sendTo feila', e); return false; }
+    if (typeof DmSync !== 'undefined') DmSync.push(chan, payload).catch(() => {});
     payload._k = 'local_' + now;
     (store[chan] = store[chan] || loadHist(chan)).push(payload);
     saveHist(chan);
