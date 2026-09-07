@@ -81,25 +81,41 @@ const DJ = (() => {
   function gunChanKey(a, b) {
     return (window.SC && SC.channelKey) ? SC.channelKey(a, b) : [a, b].sort().join('__');
   }
+  // Slå ei innkomande melding (frå Gun ELLER DmSync) inn i den lokale historikken.
+  // De-dup: på id (delt mellom begge kjelder, sett i sendPM), elles Gun-nøkkel,
+  // elles identisk melding (eiga melding ekko-ar tilbake).
+  function _mergeIncoming(me, other, msg, key) {
+    if (!msg || !msg.text || typeof msg.ts !== 'number') return;
+    const lkey = pmChannelKey(me, other);
+    let arr;
+    try { arr = JSON.parse(localStorage.getItem(lkey) || '[]'); } catch { arr = []; }
+    const dedupKey = msg.id || key;
+    if (arr.some(m => (m.id && m.id === dedupKey) || m._k === key || (m.from === msg.from && m.ts === msg.ts && m.text === msg.text))) return;
+    arr.push({ id: msg.id || null, from: msg.from, displayName: msg.fromDisplay || msg.displayName || msg.from, text: msg.text, ts: msg.ts, _k: key });
+    arr.sort((a, b) => a.ts - b.ts);
+    localStorage.setItem(lkey, JSON.stringify(arr));
+    if (typeof App !== 'undefined' && App.updateNavBadge) App.updateNavBadge();
+  }
+
   function ensureDMSub(me, other) {
-    if (!window.SC || !SC.gun()) return;
     const chan = gunChanKey(me, other);
     if (_dmSubbed.has(chan)) return;
     _dmSubbed.add(chan);
-    SC.sub(SC.gun().get(SC.NS.dm).get(chan), (msg, key) => {
-      if (!msg || !msg.text || typeof msg.ts !== 'number') return;
-      const lkey = pmChannelKey(me, other);
-      let arr;
-      try { arr = JSON.parse(localStorage.getItem(lkey) || '[]'); } catch { arr = []; }
-      // De-dup: på Gun-nøkkel ELLER identisk melding (eiga melding ekko-ar tilbake).
-      if (arr.some(m => m._k === key || (m.from === msg.from && m.ts === msg.ts && m.text === msg.text))) return;
-      arr.push({ from: msg.from, displayName: msg.fromDisplay || msg.displayName || msg.from, text: msg.text, ts: msg.ts, _k: key });
-      arr.sort((a, b) => a.ts - b.ts);
-      localStorage.setItem(lkey, JSON.stringify(arr));
-      // Den opne chatten sin 1-sekunds-poll (startPMListen) fangar opp cachen og
-      // teiknar/plinger. Om chatten ikkje er open: badge oppdaterast av App.
-      if (typeof App !== 'undefined' && App.updateNavBadge) App.updateNavBadge();
-    });
+    if (window.SC && SC.gun()) {
+      SC.sub(SC.gun().get(SC.NS.dm).get(chan), (msg, key) => _mergeIncoming(me, other, msg, key));
+    }
+    // Gun sine offentlege relear leverer IKKJE pålitelig mellom to ULIKE
+    // nettlesarar (sjå minne soundcore-gun-relay-browser-sync) — DmSync
+    // (server-autorisert, api/dm.js, delt med FriendChat) er difor den
+    // faktisk pålitelige transporten, polla ved sida av Gun-forsøket.
+    if (typeof DmSync !== 'undefined' && DmSync._enabled()) {
+      const pull = async () => {
+        const rows = await DmSync.list(chan, 200);
+        for (const row of rows) _mergeIncoming(me, other, row, row.id);
+      };
+      pull();
+      setInterval(pull, 6000);
+    }
   }
 
   // ── Private chat ───────────────────────────────────────────────────────
@@ -190,22 +206,30 @@ const DJ = (() => {
     const text  = input?.value?.trim();
     if (!text) return;
     const ts   = Date.now();
+    const id   = `${current.username}_${ts}_${Math.random().toString(36).slice(2, 7)}`;
     const key  = pmChannelKey(current.username, targetUsername);
     const msgs = JSON.parse(localStorage.getItem(key) || '[]');
-    msgs.push({ from: current.username, displayName: current.displayName, text, ts });
+    msgs.push({ id, from: current.username, displayName: current.displayName, text, ts });
     localStorage.setItem(key, JSON.stringify(msgs));
     if (input) input.value = '';
     loadPMHistory(current.username, targetUsername);
     playMessageSound('send');
 
+    const chan = gunChanKey(current.username, targetUsername);
     // Kringkast over Gun (SC.NS.dm) så mottakeren får meldinga på ALLE enheter,
     // uansett om dei er venner. Ekko tilbake de-dup-ast i ensureDMSub.
+    ensureDMSub(current.username, targetUsername);
     if (window.SC && SC.gun()) {
-      ensureDMSub(current.username, targetUsername);
       try {
-        SC.gun().get(SC.NS.dm).get(gunChanKey(current.username, targetUsername))
-          .set({ from: current.username, fromDisplay: current.displayName, text, ts, to: targetUsername });
+        SC.gun().get(SC.NS.dm).get(chan)
+          .set({ id, from: current.username, fromDisplay: current.displayName, text, ts, to: targetUsername });
       } catch (e) { console.warn('[DJ] Gun-send feila', e); }
+    }
+    // Gun leverer ikkje pålitelig mellom to ULIKE nettlesarar — spegl til
+    // DmSync (server-autorisert, delt med FriendChat) som faktisk pålitelig
+    // transport. Same autorisasjonsmodell: sessionToken + deltakar-sjekk.
+    if (typeof DmSync !== 'undefined') {
+      DmSync.push(chan, { id, from: current.username, fromDisplay: current.displayName, to: targetUsername, text, ts }).catch(() => {});
     }
 
     // Varsel-bjelle hos mottakeren (Facebook-aktig).
