@@ -238,6 +238,10 @@ const Auth = (() => {
         role:        serverUser.role || skeleton.role || 'lytter',
         activated:   serverUser.activated != null ? serverUser.activated : skeleton.activated,
         createdAt:   serverUser.createdAt || skeleton.createdAt || Date.now(),
+        // Bevis for "eg er verkeleg denne brukaren", brukt av venne-DM
+        // (js/dmsync.js) til å autorisere lesing/skriving server-side.
+        // Behald førre tokenet om denne innlogginga ikkje gav eit nytt.
+        sessionToken: serverUser.sessionToken || skeleton.sessionToken || null,
       });
       delete merged.password;          // server-kontoer har ikke lokalt passord
       users[serverUser.username] = merged;

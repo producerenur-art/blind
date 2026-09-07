@@ -43,14 +43,17 @@ const AccountServer = (() => {
     async login({ usernameOrEmail, password }) {
       const r = await _call('login', { usernameOrEmail, password });
       if (r.offline || r.error) return r;
-      if (r.user) Auth.adoptServerUser(r.user, { login: true });
+      // sessionToken (bevis for "eg er verkeleg denne brukaren") heng ikkje på
+      // r.user (publicUser() eksponerer kun trygge felt) — send han med separat
+      // så adoptServerUser kan lagre han på brukarposten (brukt av venne-DM).
+      if (r.user) Auth.adoptServerUser({ ...r.user, sessionToken: r.sessionToken }, { login: true });
       return r;
     },
 
     async activate(token) {
       const r = await _call('activate', { token });
       if (r.offline || r.error) return r;
-      if (r.user) Auth.adoptServerUser(r.user, { login: true });
+      if (r.user) Auth.adoptServerUser({ ...r.user, sessionToken: r.sessionToken }, { login: true });
       return r;
     },
 

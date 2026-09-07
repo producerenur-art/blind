@@ -18,6 +18,18 @@ const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 const { Resend } = require('resend');
 const { activationHtml, resetHtml } = require('./send-email');
+const { sign: signSession } = require('./_hmac');
+
+// Sesjonstoken (HMAC, same delte hemmelegheit som marketplace — sjå _hmac.js)
+// utstedt ved vellykka innlogging/aktivering. Bevis for "eg er verkeleg denne
+// brukaren", brukt av api/dm.js til å autorisere venne-DM utan å måtte stole
+// på eit klient-oppgjeve brukarnamn. 30 dagar TTL, ingen refresh-mekanisme enno
+// — ved utløp må brukaren berre logge inn på nytt (samme UX som før tokenet fanst).
+const SESSION_TTL = 30 * 24 * 3600;
+function issueSessionToken(username) {
+  try { return signSession({ purpose: 'session', username }, SESSION_TTL); }
+  catch (e) { return null; } // MARKETPLACE_TOKEN_SECRET ikkje sett → ingen token, DM fell tilbake til Gun-only
+}
 
 const CANONICAL_URL = 'https://www.siriusfm.no';
 
@@ -182,7 +194,7 @@ async function login(db, body) {
   if (!verifyPassword(pass, row.password_hash)) return { status: 401, body: { error: 'Incorrect username or password' } };
   if (!row.activated) return { status: 403, body: { error: 'Account not activated. Check your email.', notActivated: true } };
 
-  return { status: 200, body: { success: true, user: publicUser(row) } };
+  return { status: 200, body: { success: true, user: publicUser(row), sessionToken: issueSessionToken(row.username) } };
 }
 
 async function activate(db, body) {
@@ -212,7 +224,7 @@ async function activate(db, body) {
   sendWelcomeDigest(data.email, data.display_name || data.username)
     .catch(e => console.error('Velkomst-digest feilet (ignorert):', e && e.message ? e.message : e));
 
-  return { status: 200, body: { success: true, user: publicUser(data) } };
+  return { status: 200, body: { success: true, user: publicUser(data), sessionToken: issueSessionToken(data.username) } };
 }
 
 async function sendWelcomeDigest(toEmail, toName) {

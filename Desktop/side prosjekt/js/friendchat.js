@@ -39,11 +39,24 @@ const FriendChat = (() => {
   }
 
   // ── Abonnement ────────────────────────────────────────────────────────
+  // Gun (chanRef/SC.sub) er sanntids-forsøket, men leverer IKKJE pålitelig
+  // mellom to ULIKE nettlesarar (sjå minne soundcore-gun-relay-browser-sync).
+  // DmSync (server-autorisert, api/dm.js) er difor den faktisk pålitelige
+  // transporten på tvers av brukarar — henta éin gong + polla vidare.
   function ensureSub(chan) {
     if (subbed.has(chan) || !window.SC) return;
     subbed.add(chan);
     store[chan] = store[chan] || [];
     SC.sub(chanRef(chan), (msg, key) => onIncoming(chan, msg, key));
+
+    if (typeof DmSync !== 'undefined' && DmSync._enabled()) {
+      const pull = async () => {
+        const rows = await DmSync.list(chan, MAX_MSGS);
+        for (const row of rows) onIncoming(chan, row, row.id);
+      };
+      pull();
+      setInterval(pull, 6000);
+    }
   }
   function subscribeAll() {
     const me = Auth.current(); if (!me) return;
@@ -56,7 +69,10 @@ const FriendChat = (() => {
     if (!msg || !msg.text || typeof msg.ts !== 'number') return;
     const me = Auth.current(); if (!me) return;
     const arr = store[chan] || (store[chan] = []);
-    if (arr.some(m => m._k === key)) return;
+    // Dedup på msg.id (sett ved sending, delt mellom Gun- og DmSync-kjelda)
+    // der det finst, elles Gun-nøkkelen — same mønster som js/chat.js.
+    const dedupKey = msg.id || key;
+    if (arr.some(m => (m.id || m._k) === dedupKey)) return;
     msg._k = key;
     arr.push(msg);
     arr.sort((a, b) => a.ts - b.ts);
@@ -206,10 +222,13 @@ const FriendChat = (() => {
     const now = Date.now();
     if (now - _lastSent < 400) return;
     _lastSent = now;
-    const ref = chanRef(activeChannel()); if (!ref) return;
-    const payload = { from: me.username, fromDisplay: me.displayName, text, ts: now };
+    const chan = activeChannel();
+    const ref  = chanRef(chan); if (!ref) return;
+    const id = `${me.username}_${now}_${Math.random().toString(36).slice(2, 7)}`;
+    const payload = { id, from: me.username, fromDisplay: me.displayName, text, ts: now };
     if (_active.type === 'dm') payload.to = _active.friend;
     try { ref.set(payload); } catch (e) { console.warn('[FriendChat] send feila', e); }
+    if (typeof DmSync !== 'undefined') DmSync.push(chan, payload).catch(() => {});
     if (inp) { inp.value = ''; inp.focus(); }
   }
 
