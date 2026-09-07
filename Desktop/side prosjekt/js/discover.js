@@ -118,16 +118,21 @@ const Discover = (() => {
     drone:        ['Drone / Dark Drone', 'Ambient / Space'],
   };
 
-  const FAKE_ACTIVITY = [
-    { user: 'luna_drift',    action: 'downloaded', track: 'Hyperspace Suite', ago: '2 min ago' },
-    { user: 'ozoresident',   action: 'wishlisted', track: 'Neon Garden EP',   ago: '5 min ago' },
-    { user: 'stellarfan99',  action: 'downloaded', track: 'Deep Fold',        ago: '8 min ago' },
-    { user: 'psy_pilgrim',   action: 'downloaded', track: 'Aurora Borealis',  ago: '12 min ago' },
-    { user: 'xeno_flux',     action: 'wishlisted', track: 'Static Dreams',    ago: '15 min ago' },
-    { user: 'nebula_echo',   action: 'downloaded', track: 'Voidspace',        ago: '22 min ago' },
-    { user: 'freq_hunter',   action: 'downloaded', track: 'Modular Hearts',   ago: '31 min ago' },
-    { user: 'drifter_k',     action: 'wishlisted', track: 'Infinite Loop',    ago: '44 min ago' },
-  ];
+  // «Live activity» viste tidligere FAKE_ACTIVITY — oppdiktede brukernavn,
+  // spor og tidsstempler som aldri fantes. Fjernet 07.09.2026 og erstattet
+  // med ekte, ferske opplastinger fra allTracks (reell Gun.js-data: ekte
+  // username + uploadedAt). Ingen nedlastings-/wishlist-hendelser spores
+  // noe sted i appen, så «downloaded»/«wishlisted» kan ikke gjenskapes ekte
+  // — «uploaded» er den eneste sporede hendelsen vi faktisk kan vise sant.
+  function timeAgo(ts) {
+    const n = Number(ts);
+    if (!Number.isFinite(n) || n <= 0) return 'recently';
+    const s = Math.floor((Date.now() - n) / 1000);
+    if (s < 60)    return 'just now';
+    if (s < 3600)  return Math.floor(s / 60) + ' min ago';
+    if (s < 86400) return Math.floor(s / 3600) + ' h ago';
+    return Math.floor(s / 86400) + ' d ago';
+  }
 
   let activeGenre   = 'all';
   let activeRole    = 'all';
@@ -1196,16 +1201,20 @@ const Discover = (() => {
     </div>`;
   }
 
-  function renderActivity() {
-    return FAKE_ACTIVITY.map(a => `
+  function renderActivity(tracks) {
+    const recent = (tracks || []).slice(0, 8);
+    if (!recent.length) {
+      return `<div class="disc-activity-empty">No uploads yet — be the first ${Icon('music')}</div>`;
+    }
+    return recent.map(t => `
       <div class="disc-activity-item">
-        <div class="disc-activity-avatar">${a.user.charAt(0).toUpperCase()}</div>
+        <div class="disc-activity-avatar">${escHtml((t.username || '?').charAt(0).toUpperCase())}</div>
         <div class="disc-activity-text">
-          <span class="disc-activity-user">@${escHtml(a.user)}</span>
-          ${a.action === 'downloaded' ? 'downloaded' : 'wishlisted'}
-          <span class="disc-activity-track">${escHtml(a.track)}</span>
+          <span class="disc-activity-user">@${escHtml(t.username)}</span>
+          uploaded
+          <span class="disc-activity-track">${escHtml(t.title)}</span>
         </div>
-        <div class="disc-activity-ago">${a.ago}</div>
+        <div class="disc-activity-ago">${timeAgo(t.uploadedAt)}</div>
       </div>
     `).join('');
   }
@@ -1295,7 +1304,7 @@ const Discover = (() => {
                   <span class="disc-live-dot"></span> Live activity
                 </div>
                 <div class="disc-activity-feed" id="disc-activity-feed">
-                  ${renderActivity()}
+                  ${renderActivity(allTracks)}
                 </div>
               </div>
 
@@ -3586,24 +3595,23 @@ const Discover = (() => {
     setGenre('drone');
   }
 
+  // Ren visuell rotasjon (flash + flytt første nederst) på de ekte
+  // oppføringene som allerede står i feeden — henter ikke inn nytt innhold,
+  // bare gir følelsen av bevegelse mellom faktiske sideoppdateringer.
   function startActivityScroll() {
-    let idx = 0;
     clearInterval(activityTimer);
     activityTimer = setInterval(() => {
       const feed = document.getElementById('disc-activity-feed');
       if (!feed) { clearInterval(activityTimer); return; }
       const items = feed.querySelectorAll('.disc-activity-item');
-      if (!items.length) return;
-      const item = feed.querySelector('.disc-activity-item');
-      if (item) {
-        item.style.transition = 'background 0.4s';
-        item.style.background = 'rgba(34,197,94,0.12)';
-        setTimeout(() => { if (item) item.style.background = ''; }, 700);
-      }
-      idx = (idx + 1) % FAKE_ACTIVITY.length;
-      const clone = items[0].cloneNode(true);
+      if (items.length < 2) return;
+      const item = items[0];
+      item.style.transition = 'background 0.4s';
+      item.style.background = 'rgba(34,197,94,0.12)';
+      setTimeout(() => { item.style.background = ''; }, 700);
+      const clone = item.cloneNode(true);
       feed.appendChild(clone);
-      feed.removeChild(items[0]);
+      feed.removeChild(item);
     }, 6000);
   }
 

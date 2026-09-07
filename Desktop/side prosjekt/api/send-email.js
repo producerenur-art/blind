@@ -242,13 +242,15 @@ function promoHtml(name, siteUrl, unsubscribeUrl) {
   ];
 
   // Nytt i festtimeplanen — ekte festivalar & klubbkvelder (frå World-fanen).
+  // NB: denne lista er IKKJE dato-filtrert som EVENT_CALENDAR under — ho vart
+  // send ufiltrert til nye/potensielle brukarar med fire festivalar og to
+  // klubbkvelder som allereie hadde passert (oppdaga + retta 07.09.2026,
+  // same runde som fiksa dei tilsvarande stale datoane i js/world.js).
   const PARTIES = [
-    ['🏔️', 'Burning Mountain', 'Zernez, Switzerland', '25–28 Jun 2026'],
-    ['🏛️', 'IT Athens — Community Night III', 'Exarcheia, Athens', '3 Jul 2026'],
-    ['🏛️', 'IT Athens — Closing Season · TYPEO · MOSHBEAT · Plagger', 'Athens', '11 Jul 2026'],
-    ['🕉️', 'ZNA Gathering', 'Montargil, Portugal', '15–22 Jul 2026'],
-    ['🔥', 'OZORA Festival', 'Dádpuszta, Hungary', '27 Jul–4 Aug 2026'],
-    ['🌲', 'Mo:Dem Festival', 'Primišlje, Croatia', '3–9 Aug 2026'],
+    ['🏔️', 'Burning Mountain', 'Zernez, Switzerland', '24–27 Jun 2027'],
+    ['🕉️', 'ZNA Gathering', 'Montargil, Portugal', 'Expected Jul 2027'],
+    ['🔥', 'OZORA Festival', 'Dádpuszta, Hungary', '23 Jul–3 Aug 2027'],
+    ['🌲', 'Mo:Dem Festival', 'Primišlje, Croatia', 'Expected Aug 2027'],
     ['🌏', 'Earth Frequency Festival', 'Woodford, Australia', '23–26 Oct 2026'],
   ];
 
@@ -415,15 +417,15 @@ const RADIO_SHOWS = [
 // telje ned til, og høyrer difor heime på sida — ikkje i ein kalender.
 // Oppdater denne når World-sida får nye datoar.
 const EVENT_CALENDAR = [
-  { emoji: '🏔️', name: 'Burning Mountain',                loc: 'Zernez, Switzerland',      when: '25–28 Jun 2026',      from: '2026-06-25', to: '2026-06-28', url: 'https://www.burning-mountain.ch/' },
-  { emoji: '🏛️', name: 'IT Athens — Community Night III', loc: 'Exarcheia, Athens',        when: '3 Jul 2026',          from: '2026-07-03', to: '2026-07-03', url: 'https://ra.co/events/2477945' },
-  { emoji: '🏛️', name: 'IT Athens — Closing Season',      loc: 'Exarcheia, Athens',        when: '11 Jul 2026',         from: '2026-07-11', to: '2026-07-11', url: 'https://ra.co/events/2477950' },
-  { emoji: '🕉️', name: 'ZNA Gathering',                   loc: 'Montargil, Portugal',      when: '15–22 Jul 2026',      from: '2026-07-15', to: '2026-07-22', url: 'https://znagathering.com/' },
-  { emoji: '🔥', name: 'OZORA Festival',                   loc: 'Dádpuszta, Hungary',       when: '27 Jul – 4 Aug 2026', from: '2026-07-27', to: '2026-08-04', url: 'https://ozorafestival.eu/' },
-  { emoji: '🌲', name: 'Mo:Dem Festival',                  loc: 'Primišlje, Croatia',       when: '3–9 Aug 2026',        from: '2026-08-03', to: '2026-08-09', url: 'https://modemfestival.com/' },
-  { emoji: '🏖️', name: 'Free Earth Festival',             loc: 'Asprovalta Beach, Greece', when: '24–30 Aug 2026',      from: '2026-08-24', to: '2026-08-30', url: 'https://freeearth-festival.com/' },
-  { emoji: '🪶', name: 'Indian Spirit',                    loc: 'Eldena, Germany',          when: '26–31 Aug 2026',      from: '2026-08-26', to: '2026-08-31', url: 'https://www.indian-spirit.de/' },
-  { emoji: '🌻', name: 'Hadra Trance Festival',            loc: 'Vieure, Allier, France',   when: '27–30 Aug 2026',      from: '2026-08-27', to: '2026-08-30', url: 'https://hadratrancefestival.net/' },
+  // Oppdatert/rydda 07.09.2026: IT Athens sine to juli-2026-datoar er borte
+  // (same fiks som js/world.js Clubs), og ZNA/Mo:Dem/Free Earth/Hadra er
+  // fjerna herifrå (ikkje frå World-sida) fordi 2027-datoane deira enno
+  // ikkje er offisielt stadfesta — denne lista krev FAST dato per kommentaren
+  // over, så eit gjettedato høyrer ikkje heime her. Sjå js/world.js for den
+  // mjukare "Expected …"-forma dei står med der.
+  { emoji: '🏔️', name: 'Burning Mountain',                loc: 'Zernez, Switzerland',      when: '24 – 27 Jun 2027',    from: '2027-06-24', to: '2027-06-27', url: 'https://www.burning-mountain.ch/' },
+  { emoji: '🔥', name: 'OZORA Festival',                   loc: 'Dádpuszta, Hungary',       when: '23 Jul – 3 Aug 2027', from: '2027-07-23', to: '2027-08-03', url: 'https://ozorafestival.eu/' },
+  { emoji: '🪶', name: 'Indian Spirit',                    loc: 'Eldena, Germany',          when: '25 – 30 Aug 2027',    from: '2027-08-25', to: '2027-08-30', url: 'https://www.indian-spirit.de/' },
   { emoji: '🌏', name: 'Earth Frequency Festival',         loc: 'Woodford, QLD, Australia', when: '23–26 Oct 2026',      from: '2026-10-23', to: '2026-10-26', url: 'https://www.earthfrequency.com.au/' },
   { emoji: '🦅', name: 'Origin Festival',                  loc: 'Helderstroom, South Africa', when: '29–31 Jan 2027',    from: '2027-01-29', to: '2027-01-31', url: 'https://originfestival.com/' },
   { emoji: '🏝️', name: 'Tribal Gathering',                loc: 'Caribbean coast, Panama',  when: '5–22 Mar 2027',       from: '2027-03-05', to: '2027-03-22', url: 'https://www.tribalgathering.com/' },

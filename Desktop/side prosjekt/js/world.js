@@ -22,7 +22,7 @@ const World = (() => {
     },
     {
       emoji: '🔥', name: 'OZORA Festival', loc: 'Dádpuszta, Hungary 🇭🇺',
-      dates: '27 Jul – 4 Aug 2026',
+      dates: '23 Jul – 3 Aug 2027', // oppdatert 07.09.2026 (ticket.ozorafestival.eu) — 2026-datoen var passert
       grad: 'linear-gradient(135deg,#1a0a05,#3a1a0a,#5e2a0d)',
       theme: 'One of Europe’s largest — a culturally diverse art and trance gathering.',
       tags: ['Psytrance', 'Progressive', 'Chill Dome', 'Art'],
@@ -33,7 +33,7 @@ const World = (() => {
     },
     {
       emoji: '🌲', name: 'Mo:Dem Festival', loc: 'Primišlje, Croatia 🇭🇷',
-      dates: '3 – 9 Aug 2026',
+      dates: 'Expected early Aug 2027 (not yet official)', // oppdatert 07.09.2026 — 2026-datoen var passert
       grad: 'linear-gradient(135deg,#04130a,#0a2e16,#11402a)',
       theme: 'Momento Demento — known for high-quality underground forest, hi-tech and darkpsy.',
       tags: ['Forest', 'Darkpsy', 'Hi-Tech', 'Experimental'],
@@ -54,7 +54,7 @@ const World = (() => {
     },
     {
       emoji: '🏔️', name: 'Burning Mountain', loc: 'Zernez, Switzerland 🇨🇭',
-      dates: '25 – 28 Jun 2026',
+      dates: '24 – 27 Jun 2027', // oppdatert 07.09.2026 (burning-mountain.ch) — 2026-datoen var passert
       grad: 'linear-gradient(135deg,#0a1020,#13243f,#1c3a5c)',
       theme: 'Immersive alpine progressive psytrance at 1500 m in the Engadin valley.',
       tags: ['Progressive', 'Psytrance', 'Alpine', 'Open Air'],
@@ -74,7 +74,7 @@ const World = (() => {
     },
     {
       emoji: '🕉️', name: 'ZNA Gathering', loc: 'Montargil, Portugal 🇵🇹',
-      dates: '15 – 22 Jul 2026',
+      dates: 'Expected Jul 2027 (biennial, not yet official)', // oppdatert 07.09.2026 — 2026-datoen var passert
       grad: 'linear-gradient(135deg,#1a1405,#3a2e0a,#5e4a0d)',
       theme: 'Dedicated to «retro» and classic Goa Trance — a retro-futuristic meeting point.',
       tags: ['Goa Trance', 'Retro', 'Old-School', 'Biennial'],
@@ -84,7 +84,7 @@ const World = (() => {
     },
     {
       emoji: '🏖️', name: 'Free Earth Festival', loc: 'Asprovalta Beach, Greece 🇬🇷',
-      dates: '24 – 30 Aug 2026',
+      dates: 'Expected Aug 2027 (not yet official)', // oppdatert 07.09.2026 — 2026-datoen var passert; kjelder spriker (aug vs. jun), held det generelt til datoen er stadfesta
       grad: 'linear-gradient(135deg,#03151f,#07304a,#0b4a68)',
       theme: 'Europe’s only psytrance beach festival — three stages: Enlightenment (prog → full-on), the Parvati forest stage and Oxygen for psychedelic downtempo, dark prog & psytechno.',
       tags: ['Beach', 'Psytrance', 'Downtempo', 'Psytechno', 'Parvati Stage'],
@@ -94,7 +94,7 @@ const World = (() => {
     },
     {
       emoji: '🪶', name: 'Indian Spirit', loc: 'Eldena, Germany 🇩🇪',
-      dates: '26 – 31 Aug 2026',
+      dates: '25 – 30 Aug 2027', // oppdatert 07.09.2026 (Music Festival Wizard) — 2026-datoen var passert
       grad: 'linear-gradient(135deg,#1a0f05,#3d240b,#5c3a10)',
       theme: 'Germany’s biggest psytrance festival — Sun, Moon and Mushroom stages plus a Fire Tent and its own Chill Out stage.',
       tags: ['Psytrance', 'Chill Out Stage', 'Open Air', 'Germany'],
@@ -104,7 +104,7 @@ const World = (() => {
     },
     {
       emoji: '🌻', name: 'Hadra Trance Festival', loc: 'Vieure, Allier, France 🇫🇷',
-      dates: '27 – 30 Aug 2026',
+      dates: 'Expected late Aug 2027 (not yet official)', // oppdatert 07.09.2026 — 2026-datoen var passert
       grad: 'linear-gradient(135deg,#0d1405,#1f300a,#334d10)',
       theme: 'France’s flagship gathering — 4 stages, 170 artists and 72 hours of psytrance, chill, techno and drum & bass. 2026 theme: «Solar Punk Chronicles: The Seed».',
       tags: ['Psytrance', 'Chill', 'Techno', 'D&B', 'France'],
@@ -208,7 +208,7 @@ const World = (() => {
       // Ingen dark ambient / drone-festival stod i lista fra før — denne dekker
       // nettopp det hullet. Ekte, verifisert 07.09.2026 (darkmofo.net.au).
       emoji: '💀', name: 'Dark Mofo', loc: 'Hobart, Tasmania 🇦🇺',
-      dates: '11 – 22 Jun 2026 (winter solstice)',
+      dates: 'Expected Jun 2027 (winter solstice, not yet official)', // oppdatert 07.09.2026 — 2026-datoen var passert
       grad: 'linear-gradient(135deg,#0a0a0a,#1a0505,#2e0808)',
       theme: 'Southern-winter-solstice festival of dark ambient, drone, extreme metal and large-scale light installations — Night Mass, Winter Feast, Ogoh-Ogoh burning and the Nude Solstice Swim at dawn.',
       tags: ['Dark Ambient', 'Drone', 'Experimental', 'Solstice'],
