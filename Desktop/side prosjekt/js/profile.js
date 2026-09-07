@@ -95,19 +95,18 @@ const Profile = (() => {
     { id: 'sensation_w',  emoji: '🤍', name: 'Sensation White',         country: 'Global 🌍',   url: 'https://www.sensation.com',             ticket: 'Register' },
     { id: 'sensation_b',  emoji: '🖤', name: 'Sensation Black',         country: 'Global 🌍',   url: 'https://www.sensation.com',             ticket: 'Register' },
     { id: 'fullmoon',     emoji: '🌕', name: 'Full Moon Party',         country: 'Thailand 🇹🇭', url: 'https://fullmoonparty-thailand.com',    ticket: 'Info' },
-    { id: 'universo',     emoji: '🌌', name: 'Universo Paralello',      country: 'Brazil 🇧🇷',   url: 'https://www.universopararello.com.br',  ticket: 'Tickets' },
+    { id: 'universo',     emoji: '🌌', name: 'Universo Paralello',      country: 'Brazil 🇧🇷',   url: 'https://universoparalello.org',         ticket: 'Tickets' },
     { id: 'psy_fi',       emoji: '🔮', name: 'Psy-Fi Festival',         country: 'Netherlands 🇳🇱',url: 'https://www.psy-fi.nl',                 ticket: 'Tickets' },
     { id: 'modem',        emoji: '🎛️', name: 'Modem Festival',          country: 'Croatia 🇭🇷',  url: 'https://modemfestival.com',             ticket: 'Tickets' },
-    { id: 'shankra',      emoji: '🕉️', name: 'Shankra Festival',        country: 'Switzerland 🇨🇭',   url: 'https://www.shankra-festival.ch',       ticket: 'Tickets' },
+    { id: 'shankra',      emoji: '🕉️', name: 'Shankra Festival',        country: 'Switzerland 🇨🇭',   url: 'https://shankrafestival.org',           ticket: 'Tickets' },
     { id: 'rainbow',      emoji: '🌈', name: 'Rainbow Serpent',         country: 'Australia 🇦🇺',url: 'https://rainbowserpent.net',            ticket: 'Tickets' },
     { id: 'antaris',      emoji: '🛸', name: 'Antaris Project',         country: 'Germany 🇩🇪', url: 'https://www.antaris-project.de',        ticket: 'Info' },
-    { id: 'sun',          emoji: '☀️', name: 'SUN Festival',            country: 'Hungary 🇭🇺',   url: 'https://sunfestival.hu',                ticket: 'Tickets' },
+    { id: 'sun',          emoji: '☀️', name: 'SUN Festival',            country: 'Hungary 🇭🇺',   url: 'https://solarunitednatives.org',        ticket: 'Tickets' },
     { id: 'cosmic',       emoji: '🌠', name: 'Cosmic Convergence',      country: 'Guatemala 🇬🇹',url: 'https://cosmicconvergencefestival.org', ticket: 'Info' },
     { id: 'burning',      emoji: '🔥', name: 'Burning Man',             country: 'USA 🇺🇸',      url: 'https://burningman.org',                ticket: 'Tickets' },
     { id: 'earthcore',    emoji: '🌏', name: 'Earthcore',               country: 'Australia 🇦🇺',url: 'https://earthcore.com.au',              ticket: 'Tickets' },
     { id: 'tomorrowland', emoji: '🎡', name: 'Tomorrowland',            country: 'Belgium 🇧🇪',   url: 'https://www.tomorrowland.com',          ticket: 'Tickets' },
-    { id: 'solipse',      emoji: '🌑', name: 'Solipse',                 country: 'Global 🌍',   url: 'https://solipse.info',                  ticket: 'Info' },
-    { id: 'vuuv',         emoji: '🎶', name: 'VuuV Festival',           country: 'Germany 🇩🇪', url: 'https://www.vuuv.de',                   ticket: 'Tickets' },
+    { id: 'vuuv',         emoji: '🎶', name: 'VuuV Festival',           country: 'Germany 🇩🇪', url: 'https://www.voov.de',                   ticket: 'Tickets' },
   ];
 
   // ── DAWs / music production software ─────────────────────────────────

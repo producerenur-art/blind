@@ -1,5 +1,17 @@
 # Marketplace — MÅ gjøres før live (sikkerhet + profil-fane)
 
+> ✅ **LØST — verifisert 07.09.2026.** Begge sikkerhetshola under er lukket i
+> gjeldende `api/marketplace.js` (konsolidert til ett endepunkt med
+> `?action=`-routing pga. Vercels 12-funksjons-grense, i stedet for separate
+> `song-upload-url.js`/`download-song.js`-filer som notatet under føresette):
+> `songUploadUrl()` krev og verifiserer eit `uploadToken` (`safeVerify`,
+> `purpose:'upload'`) og tvinger banen inn i selgerens eiga mappe server-side;
+> `download()` krev eit `token` (`purpose:'download'`, matcha mot `productId`)
+> utstedt av `downloadToken()` KUN etter at Stripe-sesjonen er verifisert
+> `payment_status === 'paid'`. `js/profile.js` sin `renderStoreSection()` er
+> òg ferdig implementert og kalla — ikkje lenger placeholder. Sjekklista
+> under er difor historisk kontekst, ikkje ei gjenverande oppgåve.
+>
 > Notat skrevet av Opus-økten ved siden av marketplace-arbeidet. Røres ikke av meg —
 > her ligger to sikkerhetsfikser og en ferdig profil-fane klar til å droppe inn.
 > Bygg-klossen `api/_hmac.js` er allerede på `main`.
