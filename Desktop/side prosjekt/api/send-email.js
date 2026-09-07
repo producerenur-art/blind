@@ -393,6 +393,16 @@ const RADIO_SHOWS = [
   { day: 0, start: 7,  end: 10, emoji: '🌙', name: 'Babaganousha Radio',     host: 'Babaganousha',          genre: 'Psytrance · Goa' },
   { day: 4, start: 21, end: 23, emoji: '🌌', name: 'Astral Trance Radio',    host: 'ATR',                   genre: 'Progressive Psy · Trance' },
   { day: 1, start: 15, end: 18, emoji: '🎧', name: 'n5MD Nightscapes',       host: 'n5MD Radio',            genre: 'Downtempo · Ambient' },
+  { day: 2, start: 10, end: 13, emoji: '🧿', name: 'Psyndora Radio',         host: 'Psyndora',              genre: 'Psytrance · Goa' },
+  { day: 3, start: 3,  end: 6,  emoji: '🍄', name: 'Babaganousha Labs',      host: 'Babaganousha Labs',     genre: 'Psytrance · Goa' },
+  { day: 4, start: 0,  end: 3,  emoji: '🌀', name: 'RR Progressive',         host: 'RR Progressive',        genre: 'Progressive Psy · Trance' },
+  { day: 6, start: 8,  end: 11, emoji: '🌫️', name: 'Ambient Psychill',       host: '1.FM',                  genre: 'Psychill · Ambient' },
+  { day: 1, start: 18, end: 21, emoji: '🎐', name: 'Groove Salad Classic',   host: 'Groove Salad Classic',  genre: 'Downtempo · Chillout' },
+  { day: 1, start: 21, end: 24, emoji: '🫧', name: 'Smooth Chill',           host: 'Smooth Chill',          genre: 'Downtempo · Chillout' },
+  { day: 2, start: 0,  end: 3,  emoji: '💊', name: 'Defcon Techno',          host: 'Defcon',                genre: 'Techno Underground · EDM' },
+  { day: 4, start: 15, end: 18, emoji: '🔥', name: 'radiOzora Trance Hour',  host: 'radiOzora',             genre: 'Psytrance · Psychedelic' },
+  { day: 0, start: 10, end: 14, emoji: '🌿', name: 'radiOzora Chill Hour',   host: 'radiOzora',             genre: 'Psychill · Downtempo' },
+  { day: 5, start: 6,  end: 9,  emoji: '🔮', name: 'Radio Q37 Sessions',     host: 'Radio Q37',             genre: 'Psytrance · Ambient Dub' },
 ];
 
 // Faste datoar frå #/world (festivalar + klubbkveldar). `to` er ISO-datoen
