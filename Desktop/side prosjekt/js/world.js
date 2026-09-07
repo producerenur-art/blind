@@ -120,7 +120,7 @@ const World = (() => {
       theme: 'A German institution since 1992, held on an old airfield between Hamburg and Berlin — main floor, chill floor and a strong old-school Goa heritage.',
       tags: ['Goa Trance', 'Psytrance', 'Chill Floor', 'Since 1992'],
       links: [
-        { label: 'voov.de', kind: 'web', url: 'https://www.voov.de/' },
+        { label: 'voov-festival.de', kind: 'web', url: 'https://www.voov-festival.de/' }, // voov.de høyrer no til eit ubeslekta prosjekt, retta 07.09.2026
       ],
     },
     {
@@ -333,7 +333,7 @@ const World = (() => {
       emoji: '🛋️', name: 'Sofa Beats', loc: 'Denmark 🇩🇰 · Chillgressive / Downtempo',
       grad: 'linear-gradient(135deg,#0a1a14,#12362a)',
       links: [
-        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://sofabeats.bandcamp.com/' },
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://sofabeatsmusic.bandcamp.com/' }, // gamal handle var ein ubeslekta solokunstnar, retta 07.09.2026
       ],
     },
     {
@@ -355,7 +355,7 @@ const World = (() => {
       grad: 'linear-gradient(135deg,#1a0f05,#3a2410)',
       links: [
         { label: 'altar-records.com', kind: 'web', url: 'https://www.altar-records.com/' },
-        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://altarrecords.bandcamp.com/' },
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://altar.bandcamp.com/' }, // gamal handle synte berre eit underprosjekt, retta 07.09.2026
       ],
     },
     {
@@ -384,7 +384,7 @@ const World = (() => {
       emoji: '🌵', name: 'Desert Trax', loc: 'USA 🇺🇸 · Desert Dwellers · Tribal Downtempo',
       grad: 'linear-gradient(135deg,#1f1205,#40270a)',
       links: [
-        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://desertrax.bandcamp.com/' },
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://deserttrax.bandcamp.com/' }, // "desertrax" (éin t) 303-omdirigerte til bandcamp.com si framside, retta 07.09.2026
       ],
     },
     {
@@ -398,7 +398,7 @@ const World = (() => {
       emoji: '🌀', name: 'TWISTED Records', loc: 'UK 🇬🇧 · Simon Posford · Psytrance / Psybient',
       grad: 'linear-gradient(135deg,#0d0829,#221050)',
       links: [
-        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://twistedrecords.bandcamp.com/' },
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://twistedmusicuk.bandcamp.com/' }, // gamal handle var ein tom, ubeslekta NY-konto, retta 07.09.2026
       ],
     },
     {
@@ -432,9 +432,12 @@ const World = (() => {
     {
       emoji: '🌙', name: 'Dreaming Awake Records', loc: 'Psychill / Psybient',
       grad: 'linear-gradient(135deg,#0a0a1f,#1a1440)',
-      links: [
-        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://dreamingawake.bandcamp.com/' },
-      ],
+      // Bandcamp-lenka fjerna 07.09.2026: dreamingawake.bandcamp.com er ein
+      // ubeslekta artist i Miami. Ingen av dei to reelle Bandcamp-kandidatane
+      // (eit techno/house-merke i LA med same namn, eller det ukrainske
+      // "Dreaming Awakening Records" som sjølv er nedlagt/303-omdirigerer)
+      // matchar denne psychill/psybient-profilen — heller ingen lenke enn feil.
+      links: [],
     },
     {
       // Ingen dark ambient-label fantes i denne lista frå før (same hol som i
@@ -470,7 +473,7 @@ const World = (() => {
       theme: 'Founded by Wolfgang Ahrens (DJ Antaro) in 1994 — one of the defining labels of classic Goa trance, home to Electric Universe, Space Tribe, Etnica and S.U.N. Project.',
       tags: ['Goa Trance', 'Classic', 'Est. 1994'],
       links: [
-        { label: 'spiritzone.de', kind: 'web', url: 'https://www.spiritzone.de/' },
+        { label: 'Wikipedia', kind: 'web', url: 'https://en.wikipedia.org/wiki/Spirit_Zone_Records' }, // spiritzone.de er no ei domeneparkeringsside (til salgs) — labelen vart nedlagt 2005, ingen levande offisiell nettstad finst, retta 07.09.2026
       ],
     },
     {
