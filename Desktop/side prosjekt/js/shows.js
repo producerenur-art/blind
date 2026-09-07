@@ -135,6 +135,66 @@ const Shows = (() => {
       desc: 'Electronic chill lounge to ease into the evening.',
       stream: '1fm-chillout',
     },
+    {
+      id: 'goa-sunrise',
+      name: 'Goa Sunrise',
+      host: 'Suburbs of Goa',
+      day: 2, // Tuesday
+      startHour: 7, endHour: 10,
+      genre: 'Psytrance · Goa',
+      emoji: '🌅',
+      color: '#f59e0b',
+      desc: 'Indian electronica and classic goa to open the day with a trip.',
+      stream: 'suburbsofgoa',
+    },
+    {
+      id: 'progressive-psy-session',
+      name: 'Progressive Psy Session',
+      host: 'Trance Around',
+      day: 6, // Saturday
+      startHour: 18, endHour: 21,
+      genre: 'Progressive Psy · Trance',
+      emoji: '🌀',
+      color: '#8b5cf6',
+      desc: 'Melodic, driving progressive psytrance for the run-up to Saturday night.',
+      stream: 'trancearound',
+    },
+    {
+      id: 'fluid-chillroom',
+      name: 'Fluid Chillroom',
+      host: 'Fluid Collective',
+      day: 3, // Wednesday
+      startHour: 21, endHour: 24,
+      genre: 'Psychill · Experimental',
+      emoji: '💧',
+      color: '#06b6d4',
+      desc: 'Psychedelic, experimental electronica for late Wednesday nights.',
+      stream: 'fluid',
+    },
+    {
+      id: 'groove-salad-sessions',
+      name: 'Groove Salad Sessions',
+      host: 'Groove Salad',
+      day: 6, // Saturday
+      startHour: 12, endHour: 15,
+      genre: 'Downtempo · IDM',
+      emoji: '🥗',
+      color: '#10b981',
+      desc: 'IDM, trip-hop and downtempo electronica for a Saturday afternoon.',
+      stream: 'groovesalad',
+    },
+    {
+      id: 'dark-zone-transmission',
+      name: 'Dark Zone Transmission',
+      host: 'Dark Zone',
+      day: 0, // Sunday
+      startHour: 4, endHour: 7,
+      genre: 'Dark Ambient · Drone',
+      emoji: '🌑',
+      color: '#0d0d1a',
+      desc: 'The darker side of deep ambient — music for staring into the abyss before dawn.',
+      stream: 'darkzone',
+    },
   ];
 
   const DAYS_NO = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
