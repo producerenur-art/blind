@@ -142,6 +142,10 @@ const Profile = (() => {
     { id: 'amazon-music',  emoji: '📦', name: 'Amazon Music' },
   ];
 
+  // Rolle-preg: fanenamnet på «Content»-fana speiler kva slags brukar det er
+  // (DJ set/mix, produsent slepp utgjevingar, plateselskap har ein roster).
+  const CONTENT_TAB_LABEL = { dj: 'Sets & Mixes', produsent: 'Releases', plateselskap: 'Releases & Roster', lytter: 'Content' };
+
   // ── Event types ───────────────────────────────────────────────────────
   const EVENT_TYPES = [
     { id: 'dj-set',   emoji: '🎛️', label: 'DJ Set' },
@@ -160,6 +164,18 @@ const Profile = (() => {
   function cssFilters(f) {
     if (!f) return '';
     return `brightness(${f.brightness ?? 100}%) contrast(${f.contrast ?? 100}%) saturate(${f.saturation ?? 100}%) hue-rotate(${f.hue ?? 0}deg) grayscale(${f.grayscale ?? 0}%)`;
+  }
+
+  // Sant når brukaren aldri har justert eit einaste fargefelt (framleis
+  // nøyaktig defaultTheme()) — sjå kommentaren ved renderProfile sin
+  // theme-variabel for kvifor berre fargane (ikkje font/kortstil/layout)
+  // avgjer om rolle-preget skal slå inn.
+  function _isDefaultThemeColors(t) {
+    if (!t) return true;
+    const d = Auth.defaultTheme();
+    return t.primaryColor === d.primaryColor && t.secondaryColor === d.secondaryColor &&
+           t.bgColor === d.bgColor && t.accentColor === d.accentColor &&
+           t.bgGradient === d.bgGradient;
   }
 
   function applyTheme(theme, container) {
@@ -540,7 +556,14 @@ const Profile = (() => {
       return;
     }
 
-    const theme   = user.theme || Auth.defaultTheme();
+    // Rolle-preg: berre for brukarar som ALDRI har justert fargane sine
+    // (framleis nøyaktig på defaultTheme() sine 5 fargefelt) — då gjev vi dei
+    // det rolle-flavourte utgangspunktet (Auth.roleTheme) i staden for det
+    // nøytrale. Har brukaren endra ÉIN einaste farge sjølv, respekterer vi det
+    // valet fullt ut og rører ingenting.
+    const theme = _isDefaultThemeColors(user.theme) && Auth.roleTheme
+      ? Auth.roleTheme(user.role)
+      : (user.theme || Auth.defaultTheme());
 
     // Build hero background
     let heroBgStyle = '';
@@ -717,7 +740,7 @@ const Profile = (() => {
           <!-- Tab bar -->
           <div class="profile-tabs" id="profile-tabs">
             <button class="tab-btn active" data-tab="om" onclick="Profile.switchTab('om')">About</button>
-            <button class="tab-btn" data-tab="innhold" onclick="Profile.switchTab('innhold')">${Icon('music')} Content</button>
+            <button class="tab-btn" data-tab="innhold" onclick="Profile.switchTab('innhold')">${Icon('music')} ${CONTENT_TAB_LABEL[user.role] || 'Content'}</button>
             <button class="tab-btn" data-tab="innlegg" onclick="Profile.switchTab('innlegg')">${Icon('edit')} Posts</button>
             <button class="tab-btn" data-tab="vegg" onclick="Profile.switchTab('vegg')">${Icon('message')} Guestbook${wallCount ? ` (${wallCount})` : ''}</button>
             ${window.Community ? `<button class="tab-btn" data-tab="community" onclick="Profile.switchTab('community')" title="The community wall — music, video and people, wall to wall">${Icon('users')} Community</button>` : ''}
@@ -1223,7 +1246,13 @@ const Profile = (() => {
     _aiChatHistory = [];
 
     const app = document.getElementById('app');
-    const t   = current.theme || Auth.defaultTheme();
+    // Same rolle-preg-fallback som i renderProfile — elles ville editoren vist
+    // dei nøytrale standardfargane sjølv om det faktisk rendra profilsida
+    // allereie brukar t.d. DJ-paletten, og eit «Lagre» utan endringar ville
+    // uventa NULLSTILT rolle-preget til nøytralt.
+    const t = _isDefaultThemeColors(current.theme) && Auth.roleTheme
+      ? Auth.roleTheme(current.role)
+      : (current.theme || Auth.defaultTheme());
 
     _cpBlocks = JSON.parse(JSON.stringify(current.customPage?.blocks || []));
 

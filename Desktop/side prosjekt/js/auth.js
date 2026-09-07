@@ -19,6 +19,22 @@ const Auth = (() => {
     bgImageFilters: { brightness:100, contrast:100, saturation:100, hue:0 },
   });
 
+  // ── Rolle-preg ────────────────────────────────────────────────────────
+  // Bruker bad om at DJ/Artist/Plateselskap/Lytter skal ha kvart sitt visuelle
+  // preg som passar valet dei tok ved registrering — ikkje berre rolle-badgen
+  // som alt fanst. Berre FARGANE/gradienten skil seg frå defaultTheme(); alle
+  // andre felt (font, kortstil, layout) er framleis felles og fritt redigerbare.
+  // Lytter held nøyaktig defaultTheme() — same nøytrale utgangspunkt som før.
+  const ROLE_PALETTES = {
+    dj:           { primaryColor: '#a855f7', secondaryColor: '#06b6d4', accentColor: '#ec4899',
+                     bgColor: '#120a1f', bgGradient: 'linear-gradient(135deg,#120a1f 0%,#2e0a3e 100%)' },
+    produsent:    { primaryColor: '#14b8a6', secondaryColor: '#3b82f6', accentColor: '#f59e0b',
+                     bgColor: '#081b1a', bgGradient: 'linear-gradient(135deg,#081b1a 0%,#0a1e2e 100%)' },
+    plateselskap: { primaryColor: '#facc15', secondaryColor: '#1e3a8a', accentColor: '#f59e0b',
+                     bgColor: '#0a0e1a', bgGradient: 'linear-gradient(135deg,#0a0e1a 0%,#141b2e 100%)' },
+  };
+  const roleTheme = (role) => ({ ...defaultTheme(), ...(ROLE_PALETTES[role] || {}) });
+
   function getUsers() {
     try { return JSON.parse(localStorage.getItem(USERS_KEY) || '{}'); }
     catch { return {}; }
@@ -454,6 +470,7 @@ const Auth = (() => {
     },
 
     defaultTheme,
+    roleTheme,
 
     importQRUser(data) {
       const users = getUsers();

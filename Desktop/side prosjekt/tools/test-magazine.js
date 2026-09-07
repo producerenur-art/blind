@@ -86,9 +86,9 @@ function testGenreUrls() {
       `fanen «${key}» skal ha sin egen URL`);
   }
   assert.ok(html.includes('href="#/magazine"'), 'Alle-fanen skal peke på #/magazine');
-  // Antall faner = 15 sjangre + «Alle» = 16 (<a>-chips, ikke .mag-chips-containeren)
-  assert.strictEqual((html.match(/<a class="mag-chip/g) || []).length, 16, 'det skal være 16 faner');
-  ok('alle 16 faner er <a>-lenker med hver sin URL');
+  // Antall faner = 16 sjangre + «Alle» = 17 (<a>-chips, ikke .mag-chips-containeren)
+  assert.strictEqual((html.match(/<a class="mag-chip/g) || []).length, 17, 'det skal være 17 faner');
+  ok('alle 17 faner er <a>-lenker med hver sin URL');
 }
 
 function testFiltering() {

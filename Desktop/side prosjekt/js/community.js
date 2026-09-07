@@ -917,8 +917,15 @@ const Community = (() => {
       : '.mp4,video/*';
     const icon    = isAudio ? 'music' : 'film';
     const head    = isAudio ? 'Upload music' : 'Upload video';
-    const isPro   = !!(me && me.subscription === 'pro');
-    const timeSub = isPro ? 'up to 20 hours (Pro)' : 'up to 2 hours free · longer with Pro ⭐';
+    const isPro     = _effectiveProUpload(me);
+    const trialDays = _artistTrialDaysLeft(me);
+    const timeSub   = isPro
+      ? (trialDays > 0 && me.subscription !== 'pro'
+          ? `up to 20 hours — free trial for ${trialDays} more day${trialDays === 1 ? '' : 's'} 🎁`
+          : 'up to 20 hours (Pro)')
+      : (_isArtistOrLabel(me)
+          ? 'up to 2 hours free · your Artist/Label trial has ended · <a href="#/shop" style="color:inherit;text-decoration:underline">upgrade to Pro ⭐</a> for 20 hours'
+          : 'up to 2 hours free · longer with Pro ⭐');
     const sub     = isAudio
       ? (isLabel
           ? `Choose an audio file — all audio formats are supported (WAV, FLAC, MP3, M4A …), ${timeSub}. It's shared to the wall and added to your profile.`
@@ -1035,6 +1042,26 @@ const Community = (() => {
   const AUDIO_EXT = ['wav','wave','flac','mp3','m4a','aac','ogg','oga','opus','aiff','aif','aifc','wma','amr','alac','mp4a','weba','caf'];
   const FREE_AUDIO_MAX_SECONDS = 2 * 60 * 60;   // gratis-kontoer: opptil 2 timer
   const PRO_AUDIO_MAX_SECONDS  = 20 * 60 * 60;  // Pro: opptil 20 timer (samme tak som DJ-mixes)
+
+  // ── Bandcamp-stil prøveperiode for Artist/Plateselskap ─────────────────
+  // Bruker bad eksplisitt om «gratis tid, så koster det penger» à la Bandcamp
+  // for produsent/plateselskap-kontoer: dei fyrste 30 dagane etter registrering
+  // får dei Pro-nivå opplastingslengde (20t) heilt gratis, utan abonnement —
+  // deretter fell dei attende til gratis-grensa (2t) om dei ikkje har kjøpt Pro.
+  // Reint klient-side (createdAt kjem alt frå api/auth.js publicUser()/Gun-
+  // skjelettet) — ingen ny DB-kolonne trengst, tidsvindauget er ikkje
+  // tryggingskritisk (berre ei opplastings-bekvemmelegheit, ikkje betaling).
+  const ARTIST_TRIAL_MS = 30 * 24 * 3600 * 1000;
+  function _isArtistOrLabel(me) { return !!(me && (me.role === 'produsent' || me.role === 'plateselskap')); }
+  function _artistTrialDaysLeft(me) {
+    if (!_isArtistOrLabel(me)) return 0;
+    const created = Number(me.createdAt) || 0;
+    if (!created) return 0;
+    const left = ARTIST_TRIAL_MS - (Date.now() - created);
+    return left > 0 ? Math.ceil(left / (24 * 3600 * 1000)) : 0;
+  }
+  function _effectiveProUpload(me) { return !!(me && (me.subscription === 'pro' || _artistTrialDaysLeft(me) > 0)); }
+
   function isAudioFile(file) {
     if (/^audio\//.test(file.type || '')) return true;
     const ext = (file.name.split('.').pop() || '').toLowerCase();
@@ -1056,7 +1083,7 @@ const Community = (() => {
     // gratis-kontoer opptil 2 timer, Pro opptil 20 timer. (0 = ukjent lengde → slipper igjennom.)
     if (status) status.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:2px"></span> Checking audio file…`;
     const dur = await getAudioDuration(file);
-    const isPro = me.subscription === 'pro';
+    const isPro = _effectiveProUpload(me);
     if (dur && !isPro && dur > FREE_AUDIO_MAX_SECONDS + 5) {
       if (status) status.innerHTML =
         `<span style="color:var(--danger,#f87171)">Audio files over 2 hours require Pro ⭐ — <a href="#/shop" style="color:inherit;text-decoration:underline">upgrade in Shop</a></span>`;
