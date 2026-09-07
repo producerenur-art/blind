@@ -222,17 +222,36 @@ const World = (() => {
   // `events` = kommande planar (vert vist som «Planar framover» med RA-lenkjer).
   const CLUBS = [
     {
+      // events-lista under var to konkrete datoar i juli 2026 — begge passert
+      // (i dag er 07.09.2026). Fjerna i staden for å vise gamle "kommande"-
+      // arrangement som feilinfo; ingen bekrefta nye datoar funne å erstatte med.
       emoji: '🏛️', name: 'IT Athens', loc: 'Exarcheia, Athens, Greece 🇬🇷',
       grad: 'linear-gradient(135deg,#0a0a14,#1a1030,#2a0d3e)',
       theme: '2 rooms at Solomou 30 & Mpotasi 9, in the heart of Exarcheia — one of Athens’ most active underground clubs, with 58 events in 2026. Residents: Plagger, MOSHBEAT, TYPEO, Human Cruelty & Brazi.',
       tags: ['Underground', '2 Rooms', 'Athens', 'Live'],
-      events: [
-        { name: 'Community Night III', date: 'Jul 3, 2026', url: 'https://ra.co/events/2477945' },
-        { name: 'IT Athens Closing Season — TYPEO · MOSHBEAT · Plagger', date: 'Jul 11, 2026', url: 'https://ra.co/events/2477950' },
-      ],
       links: [
         { label: 'RA profile', kind: 'web', url: 'https://ra.co/clubs/212119' },
         { label: 'Instagram', kind: 'web', url: 'https://www.instagram.com/itathensexarcheia/' },
+      ],
+    },
+    {
+      // Techno underground hadde berre éin klubb i heile lista (IT Athens) —
+      // begge desse er verifiserte 07.09.2026 (offisielle nettstader svarer 200).
+      emoji: '🏭', name: 'Berghain', loc: 'Friedrichshain, Berlin, Germany 🇩🇪',
+      grad: 'linear-gradient(135deg,#0d0d0d,#1f1f1f)',
+      theme: 'A former power plant turned into the world’s most famous techno club — raw industrial architecture, an 18-metre-high main floor and the Panorama Bar upstairs for house. Residents include Ben Klock and Marcel Dettmann.',
+      tags: ['Techno Underground', 'Industrial', 'Berlin', 'Legendary'],
+      links: [
+        { label: 'berghain.berlin', kind: 'web', url: 'https://berghain.berlin/' },
+      ],
+    },
+    {
+      emoji: '🔒', name: 'Tresor', loc: 'Mitte, Berlin, Germany 🇩🇪',
+      grad: 'linear-gradient(135deg,#0a0a0a,#1a0505)',
+      theme: 'Founded 1991 in the vault of a former department store — the club that defined post-reunification Berlin techno, championing Jeff Mills and Underground Resistance. Moved to a former heating plant in 2007; still raw, dark and uncompromising.',
+      tags: ['Techno Underground', 'Est. 1991', 'Berlin', 'Historic'],
+      links: [
+        { label: 'tresorberlin.com', kind: 'web', url: 'https://tresorberlin.com/' },
       ],
     },
   ];
