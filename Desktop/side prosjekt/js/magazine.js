@@ -211,6 +211,18 @@ const Magazine = (() => {
         'For more of the same world, Cryo Chamber’s annual free «Dark Ambient of the Year» compilation is a good way to sample the wider roster in one sitting.',
       ],
     },
+    {
+      id: 'drumcomplex-supernova', kategori: 'New releases', emoji: '💊', grad: G.natt,
+      tittel: 'Drumcomplex returns to his own DCMX with «Supernova»',
+      ingress: 'Tough, no-nonsense German techno — 139 BPM, raw and uncompromising.',
+      genres: ['techno-underground', 'global-underground'], dato: 'March 2026', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'DCMX (Beatport) — Supernova', url: 'https://www.beatport.com/release/supernova/5823425' },
+      brodtekst: [
+        'Drumcomplex released «Supernova» on his own label DCMX on 6 March 2026 — a comeback marked by tough, raw/deep/hypnotic techno at 139 BPM, in the label’s signature no-nonsense German style.',
+        'The track quickly found its way onto bigger stages too: Carl Cox played it at Resistance Megastructure during Ultra Music Festival Miami later that same month.',
+        'A good entry point if you want the harder, more industrial end of the techno underground rather than the melodic side.',
+      ],
+    },
 
     // ─── Plateselskaper ────────────────────────────────────────────────
     {
@@ -289,6 +301,17 @@ const Magazine = (() => {
       brodtekst: [
         'Perc Trax is run by the British producer Perc and has become a reference point for raw, industrial-leaning techno — precision-built, loud and made for dark rooms rather than festival stages.',
         'The label’s roster and back catalogue are a good map of where British techno has moved over the past two decades. Follow along via the source link.',
+      ],
+    },
+    {
+      id: 'label-cyclic-law', kategori: 'Labels', emoji: '🕯️', grad: G.natt,
+      tittel: 'Cyclic Law',
+      ingress: 'French ritual and dark ambient since 2002 — the other essential label alongside Cryo Chamber.',
+      genres: ['dark-drone', 'psybient'], dato: 'France', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'Cyclic Law', url: 'https://www.cycliclaw.com/' },
+      brodtekst: [
+        'Cyclic Law has run since 2002, specialising in dark ambient, ritual and industrial soundscapes — alongside music, the label also publishes occult and esoteric books and tarot decks, which gives a sense of how deliberately atmospheric the whole project is.',
+        'Where Cryo Chamber leans cinematic, Cyclic Law leans ritual — ceremonial, slow-built pieces meant for deep, undistracted listening rather than background noise.',
       ],
     },
 
