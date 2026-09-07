@@ -49,12 +49,31 @@ const Notify = (() => {
       _items = loadLocal(_user);
       _items.sort((a, b) => b.ts - a.ts);
       _subbed = false;
+      _nsPolling = false; // ny brukar → poll for RETT innboks (henta av api/notify.js via sessionToken)
     }
     if (!_subbed && window.SC && SC.gun()) {
       _subbed = true;
       SC.sub(SC.gun().get(SC.NS.notif).get(_user), (n, key) => onIncoming(n, key));
     }
+    _startNotifySyncPoll();
     updateBell();
+  }
+
+  // Gun leverer IKKJE pålitelig mellom to ULIKE nettlesarar — NotifySync
+  // (server-autorisert, api/notify.js) er difor den faktisk pålitelige
+  // transporten, polla ved sida av Gun-abonnementet. Same onIncoming som
+  // handterer Gun-meldingar, så venneforespurnad-biverknadene (Auth.
+  // receiveFriendRequest osv.) skjer likt uansett kjelde.
+  let _nsPolling = false;
+  function _startNotifySyncPoll() {
+    if (_nsPolling || typeof NotifySync === 'undefined' || !NotifySync._enabled()) return;
+    _nsPolling = true;
+    const pull = async () => {
+      const rows = await NotifySync.list(MAX_ITEMS);
+      for (const n of rows) onIncoming(n, n.id);
+    };
+    pull();
+    setInterval(pull, 8000);
   }
 
   function onIncoming(n, key) {
@@ -113,6 +132,7 @@ const Notify = (() => {
     };
     try { SC.gun().get(SC.NS.notif).get(toUsername).set(notif); }
     catch (e) { console.warn('[Notify] emit feila', e); }
+    if (typeof NotifySync !== 'undefined') NotifySync.push(toUsername, notif).catch(() => {});
   }
 
   // Legg til eit LOKALT varsel i DENNE innlogga brukaren si liste — utan å gå
