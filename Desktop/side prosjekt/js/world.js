@@ -792,6 +792,7 @@ const World = (() => {
           <div id="world-fresh-psytrance"></div>
           <div id="world-fresh-labels"></div>
           <div id="world-fresh-techno"></div>
+          <div id="world-fresh-darkdrone"></div>
         </div>
 
         <!-- FESTIVALS -->
@@ -889,6 +890,11 @@ const World = (() => {
       title: 'Labels & new releases', emoji: '🏷️', limit: 3 });
     AIFresh.mount({ id: 'world-fresh-techno', genre: 'techno-underground',
       title: 'Techno Underground', emoji: '🏭', limit: 3 });
+    // Manglet frå før — World fikk nettopp eigne dark-drone-oppføringar
+    // (Dark Mofo, Cyclic Law, Cryo Chamber, Atrium Carceri) men ingen AI-live
+    // seksjon for sjangeren, same hol som var i Discover før den fiksen.
+    AIFresh.mount({ id: 'world-fresh-darkdrone', genre: 'dark-drone',
+      title: 'Dark Drone & Dark Ambient', emoji: '🌑', limit: 3 });
   }
 
   // Navigate to the radio page, then start the chosen station.
