@@ -1228,11 +1228,6 @@ const Discover = (() => {
     allTracks = await loadAllTracks();
     allUsers  = Auth.getAllPublicUsers().sort((a, b) => b.createdAt - a.createdAt);
 
-    // Var: totalDownloads = 4821 + tilfeldig(0-50), totalArtists = Math.max(ekte, 12),
-    // Tracks-tallet = ekte + 247 — alle tre var oppblåst med oppdiktede tall.
-    // Nedlastinger spores ikke noe sted i appen, så det tallet er fjernet heilt
-    // (ikke gjenskapt fiktivt); Users/Tracks viser nå de ekte tallene, uten gulv/påslag.
-    const totalArtists   = allUsers.length;
     const isAuthed       = !!Auth.current();  // gjester ser ikke innloggings-låste seksjoner
 
     app.innerHTML = `
@@ -1245,10 +1240,6 @@ const Discover = (() => {
             <div class="disc-hero-badge">${Icon('music')} Discovery</div>
             <h1 class="disc-hero-title">Discover</h1>
             <p class="disc-hero-sub">Explore music and connect across the community.</p>
-            <div class="disc-stats-row">
-              <div class="disc-stat"><div class="disc-stat-val">${totalArtists}</div><div class="disc-stat-label">Users</div></div>
-              <div class="disc-stat"><div class="disc-stat-val">${allTracks.length}</div><div class="disc-stat-label">Tracks</div></div>
-            </div>
           </div>
         </div>
 

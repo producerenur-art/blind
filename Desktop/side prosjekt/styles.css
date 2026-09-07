@@ -4157,16 +4157,6 @@ body:has(.radio-visualizer-wrap.vis-size-full.vis-controls-shown) #fc-dock {
   color: var(--text2); font-size: 1rem;
   max-width: 520px; margin: 0 auto 2rem; line-height: 1.7;
 }
-.disc-stats-row {
-  display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap;
-}
-.disc-stat { text-align: center; }
-.disc-stat-val {
-  font-size: 1.75rem; font-weight: 800;
-  background: linear-gradient(135deg, #9fd8fd, #f472b6);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-}
-.disc-stat-label { font-size: 0.75rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
 
 /* Genre bar */
 .disc-genre-bar {
@@ -10620,15 +10610,6 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
   background-clip: text;
 }
 .disc-hero-sub .sfm { background: none; font-weight: inherit; }
-/* NB: background-shorthand nullstiller background-clip, så clip-eigenskapane
-   må gjentakast her — utan dei blir tala fylte firkantar i staden for tekst. */
-.disc-stat-val {
-  background: var(--sfmG);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.disc-stat-label { color: var(--sfm-solid); opacity: 0.85; }
 
 /* Discover — kategorivelgar, sjangerknappar og sub-faner i logo-fargen.
    Solid tone: knappane har ikon/emoji ved sida av teksten. */
