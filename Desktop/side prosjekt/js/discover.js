@@ -14,7 +14,6 @@ const Discover = (() => {
   // Roterande radio-miksar per Discover-kategori — på-sjanger YouTube-video-ID-ar.
   // weeklyPick byter til neste i lista kvar 7. dag. Legg til/byt ut ID-ar fritt (hald deg på-sjanger).
   const CATEGORY_MIXES = {
-    'psy-tour':        ['2fXd4htj7Vo', 'caX18upOO7c', '3g2vBKiWXjY'],  // full-on / peak psytrance
     'psybient':        ['IAZIzaqxaZk', '3LQYUBw_Icc', 'V6zgkhAYhEQ'],  // psybient / psychill
     'altar-records':   ['X2WV1RnCPlw', 'Y91C2yTq8BQ', 'pu-IVYOLsDc'],  // progressive psytrance
     'hadra':           ['2crX23JpCrI', 'ifwKC8r0C5w', 'KavG_9PgRHs'],  // psytrance festival-sett
@@ -981,7 +980,6 @@ const Discover = (() => {
     { id:'music',           icon:'music',     label:'Music' },
     { id:'ultimae',         icon:'disc',      label:'Ultimae Records' },
     { id:'people',          icon:'users',     label:'Find people' },
-    { id:'psy-tour',        icon:'wind',      label:'Psytrance Peak Tour' },
     { id:'ambient-mann',    icon:'waves',     label:'Ambient Mann', notranslate:true },
     { id:'psybient',        icon:'leaf',      label:'Psybient Events' },
     { id:'altar-records',   icon:'home',      label:'Altar Records' },
@@ -1352,12 +1350,6 @@ const Discover = (() => {
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- PSY TOUR TAB (hidden by default) -->
-        <div id="disc-psy-tour-tab" class="hidden">
-          ${renderPsyTourTab()}
-          ${renderWeeklyMix('psy-tour')}
         </div>
 
         <!-- AMBIENT MANN TAB (hidden by default) -->
@@ -3273,177 +3265,9 @@ const Discover = (() => {
     `;
   }
 
-  function renderPsyTourTab() {
-    const SC_MIXES = [
-      { title: 'Progressive Psytrance SET 2026', artist: 'STAYOS', url: 'https://soundcloud.com/stayos/progressive-psytrance-set-2026' },
-      { title: 'Fantasia — Progressive Psytrance 2026', artist: 'DJ NightStar', url: 'https://soundcloud.com/djnightstar_official/fantasia-progressive-psytrance-mix-2026' },
-      { title: 'Progressive Psytrance mix February 2026', artist: 'Electric Samurai', url: 'https://soundcloud.com/dj-electric-samurai/progressive-psytrance-mix-february-2026' },
-      { title: 'Feelings — Psytrance Love Mix 2026', artist: 'DJ NightStar', url: 'https://soundcloud.com/djnightstar_official/dj-nightstar-feelings-progressive-psytrance-love-mix-2026' },
-      { title: 'Another Dimension — Progressive Psy', artist: 'DJ SAIZ', url: 'https://soundcloud.com/djsaiz/progressive-psytrance-mix' },
-      { title: 'Best of Progressive Psytrance (playlist)', artist: 'Jilax', url: 'https://soundcloud.com/jilaxofficial/sets/bestofpsytrance' },
-    ];
-    const YT_MIXES = [
-      { title: 'Psytrance Full-On — Psychedelic Trips 2026', artist: 'Speed Sound Records', url: 'https://www.youtube.com/watch?v=eVUyzYVhU3c' },
-      { title: 'High Energy Progressive & Full-On 2026', artist: 'Psytrance Mix', url: 'https://www.youtube.com/watch?v=EHKus8WnZoc' },
-      { title: 'Psytrance Festival Mix 2026 — Massive Drops', artist: 'Festival Vibes', url: 'https://www.youtube.com/watch?v=nuKCevMh7Rk' },
-      { title: 'Melodic Full-On Journey 2026 (AI Visuals)', artist: 'Radioactive Project', url: 'https://www.youtube.com/watch?v=iRKh6NbFogY' },
-      { title: 'Melodic Psytrance Mix 2026 — Emotional Journey', artist: 'DJ Nightstar', url: 'https://www.youtube.com/watch?v=Y9hZ0OFmM40' },
-      { title: 'Psytrance Mix — June 2026', artist: 'New set', url: 'https://www.youtube.com/watch?v=1OgActV73I4' },
-    ];
-    const LABELS = [
-      { emoji: '🏷', name: 'Psytrance on Bandcamp', desc: 'All releases tagged psytrance', url: 'https://bandcamp.com/tag/psytrance' },
-      { emoji: '🌀', name: 'Progressive Psytrance / Bandcamp', desc: 'Progressiv underkategori — deep & evolving', url: 'https://bandcamp.com/tag/progressive-psytrance' },
-      { emoji: '⏱', name: 'Timelapse Records', desc: 'Trance / Psy label — grunnlagt av Timelock', url: 'https://timelapserec.bandcamp.com/' },
-      { emoji: '🦏', name: 'Flying Rhino Records', desc: 'UK pioneer — progressive psytrance since the 90s', url: 'https://flyingrhino.bandcamp.com/' },
-      { emoji: '🌐', name: 'Psytrance Guide', desc: 'Overview: artists, labels, subgenres', url: 'https://psytranceguide.com/' },
-      { emoji: '📻', name: 'DMT-FM Psytrance Radio', desc: 'Gratis webradio 24/7 — full-on & progressive', url: 'https://dmt-fm.com/' },
-    ];
-    const FESTIVALS = [
-      { day: '24 jul', month: 'aug 2026', name: 'O.Z.O.R.A. Festival', loc: 'Dádpuszta, Hungary 🇭🇺', tags: ['Psytrance', 'Downtempo', 'Arts'], url: 'https://2026.ozorafestival.eu/' },
-      { day: 'Aug', month: '2026', name: 'Free Earth Festival', loc: 'Greece 🇬🇷 — beach & sea', tags: ['Beach Psy', 'Full-On'], url: 'https://freeearth-festival.com/' },
-      { day: 'Jul', month: '2026', name: 'VooV Experience', loc: 'Putlitz, Germany 🇩🇪', tags: ['Progressive', 'Full-On', 'Forest'], url: 'https://voov.de/' },
-      { day: 'Summer', month: '2026', name: 'Psy-Fi Festival', loc: 'Netherlands 🇳🇱 — lake', tags: ['Psy', 'Workshops', 'Art'], url: 'https://www.psy-fi.nl/' },
-      { day: 'Summer', month: '2026', name: 'Solar Light Festival', loc: 'Italy 🇮🇹', tags: ['Psy', 'Ritual', 'Community'], url: 'https://psymedia.co.za/event_continent/europe/' },
-      { day: 'Aug', month: '2026', name: 'Modem Festival', loc: 'Croatia 🇭🇷 — deep forest', tags: ['Dark Psy', 'Hi-Tech', 'Forest'], url: 'https://www.modemfestival.com/' },
-      { day: 'Jul', month: '2027', name: 'Boom Festival', loc: 'Idanha-a-Nova, Portugal 🇵🇹 — lake', tags: ['Psy', 'Visionary Art', 'Sustainability'], url: 'https://www.boomfestival.org/' },
-      { day: 'Aug–Sep', month: '2026', name: 'Burning Man', loc: 'Black Rock Desert, USA 🇺🇸', tags: ['Transformational', 'Art', 'Desert'], url: 'https://burningman.org/' },
-      { day: 'Dec', month: '2026', name: 'Sunburn Festival', loc: 'Vagator, Goa, India 🇮🇳 — beach', tags: ['EDM', 'Trance', 'Beach'], url: 'https://www.sunburn.in/' },
-    ];
-
-    return `
-      <div class="disc-psy-banner">
-        <div class="disc-psy-banner-emoji">${Icon('wind')}</div>
-        <div>
-          <div class="disc-psy-banner-title">Psytrance Peak Tour</div>
-          <div class="disc-psy-banner-sub">Curated mix sets, labels and upcoming festivals from the psychedelic underground universe — SoundCloud, YouTube, Bandcamp and live events.</div>
-        </div>
-      </div>
-
-      <div class="disc-psy-section">
-        <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">${Icon('music')}</span>
-          <span class="disc-psy-section-title">The artist</span>
-          <span class="disc-psy-section-badge">u-recken.com</span>
-        </div>
-        <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
-          <a class="disc-psy-label-card" href="https://u-recken.com/" target="_blank" rel="noopener noreferrer"
-             style="gap:1.2rem;align-items:flex-start">
-            <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('wind')}</div>
-            <div style="flex:1">
-              <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem">
-                U‑Recken <span style="font-size:0.85rem;opacity:0.7">🇮🇱 Israel</span>
-              </div>
-              <div class="disc-psy-label-desc" style="line-height:1.6">
-                A psytrance producer and live artist with 20 years on the scene — from underground to major festivals.
-                Known for emotionally charged dance-floor sets. Founder of BigFreq Syndicate and Tree of Life Festival.
-                Latest album: <em>Nothing is Sacred</em> (2017) — a new album is coming in 2026.
-              </div>
-              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-                <span class="disc-psy-section-badge">${Icon('wind')} Psytrance</span>
-                <span class="disc-psy-section-badge">${Icon('zap')} Full-On</span>
-                <span class="disc-psy-section-badge">${Icon('tag')} BigFreq Syndicate</span>
-              </div>
-            </div>
-            <span class="disc-psy-mix-arrow" style="align-self:center">${Icon('arrow-right')}</span>
-          </a>
-        </div>
-      </div>
-
-      <div class="disc-psy-section">
-        <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">${Icon('cloud')}</span>
-          <span class="disc-psy-section-title">SoundCloud — Mix sets</span>
-          <span class="disc-psy-section-badge">SoundCloud</span>
-        </div>
-        <div class="disc-psy-mix-grid">
-          ${SC_MIXES.map(m => `
-            <div class="disc-psy-mix-card" role="button" style="cursor:pointer" onclick="openMedia('${escHtml(m.url)}','${escHtml(m.title).replace(/'/g,'&#39;')}')">
-              <div class="disc-psy-mix-thumb disc-psy-mix-thumb--sc">${Icon('cloud')}</div>
-              <div class="disc-psy-mix-info">
-                <div class="disc-psy-mix-title">${escHtml(m.title)}</div>
-                <div class="disc-psy-mix-artist">${escHtml(m.artist)}</div>
-              </div>
-              <span class="disc-psy-mix-arrow">${Icon('play')}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <div class="disc-psy-section">
-        <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">${Icon('play')}</span>
-          <span class="disc-psy-section-title">YouTube — Full sets 2026</span>
-          <span class="disc-psy-section-badge">YouTube</span>
-        </div>
-        <div class="disc-psy-mix-grid">
-          ${YT_MIXES.map(m => `
-            <div class="disc-psy-mix-card" role="button" style="cursor:pointer" onclick="openMedia('${escHtml(m.url)}','${escHtml(m.title).replace(/'/g,'&#39;')}')">
-              <div class="disc-psy-mix-thumb disc-psy-mix-thumb--yt">${Icon('play')}</div>
-              <div class="disc-psy-mix-info">
-                <div class="disc-psy-mix-title">${escHtml(m.title)}</div>
-                <div class="disc-psy-mix-artist">${escHtml(m.artist)}</div>
-              </div>
-              <span class="disc-psy-mix-arrow">${Icon('play')}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <div class="disc-psy-section">
-        <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">${Icon('tag')}</span>
-          <span class="disc-psy-section-title">Bandcamp & Labels</span>
-          <span class="disc-psy-section-badge">Bandcamp</span>
-        </div>
-        <div class="disc-psy-label-grid">
-          ${LABELS.map(l => `
-            <a class="disc-psy-label-card" href="${l.url}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-label-icon">${iconForEmoji(l.emoji)}</div>
-              <div>
-                <div class="disc-psy-label-name">${escHtml(l.name)}</div>
-                <div class="disc-psy-label-desc">${escHtml(l.desc)}</div>
-              </div>
-            </a>
-          `).join('')}
-        </div>
-      </div>
-
-      <div class="disc-psy-section">
-        <div class="disc-psy-section-hdr">
-          <span class="disc-psy-section-icon">${Icon('star')}</span>
-          <span class="disc-psy-section-title">Upcoming festivals 2026</span>
-          <span class="disc-psy-section-badge">Live events</span>
-        </div>
-        <div class="disc-psy-festival-list">
-          ${FESTIVALS.map(f => `
-            <a class="disc-psy-festival-card" href="${f.url}" target="_blank" rel="noopener noreferrer">
-              <div class="disc-psy-festival-date">
-                <div class="disc-psy-festival-date-day">${escHtml(f.day)}</div>
-                <div class="disc-psy-festival-date-mon">${escHtml(f.month)}</div>
-              </div>
-              <div class="disc-psy-festival-body">
-                <div class="disc-psy-festival-name">${escHtml(f.name)}</div>
-                <div class="disc-psy-festival-loc">${f.loc}</div>
-                <div class="disc-psy-festival-tags">
-                  <span class="disc-psy-festival-tag disc-psy-festival-upcoming">Upcoming</span>
-                  ${f.tags.map(t => `<span class="disc-psy-festival-tag">${escHtml(t)}</span>`).join('')}
-                </div>
-              </div>
-              <span class="disc-psy-festival-arrow">${Icon('arrow-right')}</span>
-            </a>
-          `).join('')}
-        </div>
-        <a class="disc-psy-cal-link" href="https://www.psycalendar.com/psyfestivals" target="_blank" rel="noopener noreferrer">
-          See all festivals on PsyCalendar ${Icon('arrow-right')}
-        </a>
-      </div>
-    `;
-  }
-
   function editorialCards() {
     const cards = [
       { emoji:'🌌', title:'Drone Zone Essentials', desc:'Artists, labels and demo contacts',          action: () => `Discover.openDroneZone()`, highlight: true, droneStyle: true },
-      { emoji:'🌀', title:'Psytrance Peak Tour',   desc:'Mix sets, festivals & labels',              action: () => `Discover.switchTab('psy-tour')`, highlight: true, psyStyle: true },
       { emoji:'⚡', title:'Techno Underground',    desc:'Artists, events and demos — England & Ibiza',      action: () => `Router.go('/underground')`, highlight: true },
       { emoji:'🌿', title:'Chill Afternoon',       desc:'Downtempo & lounge for everyday',                 action: () => `Discover.openChillRadio()`, highlight: true },
     ];
@@ -3632,7 +3456,6 @@ const Discover = (() => {
     closeTabMenu();
     document.getElementById('disc-music-tab')?.classList.toggle('hidden', tab !== 'music');
     document.getElementById('disc-people-tab')?.classList.toggle('hidden', tab !== 'people');
-    document.getElementById('disc-psy-tour-tab')?.classList.toggle('hidden', tab !== 'psy-tour');
     document.getElementById('disc-ambient-mann-tab')?.classList.toggle('hidden', tab !== 'ambient-mann');
     document.getElementById('disc-psybient-tab')?.classList.toggle('hidden', tab !== 'psybient');
     document.getElementById('disc-altar-records-tab')?.classList.toggle('hidden', tab !== 'altar-records');

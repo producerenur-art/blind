@@ -4486,9 +4486,6 @@ body:has(.radio-visualizer-wrap.vis-size-full.vis-controls-shown) #fc-dock {
 .disc-editorial-desc { font-size: 0.75rem; color: var(--text2); line-height: 1.5; }
 .disc-editorial-card--ug { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.07); }
 .disc-editorial-card--ug:hover { border-color: var(--accent); box-shadow: 0 0 20px rgba(34,197,94,0.25); }
-.disc-editorial-card--psy { border-color: rgba(52,211,153,0.35); background: linear-gradient(135deg,rgba(34,197,94,0.08),rgba(52,211,153,0.06)); }
-.disc-editorial-card--psy:hover { border-color: #34d399; box-shadow: 0 0 20px rgba(52,211,153,0.2); }
-.disc-editorial-card--psy .disc-editorial-cta { color: #7dd3fc; }
 .disc-editorial-cta { margin-top: 0.5rem; font-size: 0.72rem; color: #38bdf8; font-weight: 700; }
 
 /* ─── Techno Underground Page ─── */
@@ -10878,7 +10875,6 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 .disc-editorial-title { color: #dff0ff; }
 .disc-editorial-desc { color: var(--sfm-solid); }
 .disc-editorial-cta { color: var(--sfm-solid); }
-.disc-editorial-card--psy .disc-editorial-cta { color: var(--sfm-solid); }
 .disc-editorial-card:hover .disc-editorial-cta { color: #ffffff; }
 
 /* World — radiokorta, lenkeknappane og outro-boksen i logo-fargane */
