@@ -171,7 +171,7 @@ const Magazine = (() => {
       tittel: 'Ott — Hiraeth',
       ingress: 'A new album from the psydub master on his own Ottsonic.',
       genres: ['dub', 'downtempo', 'psychill'], dato: '2024', forfatter: 'SiriusFM editorial team',
-      kilde: { navn: 'Ott (Bandcamp)', url: 'https://ott.bandcamp.com/' },
+      kilde: { navn: 'Ott (Bandcamp)', url: 'https://ottsonic.bandcamp.com/album/hiraeth' },
       brodtekst: [
         '«Hiraeth» is yet another finely polished chapter in Ott’s catalogue — dense, bass-heavy layers of dub and downtempo with his characteristic, handcrafted sound signature.',
         'As always it is as much a listening album as dance music: details that only open up after several listens.',

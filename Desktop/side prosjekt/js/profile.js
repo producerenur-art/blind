@@ -3769,10 +3769,6 @@ const Profile = (() => {
     if (lbl) lbl.style.borderColor = checked ? 'var(--accent)' : 'transparent';
   }
 
-  function saveRoles() {
-    // Legacy stub — role is now saved via saveProfile()
-  }
-
   // ── Festival actions ──────────────────────────────────────────────────
   function toggleFestivalItem(label) {
     label.classList.toggle('selected', label.querySelector('input').checked);
@@ -4899,7 +4895,7 @@ const Profile = (() => {
     deleteTrack,
     uploadBgImage, uploadBgVideo, openImagePaintEditor,
     aiBio, aiColors, aiLayout, applyAiColors, applyAiLayout,
-    updateRoleLabel, saveRoles, selectEditorRole,
+    updateRoleLabel, selectEditorRole,
     removeLink,
     toggleFestivalItem, saveFestivals,
     addEvent, deleteEvent,

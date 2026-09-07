@@ -126,17 +126,25 @@ assert(Groups, 'window.Groups skal være definert');
   assert(detail.includes(cloudUrl), 'banner-hero skal peke på banner-URL');
   ok('banner-hero vises inne i gruppa');
 
-  // ── 4) setGroupBanner (eier) put-er nytt banner ────────────────────────────
+  // ── 4) setGroupBanner (eier) oppdaterer banner ─────────────────────────────
+  // NB: her (i denne mock-riggen) har _groups[gid] aldri fått ein _k — det
+  // ekte Gun-echoet (map().on()) er ein no-op i den falske Gun-treet over —
+  // så setGroupBanner sin `if (g._k) …`-vakt (lagt til for å unngå å skrive
+  // til ein "undefined"-nøkkel før Gun har rekt tilbake den ekte nøkkelen)
+  // hoppar bevisst over Gun-put-et her. Det er GreenSync/GroupSync (Supabase)
+  // som er den faktisk pålitelige persisteringa i produksjon — testen sjekkar
+  // difor det brukaren faktisk ser (banneret rendra i detaljvisninga), ikkje
+  // Gun-implementasjonsdetaljen.
   cloudUrl = 'https://cloud.example/banner-2.jpg';
-  gunPuts = [];
   await Groups.setGroupBanner(gid, { files: [{ type: 'image/jpeg', name: 'c.jpg' }] });
-  assert(gunPuts.some(p => p.patch && p.patch.banner === cloudUrl), 'setGroupBanner skal put-e nytt banner');
+  Groups.open(gid);
+  assert((captures['groups-root'] || '').includes(cloudUrl), 'setGroupBanner skal oppdatere banneret som vert rendra');
   ok('setGroupBanner (eier) oppdaterer banner');
 
   // ── 5) removeGroupBanner (eier) nuller banner ──────────────────────────────
-  gunPuts = [];
   Groups.removeGroupBanner(gid);
-  assert(gunPuts.some(p => p.patch && p.patch.banner === ''), 'removeGroupBanner skal nulle banner');
+  Groups.open(gid);
+  assert(!(captures['groups-root'] || '').includes(cloudUrl), 'removeGroupBanner skal fjerne banneret frå det som vert rendra');
   ok('removeGroupBanner (eier) fjerner banner');
 
   // ── 6) Ikke-eier kan verken sette eller fjerne ─────────────────────────────

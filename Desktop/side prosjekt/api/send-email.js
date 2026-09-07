@@ -886,7 +886,7 @@ module.exports = async (req, res) => {
     const releases   = Array.isArray(b.releases) ? cleanArticles(b.releases) : NEW_RELEASES;
     const shows      = Array.isArray(b.shows)  ? b.shows  : upcomingShows(osloClock(now), 4);
     const events     = Array.isArray(b.events) ? b.events : upcomingEvents(now, 4);
-    subject = "What's coming up on SiriusFM — new releases, shows & parties 🎧";
+    subject = "What's coming up on SiriusFM — shows, magazine stories & new releases 🎧";
     const unsubUrl = b.unsubscribeUrl || `${siteUrl}/#/unsubscribe/${encodeURIComponent(toEmail)}`;
     html = liveNowHtml(toName, siteUrl, unsubUrl, {
       stations: b.stations, shows, magazine, interviews, festivals, releases, events,

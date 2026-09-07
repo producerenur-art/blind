@@ -169,12 +169,23 @@ async function main() {
   assert.strictEqual(tue[0].name, 'Techno Underground', 'programmet som går no skal stå øvst');
   assert.strictEqual(tue[0].live, true, 'det skal vere merkt som live');
   assert.strictEqual(tue[0].when, 'Today', 'og daterast «Today»');
-  assert.strictEqual(tue[1].name, 'Chill Wednesday', 'deretter kjem morgondagen');
+  // DMT FM Sessions (ons 00–03) vart lagt til seinare same økt — han ligg
+  // kronologisk FØR Chill Wednesday (ons 18–21), så han er no rett øvst av
+  // morgondagens program, ikkje Chill Wednesday.
+  assert.strictEqual(tue[1].name, 'DMT FM Sessions', 'deretter kjem morgondagen');
   assert.strictEqual(tue[1].when, 'Tomorrow', 'merkt «Tomorrow»');
-  // Måndag kl. 12 — «Drone Morning» (man 07–10) er ferdig og skal IKKJE stå øvst.
+  // Måndag kl. 12 — «Drone Morning» (man 07–10) er ferdig og skal IKKJE stå øvst;
+  // «Psychill Afternoon» (man 12–15) er på lufta akkurat no og skal stå øvst i staden.
   const mon = upcomingShows({ day: 1, hour: 12 }, 8);
-  assert.strictEqual(mon[0].name, 'Techno Underground', 'ferdig program skal skyvast til neste veke');
-  assert.strictEqual(mon[mon.length - 1].name, 'Drone Morning', 'og hamne bakerst');
+  assert.strictEqual(mon[0].name, 'Psychill Afternoon', 'programmet som går no skal stå øvst, ikkje eit ferdig program');
+  // Med berre 8 (den vanlege e-post-lengda) er ikkje Drone Morning nødvendigvis
+  // med i det heile — programlista har vakse (32 sendingar) sidan denne testen
+  // vart skriven. Spør difor etter EIN heilt full runde (langt over talet på
+  // sendingar) for å stadfeste at «ferdig i dag» faktisk hamnar heilt bakerst,
+  // utan å vere kopla til det eksakte talet på sendingar (som berre ville gjort
+  // testen skjør på nytt neste gong nokon legg til fleire program).
+  const monFull = upcomingShows({ day: 1, hour: 12 }, 200);
+  assert.strictEqual(monFull[monFull.length - 1].name, 'Drone Morning', 'ferdig program tidlegare i dag skal skyvast heilt bakerst (neste veke)');
   ok('upcomingShows: live øvst, ferdige program skyvd til neste veke');
 
   assert.strictEqual(typeof osloClock, 'function', 'osloClock skal vere eksportert');
@@ -184,27 +195,37 @@ async function main() {
   ok('osloClock reknar om frå UTC til norsk tid');
 
   // ── 7) upcomingEvents filtrerer bort det som har vore ────────────────────
+  // Kalenderen vart oppdatert til EKTE, aktuelle datoar seinare same økt (alle
+  // 2026-festivalane bytta til sine faktiske neste utgåver, stort sett 2027) —
+  // difor finst det ikkje lenger noko festival i lista som er i 2026 FØR
+  // oktober. Bruker no 27. oktober 2026 (dagen etter Earth Frequency Festival
+  // er ferdig, den einaste 2026-datoen som står att) som «no», så testen
+  // framleis har eitt konkret døme på eit arrangement som SKAL filtrerast bort.
   assert.strictEqual(typeof upcomingEvents, 'function', 'upcomingEvents skal vere eksportert');
-  const soon = upcomingEvents(new Date('2026-08-17T00:00:00Z'), 10);
+  const soon = upcomingEvents(new Date('2026-10-27T00:00:00Z'), 10);
   assert.ok(soon.length >= 4, 'skal finne fleire komande datoar');
-  assert.ok(soon.every(e => e.to >= '2026-08-17'), 'ingen arrangement som har vore');
-  assert.ok(!soon.some(e => /OZORA|Mo:Dem|Burning Mountain/.test(e.name)), 'sommarfestivalane er over');
-  assert.strictEqual(soon[0].name, 'Free Earth Festival', 'næraste dato skal stå først');
+  assert.ok(soon.every(e => e.to >= '2026-10-27'), 'ingen arrangement som har vore');
+  assert.ok(!soon.some(e => e.name === 'Earth Frequency Festival'), 'Earth Frequency Festival (23–26 okt 2026) er over');
+  assert.strictEqual(soon[0].name, 'Origin Festival', 'næraste dato skal stå først');
   // Sortert stigande på STARTdato — det er den lesaren ser i «når»-kolonna.
   for (let i = 1; i < soon.length; i++) {
     assert.ok(soon[i - 1].from <= soon[i].from, 'kalenderen skal vere kronologisk');
   }
   assert.deepStrictEqual(soon.slice(0, 3).map(e => e.name),
-    ['Free Earth Festival', 'Indian Spirit', 'Hadra Trance Festival'],
-    'august-festivalane skal stå i startdato-rekkjefølgje');
-  // Ein festival som er I GANG skal framleis vere med.
-  const during = upcomingEvents(new Date('2026-08-28T00:00:00Z'), 10);
-  assert.ok(during.some(e => e.name === 'Free Earth Festival'), 'pågåande festival skal stå att');
+    ['Origin Festival', 'Tribal Gathering', 'Burning Mountain'],
+    'dei tre næraste festivalane skal stå i startdato-rekkjefølgje');
+  // Ein festival som er I GANG skal framleis vere med (OZORA 23 jul – 3 aug 2027).
+  const during = upcomingEvents(new Date('2027-07-28T00:00:00Z'), 10);
+  assert.ok(during.some(e => e.name === 'OZORA Festival'), 'pågåande festival skal stå att');
   const early = upcomingEvents(new Date('2026-06-01T00:00:00Z'), 10);
   assert.ok(early.some(e => /OZORA/.test(e.name)), 'OZORA skal vere med før festivalen');
   // Kalenderen skal spegle World-sida — sjekk at dei nye oppføringane er med.
+  // NB: ZNA/Mo:Dem/Free Earth/Hadra er MED VILJE fjerna herifrå (sjå kommentaren
+  // ved EVENT_CALENDAR) sidan denne lista krev ei stadfesta fast dato, og dei
+  // festivalane sine 2027-datoar ikkje er offisielle enno — dei står framleis
+  // på #/world med ei mjukare "Expected …"-form, berre ikkje her.
   const far = upcomingEvents(new Date('2026-08-17T00:00:00Z'), 99).map(e => e.name).join('|');
-  for (const n of ['Indian Spirit', 'Hadra Trance Festival', 'Origin Festival', 'Tribal Gathering', 'VooV Experience', 'Boom Festival']) {
+  for (const n of ['Indian Spirit', 'Origin Festival', 'Tribal Gathering', 'VooV Experience', 'Boom Festival']) {
     assert.ok(far.includes(n), `${n} frå #/world skal vere i kalenderen`);
   }
   ok('upcomingEvents: kronologisk, berre framtidige, speglar #/world');
