@@ -9333,6 +9333,17 @@ body.edge-idle #about-tab-handle {
 .community-input { width: 100%; min-height: 64px; resize: vertical; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 0.55rem 0.7rem; color: var(--text); font-size: 0.9rem; font-family: inherit; }
 .community-input:focus { outline: none; border-color: var(--accent); }
 .community-composer-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-top: 0.55rem; flex-wrap: wrap; }
+.community-emoji-pop {
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.15rem;
+  background: var(--bg1); border: 1px solid var(--border); border-radius: 10px;
+  padding: 0.5rem; margin-top: 0.5rem;
+}
+.community-emoji-pop.hidden { display: none; }
+.community-emoji-pop button {
+  background: none; border: none; cursor: pointer; font-size: 1.1rem;
+  padding: 0.25rem; border-radius: 6px; line-height: 1;
+}
+.community-emoji-pop button:hover { background: var(--surface2); }
 .community-vis { font-size: 0.8rem; color: var(--text2); display: inline-flex; align-items: center; gap: 0.35rem; }
 .community-vis .icon { width: 15px; height: 15px; }
 .community-vis select { background: var(--bg2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 0.25rem 0.4rem; font-size: 0.8rem; }

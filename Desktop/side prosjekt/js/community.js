@@ -481,12 +481,15 @@ const Community = (() => {
         <select id="sc-post-target" onchange="Community.onTargetChange(this.value)">${composerTargetOptions()}</select>
       </label>`;
     return `
-      <div class="community-composer">
+      <div class="community-composer" style="position:relative">
         <textarea id="sc-post-input" class="community-input" placeholder="Share something with the community…" maxlength="1000"></textarea>
         <div id="sc-post-img-preview"></div>
+        ${_postEmojiPickerHtml()}
         <div class="community-composer-row">
           ${targetControl}
           <span id="sc-post-vis-wrap">${visControl}</span>
+          <button type="button" class="btn btn-ghost btn-sm" style="margin:0" title="Emoji" onclick="Community.toggleEmojiPicker(this)">😊</button>
+          <button type="button" class="btn btn-ghost btn-sm" style="margin:0" title="Add a GIF (paste a .gif URL)" onclick="Community.pickGif(this)">${Icon('image')} GIF</button>
           <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0" title="Attach an image">
             <input type="file" id="sc-post-img-input" accept="image/*" style="display:none" onchange="Community.addImage(this)">
             ${Icon('image')} Image
@@ -496,6 +499,53 @@ const Community = (() => {
           </label>
           <button class="btn btn-primary btn-sm" onclick="Community.post(this)">${Icon('send')} Share</button>
         </div>
+      </div>`;
+  }
+
+  // ── Emoji-plukkar (composer) ───────────────────────────────────────────
+  // Same mønster som DJ.toggleEmojiPicker/insertPMEmoji for private meldingar:
+  // scopa til DEN composeren knappen faktisk sit i, sidan fleire kan liggja
+  // monterte samtidig (profilfaner).
+  const POST_EMOJIS = ['😀','😂','😍','🥳','😎','🤔','👍','👎','❤️','🔥','🎉','🙏','😢','😮','💯','✨'];
+  function _postEmojiPickerHtml() {
+    return `<div class="community-emoji-pop hidden" id="sc-post-emoji-pop">
+      ${POST_EMOJIS.map(e => `<button type="button" onclick="Community.insertEmoji('${e}',this)">${e}</button>`).join('')}
+    </div>`;
+  }
+  function toggleEmojiPicker(fromEl) {
+    const root = _composerRoot(fromEl && fromEl.closest ? fromEl : null);
+    const pop = root && root.querySelector('.community-emoji-pop');
+    if (pop) pop.classList.toggle('hidden');
+  }
+  function insertEmoji(e, fromEl) {
+    const root = _composerRoot(fromEl && fromEl.closest ? fromEl : null);
+    const inp = _cField(root, 'sc-post-input');
+    if (inp) { inp.value += e; inp.focus(); }
+    const pop = root && root.querySelector('.community-emoji-pop');
+    if (pop) pop.classList.add('hidden');
+  }
+
+  // ── GIF via URL (composer) ─────────────────────────────────────────────
+  // Same løysing som DJ.pickGif for private meldingar: ingen ny API-nøkkel å
+  // skaffa (Giphy/Tenor), berre lim inn ei .gif-lenke — gjenbruker den alt
+  // testa _pendingImage-vegen (kind:'image' i post()), så heile render-/synk-
+  // stien for bilete fungerer uendra for GIF-ar.
+  function pickGif(fromEl) {
+    const me = Auth.current();
+    if (!me) { if (typeof Router !== 'undefined') Router.go('/login'); return; }
+    const url = (prompt('Paste a direct .gif URL:', '') || '').trim();
+    if (!url) return;
+    if (!/^https?:\/\/\S+\.gif(?:[?#]\S*)?$/i.test(url)) {
+      if (typeof App !== 'undefined') App.toast('Must be a direct link to a .gif file', 'error');
+      return;
+    }
+    const root = _composerRoot(fromEl && fromEl.closest ? fromEl : null);
+    _pendingImage = { url, name: 'gif' };
+    const preview = _cField(root, 'sc-post-img-preview');
+    if (preview) preview.innerHTML = `
+      <div style="position:relative;display:inline-block;margin-top:0.25rem">
+        <img src="${esc(url)}" alt="GIF" style="max-width:170px;max-height:130px;border-radius:8px;display:block">
+        <button type="button" onclick="Community.clearImage(this)" title="Remove GIF" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.65);border:none;color:#fff;border-radius:50%;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center">${Icon('x')}</button>
       </div>`;
   }
 
@@ -1193,6 +1243,7 @@ const Community = (() => {
     addImage, clearImage, visiblePosts, postCardHtml, getPost, hydrateRemote,
     setSection, pickedFile, pickedCover, aiBuyHelp, uploadMusic, uploadVideo, playYt,
     zoom, zoomReset, onTargetChange, refreshComposerTarget, startPolling, stopPolling,
+    toggleEmojiPicker, insertEmoji, pickGif,
   };
 })();
 window.Community = Community;
