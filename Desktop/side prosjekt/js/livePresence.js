@@ -45,7 +45,12 @@ const LivePresence = (() => {
 
   async function _ping() {
     if (!_enabled() || document.hidden) return;   // ikke tell bakgrunnsfaner
-    try { await _client().rpc('presence_ping', { p_id: _visitorId() }); }
+    // Brukarnamn (om innlogga) sendast no òg med — brukt av
+    // presence_online_usernames() (0017) til den offentlege "hvem er
+    // online"-lista i js/realtime.js, som elles berre hadde upåliteleg
+    // Gun-presence å gå etter (sjå minne soundcore-gun-relay-browser-sync).
+    const me = (window.Auth && Auth.current && Auth.current()) ? Auth.current() : null;
+    try { await _client().rpc('presence_ping', { p_id: _visitorId(), p_username: me ? me.username : null }); }
     catch { /* fire-and-forget: heartbeat feiler stille */ }
   }
 

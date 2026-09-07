@@ -139,15 +139,46 @@ const SC = (() => {
   // utlogga vitjande som ikkje sjølv sender heartbeat. Idempotent.
   function subscribePresence() {
     const g = gun();
-    if (!g || _presenceSubbed) return;
-    _presenceSubbed = true;
-    g.get(NS.presence).map().on((d, k) => {
-      if (d && d.ts) {
-        _presence[k] = d.ts;
-        if (d.status && STATUS_VALID.includes(d.status)) _status[k] = d.status;
-        _emitPresence();
-      }
-    });
+    if (g && !_presenceSubbed) {
+      _presenceSubbed = true;
+      g.get(NS.presence).map().on((d, k) => {
+        if (d && d.ts) {
+          _presence[k] = d.ts;
+          if (d.status && STATUS_VALID.includes(d.status)) _status[k] = d.status;
+          _emitPresence();
+        }
+      });
+    }
+    _startSupabasePresencePoll();
+  }
+
+  // Gun sine offentlege relear leverer IKKJE pålitelig mellom to ULIKE
+  // nettlesarar (sjå minne soundcore-gun-relay-browser-sync) — den offentlege
+  // "kven er online"-lista (js/onlineWidget.js) synte difor truleg feil/
+  // ufullstendig liste for besøkande på tvers av nettlesarar heile tida.
+  // Denne pollen gjenbruker LivePresence sin allereie pålitelige heartbeat
+  // (js/livePresence.js → presence_ping, no med valfritt brukarnamn — sjå
+  // migrasjon 0017) som ei ANDRE, faktisk pålitelig kjelde ved sida av Gun-
+  // forsøket — same mønster som ChatSync/DmSync. Fyller berre inn _presence/
+  // _emitPresence, ingen endring av offentleg API, så OnlineWidget treng
+  // ingen kodeendring.
+  let _sbPresencePolling = false;
+  function _startSupabasePresencePoll() {
+    if (_sbPresencePolling) return;
+    if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) return;
+    _sbPresencePolling = true;
+    const poll = async () => {
+      try {
+        const { data, error } = await SC_Storage.client().rpc('presence_online_usernames');
+        if (!error && Array.isArray(data)) {
+          const now = Date.now();
+          data.forEach(u => { if (u) _presence[u] = now; });
+          _emitPresence();
+        }
+      } catch (_) { /* fire-and-forget: degraderer til Gun-forsøket åleine */ }
+    };
+    poll();
+    setInterval(poll, 15000);
   }
 
   function startPresence(username) {
