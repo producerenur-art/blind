@@ -461,6 +461,40 @@ const World = (() => {
         { label: 'Resident Advisor', kind: 'web', url: 'https://ra.co/labels/1182' },
       ],
     },
+    {
+      // Verifisert 07.09.2026. Goa-dekninga hadde Suntrip/TIP/TWISTED frå før,
+      // men ikkje Spirit Zone — eit av dei mest sentrale klassiske Goa-labela
+      // (heim for Electric Universe, Space Tribe, Etnica på 90-talet).
+      emoji: '🌀', name: 'Spirit Zone Recordings', loc: 'Germany 🇩🇪 · Goa Trance (est. 1994)',
+      grad: 'linear-gradient(135deg,#1a0b3d,#3a106e)',
+      theme: 'Founded by Wolfgang Ahrens (DJ Antaro) in 1994 — one of the defining labels of classic Goa trance, home to Electric Universe, Space Tribe, Etnica and S.U.N. Project.',
+      tags: ['Goa Trance', 'Classic', 'Est. 1994'],
+      links: [
+        { label: 'spiritzone.de', kind: 'web', url: 'https://www.spiritzone.de/' },
+      ],
+    },
+    {
+      // EDM hadde ingen eigen label-representasjon her frå før (berre media/
+      // artist-lister nemnde det). Anjunabeats er sjangerens definitive label.
+      emoji: '⚡', name: 'Anjunabeats', loc: 'UK 🇬🇧 · EDM / Trance (Above & Beyond)',
+      grad: 'linear-gradient(135deg,#1a0520,#3a0f4a)',
+      theme: 'Run by Above & Beyond since 2000 — one of the defining melodic trance/EDM labels, still driving the genre’s biggest festival-stage sound today.',
+      tags: ['EDM', 'Trance', 'Above & Beyond'],
+      links: [
+        { label: 'anjunabeats.com', kind: 'web', url: 'https://anjunabeats.com/' },
+      ],
+    },
+    {
+      // Fleire dark-drone-label enn berre Cyclic Law/Cryo Chamber — same to
+      // som Discover sin Drone Zone allereie brukar (DRONE_LABELS), no òg her.
+      emoji: '🩸', name: 'Malignant Records', loc: 'USA 🇺🇸 · Dark Ambient / Industrial (est. 1994)',
+      grad: 'linear-gradient(135deg,#0a0505,#1a0505)',
+      theme: 'Running since 1994 — one of the longest-standing labels dedicated to dark ambient, power electronics and true industrial.',
+      tags: ['Dark Ambient', 'Industrial', 'Est. 1994'],
+      links: [
+        { label: 'malignantrecords.com', kind: 'web', url: 'https://www.malignantrecords.com/' },
+      ],
+    },
   ];
 
   // ── Magazines, media & scene archives ─────────────────────────────────
