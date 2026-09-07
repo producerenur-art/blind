@@ -9259,6 +9259,36 @@ body.edge-idle #about-tab-handle {
 .fc-send { background: var(--accent); border: none; color: #fff; border-radius: 8px; width: 36px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .fc-send:hover { filter: brightness(1.1); }
 .fc-send .icon { width: 17px; height: 17px; }
+.fc-icon-btn {
+  background: none; border: 1px solid var(--border); border-radius: 8px;
+  width: 32px; height: 32px; flex-shrink: 0; cursor: pointer; color: var(--text2);
+  display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem;
+}
+.fc-icon-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.fc-icon-btn .icon { width: 15px; height: 15px; }
+.fc-msg-gif { display: block; max-width: 160px; max-height: 160px; border-radius: 10px; margin-top: 0.15rem; }
+.fc-msg-edited { font-size: 0.6rem; color: var(--text3); font-style: italic; }
+.fc-msg-actions { display: inline-flex; gap: 0.25rem; opacity: 0; transition: opacity 0.15s; }
+.fc-msg:hover .fc-msg-actions, .msgr-msg-wrap:hover .fc-msg-actions { opacity: 1; }
+.fc-msg-act {
+  background: none; border: none; cursor: pointer; padding: 0 0.15rem;
+  color: var(--text3); font-size: 0.7rem; line-height: 1;
+}
+.fc-msg-act:hover { color: var(--text); }
+.fc-msg-act .icon { width: 11px; height: 11px; }
+.fc-emoji-pop {
+  position: absolute; bottom: 100%; left: 0.5rem; margin-bottom: 0.35rem;
+  background: var(--bg1); border: 1px solid var(--border); border-radius: 10px;
+  padding: 0.4rem; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.1rem;
+  z-index: 20;
+}
+.fc-emoji-pop.hidden { display: none; }
+.fc-emoji-pop button {
+  background: none; border: none; cursor: pointer; font-size: 1rem;
+  padding: 0.2rem; border-radius: 6px; line-height: 1;
+}
+.fc-emoji-pop button:hover { background: rgba(255,255,255,0.08); }
 
 /* ── Varslings-bjelle + dropdown ── */
 .nav-bell-badge {

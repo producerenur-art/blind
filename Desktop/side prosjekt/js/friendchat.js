@@ -52,7 +52,7 @@ const FriendChat = (() => {
     if (typeof DmSync !== 'undefined' && DmSync._enabled()) {
       const pull = async () => {
         const rows = await DmSync.list(chan, MAX_MSGS);
-        for (const row of rows) onIncoming(chan, row, row.id);
+        _reconcile(chan, rows);
       };
       pull();
       setInterval(pull, 6000);
@@ -88,6 +88,37 @@ const FriendChat = (() => {
       if (viewing) markRead(chan);
       else if (msg.ts > _sessionStart - 4000) SC.playDing('message');
     }
+    updateBadges();
+  }
+
+  // DmSync er den EINASTE kjelda som veit om rediger/slett (Gun-meldingar er
+  // fire-and-forget, ingen node-referanse å oppdatere seinare) — same mønster
+  // som DJ._reconcileFromServer for #/messages/:username. Oppdaterer tekst på
+  // id-treff (rediger), fjernar lokale rader med ein id som ikkje lenger er i
+  // serverlista (sletta). Rører ALDRI rader utan id.
+  function _reconcile(chan, rows) {
+    let arr = store[chan] || (store[chan] = []);
+    const serverIds = new Set(rows.map(r => r.id));
+    let changed = false;
+
+    for (const row of rows) {
+      const idx = arr.findIndex(m => m.id === row.id);
+      if (idx === -1) {
+        arr.push({ id: row.id, from: row.from_user, fromDisplay: row.from_display || row.from_user,
+          text: row.text, ts: row.ts, kind: row.kind || 'text', edited: !!row.edited });
+        changed = true;
+      } else if (arr[idx].text !== row.text || !!arr[idx].edited !== !!row.edited || (arr[idx].kind || 'text') !== (row.kind || 'text')) {
+        arr[idx] = { ...arr[idx], text: row.text, kind: row.kind || arr[idx].kind, edited: !!row.edited };
+        changed = true;
+      }
+    }
+    const pruned = arr.filter(m => !m.id || serverIds.has(m.id));
+    if (pruned.length !== arr.length) { arr = store[chan] = pruned; changed = true; }
+    if (!changed) return;
+
+    arr.sort((a, b) => a.ts - b.ts);
+    while (arr.length > MAX_MSGS) arr.shift();
+    if (chan === activeChannel() && document.getElementById('fc-messages')) renderMessages();
     updateBadges();
   }
 
@@ -172,17 +203,25 @@ const FriendChat = (() => {
       ${rows || '<div class="fc-empty">No friends yet.</div>'}`;
   }
 
+  const FC_EMOJIS = ['😀','😂','😍','🥳','😎','🤔','👍','👎','❤️','🔥','🎉','🙏','😢','😮','💯','✨'];
+  function _emojiPickerHtml() {
+    return `<div class="fc-emoji-pop hidden" id="fc-emoji-pop">
+      ${FC_EMOJIS.map(e => `<button type="button" onclick="FriendChat.insertEmoji('${e}')">${e}</button>`).join('')}
+    </div>`;
+  }
+
   function renderConversation(body) {
     const chan = activeChannel();
     body.innerHTML = `
       <div class="fc-messages" id="fc-messages"></div>
+      ${_emojiPickerHtml()}
       <div class="fc-input-row">
+        <button class="fc-icon-btn" type="button" onclick="FriendChat.toggleEmojiPicker()" title="Emoji">😊</button>
+        <button class="fc-icon-btn" type="button" onclick="FriendChat.pickGif()" title="Add a GIF">${Icon('image')}</button>
         <input id="fc-input" class="fc-input" placeholder="Write a message…" maxlength="600" autocomplete="off">
         <button class="fc-send" onclick="FriendChat.send()" title="Send">${Icon('send')}</button>
       </div>`;
-    const msgs = document.getElementById('fc-messages');
-    (store[chan] || []).forEach(appendMsgEl);
-    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+    renderMessages();
     const inp = document.getElementById('fc-input');
     if (inp) {
       inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
@@ -191,17 +230,38 @@ const FriendChat = (() => {
     markRead(chan);
   }
 
+  // Full re-rendering av meldingslista frå store[chan] — trengst for at
+  // rediger/slett (som endrar/fjernar rader midt i lista via _reconcile) skal
+  // vises, ikkje berre reine nye meldingar (som appendMsgEl åleine dekte før).
+  function renderMessages() {
+    const cont = document.getElementById('fc-messages'); if (!cont) return;
+    const chan = activeChannel();
+    cont.innerHTML = '';
+    (store[chan] || []).forEach(appendMsgEl);
+    cont.scrollTop = cont.scrollHeight;
+  }
+
   function appendMsgEl(msg) {
     const cont = document.getElementById('fc-messages'); if (!cont) return;
     const me = Auth.current();
     const isMine = me && msg.from === me.username;
     const time = new Date(msg.ts || Date.now()).toLocaleTimeString('no', { hour: '2-digit', minute: '2-digit' });
+    const body = msg.kind === 'gif'
+      ? `<img class="fc-msg-gif" src="${esc(msg.text)}" alt="GIF" loading="lazy">`
+      : `<span class="fc-msg-text">${esc(msg.text)}</span>`;
+    const editedTag = msg.edited ? '<span class="fc-msg-edited"> (edited)</span>' : '';
+    const actions = (isMine && msg.id) ? `
+      <span class="fc-msg-actions">
+        ${msg.kind !== 'gif' ? `<button class="fc-msg-act" onclick="FriendChat.editMsg('${esc(msg.id)}')" title="Edit">${Icon('edit')}</button>` : ''}
+        <button class="fc-msg-act" onclick="FriendChat.deleteMsg('${esc(msg.id)}')" title="Delete">${Icon('trash')}</button>
+      </span>` : '';
     const el = document.createElement('div');
     el.className = 'fc-msg' + (isMine ? ' mine' : '');
+    if (msg.id) el.dataset.mid = msg.id;
     el.innerHTML = `
       ${!isMine ? `<a class="fc-msg-from" href="#/u/${esc(msg.from)}">${esc(msg.fromDisplay || msg.from)}</a>` : ''}
-      <span class="fc-msg-text">${esc(msg.text)}</span>
-      <span class="fc-msg-time">${time}</span>`;
+      ${body}${editedTag}
+      <span class="fc-msg-time">${time}</span>${actions}`;
     cont.appendChild(el);
     cont.scrollTop = cont.scrollHeight;
   }
@@ -214,9 +274,7 @@ const FriendChat = (() => {
   }
 
   // ── Handlingar ────────────────────────────────────────────────────────
-  function send() {
-    const inp = document.getElementById('fc-input');
-    const text = inp && inp.value.trim();
+  function _doSend(text, kind) {
     const me = Auth.current();
     if (!text || !me || !window.SC) return;
     const now = Date.now();
@@ -225,11 +283,64 @@ const FriendChat = (() => {
     const chan = activeChannel();
     const ref  = chanRef(chan); if (!ref) return;
     const id = `${me.username}_${now}_${Math.random().toString(36).slice(2, 7)}`;
-    const payload = { id, from: me.username, fromDisplay: me.displayName, text, ts: now };
+    const payload = { id, from: me.username, fromDisplay: me.displayName, text, ts: now, kind: kind || 'text' };
     if (_active.type === 'dm') payload.to = _active.friend;
     try { ref.set(payload); } catch (e) { console.warn('[FriendChat] send feila', e); }
     if (typeof DmSync !== 'undefined') DmSync.push(chan, payload).catch(() => {});
+  }
+
+  function send() {
+    const inp = document.getElementById('fc-input');
+    const text = inp && inp.value.trim();
+    if (!text) return;
+    _doSend(text, 'text');
     if (inp) { inp.value = ''; inp.focus(); }
+  }
+
+  function pickGif() {
+    const url = (prompt('Paste a direct .gif URL:', '') || '').trim();
+    if (!url) return;
+    if (!/^https?:\/\/\S+\.gif(?:[?#]\S*)?$/i.test(url)) {
+      if (typeof App !== 'undefined') App.toast('Must be a direct link to a .gif file', 'error');
+      return;
+    }
+    _doSend(url, 'gif');
+  }
+
+  // Rediger/slett EIGEN melding — server (api/dm.js) sjekkar from_user === deg
+  // sjølv uansett, dette er berre UI-tilgangen. Same mønster som DJ.editPM.
+  function editMsg(id) {
+    const chan = activeChannel(); if (!chan) return;
+    const arr = store[chan] || [];
+    const m = arr.find(x => x.id === id);
+    if (!m || !Auth.current() || m.from !== Auth.current().username || m.kind === 'gif') return;
+    const next = prompt('Edit message:', m.text);
+    if (next === null) return;
+    const trimmed = next.trim(); if (!trimmed) return;
+    m.text = trimmed; m.edited = true;
+    renderMessages();
+    if (typeof DmSync !== 'undefined') DmSync.edit(chan, id, trimmed).catch(() => {});
+  }
+  function deleteMsg(id) {
+    const chan = activeChannel(); if (!chan) return;
+    const arr = store[chan] || [];
+    const m = arr.find(x => x.id === id);
+    if (!m || !Auth.current() || m.from !== Auth.current().username) return;
+    if (!confirm('Delete this message?')) return;
+    store[chan] = arr.filter(x => x.id !== id);
+    renderMessages();
+    if (typeof DmSync !== 'undefined') DmSync.remove(chan, id).catch(() => {});
+  }
+
+  function toggleEmojiPicker() {
+    const pop = document.getElementById('fc-emoji-pop');
+    if (pop) pop.classList.toggle('hidden');
+  }
+  function insertEmoji(e) {
+    const inp = document.getElementById('fc-input');
+    if (inp) { inp.value += e; inp.focus(); }
+    const pop = document.getElementById('fc-emoji-pop');
+    if (pop) pop.classList.add('hidden');
   }
 
   function openConv(username, displayName) {
@@ -274,6 +385,7 @@ const FriendChat = (() => {
   }
   function init() { refresh(); }
 
-  return { init, refresh, toggle, toggleMin, toggleSound, openConv, openGroup, back, send };
+  return { init, refresh, toggle, toggleMin, toggleSound, openConv, openGroup, back, send,
+    pickGif, editMsg, deleteMsg, toggleEmojiPicker, insertEmoji };
 })();
 window.FriendChat = FriendChat;

@@ -78,11 +78,43 @@ const Messenger = (() => {
       _dmPolled.add(chan);
       const pull = async () => {
         const rows = await DmSync.list(chan, MAX_MSGS);
-        for (const row of rows) onIncoming(chan, row, row.id);
+        _reconcile(chan, rows);
       };
       pull();
       setInterval(pull, 6000);
     }
+  }
+
+  // DmSync er den EINASTE kjelda som veit om rediger/slett (Gun-meldingar er
+  // fire-and-forget) — same mønster som DJ._reconcileFromServer/
+  // FriendChat._reconcile. Oppdaterer tekst på id-treff (rediger), fjernar
+  // lokale rader med ein id som ikkje lenger er i serverlista (sletta).
+  function _reconcile(chan, rows) {
+    let arr = store[chan] || (store[chan] = loadHist(chan));
+    const serverIds = new Set(rows.map(r => r.id));
+    let changed = false;
+
+    for (const row of rows) {
+      const idx = arr.findIndex(m => m.id === row.id);
+      if (idx === -1) {
+        arr.push({ id: row.id, from: row.from_user, fromDisplay: row.from_display || row.from_user,
+          to: row.to_user, text: row.text, ts: row.ts, kind: row.kind || 'text', edited: !!row.edited, _k: row.id });
+        changed = true;
+      } else if (arr[idx].text !== row.text || !!arr[idx].edited !== !!row.edited || (arr[idx].kind || 'text') !== (row.kind || 'text')) {
+        arr[idx] = { ...arr[idx], text: row.text, kind: row.kind || arr[idx].kind, edited: !!row.edited };
+        changed = true;
+      }
+    }
+    const pruned = arr.filter(m => !m.id || serverIds.has(m.id));
+    if (pruned.length !== arr.length) { arr = store[chan] = pruned; changed = true; }
+    if (!changed) return;
+
+    arr.sort((a, b) => a.ts - b.ts);
+    while (arr.length > MAX_MSGS) arr.shift();
+    saveHist(chan);
+    if (_view === 'conv' && _active && channelWith(_active) === chan && document.getElementById('msgr-messages')) renderMessages(chan);
+    if (_view === 'list' && root()) renderList(root());
+    updateBadges();
   }
 
   // Abonner på alle kjende samtalar: vener + tidlegare partnarar.
@@ -261,6 +293,13 @@ const Messenger = (() => {
       </div>`;
   }
 
+  const MSGR_EMOJIS = ['😀','😂','😍','🥳','😎','🤔','👍','👎','❤️','🔥','🎉','🙏','😢','😮','💯','✨'];
+  function _emojiPickerHtml() {
+    return `<div class="fc-emoji-pop hidden" id="msgr-emoji-pop">
+      ${MSGR_EMOJIS.map(e => `<button type="button" onclick="Messenger.insertEmoji('${e}')">${e}</button>`).join('')}
+    </div>`;
+  }
+
   function renderConversation(el) {
     const u = me(); if (!u || !_active) { _view = 'list'; return renderList(el); }
     const target = Auth.getUser(_active);
@@ -277,26 +316,36 @@ const Messenger = (() => {
             <span>${esc((target && target.displayName) || _active)}${online ? ' <span style="font-size:0.72rem;color:#38bdf8">● online</span>' : ''}</span>
           </a>
         </div>
-        <div class="settings-section-body" style="padding:0">
+        <div class="settings-section-body" style="padding:0;position:relative">
           <div id="msgr-messages" style="max-height:min(52vh,440px);overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.5rem"></div>
+          ${_emojiPickerHtml()}
           <div style="display:flex;gap:0.5rem;padding:0.75rem 1rem;border-top:1px solid var(--border,rgba(255,255,255,0.08))">
+            <button class="btn btn-ghost btn-sm" type="button" style="margin:0" title="Emoji" onclick="Messenger.toggleEmojiPicker()">😊</button>
+            <button class="btn btn-ghost btn-sm" type="button" style="margin:0" title="Add a GIF" onclick="Messenger.pickGif()">${Icon('image')}</button>
             <input class="form-input" id="msgr-input" placeholder="Write a message…" autocomplete="off" style="flex:1"
                    onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();Messenger.send()}">
             <button class="btn btn-primary" onclick="Messenger.send()">${Icon('send')} Send</button>
           </div>
         </div>
       </div>`;
-    const box = document.getElementById('msgr-messages');
-    const msgs = store[chan] || loadHist(chan);
-    store[chan] = msgs;
-    box.innerHTML = msgs.length ? '' : '<p style="color:var(--text3);font-size:0.85rem;text-align:center;margin:1rem 0">No messages yet — say hi! 👋</p>';
-    msgs.forEach(m => appendMsgEl(m, box));
-    box.scrollTop = box.scrollHeight;
+    renderMessages(chan);
     markRead(chan);
     updateBadges();
     // Bytt initial-plassholdaren i samtale-headeren ut med det ekte profilbildet.
     if (window.Profile && Profile.hydrateAvatars) Profile.hydrateAvatars(el);
     document.getElementById('msgr-input')?.focus();
+  }
+
+  // Full re-rendering av #msgr-messages frå store[chan] — trengst for at
+  // rediger/slett (som endrar/fjernar rader midt i historikken via _reconcile)
+  // skal vises, ikkje berre reine nye meldingar.
+  function renderMessages(chan) {
+    const box = document.getElementById('msgr-messages'); if (!box) return;
+    const msgs = store[chan] || loadHist(chan);
+    store[chan] = msgs;
+    box.innerHTML = msgs.length ? '' : '<p style="color:var(--text3);font-size:0.85rem;text-align:center;margin:1rem 0">No messages yet — say hi! 👋</p>';
+    msgs.forEach(m => appendMsgEl(m, box));
+    box.scrollTop = box.scrollHeight;
   }
 
   function appendMsgEl(msg, box) {
@@ -306,11 +355,22 @@ const Messenger = (() => {
     const isMine = u && msg.from === u.username;
     const empty = box.querySelector('p'); if (empty) empty.remove();
     const time = new Date(msg.ts || Date.now()).toLocaleTimeString('no', { hour: '2-digit', minute: '2-digit' });
+    const bodyHtml = msg.kind === 'gif'
+      ? `<img class="fc-msg-gif" src="${esc(msg.text)}" alt="GIF" loading="lazy" style="max-width:200px;max-height:200px;border-radius:10px;display:block">`
+      : `<div style="background:${isMine ? 'linear-gradient(135deg,#22c55e,#16a34a)' : 'var(--surface2,rgba(255,255,255,0.06))'};color:${isMine ? '#062012' : 'var(--text)'};padding:0.5rem 0.75rem;border-radius:14px;font-size:0.9rem;word-break:break-word">${esc(msg.text)}</div>`;
+    const editedTag = msg.edited ? '<span style="font-size:0.65rem;color:var(--text3);font-style:italic;margin-left:0.35rem">(edited)</span>' : '';
+    const actions = (isMine && msg.id) ? `
+      <span class="fc-msg-actions" style="margin-left:0.4rem">
+        ${msg.kind !== 'gif' ? `<button class="fc-msg-act" onclick="Messenger.editMsg('${esc(msg.id)}')" title="Edit">${Icon('edit')}</button>` : ''}
+        <button class="fc-msg-act" onclick="Messenger.deleteMsg('${esc(msg.id)}')" title="Delete">${Icon('trash')}</button>
+      </span>` : '';
     const wrap = document.createElement('div');
+    wrap.className = 'msgr-msg-wrap';
     wrap.style.cssText = `max-width:78%;align-self:${isMine ? 'flex-end' : 'flex-start'}`;
+    if (msg.id) wrap.dataset.mid = msg.id;
     wrap.innerHTML = `
-      <div style="background:${isMine ? 'linear-gradient(135deg,#22c55e,#16a34a)' : 'var(--surface2,rgba(255,255,255,0.06))'};color:${isMine ? '#062012' : 'var(--text)'};padding:0.5rem 0.75rem;border-radius:14px;font-size:0.9rem;word-break:break-word">${esc(msg.text)}</div>
-      <div style="font-size:0.68rem;color:var(--text3);margin-top:0.15rem;text-align:${isMine ? 'right' : 'left'}">${time}</div>`;
+      ${bodyHtml}
+      <div style="font-size:0.68rem;color:var(--text3);margin-top:0.15rem;text-align:${isMine ? 'right' : 'left'};display:flex;align-items:center;${isMine ? 'justify-content:flex-end' : ''}">${time}${editedTag}${actions}</div>`;
     box.appendChild(wrap);
     box.scrollTop = box.scrollHeight;
   }
@@ -365,18 +425,15 @@ const Messenger = (() => {
     openConv(sel.value);
   }
 
-  function send() {
+  function _doSend(text, kind) {
     const u = me(); if (!u || !_active || !window.SC) return;
-    const inp = document.getElementById('msgr-input');
-    const text = inp && inp.value.trim();
-    if (!text) return;
     const now = Date.now();
     if (now - _lastSent < 400) return;
     _lastSent = now;
     const chan = channelWith(_active);
     const ref = chanRef(chan); if (!ref) return;
     const id = `${u.username}_${now}_${Math.random().toString(36).slice(2, 7)}`;
-    const payload = { id, from: u.username, fromDisplay: u.displayName, text, ts: now, to: _active };
+    const payload = { id, from: u.username, fromDisplay: u.displayName, text, ts: now, to: _active, kind: kind || 'text' };
     try { ref.set(payload); } catch (e) { console.warn('[Messenger] send feila', e); }
     if (typeof DmSync !== 'undefined') DmSync.push(chan, payload).catch(() => {});
     // Lokalt: legg til med ein gong (Gun-echoet de-dupar på _k seinare).
@@ -390,15 +447,73 @@ const Messenger = (() => {
     // Varsle mottakaren (dukkar opp i bjella + som toast hos dei).
     if (window.Notify && Notify.emit) {
       Notify.emit(_active, { type: 'message', from: u.username, fromDisplay: u.displayName,
-        text: 'sent you a message', link: '#/minside' });
+        text: kind === 'gif' ? 'sent you a GIF' : 'sent you a message', link: '#/minside' });
     }
     // E-postvarsel om mottakaren har e-post registrert.
     const target = Auth.getUser(_active);
     if (target && target.email && typeof Email !== 'undefined' && Email.sendMessageNotification) {
-      Email.sendMessageNotification(target.email, target.displayName, u.displayName, u.username, text);
+      Email.sendMessageNotification(target.email, target.displayName, u.displayName, u.username, kind === 'gif' ? 'sent a GIF' : text);
     }
-    if (inp) { inp.value = ''; inp.focus(); }
     updateBadges();
+  }
+
+  function send() {
+    const inp = document.getElementById('msgr-input');
+    const text = inp && inp.value.trim();
+    if (!text) return;
+    _doSend(text, 'text');
+    if (inp) { inp.value = ''; inp.focus(); }
+  }
+
+  function pickGif() {
+    if (!_active) return;
+    const url = (prompt('Paste a direct .gif URL:', '') || '').trim();
+    if (!url) return;
+    if (!/^https?:\/\/\S+\.gif(?:[?#]\S*)?$/i.test(url)) {
+      if (window.App) App.toast('Must be a direct link to a .gif file', 'error');
+      return;
+    }
+    _doSend(url, 'gif');
+  }
+
+  // Rediger/slett EIGEN melding — server (api/dm.js) sjekkar from_user === deg
+  // sjølv uansett, dette er berre UI-tilgangen. Same mønster som DJ.editPM.
+  function editMsg(id) {
+    if (!_active) return;
+    const chan = channelWith(_active);
+    const arr = store[chan] || [];
+    const m = arr.find(x => x.id === id);
+    if (!m || !me() || m.from !== me().username || m.kind === 'gif') return;
+    const next = prompt('Edit message:', m.text);
+    if (next === null) return;
+    const trimmed = next.trim(); if (!trimmed) return;
+    m.text = trimmed; m.edited = true;
+    saveHist(chan);
+    renderMessages(chan);
+    if (typeof DmSync !== 'undefined') DmSync.edit(chan, id, trimmed).catch(() => {});
+  }
+  function deleteMsg(id) {
+    if (!_active) return;
+    const chan = channelWith(_active);
+    const arr = store[chan] || [];
+    const m = arr.find(x => x.id === id);
+    if (!m || !me() || m.from !== me().username) return;
+    if (!confirm('Delete this message?')) return;
+    store[chan] = arr.filter(x => x.id !== id);
+    saveHist(chan);
+    renderMessages(chan);
+    if (typeof DmSync !== 'undefined') DmSync.remove(chan, id).catch(() => {});
+  }
+
+  function toggleEmojiPicker() {
+    const pop = document.getElementById('msgr-emoji-pop');
+    if (pop) pop.classList.toggle('hidden');
+  }
+  function insertEmoji(e) {
+    const inp = document.getElementById('msgr-input');
+    if (inp) { inp.value += e; inp.focus(); }
+    const pop = document.getElementById('msgr-emoji-pop');
+    if (pop) pop.classList.add('hidden');
   }
 
   // Send ei melding til ein brukar utan open samtale (t.d. frå Community-
@@ -472,6 +587,7 @@ const Messenger = (() => {
     subscribeKnown();
   }
 
-  return { init, mount, render, show, openConv, startNew, send, sendTo, totalUnread, updateBadges };
+  return { init, mount, render, show, openConv, startNew, send, sendTo, totalUnread, updateBadges,
+    pickGif, editMsg, deleteMsg, toggleEmojiPicker, insertEmoji };
 })();
 window.Messenger = Messenger;
