@@ -41,7 +41,7 @@ const DmSync = (() => {
     if (!channel || !msg || !msg.text) return false;
     const data = await _call('send', {
       channel, id: msg.id, from: msg.from, fromDisplay: msg.fromDisplay,
-      to: msg.to, text: msg.text, ts: msg.ts,
+      to: msg.to, text: msg.text, ts: msg.ts, kind: msg.kind,
     });
     return !!(data && data.success);
   }
@@ -53,7 +53,17 @@ const DmSync = (() => {
     return (data && Array.isArray(data.messages)) ? data.messages : [];
   }
 
-  return { push, list, _enabled: () => !!_token() };
+  // Rediger/slett EIGEN melding (server sjekkar from_user === deg sjølv).
+  async function edit(channel, id, text) {
+    const data = await _call('edit', { channel, id, text });
+    return !!(data && data.success);
+  }
+  async function remove(channel, id) {
+    const data = await _call('delete', { channel, id });
+    return !!(data && data.success);
+  }
+
+  return { push, list, edit, remove, _enabled: () => !!_token() };
 })();
 
 if (typeof window !== 'undefined') window.DmSync = DmSync;

@@ -5916,11 +5916,43 @@ body:has(.radio-visualizer-wrap.vis-size-full.vis-controls-shown) #fc-dock {
 }
 .dj-pm-msg--mine .dj-pm-bubble { background: var(--accent); color: #fff; }
 .dj-pm-time { font-size: 0.65rem; color: var(--text3); margin-top: 0.15rem; }
+.dj-pm-gif { display: block; max-width: 220px; max-height: 220px; border-radius: 10px; margin-top: 0.15rem; }
+.dj-pm-edited { font-size: 0.65rem; color: var(--text3); font-style: italic; margin-left: 0.35rem; }
+.dj-pm-actions {
+  display: flex; gap: 0.35rem; margin-top: 0.15rem; opacity: 0;
+  transition: opacity 0.15s;
+}
+.dj-pm-msg:hover .dj-pm-actions { opacity: 1; }
+.dj-pm-act {
+  background: none; border: none; cursor: pointer; padding: 0.1rem 0.25rem;
+  color: var(--text3); font-size: 0.75rem; border-radius: 6px; line-height: 1;
+}
+.dj-pm-act:hover { color: var(--text1); background: var(--surface2); }
 .dj-pm-input-row {
   display: flex; gap: 0.5rem; padding: 0.75rem 1rem;
   border-top: 1px solid var(--border); flex-shrink: 0; background: var(--bg2);
+  position: relative;
 }
 .dj-pm-input-row input { flex: 1; }
+.dj-pm-emoji-btn, .dj-pm-gif-btn {
+  background: none; border: 1px solid var(--border); border-radius: 8px;
+  cursor: pointer; padding: 0.4rem 0.6rem; color: var(--text2);
+  display: flex; align-items: center; gap: 0.25rem; font-size: 0.8rem;
+}
+.dj-pm-emoji-btn:hover, .dj-pm-gif-btn:hover { background: var(--surface2); color: var(--text1); }
+.dj-pm-emoji-pop {
+  position: absolute; bottom: 100%; left: 1rem; margin-bottom: 0.5rem;
+  background: var(--bg1); border: 1px solid var(--border); border-radius: 12px;
+  padding: 0.5rem; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.15rem;
+  z-index: 20;
+}
+.dj-pm-emoji-pop.hidden { display: none; }
+.dj-pm-emoji-pop button {
+  background: none; border: none; cursor: pointer; font-size: 1.1rem;
+  padding: 0.25rem; border-radius: 6px; line-height: 1;
+}
+.dj-pm-emoji-pop button:hover { background: var(--surface2); }
 
 /* DJ nav link */
 .nav-link-dj {

@@ -97,6 +97,38 @@ const DJ = (() => {
     if (typeof App !== 'undefined' && App.updateNavBadge) App.updateNavBadge();
   }
 
+  // DmSync er den EINASTE kjelda som veit om rediger/slett (Gun-meldingar er
+  // fire-and-forget, ingen node-referanse å oppdatere seinare). Full
+  // rekonsiliering per poll: oppdater tekst på id-treff (rediger), fjern
+  // lokale rader med ein id som ikkje lenger er i serverlista (sletta).
+  // Rører ALDRI lokale rader utan id (eldre meldingar frå før denne fiksen).
+  function _reconcileFromServer(me, other, rows) {
+    const lkey = pmChannelKey(me, other);
+    let arr;
+    try { arr = JSON.parse(localStorage.getItem(lkey) || '[]'); } catch { arr = []; }
+    const serverIds = new Set(rows.map(r => r.id));
+    let changed = false;
+
+    for (const row of rows) {
+      const idx = arr.findIndex(m => m.id === row.id);
+      if (idx === -1) {
+        arr.push({ id: row.id, from: row.from_user, displayName: row.from_display || row.from_user,
+          text: row.text, ts: row.ts, kind: row.kind || 'text', edited: !!row.edited });
+        changed = true;
+      } else if (arr[idx].text !== row.text || !!arr[idx].edited !== !!row.edited) {
+        arr[idx] = { ...arr[idx], text: row.text, kind: row.kind || arr[idx].kind, edited: !!row.edited };
+        changed = true;
+      }
+    }
+    const pruned = arr.filter(m => !m.id || serverIds.has(m.id));
+    if (pruned.length !== arr.length) { arr = pruned; changed = true; }
+
+    if (!changed) return;
+    arr.sort((a, b) => a.ts - b.ts);
+    localStorage.setItem(lkey, JSON.stringify(arr));
+    if (typeof App !== 'undefined' && App.updateNavBadge) App.updateNavBadge();
+  }
+
   function ensureDMSub(me, other) {
     const chan = gunChanKey(me, other);
     if (_dmSubbed.has(chan)) return;
@@ -111,7 +143,7 @@ const DJ = (() => {
     if (typeof DmSync !== 'undefined' && DmSync._enabled()) {
       const pull = async () => {
         const rows = await DmSync.list(chan, 200);
-        for (const row of rows) _mergeIncoming(me, other, row, row.id);
+        _reconcileFromServer(me, other, rows);
       };
       pull();
       setInterval(pull, 6000);
@@ -146,7 +178,10 @@ const DJ = (() => {
           </a>
         </div>
         <div id="pm-messages" class="dj-pm-messages"></div>
-        <div class="dj-pm-input-row">
+        <div class="dj-pm-input-row" style="position:relative">
+          ${_pmEmojiPickerHtml()}
+          <button type="button" class="btn btn-ghost btn-sm" title="Emoji" onclick="DJ.toggleEmojiPicker()">😀</button>
+          <button type="button" class="btn btn-ghost btn-sm" title="Send a GIF" onclick="DJ.pickGif('${target.username}')">${Icon('image')} GIF</button>
           <input class="form-input" id="pm-input" placeholder="Write a message…" onkeydown="if(event.key==='Enter')DJ.sendPM('${target.username}')">
           <button class="btn btn-primary" onclick="DJ.sendPM('${target.username}')">Send</button>
         </div>
@@ -170,7 +205,7 @@ const DJ = (() => {
     const msgs = JSON.parse(localStorage.getItem(key) || '[]');
     const el   = document.getElementById('pm-messages');
     if (!el) return;
-    el.innerHTML = msgs.map(m => pmMsgHtml(m, me)).join('');
+    el.innerHTML = msgs.map(m => pmMsgHtml(m, me, other)).join('');
     el.scrollTop = el.scrollHeight;
   }
 
@@ -180,10 +215,13 @@ const DJ = (() => {
     // og overskriv #pm-messages med A si historie medan du ser på chat B.
     if (_pmIv) { clearInterval(_pmIv); _pmIv = null; }
     const key = pmChannelKey(me, other);
-    let lastCount = JSON.parse(localStorage.getItem(key) || '[]').length;
+    let lastRaw = localStorage.getItem(key) || '[]';
+    let lastCount = (JSON.parse(lastRaw) || []).length;
     const iv = setInterval(() => {
       if (!document.getElementById('pm-messages')) { clearInterval(iv); _pmIv = null; return; }
-      const msgs = JSON.parse(localStorage.getItem(key) || '[]');
+      const raw = localStorage.getItem(key) || '[]';
+      if (raw === lastRaw) return; // ingen endring i det heile (nytt/redigert/sletta)
+      const msgs = JSON.parse(raw);
       if (msgs.length > lastCount) {
         const newMsgs = msgs.slice(lastCount);
         const newFromOther = newMsgs.filter(m => m.from !== me);
@@ -192,26 +230,44 @@ const DJ = (() => {
           const last = newFromOther[newFromOther.length - 1];
           showPMNotification(last.displayName, last.text);
         }
-        lastCount = msgs.length;
-        loadPMHistory(me, other);
-        markConvRead(me, other);
       }
+      lastCount = msgs.length;
+      lastRaw = raw;
+      loadPMHistory(me, other);
+      markConvRead(me, other);
     }, 1000);
   }
 
   async function sendPM(targetUsername) {
-    const current = Auth.current();
-    if (!current) return;
     const input = document.getElementById('pm-input');
     const text  = input?.value?.trim();
     if (!text) return;
+    if (input) input.value = '';
+    await _doSend(targetUsername, text, 'text');
+  }
+
+  // GIF-melding: ber om ei URL (enklaste trygge løysing — ingen ny ekstern
+  // API-konto/nøkkel trengst, i motsetning til eit fullt Giphy/Tenor-søk).
+  // Lim inn ei direkte .gif-lenke; pmMsgHtml/gpost-visning render kind:'gif'
+  // som eit bilete i staden for tekst.
+  async function pickGif(targetUsername) {
+    const url = (prompt('Paste a GIF URL (must end in .gif):') || '').trim();
+    if (!url) return;
+    if (!/^https?:\/\/\S+\.gif(?:[?#]\S*)?$/i.test(url)) {
+      App.toast('That doesn\'t look like a direct .gif link', 'error'); return;
+    }
+    await _doSend(targetUsername, url, 'gif');
+  }
+
+  async function _doSend(targetUsername, text, kind) {
+    const current = Auth.current();
+    if (!current) return;
     const ts   = Date.now();
     const id   = `${current.username}_${ts}_${Math.random().toString(36).slice(2, 7)}`;
     const key  = pmChannelKey(current.username, targetUsername);
     const msgs = JSON.parse(localStorage.getItem(key) || '[]');
-    msgs.push({ id, from: current.username, displayName: current.displayName, text, ts });
+    msgs.push({ id, from: current.username, displayName: current.displayName, text, ts, kind });
     localStorage.setItem(key, JSON.stringify(msgs));
-    if (input) input.value = '';
     loadPMHistory(current.username, targetUsername);
     playMessageSound('send');
 
@@ -229,36 +285,101 @@ const DJ = (() => {
     // DmSync (server-autorisert, delt med FriendChat) som faktisk pålitelig
     // transport. Same autorisasjonsmodell: sessionToken + deltakar-sjekk.
     if (typeof DmSync !== 'undefined') {
-      DmSync.push(chan, { id, from: current.username, fromDisplay: current.displayName, to: targetUsername, text, ts }).catch(() => {});
+      DmSync.push(chan, { id, from: current.username, fromDisplay: current.displayName, to: targetUsername, text, ts, kind }).catch(() => {});
     }
 
     // Varsel-bjelle hos mottakeren (Facebook-aktig).
     if (window.Notify && Notify.emit) {
       Notify.emit(targetUsername, {
         type: 'message', from: current.username, fromDisplay: current.displayName,
-        text: 'sent you a private message', link: '#/messages/' + current.username,
+        text: kind === 'gif' ? 'sent you a GIF' : 'sent you a private message', link: '#/messages/' + current.username,
       });
     }
 
     // E-postvarsel til mottaker
     const target = Auth.getUser(targetUsername);
     if (target?.email && typeof Email !== 'undefined') {
-      Email.sendMessageNotification(target.email, target.displayName, current.displayName, current.username, text);
+      Email.sendMessageNotification(target.email, target.displayName, current.displayName, current.username, kind === 'gif' ? 'sent a GIF' : text);
     }
   }
 
-  function pmMsgHtml(m, me) {
+  // Rediger EIGEN melding (tekst-kun — ikkje GIF). Oppdaterer lokalt +
+  // DmSync (autoritativ for rediger, sjå _reconcileFromServer); Gun-kopien
+  // rørast ikkje (ingen node-referanse), men neste poll rettar ho uansett.
+  async function editPM(targetUsername, id) {
+    const current = Auth.current(); if (!current) return;
+    const key  = pmChannelKey(current.username, targetUsername);
+    const msgs = JSON.parse(localStorage.getItem(key) || '[]');
+    const m = msgs.find(x => x.id === id);
+    if (!m || m.from !== current.username || m.kind === 'gif') return;
+    const next = prompt('Edit message:', m.text);
+    if (next === null) return;
+    const trimmed = next.trim(); if (!trimmed) return;
+    m.text = trimmed; m.edited = true;
+    localStorage.setItem(key, JSON.stringify(msgs));
+    loadPMHistory(current.username, targetUsername);
+    const chan = gunChanKey(current.username, targetUsername);
+    if (typeof DmSync !== 'undefined') DmSync.edit(chan, id, trimmed).catch(() => {});
+  }
+
+  // Slett EIGEN melding.
+  async function deletePM(targetUsername, id) {
+    const current = Auth.current(); if (!current) return;
+    if (!confirm('Delete this message?')) return;
+    const key  = pmChannelKey(current.username, targetUsername);
+    let msgs = JSON.parse(localStorage.getItem(key) || '[]');
+    const m = msgs.find(x => x.id === id);
+    if (!m || m.from !== current.username) return;
+    msgs = msgs.filter(x => x.id !== id);
+    localStorage.setItem(key, JSON.stringify(msgs));
+    loadPMHistory(current.username, targetUsername);
+    const chan = gunChanKey(current.username, targetUsername);
+    if (typeof DmSync !== 'undefined') DmSync.remove(chan, id).catch(() => {});
+  }
+
+  function _esc(s) { return (window.SC && SC.esc) ? SC.esc(s) : String(s == null ? '' : s); }
+
+  function pmMsgHtml(m, me, targetUsername) {
     const isMine = m.from === me;
+    // m.text vart før sett rått inn i innerHTML utan escaping — ein ekte XSS-
+    // sårbarheit (ein annan brukar kunne sende <script>/<img onerror=...> som
+    // ville køyrt hos mottakaren). Fiksa i same runde som gif/rediger/slett.
+    const body = m.kind === 'gif'
+      ? `<img class="dj-pm-gif" src="${_esc(m.text)}" alt="GIF" loading="lazy">`
+      : _esc(m.text);
+    const editedTag = m.edited ? '<span class="dj-pm-edited"> (edited)</span>' : '';
+    const actions = (isMine && targetUsername) ? `
+        <span class="dj-pm-actions">
+          ${m.kind !== 'gif' ? `<button class="dj-pm-act" onclick="DJ.editPM('${_esc(targetUsername)}','${_esc(m.id)}')" title="Edit">${Icon('edit')}</button>` : ''}
+          <button class="dj-pm-act" onclick="DJ.deletePM('${_esc(targetUsername)}','${_esc(m.id)}')" title="Delete">${Icon('trash')}</button>
+        </span>` : '';
     return `
       <div class="dj-pm-msg ${isMine ? 'dj-pm-msg--mine' : ''}">
-        ${!isMine ? `<div class="dj-pm-nick">${m.displayName}</div>` : ''}
-        <div class="dj-pm-bubble">${m.text}</div>
-        <div class="dj-pm-time">${new Date(m.ts).toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'})}</div>
+        ${!isMine ? `<div class="dj-pm-nick">${_esc(m.displayName)}</div>` : ''}
+        <div class="dj-pm-bubble">${body}${editedTag}</div>
+        <div class="dj-pm-time">${new Date(m.ts).toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'})}${actions}</div>
       </div>`;
   }
 
+  // Emoji-knapp: enkel liste (same utval som radio-chatten), set inn i
+  // #pm-input og gjev fokus tilbake. GIF-knapp ber om ei .gif-URL (sjå
+  // pickGif over — ingen ny ekstern API-konto trengst).
+  const PM_EMOJIS = ['😄','😂','🔥','❤️','👏','🎵','🎶','🌀','💫','⚡','🌊','🚀','✨','🎉','💜','👾'];
+  function _pmEmojiPickerHtml() {
+    return `<div class="dj-pm-emoji-pop hidden" id="pm-emoji-pop">
+      ${PM_EMOJIS.map(e => `<button type="button" onclick="DJ.insertPMEmoji('${e}')">${e}</button>`).join('')}
+    </div>`;
+  }
+  function toggleEmojiPicker() { document.getElementById('pm-emoji-pop')?.classList.toggle('hidden'); }
+  function insertPMEmoji(e) {
+    const inp = document.getElementById('pm-input'); if (!inp) return;
+    inp.value += e; inp.focus();
+    document.getElementById('pm-emoji-pop')?.classList.add('hidden');
+  }
+
   return {
-    renderPrivateChat, sendPM,
+    renderPrivateChat, sendPM, pickGif, editPM, deletePM,
+    toggleEmojiPicker, insertPMEmoji,
     getTotalUnreadPMs, requestNotificationPermission,
   };
 })();

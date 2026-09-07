@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
     if (body.action === 'list') {
       const limit = Math.max(1, Math.min(parseInt(body.limit, 10) || 200, 500));
       const { data, error } = await db.from('direct_messages')
-        .select('id, channel, from_user, from_display, to_user, text, ts')
+        .select('id, channel, from_user, from_display, to_user, text, ts, edited, kind')
         .eq('channel', channel)
         .order('ts', { ascending: false })
         .limit(limit);
@@ -68,11 +68,37 @@ module.exports = async (req, res) => {
         from_display: String(body.fromDisplay || from).slice(0, 80),
         to_user:      body.to ? String(body.to) : null,
         text,
+        kind: body.kind === 'gif' ? 'gif' : 'text',
         ts: Number(body.ts) || Date.now(),
       };
       const { error } = await db.from('direct_messages').upsert(row, { onConflict: 'id' });
       if (error) throw error;
       return res.status(200).json({ success: true, id });
+    }
+
+    // Kun eigen melding kan redigerast/slettast — sjekka mot from_user, ikkje
+    // berre kanal-deltakinga over (som gjeld begge partar i samtalen).
+    if (body.action === 'edit') {
+      const id = String(body.id || '');
+      const text = String(body.text || '').slice(0, 2000).trim();
+      if (!id || !text) return res.status(400).json({ error: 'Missing id/text' });
+      const { data: row } = await db.from('direct_messages').select('from_user').eq('id', id).maybeSingle();
+      if (!row) return res.status(200).json({ success: true }); // alt borte
+      if (row.from_user !== me) return res.status(403).json({ error: 'Not your message' });
+      const { error } = await db.from('direct_messages').update({ text, edited: true }).eq('id', id);
+      if (error) throw error;
+      return res.status(200).json({ success: true });
+    }
+
+    if (body.action === 'delete') {
+      const id = String(body.id || '');
+      if (!id) return res.status(400).json({ error: 'Missing id' });
+      const { data: row } = await db.from('direct_messages').select('from_user').eq('id', id).maybeSingle();
+      if (!row) return res.status(200).json({ success: true });
+      if (row.from_user !== me) return res.status(403).json({ error: 'Not your message' });
+      const { error } = await db.from('direct_messages').delete().eq('id', id);
+      if (error) throw error;
+      return res.status(200).json({ success: true });
     }
 
     return res.status(400).json({ error: 'Unknown action' });
