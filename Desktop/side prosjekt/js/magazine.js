@@ -35,10 +35,10 @@ const Magazine = (() => {
   const genreLabel = (k) => (GENRES.find(g => g.key === k) || {}).label || k;
 
   // Seksjoner, i visningsrekkefølge.
-  const KATEGORIER = ['Cover story', 'Interviews', 'New releases', 'Labels', 'Festivals & parties'];
+  const KATEGORIER = ['Cover story', 'Interviews', 'New releases', 'Labels', 'Festivals & parties', 'Visual art'];
   const KAT_IKON = {
     'Cover story': 'star', 'Interviews': 'message', 'New releases': 'disc',
-    'Labels': 'music', 'Festivals & parties': 'calendar',
+    'Labels': 'music', 'Festivals & parties': 'calendar', 'Visual art': 'palette',
   };
 
   const G = {
@@ -359,6 +359,71 @@ const Magazine = (() => {
       brodtekst: [
         'The festivals are the tips of the iceberg — most of the culture lives in clubs and individual parties worldwide. Resident Advisor (RA) is the most widely used overview of events, clubs and artists in the global underground.',
         'Here you will find everything from house and techno to trance and broader EDM, searchable city by city. A great place to start if you want to discover the scene where you are — or where you are heading.',
+      ],
+    },
+
+    // ─── Visuell kunst ─────────────────────────────────────────────────
+    // Psykedelisk/visjonær kunst heng tett saman med scenen (album-cover,
+    // festival-kunst, chapel/domekunst) — same krets som Goa/psytrance/
+    // transformasjonsfestivalane over. Alle lenker verifisert opne 07.09.2026.
+    {
+      id: 'kunst-alex-grey-cosm', kategori: 'Visual art', emoji: '👁️', grad: G.lilla,
+      tittel: 'Alex Grey and the Chapel of Sacred Mirrors',
+      ingress: 'The visionary artist behind the Sacred Mirrors — and the sanctuary he and Allyson Grey built around them.',
+      genres: ['psychill', 'psybient', 'goa', 'psytrance'], dato: 'Ongoing', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'alexgrey.com', url: 'https://www.alexgrey.com/' },
+      brodtekst: [
+        'Alex Grey is one of the most recognizable names in visionary art: anatomically precise figures overlaid with radiating energy systems, painted with the same reverence a medical illustrator brings to the body and a mystic brings to the spirit. His best-known work, the Sacred Mirrors — 21 paintings made between 1979 and 1988 — remains the centerpiece of his practice.',
+        'Together with his wife, artist Allyson Grey, he built the Chapel of Sacred Mirrors (CoSM) to house them: a nonprofit sanctuary in Wappingers Falls, New York, now centered on the Entheon building, open to visitors Friday through Sunday with free admission on First Fridays.',
+        'CoSM also runs Full Moon Ceremonies, seasonal Celestial Celebrations and artist residencies — and the Greys regularly bring the work to Burning Man. This visionary-art lineage is the same one that shaped the visual language of Goa and psytrance festival culture worldwide.',
+      ],
+    },
+    {
+      id: 'kunst-allyson-grey', kategori: 'Visual art', emoji: '🔺', grad: G.rosa,
+      tittel: 'Allyson Grey: Secret Writing, Chaos and Order',
+      ingress: 'Co-founder of CoSM — forty years of a visual language built from three root symbols.',
+      genres: ['psychill', 'psybient', 'goa'], dato: 'Ongoing', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'allysongrey.com', url: 'https://www.allysongrey.com/' },
+      brodtekst: [
+        'Allyson Grey co-founded the Chapel of Sacred Mirrors alongside Alex Grey, but her own painting practice stands on its own: a personal symbolic language built from three recurring elements — Chaos, Order, and Secret Writing.',
+        '"Secret Writing" is a set of twenty unpronounceable letters she describes as a language of pure spirit, a window through which invisible thought becomes physically manifest. "Chaos" and "Order" are her visual counterweights — entropic, spontaneous fields set against precise, mandala-like grids.',
+        'She has worked the same three-part vocabulary for four decades, making her one of the clearest examples of a visionary artist building an entire cosmology from a small, disciplined set of symbols.',
+      ],
+    },
+    {
+      id: 'kunst-amanda-sage', kategori: 'Visual art', emoji: '🌌', grad: G.hav,
+      tittel: 'Amanda Sage: glazing light into the canvas',
+      ingress: 'A Vienna-school-influenced visionary painter — and one of the scene\'s most active teachers.',
+      genres: ['psychill', 'psybient', 'downtempo', 'goa'], dato: 'Ongoing', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'amandasage.com', url: 'https://www.amandasage.com/' },
+      brodtekst: [
+        'Amanda Sage paints at the intersection of humanity, nature and the cosmos, using a glazing technique — thin, translucent layers of paint built up one on top of another — to give her figures the glowing, otherworldly quality the visionary-art scene is known for.',
+        'Her body of work spans close to three decades, alongside live-painting performances and collaborations at festivals and galleries connected to CoSM, Burning Man and the Vienna School of Fantastic Realism.',
+        'She is also one of the scene\'s most active teachers, running regular painting workshops that pass the visionary technique on to a new generation of artists.',
+      ],
+    },
+    {
+      id: 'kunst-android-jones', kategori: 'Visual art', emoji: '🖥️', grad: G.natt,
+      tittel: 'Android Jones: visionary art goes digital',
+      ingress: 'From album covers to full VR domes — psychedelic visionary art built with a tablet instead of a brush.',
+      genres: ['psytrance', 'psybient', 'goa', 'edm'], dato: 'Ongoing', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'androidjones.com', url: 'https://androidjones.com/' },
+      brodtekst: [
+        'Android Jones took the visionary-art tradition of Alex Grey and Amanda Sage and moved it onto a screen: densely detailed digital paintings, built in series like Dreamscapes, Hyperdigital and Electromineral, that push the same themes of consciousness and cosmic unity into a fully digital medium.',
+        'His work regularly ends up on festival stages and album covers across the psytrance and psybient world, and he has taken the format further with immersive VR and dome-projection pieces designed to be experienced from the inside.',
+        'His prints, tapestries and hologram art are sold directly through his own site — one of the clearer examples of a visionary artist building an independent, festival-scene business around the work.',
+      ],
+    },
+    {
+      id: 'kunst-chris-dyer', kategori: 'Visual art', emoji: '🛹', grad: G.grønn,
+      tittel: 'Chris Dyer: bridging skate art and visionary art',
+      ingress: 'Positive Creations — murals, skateboards and psychedelic fine art from the same hand.',
+      genres: ['psytrance', 'goa', 'techno-underground'], dato: 'Ongoing', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'positivecreations.ca', url: 'https://positivecreations.ca/' },
+      brodtekst: [
+        'Chris Dyer is a Peruvian-Canadian artist who works across three scenes usually kept apart: street art, skateboard graphics and visionary psychedelic painting — murals, decks, album covers and gallery canvases built from the same colorful, symbol-dense visual language.',
+        'His recurring themes are consciousness, unity and kindness, delivered with a playful, cartoon-adjacent edge that sets him apart from the more solemn end of visionary art.',
+        'His 2024 art book "Shamanic Journey" collects work from 2011 to 2023, and his own site, Positive Creations, sells prints and clothing alongside a podcast and a travel-vlog series documenting murals painted around the world.',
       ],
     },
   ];
