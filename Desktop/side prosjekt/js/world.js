@@ -151,7 +151,7 @@ const World = (() => {
       tags: ['Psytrance', 'Alpine', 'Transformational', 'Chill Area'],
       links: [
         { label: 'shankrafestival.org', kind: 'web', url: 'https://shankrafestival.org/' },
-        { label: 'SoundCloud', kind: 'soundcloud', url: 'https://soundcloud.com/shankrafestival' },
+        { label: 'SoundCloud', kind: 'soundcloud', url: 'https://soundcloud.com/shankra-festival' },
       ],
     },
     {
@@ -447,12 +447,16 @@ const World = (() => {
   // ── Magazines, media & scene archives ─────────────────────────────────
   const MEDIA = [
     {
-      emoji: '🍄', name: 'mushroom magazine', loc: 'Germany 🇩🇪 · Since 1993',
+      // Verifisert 07.09.2026: mushroom-magazine.com viser «Website offline» —
+      // magasinet la ned nettsida etter 25 år. Behalde som scene-historie, men
+      // peikar no til Facebook-sida deira (framleis aktiv) i staden for den
+      // daude lenkja.
+      emoji: '🍄', name: 'mushroom magazine', loc: 'Germany 🇩🇪 · 1993–2026 (nettside nedlagt)',
       grad: 'linear-gradient(135deg,#1a0a05,#3d1a0a)',
-      theme: 'The world’s leading psytrance magazine — print and online. Party and festival guide, new releases, artist and label features, DJ charts.',
-      tags: ['Magazine', 'Print + Online', 'Festival Guide', 'DJ Charts'],
+      theme: 'For 25 år verdas leiande psytrance-magasin — party- og festivalguide, nye utgjevingar, artist- og labelportrett, DJ-lister. Nettsida er lagt ned; arkivet lever vidare på Facebook.',
+      tags: ['Magazine', 'Scene History', 'Festival Guide', 'DJ Charts'],
       links: [
-        { label: 'mushroom-magazine.com', kind: 'web', url: 'https://www.mushroom-magazine.com/' },
+        { label: 'Facebook', kind: 'web', url: 'https://www.facebook.com/mushroommagazine/' },
       ],
     },
     {
@@ -516,6 +520,27 @@ const World = (() => {
       tags: ['Forum', 'Reviews', 'Community', 'Since 1997'],
       links: [
         { label: 'psynews.org', kind: 'web', url: 'https://www.psynews.org/' },
+      ],
+    },
+    {
+      // Techno underground hadde ingen eiga scene-media her frå før — verifisert
+      // 07.09.2026 (WebFetch, curl 403 er berre RA sin bot-beskyttelse).
+      emoji: '🎫', name: 'Resident Advisor', loc: 'Global · Techno Underground / Club culture',
+      grad: 'linear-gradient(135deg,#0d0d0d,#1f1f1f)',
+      theme: 'The definitive outlet for underground club culture — event listings, reviews, artist features and news across techno, house and the wider underground.',
+      tags: ['Techno Underground', 'Club Listings', 'News', 'Reviews'],
+      links: [
+        { label: 'ra.co', kind: 'web', url: 'https://ra.co/' },
+      ],
+    },
+    {
+      // EDM hadde ingen eiga scene-media her frå før heller.
+      emoji: '⚡', name: 'EDM.com', loc: 'USA 🇺🇸 · EDM (est. 2013)',
+      grad: 'linear-gradient(135deg,#1a0520,#3a0f4a)',
+      theme: 'One of the largest EDM-focused outlets — breaking news, artist interviews and release coverage across the wider electronic dance music industry.',
+      tags: ['EDM', 'News', 'Interviews'],
+      links: [
+        { label: 'edm.com', kind: 'web', url: 'https://edm.com/' },
       ],
     },
   ];
@@ -642,6 +667,24 @@ const World = (() => {
       emoji: '🌀', name: 'The Trip', loc: 'Psychedelic electronica & trip-hop',
       grad: 'linear-gradient(135deg,#0d0829,#2a0d5e)',
       links: [{ play: 'thetrip' }],
+    },
+    {
+      // Denne lista hadde ingen dark ambient/drone- eller techno-radio frå før —
+      // same hol som Labels/Artists/Media. Alle tre `play`-id-ane finst allereie
+      // i STATIONS (radio.js), så dette er berre nye vindauge inn til dei.
+      emoji: '💀', name: 'Doomed — Dark Drone', loc: 'Dark ambient & dark drone electronics',
+      grad: 'linear-gradient(135deg,#0a0a0a,#1a0505)',
+      links: [{ play: 'doomed' }],
+    },
+    {
+      emoji: '💊', name: 'Digitalis', loc: 'Hypnotic techno & minimal grooves',
+      grad: 'linear-gradient(135deg,#1a0505,#2e0808)',
+      links: [{ play: 'digitalis' }],
+    },
+    {
+      emoji: '🌿', name: 'radiOzora Chill', loc: 'OZORA Festival radio — chill & downtempo · Budapest 🇭🇺',
+      grad: 'linear-gradient(135deg,#04130a,#0a2e16)',
+      links: [{ play: 'radiozora-chill' }],
     },
   ];
 
