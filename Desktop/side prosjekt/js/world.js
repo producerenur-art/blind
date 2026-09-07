@@ -417,6 +417,31 @@ const World = (() => {
         { label: 'Bandcamp', kind: 'bandcamp', url: 'https://dreamingawake.bandcamp.com/' },
       ],
     },
+    {
+      // Ingen dark ambient-label fantes i denne lista frå før (same hol som i
+      // Magazine/AI-rotasjonen — Cryo Chamber dekkjer det der, men World hadde
+      // ingenting). Cyclic Law er den andre store, verifisert 07.09.2026.
+      emoji: '🕯️', name: 'Cyclic Law', loc: 'France 🇫🇷 · Dark Ambient / Ritual / Industrial (est. 2002)',
+      grad: 'linear-gradient(135deg,#0a0a0a,#1a0505)',
+      links: [
+        { label: 'cycliclaw.com', kind: 'web', url: 'https://www.cycliclaw.com/' },
+      ],
+    },
+    {
+      emoji: '🪐', name: 'Cryo Chamber', loc: 'USA 🇺🇸 · Dark Ambient / Cinematic (Simon Heath)',
+      grad: 'linear-gradient(135deg,#04130a,#0a2e16)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://cryochamber.bandcamp.com/' },
+      ],
+    },
+    {
+      // Techno underground hadde heller ingen label her — verifisert 07.09.2026.
+      emoji: '🏭', name: 'CLR', loc: 'Germany 🇩🇪 · Raw / Hypnotic Techno (Chris Liebing, est. 1999)',
+      grad: 'linear-gradient(135deg,#0d0d0d,#1f1f1f)',
+      links: [
+        { label: 'Resident Advisor', kind: 'web', url: 'https://ra.co/labels/1182' },
+      ],
+    },
   ];
 
   // ── Magazines, media & scene archives ─────────────────────────────────
@@ -554,6 +579,28 @@ const World = (() => {
       emoji: '🔊', name: 'Ott', loc: 'UK 🇬🇧 · Dub / Psybient',
       grad: 'linear-gradient(135deg,#0a140d,#163024)',
       links: [{ label: 'Bandcamp', kind: 'bandcamp', url: 'https://ottsonic.bandcamp.com/' }],
+    },
+    {
+      // Ingen dark ambient-artist fantes her frå før — same hol som labels-lista.
+      emoji: '🪐', name: 'Atrium Carceri', loc: 'Sweden 🇸🇪 · Dark Ambient / Cinematic (Simon Heath)',
+      theme: 'Simon Heath’s flagship dark ambient project — cinematic, cold-industrial soundscapes. Left Cold Meat Industry in 2011 to found his own label, Cryo Chamber, which now anchors the whole genre.',
+      tags: ['Dark Ambient', 'Cinematic', 'Cryo Chamber'],
+      grad: 'linear-gradient(135deg,#04130a,#0a2e16)',
+      links: [
+        { label: 'Cryo Chamber (Bandcamp)', kind: 'bandcamp', url: 'https://cryochamber.bandcamp.com/' },
+        { label: 'Wikipedia', kind: 'web', url: 'https://en.wikipedia.org/wiki/Atrium_Carceri' },
+      ],
+    },
+    {
+      // Ingen techno underground-artist fantes her frå før heller.
+      emoji: '🏭', name: 'Surgeon', loc: 'UK 🇬🇧 · Raw / Hypnotic Techno (Anthony Child, since 1994)',
+      theme: 'Anthony Child, aka Surgeon — a founding name in British underground techno, running his own labels Dynamic Tension and Counterbalance since the mid-90s alongside releases on Tresor and Downwards.',
+      tags: ['Techno Underground', 'Dynamic Tension', 'Hypnotic'],
+      grad: 'linear-gradient(135deg,#0d0d0d,#1f1f1f)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://anthony-child.bandcamp.com/' },
+        { label: 'dj-surgeon.com', kind: 'web', url: 'https://dj-surgeon.com/' },
+      ],
     },
   ];
 
