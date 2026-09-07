@@ -422,18 +422,40 @@ const Chat = (() => {
   }
 
   // ── Gun message subscription ──────────────────────────────────────────
+  // Gun (messagesRef) er sanntids-forsøket, men dei offentlege releane leverer
+  // IKKJE pålitelig meldingar mellom to ULIKE nettlesarar (verifisert
+  // 2026-06-28, sjå minne soundcore-gun-relay-browser-sync). ChatSync
+  // (Supabase-spegling, migrasjon 0015) er difor den faktisk pålitelige
+  // transporten på tvers av brukarar — henta éin gong + polla vidare.
+  // Dedup på msg.id (sett i sendMessage) der det finst, elles Gun-nøkkelen.
+  const _renderedIds = new Set();
   function subscribeMessages() {
     if (!messagesRef || _msgSubscribed) return;
     _msgSubscribed = true;
     const msgs = document.getElementById('chat-messages');
     if (!msgs) return;
     msgs.innerHTML = '';
-    const rendered = new Set();
     messagesRef.map().on((msg, key) => {
-      if (!msg || !msg.text || rendered.has(key)) return;
-      rendered.add(key);
+      if (!msg || !msg.text) return;
+      const dedupKey = msg.id || key;
+      if (_renderedIds.has(dedupKey)) return;
+      _renderedIds.add(dedupKey);
       appendMessage(msg);
     });
+
+    if (typeof ChatSync !== 'undefined' && ChatSync._enabled()) {
+      const pull = async () => {
+        const rows = await ChatSync.list(MAX_MSGS);
+        for (const msg of rows.slice().reverse()) {
+          const dedupKey = msg.id;
+          if (!dedupKey || _renderedIds.has(dedupKey)) continue;
+          _renderedIds.add(dedupKey);
+          appendMessage(msg);
+        }
+      };
+      pull();
+      setInterval(pull, 6000);
+    }
   }
 
   function appendMessage(msg) {
@@ -485,13 +507,19 @@ const Chat = (() => {
     const now = Date.now();
     if (now - lastSent < 800) { App.toast('Not so fast! ⚡', 'info'); return; }
     lastSent = now;
-    const msg = { nick: myNick, color: myColor, text, ts: now, type: 'msg' };
+    const id  = `${myNick}_${now}_${Math.random().toString(36).slice(2, 7)}`;
+    const msg = { id, nick: myNick, color: myColor, text, ts: now, type: 'msg' };
     if (gun && messagesRef) {
       messagesRef.set(msg);
     } else {
       appendMessage(msg);
       saveFallbackMsg(msg);
     }
+    // Egen melding er alt rendra lokalt (Gun .set() over, eller fallback) —
+    // merk han som sett FØR sky-spegling, elles kan polling om nokre sekund
+    // rendre han ein gong til når han kjem tilbake frå Supabase.
+    _renderedIds.add(id);
+    if (typeof ChatSync !== 'undefined') ChatSync.push(msg).catch(() => {});
     if (inp) inp.value = '';
   }
 
