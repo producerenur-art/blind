@@ -433,6 +433,22 @@ const EVENT_CALENDAR = [
   { emoji: '🌌', name: 'Boom Festival — 30 years',         loc: 'Idanha-a-Nova, Portugal',  when: '18–25 Jul 2027',      from: '2027-07-18', to: '2027-07-25', url: 'https://www.boomfestival.org/' },
 ];
 
+// Kuraterte "New releases"-saker frå js/magazine.js sin MAGAZINE-array.
+// Same duplisering-problem som RADIO_SHOWS/EVENT_CALENDAR: serveren kan ikkje
+// importere ein frontend-modul, og readMagazine() under les KUN AI-cache-
+// tabellen magazine_cache — aldri denne kuraterte lista. Utan denne dupliserte
+// kopien ville handplukka utgjevingar (Cryo Chamber, Drumcomplex osv.) aldri
+// nådd nokon på e-post, same om kor mange dei blir. Berre dei med ei ekte,
+// spesifikk dato er med — «Ongoing»/«Updated monthly»-sakene høyrer heime på
+// sida, ikkje i eit "nytt no"-utval. Oppdater denne når nye "New releases"-
+// saker med ekte dato blir lagt til i js/magazine.js.
+const NEW_RELEASES = [
+  { tittel: 'Anjunadeep 16', ingress: 'The sixteenth edition of the compilation series, released February 2026.', kilde: { navn: 'Anjunadeep 16 (Bandcamp)' }, kilde_url: 'https://anjunadeep.bandcamp.com/album/anjunadeep-16' },
+  { tittel: 'Aes Dana — Perimeters (Remaster 2025)', ingress: 'Ultimae dusts off a downtempo classic.', kilde: { navn: 'Ultimae Records' }, kilde_url: 'https://ultimae.com/' },
+  { tittel: 'Drumcomplex returns to his own DCMX with «Supernova»', ingress: 'Tough, no-nonsense German techno — 139 BPM, raw and uncompromising.', kilde: { navn: 'DCMX (Beatport)' }, kilde_url: 'https://www.beatport.com/release/supernova/5823425' },
+  { tittel: 'Void Stasis returns with «Specimen 7»', ingress: 'A sci-fi dark ambient voyage on Cryo Chamber, mastered by label head Simon Heath.', kilde: { navn: 'Cryo Chamber (Bandcamp)' }, kilde_url: 'https://cryochamber.bandcamp.com/album/specimen-7' },
+];
+
 const DAY_NAMES  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const DAY_SHORT  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -540,6 +556,7 @@ function liveNowHtml(name, siteUrl, unsubscribeUrl, data) {
   const magazine   = Array.isArray(data.magazine)   ? data.magazine   : [];
   const festivals  = Array.isArray(data.festivals)  ? data.festivals  : [];
   const interviews = Array.isArray(data.interviews) ? data.interviews : [];
+  const releases   = Array.isArray(data.releases)   ? data.releases   : [];
   const events     = Array.isArray(data.events)     ? data.events     : [];
 
   const stationRow = (emoji, title, desc) =>
@@ -615,6 +632,7 @@ function liveNowHtml(name, siteUrl, unsubscribeUrl, data) {
   const magazineRows  = magazine.map(a => articleRow(a, magUrl)).join('');
   const festivalRows  = festivals.map(a => articleRow(a, worldUrl)).join('');
   const interviewRows = interviews.map(a => articleRow(a, magUrl)).join('');
+  const releaseRows   = releases.map(a => articleRow(a, magUrl)).join('');
   const eventRows     = events.map(eventRow).join('');
 
   return `<!DOCTYPE html>
@@ -630,7 +648,7 @@ function liveNowHtml(name, siteUrl, unsubscribeUrl, data) {
     </div>
     <div style="padding:2rem;color:#e2e8f0">
       <h2 style="color:#fff;margin:0 0 0.75rem;font-size:1.3rem">Hi ${escHtml(name)} — here's what's coming up 🎧</h2>
-      <p style="color:#94a3b8;line-height:1.6;margin:0 0 0.85rem">This is your regular round-up from SiriusFM: the channels playing <strong style="color:#e2e8f0">right now</strong>, the <strong style="color:#e2e8f0">radio shows</strong> lined up this week, <strong style="color:#e2e8f0">fresh stories and interviews</strong> in the magazine, and the <strong style="color:#e2e8f0">festivals, events and parties</strong> coming next.</p>
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 0.85rem">This is your regular round-up from SiriusFM: the channels playing <strong style="color:#e2e8f0">right now</strong>, the <strong style="color:#e2e8f0">radio shows</strong> lined up this week, <strong style="color:#e2e8f0">new releases</strong>, <strong style="color:#e2e8f0">fresh stories and interviews</strong> in the magazine, and the <strong style="color:#e2e8f0">festivals, events and parties</strong> coming next.</p>
       <p style="color:#94a3b8;line-height:1.6;margin:0 0 1.25rem">Everything below is one tap away at <a href="${base}" style="color:#c4b5fd;font-weight:700;text-decoration:none">${displayUrl}</a> — the radio starts instantly, no account needed.</p>
 
       <div style="text-align:center;margin:0 0 0.65rem">
@@ -640,6 +658,7 @@ function liveNowHtml(name, siteUrl, unsubscribeUrl, data) {
 
       ${section('🔴 Playing right now', 'Pick a channel and it starts instantly — no account needed.', stationRows, 'Open the radio →', radioUrl, '#4ade80')}
       ${section('📅 Radio shows coming up', 'Your weekly programme — hosted shows on the SiriusFM schedule.', showRows, 'See the full schedule →', showsUrl, '#7dd3fc')}
+      ${section('💿 New releases', 'Albums, EPs and tracks we\'re featuring right now.', releaseRows, 'Read the magazine →', magUrl, '#4ade80')}
       ${section('📰 New in the magazine', 'Fresh releases, scene reports and label news, updated twice a day.', magazineRows, 'Read the magazine →', magUrl, '#60a5fa')}
       ${section('🎤 New interviews', 'Artists in their own words, straight from the magazine.', interviewRows, 'Read the magazine →', magUrl, '#c4b5fd')}
       ${section('🎪 Festival &amp; party news', 'The latest line-ups, tickets and programme news from the scene.', festivalRows, 'See all festivals →', worldUrl, '#f59e0b')}
@@ -864,12 +883,13 @@ module.exports = async (req, res) => {
       ? cleanArticles(b.magazine)
       : allArts.filter(a => !shownTitles.has(String(a.tittel || a.title || ''))).slice(0, 3);
     const festivals  = Array.isArray(b.festivals) ? cleanArticles(b.festivals) : await readMagazine('festivals', 3);
+    const releases   = Array.isArray(b.releases) ? cleanArticles(b.releases) : NEW_RELEASES;
     const shows      = Array.isArray(b.shows)  ? b.shows  : upcomingShows(osloClock(now), 4);
     const events     = Array.isArray(b.events) ? b.events : upcomingEvents(now, 4);
-    subject = "What's coming up on SiriusFM — new shows, magazine & parties 🎧";
+    subject = "What's coming up on SiriusFM — new releases, shows & parties 🎧";
     const unsubUrl = b.unsubscribeUrl || `${siteUrl}/#/unsubscribe/${encodeURIComponent(toEmail)}`;
     html = liveNowHtml(toName, siteUrl, unsubUrl, {
-      stations: b.stations, shows, magazine, interviews, festivals, events,
+      stations: b.stations, shows, magazine, interviews, festivals, releases, events,
     });
   } else {
     return res.status(400).json({ error: 'Unknown email type' });
