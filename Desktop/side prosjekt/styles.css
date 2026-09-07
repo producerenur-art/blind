@@ -10330,9 +10330,10 @@ a.community-link .icon { width: 15px; height: 15px; }
 }
 
 /* ════════════════════════════════════════════
-   GLOBAL «HVEM ER ONLINE»-KNAPP  (js/onlineWidget.js)
-   Pille i nav-baren — vises på alle ruter. Panelet er ein nedtrekksmeny
-   (posisjon settast av JS via top/left).
+   PILLE-BASISSTIL (js/livePresence.js sin admin-only besøkstelling).
+   Den globale «hvem er online»-knappen (js/onlineWidget.js) som brukte
+   same basisklasse er fjerna 07.09.2026 — denne stilen lever vidare fordi
+   visitors-pill under framleis byggjer på .online-pill/-num/-label.
    ════════════════════════════════════════════ */
 .online-pill {
   display: inline-flex;
@@ -10367,53 +10368,9 @@ a.community-link .icon { width: 15px; height: 15px; }
 .visitors-pill:hover{ background: rgba(99,102,241,0.12); }
 .visitors-eye       { font-size: 0.9rem; line-height: 1; }
 
-/* Panel — lista over kven som er online (dropdown, JS set top/left) */
-.online-pop {
-  position: fixed;
-  top: calc(var(--nav-h) + 8px);
-  left: 1rem;
-  z-index: var(--z-panel);
-  width: 240px;
-  max-height: min(60vh, 380px);
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--radius);
-  border: 1px solid var(--border2);
-  background: rgba(17,17,24,0.96);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  animation: onlinePopIn 0.16s ease;
-}
-.online-pop.hidden { display: none; }
-@keyframes onlinePopIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.online-pop-hdr {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--border);
-}
-.online-pop-title { display: inline-flex; align-items: center; gap: 0.45rem; font: 700 0.85rem 'Inter', sans-serif; color: var(--text); }
-.online-pop-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex: 0 0 auto; }
-.online-pop-x {
-  background: none; border: none; color: var(--text3); cursor: pointer;
-  font-size: 0.85rem; line-height: 1; padding: 0.2rem; border-radius: 6px;
-}
-.online-pop-x:hover { color: var(--text); background: var(--surface2); }
-.online-pop-list { overflow-y: auto; padding: 0.3rem; }
-.online-pop-row {
-  display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.45rem 0.5rem; border-radius: var(--radius-sm);
-  color: var(--text); text-decoration: none; font-size: 0.85rem;
-}
-.online-pop-row:hover { background: var(--surface2); }
-.online-pop-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.online-pop-you { color: var(--text3); font-weight: 500; }
-.online-pop-empty { padding: 0.9rem 0.7rem; color: var(--text3); font-size: 0.82rem; text-align: center; }
-
 @media (max-width: 640px) {
   .online-pill { padding: 0.3rem 0.5rem; }
   .online-pill-label { display: none; }              /* kun 🟢 + tal på små skjermar */
-  .online-pop  { width: min(82vw, 240px); }
 }
 
 /* ── AI-rotasjon: «Fersk fra nettet» (js/aifresh.js) ─────────────────────────
