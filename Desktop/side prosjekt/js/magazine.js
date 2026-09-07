@@ -199,6 +199,18 @@ const Magazine = (() => {
         'A State of Trance is a natural starting point for new singles and sets from this part of the scene, where trance and EDM often blur into one another.',
       ],
     },
+    {
+      id: 'cryo-chamber-specimen-7', kategori: 'New releases', emoji: '🌑', grad: G.natt,
+      tittel: 'Void Stasis returns with «Specimen 7»',
+      ingress: 'A sci-fi dark ambient voyage on Cryo Chamber, mastered by label head Simon Heath.',
+      genres: ['dark-drone', 'psybient', 'downtempo'], dato: 'August 2026', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'Cryo Chamber (Bandcamp) — Specimen 7', url: 'https://cryochamber.bandcamp.com/album/specimen-7' },
+      brodtekst: [
+        'Void Stasis released «Specimen 7» on Cryo Chamber on 25 August 2026 — alien ambient and sci-fi soundscapes, mastered by Simon Heath (Atrium Carceri, the label’s founder).',
+        'It sits squarely in the label’s signature territory: cinematic, slow-built dark ambient made for headphones and dark rooms rather than dance floors.',
+        'For more of the same world, Cryo Chamber’s annual free «Dark Ambient of the Year» compilation is a good way to sample the wider roster in one sitting.',
+      ],
+    },
 
     // ─── Plateselskaper ────────────────────────────────────────────────
     {
@@ -216,7 +228,7 @@ const Magazine = (() => {
       id: 'label-cryo-chamber', kategori: 'Labels', emoji: '🪐', grad: G.skog,
       tittel: 'Cryo Chamber',
       ingress: 'Cinematic dark ambient driven by Simon Heath (Atrium Carceri).',
-      genres: ['psybient', 'psychill', 'downtempo'], dato: 'Oregon, USA', forfatter: 'SiriusFM editorial team',
+      genres: ['psybient', 'psychill', 'downtempo', 'dark-drone'], dato: 'Oregon, USA', forfatter: 'SiriusFM editorial team',
       kilde: { navn: 'Cryo Chamber (Bandcamp)', url: 'https://cryochamber.bandcamp.com/' },
       brodtekst: [
         'Cryo Chamber is run by Simon Heath, the man behind Atrium Carceri, and specialises in dark ambient with a cinematic, quality-conscious edge.',

@@ -204,6 +204,18 @@ const World = (() => {
         { label: 'ometeotl.mx', kind: 'web', url: 'https://ometeotl.mx/' },
       ],
     },
+    {
+      // Ingen dark ambient / drone-festival stod i lista fra før — denne dekker
+      // nettopp det hullet. Ekte, verifisert 07.09.2026 (darkmofo.net.au).
+      emoji: '💀', name: 'Dark Mofo', loc: 'Hobart, Tasmania 🇦🇺',
+      dates: '11 – 22 Jun 2026 (winter solstice)',
+      grad: 'linear-gradient(135deg,#0a0a0a,#1a0505,#2e0808)',
+      theme: 'Southern-winter-solstice festival of dark ambient, drone, extreme metal and large-scale light installations — Night Mass, Winter Feast, Ogoh-Ogoh burning and the Nude Solstice Swim at dawn.',
+      tags: ['Dark Ambient', 'Drone', 'Experimental', 'Solstice'],
+      links: [
+        { label: 'darkmofo.net.au', kind: 'web', url: 'https://darkmofo.net.au/' },
+      ],
+    },
   ];
 
   // ── Klubbar & scener ──────────────────────────────────────────────────

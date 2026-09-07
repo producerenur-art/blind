@@ -99,6 +99,42 @@ const Shows = (() => {
       desc: 'Sunday afternoon with ambient space music and quiet journeys.',
       stream: 'missioncontrol',
     },
+    {
+      id: 'psychill-afternoon',
+      name: 'Psychill Afternoon',
+      host: 'MultiHuman EntheoMusic',
+      day: 1, // Monday
+      startHour: 12, endHour: 15,
+      genre: 'Psychill · Psybient',
+      emoji: '🌿',
+      color: '#10b981',
+      desc: 'Entheogenic psychill and world sounds for the slow middle of the day.',
+      stream: 'multihuman',
+    },
+    {
+      id: 'dark-drone-ritual',
+      name: 'Dark Drone Ritual',
+      host: 'The Void Wanderer',
+      day: 5, // Friday
+      startHour: 0, endHour: 3,
+      genre: 'Dark Ambient · Drone',
+      emoji: '💀',
+      color: '#7f1d1d',
+      desc: 'The darker side of deep ambient — ritual drone for staring into the abyss before the weekend.',
+      stream: 'doomed',
+    },
+    {
+      id: 'chillout-lounge',
+      name: 'Chillout Lounge',
+      host: 'Lounge Sessions',
+      day: 4, // Thursday
+      startHour: 18, endHour: 21,
+      genre: 'Chill Out · Lounge',
+      emoji: '🛋️',
+      color: '#0ea5e9',
+      desc: 'Electronic chill lounge to ease into the evening.',
+      stream: '1fm-chillout',
+    },
   ];
 
   const DAYS_NO = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
