@@ -58,19 +58,72 @@ const Groups = (() => {
 
   // ── Gun-abonnement ─────────────────────────────────────────────────────
   function subscribe() {
-    if (_subbed || !window.SC || !SC.gun()) return;
-    _subbed = true;
-    const g = SC.gun();
-    SC.sub(g.get(SC.NS.groups).get('groups'), (grp, key) => {
-      if (!grp || !grp.id) { return; }
-      _groups[grp.id] = { ...grp, _k: key };
-      queuePaint();
-    });
-    SC.sub(g.get(SC.NS.gposts).get('gposts'), (p, key) => {
-      if (!p || !p.id) return;
-      _gposts[p.id] = { ...p, _k: key };
-      queuePaint();
-    });
+    if (window.SC && SC.gun() && !_subbed) {
+      _subbed = true;
+      const g = SC.gun();
+      SC.sub(g.get(SC.NS.groups).get('groups'), (grp, key) => {
+        if (!grp || !grp.id) { return; }
+        _groups[grp.id] = { ...grp, _k: key };
+        queuePaint();
+      });
+      SC.sub(g.get(SC.NS.gposts).get('gposts'), (p, key) => {
+        if (!p || !p.id) return;
+        _gposts[p.id] = { ...p, _k: key };
+        queuePaint();
+      });
+    }
+    _startGroupSyncPoll();
+  }
+
+  // Gun sine offentlege relear leverer IKKJE pålitelig mellom to ULIKE
+  // nettlesarar (sjå minne soundcore-gun-relay-browser-sync) — GroupSync
+  // (server-autorisert, api/groups.js) er difor den faktisk pålitelige
+  // transporten for gruppemetadata + -innlegg, polla ved sida av Gun.
+  // Held Gun sin _k om han finst (så eksisterande .put()-kall framleis
+  // fungerer for grupper som først vart oppretta via Gun).
+  let _gsPolling = false;
+  function _startGroupSyncPoll() {
+    if (_gsPolling || typeof GroupSync === 'undefined' || !GroupSync._enabled()) return;
+    _gsPolling = true;
+    const pullGroups = async () => {
+      const rows = await GroupSync.listGroups();
+      let changed = false;
+      for (const row of rows) {
+        const existing = _groups[row.id];
+        _groups[row.id] = {
+          ...row, ownerDisplay: row.owner_display, createdAt: row.ts,
+          members: typeof row.members === 'string' ? row.members : JSON.stringify(row.members || []),
+          _k: existing ? existing._k : undefined,
+        };
+        changed = true;
+      }
+      if (changed) queuePaint();
+    };
+    pullGroups();
+    setInterval(pullGroups, 8000);
+  }
+
+  // Poll innlegga for éi gruppe (kalla når nokon faktisk ser på gruppa —
+  // ikkje alle grupper sine innlegg heile tida).
+  const _gpPolled = new Set();
+  function _pollGroupPosts(groupId) {
+    if (_gpPolled.has(groupId) || typeof GroupSync === 'undefined' || !GroupSync._enabled()) return;
+    _gpPolled.add(groupId);
+    const pull = async () => {
+      const rows = await GroupSync.listPosts(groupId);
+      let changed = false;
+      for (const row of rows) {
+        const existing = _gposts[row.id];
+        _gposts[row.id] = {
+          ...row, groupId: row.group_id, author: row.author, authorDisplay: row.author_display,
+          _k: existing ? existing._k : undefined,
+        };
+        changed = true;
+      }
+      if (changed) queuePaint();
+    };
+    pull();
+    setInterval(pull, 8000);
   }
   // Gun kan sende oppdatering på slett (data=null) — fang det på nøkkel-nivå.
   let _deletesWatched = false;
@@ -124,6 +177,7 @@ const Groups = (() => {
       createdAt: Date.now(), ts: Date.now(),
     };
     try { SC.gun().get(SC.NS.groups).get('groups').set(g); } catch (e) { console.warn('[Groups] create', e); }
+    if (typeof GroupSync !== 'undefined') GroupSync.upsertGroup(g).catch(() => {});
     _groups[g.id] = { ...g };
     App.toast('🎉 Group created!', 'success');
     _showCreate = false; _pendingBanner = ''; _view = g.id; paint();
@@ -153,7 +207,8 @@ const Groups = (() => {
     App.toast('Uploading banner…', 'info');
     const url = await _uploadBannerImage(file);
     if (!url) return;
-    try { SC.gun().get(SC.NS.groups).get('groups').get(g._k).put({ banner: url }); } catch {}
+    if (g._k) try { SC.gun().get(SC.NS.groups).get('groups').get(g._k).put({ banner: url }); } catch {}
+    if (typeof GroupSync !== 'undefined') GroupSync.upsertGroup({ ...g, banner: url }).catch(() => {});
     _groups[id] = { ...g, banner: url };
     App.toast('Banner updated ✓', 'success'); paint();
   }
@@ -162,7 +217,8 @@ const Groups = (() => {
   function removeGroupBanner(id) {
     const g = _groups[id]; const me = Auth.current();
     if (!g || !isOwner(g, me?.username)) return;
-    try { SC.gun().get(SC.NS.groups).get('groups').get(g._k).put({ banner: '' }); } catch {}
+    if (g._k) try { SC.gun().get(SC.NS.groups).get('groups').get(g._k).put({ banner: '' }); } catch {}
+    if (typeof GroupSync !== 'undefined') GroupSync.upsertGroup({ ...g, banner: '' }).catch(() => {});
     _groups[id] = { ...g, banner: '' };
     App.toast('Banner removed', 'success'); paint();
   }
@@ -175,7 +231,8 @@ const Groups = (() => {
     const trimmed = name.trim(); if (!trimmed) { App.toast('Name cannot be empty', 'error'); return; }
     const rules = prompt('Group rules (optional):', g.rules || '');
     if (rules === null) return;
-    try { SC.gun().get(SC.NS.groups).get('groups').get(g._k).put({ name: trimmed, rules: rules.trim() }); } catch {}
+    if (g._k) try { SC.gun().get(SC.NS.groups).get('groups').get(g._k).put({ name: trimmed, rules: rules.trim() }); } catch {}
+    if (typeof GroupSync !== 'undefined') GroupSync.upsertGroup({ ...g, name: trimmed, rules: rules.trim() }).catch(() => {});
     _groups[id] = { ...g, name: trimmed, rules: rules.trim() };
     App.toast('Group updated ✓', 'success'); paint();
   }
@@ -184,7 +241,8 @@ const Groups = (() => {
     const g = _groups[id]; const me = Auth.current();
     if (!g || !isOwner(g, me?.username)) return;
     if (!confirm(`Delete the group «${g.name}»? This cannot be undone.`)) return;
-    try { if (g._k) SC.gun().get(SC.NS.groups).get('groups').get(g._k).put(null); } catch {}
+    if (g._k) try { SC.gun().get(SC.NS.groups).get('groups').get(g._k).put(null); } catch {}
+    if (typeof GroupSync !== 'undefined') GroupSync.deleteGroup(id).catch(() => {});
     delete _groups[id];
     if (_view === id) _view = null;
     App.toast('Group deleted', 'success'); paint();
@@ -196,6 +254,7 @@ const Groups = (() => {
     if (!g || !me) return;
     if (g.privacy === 'closed' && !isMember(g, me.username)) { App.toast('This group is closed — you must be invited', 'info'); return; }
     saveMembers(g, [...members(g), me.username]);
+    if (typeof GroupSync !== 'undefined') GroupSync.updateMembers(id, 'join').catch(() => {});
     App.toast(`You are now in «${g.name}» 🎉`, 'success'); paint();
   }
   function leaveGroup(id) {
@@ -203,6 +262,7 @@ const Groups = (() => {
     if (!g || !me) return;
     if (isOwner(g, me.username)) { App.toast('The owner cannot leave — delete the group instead', 'info'); return; }
     saveMembers(g, members(g).filter(u => u !== me.username));
+    if (typeof GroupSync !== 'undefined') GroupSync.updateMembers(id, 'leave').catch(() => {});
     App.toast('You left the group', 'success'); paint();
   }
   function toggleInvite(id) { _invite = (_invite === id) ? null : id; paint(); }
@@ -210,6 +270,7 @@ const Groups = (() => {
     const g = _groups[id]; const me = Auth.current();
     if (!g || !me || !isMember(g, me.username)) return;
     saveMembers(g, [...members(g), username]);
+    if (typeof GroupSync !== 'undefined') GroupSync.updateMembers(id, 'invite', username).catch(() => {});
     if (window.Notify) Notify.emit(username, {
       type: 'group', text: `added you to the group «${g.name}»`, link: '#/grupper',
     });
@@ -266,6 +327,7 @@ const Groups = (() => {
       text: body, ts: Date.now(),
     };
     try { SC.gun().get(SC.NS.gposts).get('gposts').set(p); } catch (e) { console.warn('[Groups] share', e); }
+    if (typeof GroupSync !== 'undefined') GroupSync.createPost(p).catch(() => {});
     _gposts[p.id] = { ...p };
     _notifyGroup(g, me);
     if (typeof App !== 'undefined') App.toast('Shared to the group! 🎉', 'success');
@@ -375,6 +437,7 @@ const Groups = (() => {
       text, ts: Date.now(),
     };
     try { SC.gun().get(SC.NS.gposts).get('gposts').set(p); } catch (e) { console.warn('[Groups] post', e); }
+    if (typeof GroupSync !== 'undefined') GroupSync.createPost(p).catch(() => {});
     _gposts[p.id] = { ...p };
     _notifyGroup(g, me);
     if (inp) inp.value = '';
@@ -386,7 +449,8 @@ const Groups = (() => {
     if (!p || !me) return;
     if (p.author !== me.username && !(g && isOwner(g, me.username))) return;  // forfatter eller gruppe-eier
     if (!confirm('Delete this post?')) return;
-    try { if (p._k) SC.gun().get(SC.NS.gposts).get('gposts').get(p._k).put(null); } catch {}
+    if (p._k) try { SC.gun().get(SC.NS.gposts).get('gposts').get(p._k).put(null); } catch {}
+    if (typeof GroupSync !== 'undefined') GroupSync.deletePost(id).catch(() => {});
     delete _gposts[id];
     App.toast('Post deleted', 'success'); paint();
   }
@@ -544,6 +608,7 @@ const Groups = (() => {
           <button class="btn btn-primary btn-sm" onclick="Groups.postToGroup('${g.id}')">${Icon('send')} Share</button>
         </div>
       </div>` : `<div class="community-empty">Join the group to write posts.</div>`;
+    _pollGroupPosts(g.id);
     const posts = groupPosts(g.id);
     const feed = posts.length ? posts.map(p => gpostHtml(p, g, me)).join('')
       : '<div class="community-empty">No posts in the group yet.</div>';
