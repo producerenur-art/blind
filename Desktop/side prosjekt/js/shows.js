@@ -553,7 +553,6 @@ const Shows = (() => {
         <div class="section rsx-section" style="max-width:900px">
           <div class="section-header">
             <div class="section-title">${Icon('search')} Search every web radio in the world</div>
-            <span class="text-muted text-sm">Psytrance · EDM · House · Chillout · Psychill · Progressive · Downtempo · Ambient · Dark Drone — and everything else</span>
           </div>
           ${RadioSearch.widget()}
         </div>
