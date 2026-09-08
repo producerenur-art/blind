@@ -19,10 +19,18 @@
       }
     } catch (_) {}
 
+    // App.toast (js/app.js) — IKKE en bar global funksjon, den ligger inne i
+    // App-modulen. En tidligere versjon prøvde `typeof toast === 'function'`,
+    // som alltid feilet stille (App.toast != window.toast), så registreringen
+    // gikk faktisk gjennom server-side uten at brukeren fikk noen tilbakemelding.
+    function notify(msg, type) {
+      try { if (typeof App !== 'undefined' && App.toast) App.toast(msg, type); } catch (_) {}
+    }
+
     async function submit() {
       const email = String(input.value || '').trim();
       if (!email || !email.includes('@')) {
-        if (typeof toast === 'function') toast('Enter a valid email address.', 'error');
+        notify('Enter a valid email address.', 'error');
         return;
       }
       go.disabled = true;
@@ -34,14 +42,14 @@
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && data.success) {
-          if (typeof toast === 'function') toast("You're subscribed ✓", 'success');
+          notify("You're subscribed ✓", 'success');
         } else if (data.notProvisioned) {
-          if (typeof toast === 'function') toast('Updates are not set up yet — try again later.', 'error');
+          notify('Updates are not set up yet — try again later.', 'error');
         } else {
-          if (typeof toast === 'function') toast(data.error || 'Could not subscribe right now.', 'error');
+          notify(data.error || 'Could not subscribe right now.', 'error');
         }
       } catch (_) {
-        if (typeof toast === 'function') toast('Network error — try again.', 'error');
+        notify('Network error — try again.', 'error');
       } finally {
         go.disabled = false;
       }
