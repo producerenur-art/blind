@@ -94,6 +94,28 @@ module.exports = async (req, res) => {
         return true;
       });
 
+    // Gjeste-abonnentar (inga konto) — meldt på via "Updates"-widgeten i #dock,
+    // sjå supabase/migrations/0021_newsletter_subscribers.sql. Same sideinnlesing
+    // og de-duplisering (mot `seen`, som alt inneheld konto-e-postane) som over,
+    // slik at nokon som er BÅDE konto-innehavar OG gjeste-abonnent aldri får to
+    // e-postar. Feiler stille (tabellen finst kanskje ikkje enno) — kontoane skal
+    // framleis få påminninga sjølv om denne biten ikkje er provisjonert.
+    for (let from = 0; ; from += PAGE) {
+      const { data, error: subErr } = await db.from('newsletter_subscribers')
+        .select('email')
+        .is('unsubscribed_at', null)
+        .order('email', { ascending: true })
+        .range(from, from + PAGE - 1);
+      if (subErr) break;   // tabell manglar e.l. → berre hopp over gjeste-lista
+      for (const row of (data || [])) {
+        const k = String(row.email || '').toLowerCase().trim();
+        if (!k || seen.has(k)) continue;
+        seen.add(k);
+        recipients.push({ email: k, name: 'there' });
+      }
+      if (!data || data.length < PAGE) break;
+    }
+
     if (dry) return res.status(200).json({ ok: true, dryRun: true, wouldSend: recipients.length });
 
     let sent = 0, skipped = 0, failed = 0;

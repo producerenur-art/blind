@@ -769,6 +769,10 @@ function escHtml(str) {
 // seg av reklame. Fail-open: kan vi IKKE sjekke (mangler konfig/tabell/kolonne, eller
 // annen feil) → returner false, så promo-utsending oppfører seg som før provisjonering
 // i stedet for å stoppe helt. Gjelder KUN reklame (type:'promo') — aldri konto-e-post.
+// Sjekker BÅDE konto-avmelding (accounts.marketing_opt_out) og gjeste-avmelding
+// (newsletter_subscribers.unsubscribed_at, se migrasjon 0021) — en mottaker uten
+// konto har kun sistnevnte, en registrert bruker sjekkes mot begge (en aldri
+// meldt opp gjeste-rad finnes rett og slett ikke, og teller da ikke som avmeldt).
 async function isUnsubscribed(email) {
   const url  = process.env.SUPABASE_URL;
   const key  = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -777,10 +781,13 @@ async function isUnsubscribed(email) {
   try {
     const { createClient } = require('@supabase/supabase-js');
     const db = createClient(url, key, { auth: { persistSession: false } });
-    const { data, error } = await db.from('accounts')
-      .select('marketing_opt_out').ilike('email', addr).maybeSingle();
-    if (error) return false;   // tabell/kolonne mangler e.l. → fail-open
-    return !!(data && data.marketing_opt_out);
+    const [acc, sub] = await Promise.all([
+      db.from('accounts').select('marketing_opt_out').ilike('email', addr).maybeSingle(),
+      db.from('newsletter_subscribers').select('unsubscribed_at').ilike('email', addr).maybeSingle(),
+    ]);
+    const accOptOut = !acc.error && !!(acc.data && acc.data.marketing_opt_out);
+    const subOptOut = !sub.error && !!(sub.data && sub.data.unsubscribed_at);
+    return accOptOut || subOptOut;   // begge feiler stille (fail-open) hvis tabell/kolonne mangler
   } catch {
     return false;
   }

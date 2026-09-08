@@ -7585,6 +7585,53 @@ body.edge-idle #about-tab-handle {
   border-bottom: 1px solid rgba(6,182,212,0.15);
 }
 
+/* "Updates"-popover (nyhetsbrev-registrering) — samme mønster som lenke-panelet. */
+#dock #dock-updates-widget {
+  position: relative;
+  bottom: auto; right: auto; left: auto;
+  z-index: auto;
+}
+#dock-updates-panel {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  width: 260px;
+  max-height: 0;
+  overflow: hidden;
+  background: rgba(10, 8, 22, 0.97);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  opacity: 0;
+  pointer-events: none;
+  transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease;
+}
+#dock-updates-panel.open {
+  max-height: 260px;
+  opacity: 1;
+  pointer-events: all;
+}
+.dock-updates-body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dock-updates-lead {
+  font-size: 0.8rem;
+  color: var(--text2);
+  line-height: 1.5;
+  margin: 0;
+}
+.dock-updates-note {
+  font-size: 0.7rem;
+  color: var(--text3);
+  margin: 0;
+  text-align: center;
+}
+
 /* ═══ EMBED MEDIA PANEL ═══ */
 .embed-panel {
   position: fixed;

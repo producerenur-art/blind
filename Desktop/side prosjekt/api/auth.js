@@ -330,10 +330,48 @@ async function setMarketingOptOut(db, body, value) {
   }
   return { status: 200, body: { success: true } };
 }
-async function unsubscribe(db, body) { return setMarketingOptOut(db, body, true); }
-async function resubscribe(db, body) { return setMarketingOptOut(db, body, false); }
+// Speiler samme opt-out på nyhetsbrev-gjester (public.newsletter_subscribers) —
+// best-effort, feiler stille hvis tabellen ikke finnes ennå (migrasjon 0021
+// ikke kjørt) eller e-posten ikke er der (den kan tilhøre kun en konto).
+async function setNewsletterOptOut(db, email, value) {
+  try {
+    await db.from('newsletter_subscribers')
+      .update({ unsubscribed_at: value ? new Date().toISOString() : null })
+      .ilike('email', email);
+  } catch (_) { /* best effort */ }
+}
+async function unsubscribe(db, body) {
+  const email = String(body.email || '').toLowerCase().trim();
+  if (email && email.includes('@')) await setNewsletterOptOut(db, email, true);
+  return setMarketingOptOut(db, body, true);
+}
+async function resubscribe(db, body) {
+  const email = String(body.email || '').toLowerCase().trim();
+  if (email && email.includes('@')) await setNewsletterOptOut(db, email, false);
+  return setMarketingOptOut(db, body, false);
+}
 
-const ACTIONS = { register, login, activate, forgot, reset, resend, unsubscribe, resubscribe };
+// ── Nyhetsbrev-registrering for gjester (uten konto) ────────────────────────
+// "Updates"-widgeten i #dock kaller denne. Samme ukentlige e-post
+// (api/live-reminder.js → api/send-email.js type:'live_now') sendes til disse
+// som til registrerte kontoer. Upsert nullstiller unsubscribed_at, så et gjentatt
+// skjema-innsendt (f.eks. etter en tidligere avmelding) også melder på igjen.
+async function subscribe(db, body) {
+  const email = String(body.email || '').toLowerCase().trim();
+  if (!email || !email.includes('@')) return { status: 400, body: { error: 'Invalid email address' } };
+  const { error } = await db.from('newsletter_subscribers')
+    .upsert({ email, unsubscribed_at: null }, { onConflict: 'email' });
+  if (error) {
+    if (tableMissing(error)) {
+      console.warn('newsletter_subscribers-tabellen finnes ikke ennå — kjør supabase/migrations/0021_newsletter_subscribers.sql.');
+      return { status: 503, body: { error: 'Newsletter storage not provisioned', notProvisioned: true } };
+    }
+    return { status: 500, body: { error: 'Could not save your email' } };
+  }
+  return { status: 200, body: { success: true } };
+}
+
+const ACTIONS = { register, login, activate, forgot, reset, resend, unsubscribe, resubscribe, subscribe };
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

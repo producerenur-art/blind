@@ -79,7 +79,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
   <!-- Supabase JS — shared media storage (60-min audio, video) across all users -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="styles.css?v=20260907-nopsytour">
+  <link rel="stylesheet" href="styles.css?v=20260908-updates">
 </head>
 <body>
 
@@ -325,6 +325,22 @@
       </div>
     </div>
 
+    <!-- Weekly email updates (shows, festivals, new releases) — guests + logged-in -->
+    <div id="dock-updates-widget" class="dock-widget">
+      <button id="dock-updates-btn" class="dock-btn" title="Get email updates" aria-label="Get email updates">
+        <span data-icon="bell"></span>
+      </button>
+      <div id="dock-updates-panel">
+        <div class="dock-panel-title">Updates</div>
+        <div class="dock-updates-body">
+          <p class="dock-updates-lead">Get the weekly email — upcoming shows, festivals &amp; new releases.</p>
+          <input class="form-input" id="dock-updates-email" type="email" placeholder="you@email.com" autocomplete="email">
+          <button class="btn btn-primary w-full" id="dock-updates-go" type="button">Subscribe</button>
+          <p class="dock-updates-note">Unsubscribe anytime.</p>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ═══ ABOUT SIRIUSFM — utdragbar fane i høyre kant ═══ -->
@@ -427,7 +443,8 @@
   <script src="js/picksDrag.js?v=20260629-picksdrag"></script>
   <script src="js/bugHelp.js?v=20260718-en100"></script>
   <script src="js/report.js?v=20260716-en"></script>
-  <script src="js/dock.js?v=20260815-noplatform"></script>
+  <script src="js/dock.js?v=20260908-updates"></script>
+  <script src="js/newsletter.js?v=20260908-updates"></script>
   <script src="js/aboutTab.js"></script>
   <script src="js/edgeAutohide.js?v=20260815-noplatform"></script>
   <script src="js/collapsible.js?v=20260629-collapse"></script>

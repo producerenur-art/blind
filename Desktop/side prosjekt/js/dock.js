@@ -1,20 +1,26 @@
 /* ═══════════════════════════════════════════
    Control Dock — wires the consolidated bottom-right dock.
-   Her håndterer vi kun lenke-popoveren (sosiale lenker).
+   Håndterer popover-widgetene (lenker, e-postoppdateringer).
    ═══════════════════════════════════════════ */
 (function () {
-  const btn   = document.getElementById('dock-links-btn');
-  const panel = document.getElementById('dock-links-panel');
-  if (!btn || !panel) return;
+  function wireWidget(btnId, panelId, widgetId) {
+    const btn    = document.getElementById(btnId);
+    const panel  = document.getElementById(panelId);
+    const widget = document.getElementById(widgetId);
+    if (!btn || !panel || !widget) return;
 
-  let open = false;
-  function close() { open = false; panel.classList.remove('open'); }
-  function toggle() { open ? close() : (open = true, panel.classList.add('open')); }
+    let open = false;
+    function close() { open = false; panel.classList.remove('open'); }
+    function toggle() { open ? close() : (open = true, panel.classList.add('open')); }
 
-  btn.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+    btn.addEventListener('click', e => { e.stopPropagation(); toggle(); });
 
-  // Close on outside click
-  document.addEventListener('click', e => {
-    if (open && !document.getElementById('dock-links-widget').contains(e.target)) close();
-  });
+    // Close on outside click
+    document.addEventListener('click', e => {
+      if (open && !widget.contains(e.target)) close();
+    });
+  }
+
+  wireWidget('dock-links-btn', 'dock-links-panel', 'dock-links-widget');
+  wireWidget('dock-updates-btn', 'dock-updates-panel', 'dock-updates-widget');
 })();
