@@ -1579,68 +1579,65 @@ const Discover = (() => {
   }
 
   function renderPsybientTab() {
+    // Oppdatert 08.09.2026 (i dag). Heile lista var utgått — datoane over synte
+    // 2025/tidleg-2026, alt passert. Psy-Fi Festival fjerna heilt: 2026-utgåva
+    // vart AVLYST (manglande billettsal, stadfesta via søk), ingen kjend
+    // framtid. Sola Luna og Gaia Beats har stadfesta 2026/2027-datoar frå
+    // offisielle sider; dei tre siste manglar stadfesta neste utgåve enno
+    // (same "Expected … (not yet official)"-mønster som js/world.js FESTIVALS).
     const EVENTS = [
       {
-        day: 'Jul',
-        month: '2026',
+        day: '22–24',
+        month: 'Jan 2027',
+        name: 'Gaia Beats',
+        loc: 'Chiang Mai, Thailand 🇹🇭',
+        tags: ['Psybient', 'Downtempo', 'Psytrance'],
+        url: 'https://www.psybient.org/love/trance-festivals-list-calendar/',
+        website: 'https://gaiabeats.com/',
+      },
+      {
+        day: '30 Dec – 3 Jan',
+        month: '2026/27',
+        name: 'Sola Luna Festival',
+        loc: 'Khanom, Thailand 🇹🇭 — beach',
+        tags: ['Beach Psy', 'Ambient', 'New Year'],
+        url: 'https://www.psybient.org/love/sola-luna-festival-thailand/',
+        website: 'https://solalunafestival.com/',
+      },
+      {
+        day: 'Expected Jul',
+        month: '2027 (TBD)',
         name: 'ZNA Gathering',
-        loc: 'Portugal 🇵🇹',
+        loc: 'Montargil, Portugal 🇵🇹',
         tags: ['Psybient', 'Chillout', 'Peninsula Stage'],
         url: 'https://www.psybient.org/love/zna-portugal/',
         website: 'https://znagathering.com/',
       },
       {
-        day: 'Summer',
-        month: '2026',
-        name: 'Gaia Beats',
-        loc: 'Thailand 🇹🇭',
-        tags: ['Psybient', 'Downtempo', 'Psytrance'],
-        url: 'https://www.psybient.org/love/trance-festivals-list-calendar/',
-        website: null,
-      },
-      {
-        day: 'Jul',
-        month: '2026',
+        day: 'Expected Jul',
+        month: '2027 (TBD)',
         name: 'S.U.N. Festival',
-        loc: 'Hungary 🇭🇺',
+        loc: 'Csobánkapuszta, Hungary 🇭🇺',
         tags: ['Psytrance', 'Ambient', 'Community'],
         url: 'https://www.psybient.org/love/trance-festivals-list-calendar/',
-        website: 'https://sunfestival.org/',
+        website: 'https://solarunitednatives.org/',
       },
       {
-        day: 'Jun 25',
-        month: '2025',
+        day: 'Expected Jul',
+        month: '2027 (TBD)',
         name: '7Chakras Festival',
         loc: 'Tuscania (VT), Italy 🇮🇹',
         tags: ['Psytrance', 'Psybient', 'Healing'],
         url: 'https://www.psybient.org/love/7chakras-festival-italy/',
-        website: null,
+        website: 'https://www.7chakrasfestival.org/',
       },
       {
-        day: 'Jun',
-        month: '2025',
-        name: 'Psy-Fi Festival',
-        loc: 'Netherlands 🇳🇱',
-        tags: ['Psytrance', 'Workshops', 'Art'],
-        url: 'https://www.psybient.org/love/psy-fi-2025-netherlands/',
-        website: 'https://www.psy-fi.nl/',
-      },
-      {
-        day: 'Summer',
-        month: '2025',
+        day: 'Expected Summer',
+        month: '2027 (TBD)',
         name: 'Psychedelicious',
         loc: 'Czech Republic 🇨🇿',
         tags: ['Psytrance', 'Psychedelic', 'Community'],
         url: 'https://www.psybient.org/love/psychedelicious/',
-        website: null,
-      },
-      {
-        day: 'New Year',
-        month: '2025/26',
-        name: 'Sola Luna Festival',
-        loc: 'Thailand 🇹🇭 — beach',
-        tags: ['Beach Psy', 'Ambient', 'New Year'],
-        url: 'https://www.psybient.org/love/sola-luna-festival-thailand/',
         website: null,
       },
     ];
@@ -1665,7 +1662,7 @@ const Discover = (() => {
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
           <span class="disc-psy-section-icon">${Icon('star')}</span>
-          <span class="disc-psy-section-title">Upcoming festivals 2025–2026</span>
+          <span class="disc-psy-section-title">Upcoming festivals 2026–2027</span>
           <span class="disc-psy-section-badge">psybient.org</span>
         </div>
         <div class="disc-psy-festival-list">
@@ -1758,7 +1755,7 @@ const Discover = (() => {
       { emoji: '🌐', name: 'altar-records.com',  desc: 'Official website — artists, releases, samples and mastering', url: 'https://www.altar-records.com/' },
       { emoji: '🎵', name: 'Bandcamp',            desc: 'Support the artists directly — buy and stream',                         url: 'https://altar.bandcamp.com/' },
       { emoji: '🎧', name: 'Spotify',             desc: 'Playlists and albums on Spotify',                                  url: 'https://open.spotify.com/user/altarrecords' },
-      { emoji: '▶',  name: 'YouTube',             desc: 'Videos, sets and music videos',                                   url: 'https://www.youtube.com/c/AltarRecords' },
+      { emoji: '▶',  name: 'YouTube',             desc: 'Videos, sets and music videos',                                   url: 'https://www.youtube.com/@AltarRecords' }, // gamal /c/-URL retta til handle-format, verifisert 08.09.2026
       { emoji: 'f',  name: 'Facebook',            desc: 'News and releases',                                           url: 'https://www.facebook.com/AltarRecords' },
       { emoji: '📸', name: 'Instagram',           desc: 'Photos, artwork and updates',                                url: 'https://www.instagram.com/altar_records/' },
     ];
@@ -2444,8 +2441,8 @@ const Discover = (() => {
     const LINKS = [
       { emoji: '🌐', name: 'cosmicleaf.gr',   desc: 'Official website — artists, releases and news',    url: 'https://cosmicleaf.gr/' },
       { emoji: '🎵', name: 'Bandcamp',         desc: 'Stream and buy the entire catalogue',                         url: 'https://cosmicleaf.bandcamp.com/' },
-      { emoji: '☁️', name: 'SoundCloud',       desc: 'Mixes and curated playlists',                        url: 'https://soundcloud.com/cosmic-leaf' },
-      { emoji: '▶',  name: 'YouTube',          desc: 'Music videos, live sets and mixes',                        url: 'https://www.youtube.com/@CosmicLeafRecords' },
+      { emoji: '☁️', name: 'SoundCloud',       desc: 'Mixes and curated playlists',                        url: 'https://soundcloud.com/cosmicleafofficial' }, // gamal handle var feil (404), retta 08.09.2026
+      { emoji: '▶',  name: 'YouTube',          desc: 'Music videos, live sets and mixes',                        url: 'https://www.youtube.com/cosmicleafofficial' }, // same, retta 08.09.2026
     ];
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#041a08,#0a2e10,#041a08)">
@@ -2965,7 +2962,7 @@ const Discover = (() => {
     const LINKS = [
       { emoji: '🎵', name: 'Bandcamp',   desc: 'Stream and buy the entire discography',              url: 'https://youngerbrothermusic.bandcamp.com/music' },
       { emoji: '🌐', name: 'Website',   desc: 'Official website — news and tour',           url: 'https://www.youngerbrothermusic.com/' },
-      { emoji: '☁️', name: 'SoundCloud', desc: 'Mixes and tracks for free',                         url: 'https://soundcloud.com/younger-brother-music' },
+      { emoji: '☁️', name: 'SoundCloud', desc: 'Mixes and tracks for free',                         url: 'https://soundcloud.com/youngerbrothers' }, // gamal handle var feil (404), retta 08.09.2026
       { emoji: '▶',  name: 'YouTube',    desc: 'Music videos and live recordings',                   url: 'https://www.youtube.com/@YoungerBrotherMusic' },
     ];
     return `
@@ -3080,7 +3077,7 @@ const Discover = (() => {
       { emoji: '🌐', name: 'shponglemusic.com',    desc: 'Official website — music, news and tour',    url: 'https://www.shponglemusic.com/' },
       { emoji: '📀', name: 'Bandcamp',             desc: 'Stream and buy the entire discography',                 url: 'https://shpongle.bandcamp.com/' },
       { emoji: '☁️', name: 'SoundCloud',           desc: 'Mixes and tracks for free',                           url: 'https://soundcloud.com/shpongle' },
-      { emoji: '▶',  name: 'YouTube',              desc: 'Official channel — live sets and music videos',        url: 'https://www.youtube.com/@ShpongleOfficial' },
+      { emoji: '▶',  name: 'YouTube',              desc: 'Official channel — live sets and music videos',        url: 'https://www.youtube.com/ShpongleMusic' }, // gamal handle @ShpongleOfficial fantes ikkje, retta 08.09.2026
     ];
     return `
       <div class="disc-psy-banner" style="background:linear-gradient(135deg,#0d0829,#1a0b3d,#2a0d5e,#0d0829)">
