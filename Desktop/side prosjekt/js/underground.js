@@ -110,7 +110,7 @@ const Underground = (() => {
       desc: 'London’s premier techno institution since 1999. Friday = FabricLive, Saturday = fabric.',
       url: 'https://www.fabriclondon.com',
       tag: 'Club',
-      events: 'https://ra.co/clubs/uk/london/fabric',
+      events: 'https://ra.co/clubs/237', // gamal slug-URL (uk/london/fabric) retta til RAs ekte numeriske id, verifisert 08.09.2026
     },
     {
       name: 'Printworks',
@@ -118,7 +118,7 @@ const Underground = (() => {
       desc: 'Iconic industrial venue in the London Bridge area with an outstanding sound system.',
       url: 'https://printworkslondon.co.uk',
       tag: 'Venue',
-      events: 'https://ra.co/clubs/uk/london/printworks-london',
+      events: 'https://ra.co/clubs/127337', // retta frå gamal slug-URL, verifisert 08.09.2026
     },
     {
       name: 'Warehouse Project',
@@ -126,7 +126,7 @@ const Underground = (() => {
       desc: 'Manchester’s biggest techno event. Housed in the historic Aviva Studios from September to December.',
       url: 'https://www.thewarehouseproject.com',
       tag: 'Festival / Club',
-      events: 'https://ra.co/promoters/uk/warehouseproject',
+      events: 'https://ra.co/clubs/104207', // retta frå gamal slug-URL, verifisert 08.09.2026
     },
     {
       name: 'Sub Club',
@@ -134,7 +134,7 @@ const Underground = (() => {
       desc: 'One of Europe’s oldest and most respected underground clubs — active since 1987.',
       url: 'https://subclub.co.uk',
       tag: 'Club',
-      events: 'https://ra.co/clubs/uk/glasgow/sub-club',
+      events: 'https://ra.co/clubs/1918', // retta frå gamal slug-URL, verifisert 08.09.2026
     },
   ];
 
@@ -145,7 +145,7 @@ const Underground = (() => {
       desc: 'Home of Circoloco. Ibiza’s rawest and most authentic underground club with an open terrace.',
       url: 'https://dc10ibiza.com/en/', // circoloco.com (utan www) løyser DNS men er ein UBESLEKTA sirkusduo, ikkje klubben — retta 07.09.2026
       tag: 'Club',
-      events: 'https://ra.co/clubs/es/ibiza/dc10',
+      events: 'https://ra.co/clubs/1273', // retta frå gamal slug-URL, verifisert 08.09.2026
     },
     {
       name: 'Amnesia',
@@ -153,7 +153,7 @@ const Underground = (() => {
       desc: 'One of the world’s most famous clubs. Home to Sven Väth’s Cocoon and many iconic residencies.',
       url: 'https://www.amnesia.es',
       tag: 'Club',
-      events: 'https://ra.co/clubs/es/ibiza/amnesia',
+      events: 'https://ra.co/clubs/764', // retta frå gamal slug-URL, verifisert 08.09.2026
     },
     {
       name: 'Hï Ibiza',
@@ -161,7 +161,7 @@ const Underground = (() => {
       desc: 'A modern mega-club known for its groundbreaking sound system and spectacular light show.',
       url: 'https://www.hiibiza.com',
       tag: 'Club',
-      events: 'https://ra.co/clubs/es/ibiza/hi-ibiza',
+      events: 'https://ra.co/clubs/130160', // retta frå gamal slug-URL (brukar oppdaga denne), verifisert 08.09.2026
     },
     {
       name: 'Ushuaïa',
@@ -169,7 +169,7 @@ const Underground = (() => {
       desc: 'Open-air stage with sea views. The summer’s best daytime and sunset events on the island.',
       url: 'https://www.ushuaiaibiza.com',
       tag: 'Open Air',
-      events: 'https://ra.co/clubs/es/ibiza/ushuaia-ibiza-beach-hotel',
+      events: 'https://ra.co/clubs/21544', // retta frå gamal slug-URL, verifisert 08.09.2026
     },
   ];
 
@@ -297,7 +297,7 @@ const Underground = (() => {
             <div class="ug-venue-grid">
               ${VENUES_UK.map(v => venueCard(v)).join('')}
             </div>
-            <a class="ug-ra-banner" href="https://ra.co/events/uk" target="_blank" rel="noopener">
+            <a class="ug-ra-banner" href="https://ra.co/events/uk/all" target="_blank" rel="noopener">
               ${Icon('search')} See all UK events on <strong>Resident Advisor</strong> ${Icon('arrow-right')}
             </a>
           </section>
