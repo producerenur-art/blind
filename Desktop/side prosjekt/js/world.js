@@ -821,6 +821,38 @@ const World = (() => {
         { label: 'Bandcamp', kind: 'bandcamp', url: 'https://kammarheit.bandcamp.com/' },
       ],
     },
+    {
+      // Lagt til 08.09.2026 (brukar-forespurt, Ultimae-artistar), verifisert:
+      // alle lenkjer lastar (ultimae.com sine offisielle artistsider).
+      emoji: '🌲', name: 'Martin Nonstatic', loc: 'Austria 🇦🇹 · Psybient / Ambient (Ultimae)',
+      theme: 'Martin Van Rossum — born in the Netherlands (1976), now based in Linz. Smooth, hypnotic ambient electronica with lush soundscapes; a prolific Ultimae Records artist with albums like Granite, Ligand and Pulsatille.',
+      tags: ['Psybient', 'Ambient', 'Ultimae Records'],
+      grad: 'linear-gradient(135deg,#04130d,#0a2e22)',
+      links: [
+        { label: 'ultimae.com', kind: 'web', url: 'https://ultimae.com/artists/martin-nonstatic/' },
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://martinnonstatic1.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🌀', name: 'Aes Dana', loc: 'France 🇫🇷 · Downtempo / IDM (Ultimae founder)',
+      theme: 'Vincent Villuis — composer, sound designer and founder of Ultimae Records, with 25+ years in electronic music. Blends deep ambient, downtempo and IDM with neo-classical and industrial touches; also known for H.U.V.A. Network with Solar Fields.',
+      tags: ['Downtempo', 'IDM', 'Ultimae Records'],
+      grad: 'linear-gradient(135deg,#05131f,#0a2a44)',
+      links: [
+        { label: 'ultimae.com', kind: 'web', url: 'https://ultimae.com/artists/aes-dana/' },
+        { label: 'Bandcamp (Ultimae)', kind: 'bandcamp', url: 'https://ultimae.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🌊', name: 'Miktek', loc: 'Greece 🇬🇷 · Ambient / IDM / Downtempo (Ultimae)',
+      theme: 'Mihalis Aikaterinis, from Mytilene (Lesvos) — meticulously crafted ambient/IDM with unique percussion and subtle melodies. Debuted in 2011 on Abstrakt Reflections, joined Ultimae Records in 2013 for Elsewhere and several label compilations, plus collaborations with Aes Dana.',
+      tags: ['Ambient', 'IDM', 'Ultimae Records'],
+      grad: 'linear-gradient(135deg,#04191f,#0a3a44)',
+      links: [
+        { label: 'ultimae.com', kind: 'web', url: 'https://ultimae.com/artists/miktek/' },
+        { label: 'Bandcamp (Ultimae)', kind: 'bandcamp', url: 'https://ultimae.bandcamp.com/' },
+      ],
+    },
   ];
 
   // ── Web radios from around the world ──────────────────────────────────
