@@ -853,6 +853,27 @@ const World = (() => {
         { label: 'Bandcamp (Ultimae)', kind: 'bandcamp', url: 'https://ultimae.bandcamp.com/' },
       ],
     },
+    {
+      // Lagt til 08.09.2026 (brukar-forespurt). Sjanger-strekk mot sidas
+      // psy/downtempo/dark-ambient-fokus (mainstream trance/EDM og techno/house),
+      // lagt til likevel per ønske. Verifisert: begge offisielle sider lastar.
+      emoji: '🎧', name: 'Tiësto', loc: 'Netherlands 🇳🇱 · Trance / EDM (since 1994)',
+      theme: 'Tijs Michiel Verwest — voted World No. 1 DJ three years running (2002–2004), a defining name in trance before shaping mainstream EDM and festival main stages worldwide.',
+      tags: ['Trance', 'EDM', 'Festival Main Stage'],
+      grad: 'linear-gradient(135deg,#0a0520,#241050)',
+      links: [
+        { label: 'tiesto.com', kind: 'web', url: 'https://www.tiesto.com/' },
+      ],
+    },
+    {
+      emoji: '🎚️', name: 'Carl Cox', loc: 'UK 🇬🇧 · House / Techno (since late 1980s)',
+      theme: 'A veteran of acid house and a champion of techno for over three decades — label owner (Intec Digital) and long-running "King of Ibiza" for his Space and Ushuaïa residencies.',
+      tags: ['Techno', 'House', 'Intec Digital'],
+      grad: 'linear-gradient(135deg,#0d0d0d,#1f1f1f)',
+      links: [
+        { label: 'carlcox.com', kind: 'web', url: 'https://carlcox.com/' },
+      ],
+    },
   ];
 
   // ── Web radios from around the world ──────────────────────────────────
