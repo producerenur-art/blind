@@ -367,6 +367,7 @@ const World = (() => {
       emoji: '🌌', name: 'Microcosmos Chill-out', loc: 'Psychill / Ambient',
       grad: 'linear-gradient(135deg,#050a1f,#101a44)',
       links: [
+        { label: 'microcosmosrecords.com', kind: 'web', url: 'https://microcosmosrecords.com/' },
         { label: 'Bandcamp', kind: 'bandcamp', url: 'https://microcosmos.bandcamp.com/' },
       ],
     },
@@ -382,7 +383,12 @@ const World = (() => {
       grad: 'linear-gradient(135deg,#12051f,#280a40)',
       links: [
         { label: 'merkabamusic.com', kind: 'web', url: 'https://merkabamusic.com/' },
-        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://merkabamusic.bandcamp.com/' },
+        // Verifisert 08.09.2026: merkabamusic.bandcamp.com (utan "1") er faktisk
+        // soloartisten "Merkaba" i Sydney (entalsspråk, 17 utgjevingar) — IKKJE
+        // labelen. merkabamusic1.bandcamp.com er "Merkaba Music Australia", den
+        // ekte labelen med fleire signerte artistar (Kalya Scintilla, TRIBONE
+        // m.fl.). Retta til den rette lenka.
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://merkabamusic1.bandcamp.com/' },
       ],
     },
     {
@@ -403,6 +409,7 @@ const World = (() => {
       emoji: '🌀', name: 'TWISTED Records', loc: 'UK 🇬🇧 · Simon Posford · Psytrance / Psybient',
       grad: 'linear-gradient(135deg,#0d0829,#221050)',
       links: [
+        { label: 'twistedmusic.com', kind: 'web', url: 'https://twistedmusic.com/' },
         { label: 'Bandcamp', kind: 'bandcamp', url: 'https://twistedmusicuk.bandcamp.com/' }, // gamal handle var ein tom, ubeslekta NY-konto, retta 07.09.2026
       ],
     },
@@ -452,6 +459,7 @@ const World = (() => {
       grad: 'linear-gradient(135deg,#0a0a0a,#1a0505)',
       links: [
         { label: 'cycliclaw.com', kind: 'web', url: 'https://www.cycliclaw.com/' },
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://cycliclaw.bandcamp.com/' },
       ],
     },
     {
@@ -501,6 +509,120 @@ const World = (() => {
       tags: ['Dark Ambient', 'Industrial', 'Est. 1994'],
       links: [
         { label: 'malignantrecords.com', kind: 'web', url: 'https://www.malignantrecords.com/' },
+      ],
+    },
+    // ── Lagt til 08.09.2026 (brukar-forespurt batch, verifisert via research-agent) ──
+    {
+      emoji: '🪶', name: 'Shamanic Tales', loc: 'Israel 🇮🇱 · Psytrance (Astrix’s label)',
+      grad: 'linear-gradient(135deg,#140a1f,#301344)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://shamanictales.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🐘', name: 'Bom Shanka Music', loc: 'UK 🇬🇧 · Psytrance',
+      grad: 'linear-gradient(135deg,#1f0a14,#44102c)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://bomshankamusic.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🐲', name: 'Dragonfly Records', loc: 'UK 🇬🇧 · Goa Trance (est. 1993)',
+      grad: 'linear-gradient(135deg,#04191a,#0a3a3d)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://dragonflyrecordsuk.bandcamp.com/' },
+      ],
+    },
+    {
+      // Techno, ikkje psy/downtempo — same sjanger-utviding som CLR-oppføringa over.
+      emoji: '🎚️', name: 'KNTXT', loc: 'Belgium 🇧🇪 · Techno (Charlotte de Witte)',
+      grad: 'linear-gradient(135deg,#0a0a0a,#1f1f1f)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://kntxt.bandcamp.com/' },
+      ],
+    },
+    {
+      // Bandcamp-handle "beatspace-timelapse" — sjølve labelen er Timelapse Records (Israel).
+      emoji: '⏳', name: 'Timelapse Records', loc: 'Israel 🇮🇱 · Goa Trance / Psybient',
+      grad: 'linear-gradient(135deg,#0a0a2e,#181a54)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://beatspace-timelapse.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🌍', name: 'Globalsect Music', loc: 'Serbia 🇷🇸 · Psy / Space Ambient',
+      grad: 'linear-gradient(135deg,#05081f,#141048)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://globalsect.bandcamp.com/' },
+      ],
+    },
+    {
+      // Sjanger ikkje eksplisitt oppgitt på sida — utleidd frå katalogen, usikkert.
+      emoji: '⏰', name: 'Cronomi Records', loc: 'Belgium 🇧🇪 · Electronic / Psy',
+      grad: 'linear-gradient(135deg,#0f0a1f,#241344)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://cronomi.bandcamp.com/' },
+      ],
+    },
+    {
+      // Sjanger ikkje eksplisitt oppgitt på sida — utleidd frå katalogen, usikkert.
+      emoji: '🌆', name: 'MikelaBella Records', loc: 'Spain 🇪🇸 · Electronic / Dub / Ambient',
+      grad: 'linear-gradient(135deg,#1f0d05,#3d2410)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://mikelabellarecords.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🌐', name: 'Synchronos Recordings', loc: 'USA 🇺🇸 · Psybass / Glitch / Ambient',
+      grad: 'linear-gradient(135deg,#04191f,#0a3a44)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://synchronos-recordings.bandcamp.com/' },
+      ],
+    },
+    {
+      // Sjanger-strekk mot sidas psy/downtempo/dark-ambient-fokus (Rotterdam
+      // chillhop/jazzhop/triphop-label) — lagt til likevel per brukarønske.
+      emoji: '☕', name: 'Chillhop Music', loc: 'Netherlands 🇳🇱 · Chillhop / Jazzhop / Triphop',
+      grad: 'linear-gradient(135deg,#1a1005,#3a2410)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://chillhop.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '💙', name: 'Blue Tunes Chillout', loc: 'Germany 🇩🇪 · Lounge / Chillout / Ambient',
+      grad: 'linear-gradient(135deg,#04121f,#0a2c4a)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://bluetuneschillout.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🧘', name: 'Mystic Sound Records', loc: 'Greece 🇬🇷 · Psychedelic Downtempo',
+      grad: 'linear-gradient(135deg,#051a1a,#0a3838)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://mysticsound.bandcamp.com/' },
+      ],
+    },
+    {
+      // Berre Discogs-lenke funnen — ingen eiga nettside/Bandcamp identifisert enno.
+      emoji: '🌫️', name: 'Leftfield Records', loc: 'Sweden 🇸🇪 · Ambient / Psybient (Carbon Based Lifeforms)',
+      grad: 'linear-gradient(135deg,#0a0f14,#182a3a)',
+      links: [
+        { label: 'Discogs', kind: 'web', url: 'https://www.discogs.com/label/467138-Leftfield-Records' },
+      ],
+    },
+    {
+      // Stad ikkje oppgitt nokon stad på sida — ukjend, difor utelate frå loc.
+      emoji: '🐉', name: 'Celestial Dragon Records', loc: 'Electronic / Experimental',
+      grad: 'linear-gradient(135deg,#1a0505,#3d1010)',
+      links: [
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://beatspace-celestialdragon.bandcamp.com/' },
+      ],
+    },
+    {
+      emoji: '🌅', name: 'Café del Mar Music', loc: 'Spain 🇪🇸 · Ibiza · Chillout / Lounge (est. 1994)',
+      grad: 'linear-gradient(135deg,#1a1005,#3d2810)',
+      links: [
+        { label: 'cafedelmar.com', kind: 'web', url: 'https://cafedelmar.com/music/albums' },
       ],
     },
   ];

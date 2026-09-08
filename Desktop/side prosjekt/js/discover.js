@@ -1506,18 +1506,18 @@ const Discover = (() => {
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
           <span class="disc-psy-section-icon">${Icon('music')}</span>
-          <span class="disc-psy-section-title">The artist</span>
-          <span class="disc-psy-section-badge">radioq37.com</span>
+          <span class="disc-psy-section-title">The podcast</span>
+          <span class="disc-psy-section-badge">www.ambientmann.com</span>
         </div>
         <div class="disc-psy-label-grid" style="grid-template-columns:1fr">
-          <a class="disc-psy-label-card" href="https://radioq37.com/artist/ambient-mann/" target="_blank" rel="noopener noreferrer"
+          <a class="disc-psy-label-card" href="https://www.ambientmann.com/" target="_blank" rel="noopener noreferrer"
              style="gap:1.2rem;align-items:flex-start">
             <div class="disc-psy-label-icon" style="font-size:2.5rem">${Icon('waves')}</div>
             <div style="flex:1">
               <div class="disc-psy-label-name" style="font-size:1.1rem;margin-bottom:0.35rem"><span class="notranslate" translate="no">Ambient Mann</span></div>
               <div class="disc-psy-label-desc" style="line-height:1.6">
                 Deep, droning and atmospheric electronica at the intersection of psychill,
-                downtempo and experimental electronica. Explore the full artist at radioq37.com.
+                downtempo and experimental electronica. Explore the full Podcast Series at www.ambientmann.com.
               </div>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
                 ${TAGS.map(t => `<span class="disc-psy-section-badge">${iconForEmoji(t.emoji)} ${t.label}</span>`).join('')}
@@ -1531,7 +1531,7 @@ const Discover = (() => {
       <div class="disc-psy-section">
         <div class="disc-psy-section-hdr">
           <span class="disc-psy-section-icon">${Icon('radio')}</span>
-          <span class="disc-psy-section-title">Radio mix &amp; search</span>
+          <span class="disc-psy-section-title">Radio Podcast &amp; search</span>
           <span class="disc-psy-section-badge">YouTube</span>
         </div>
         <form class="yt-search disc-am-yt-form" onsubmit="return Discover.ambientYtSearch(event)">
