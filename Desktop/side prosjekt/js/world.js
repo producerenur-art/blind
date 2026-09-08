@@ -11,7 +11,7 @@ const World = (() => {
   const FESTIVALS = [
     {
       emoji: '🌌', name: 'Boom Festival', loc: 'Idanha-a-Nova, Portugal 🇵🇹',
-      dates: '18 – 25 Jul 2027 · 30 years',
+      dates: '18 – 25 Jul 2027 · 30 years', from: '2027-07-18', to: '2027-07-25',
       grad: 'linear-gradient(135deg,#0d0829,#1a0b3d,#2a0d5e)',
       theme: 'The world’s most famous transformational festival — Dance Temple, Chill Out Gardens, visionary art & deep camping culture. The 2027 edition celebrates 30 years of Boom, with ~70 % newly booked projects.',
       tags: ['Psytrance', 'Downtempo', 'Ambient', 'Visionary Art', 'Biennial'],
@@ -22,7 +22,7 @@ const World = (() => {
     },
     {
       emoji: '🔥', name: 'OZORA Festival', loc: 'Dádpuszta, Hungary 🇭🇺',
-      dates: '23 Jul – 3 Aug 2027', // oppdatert 07.09.2026 (ticket.ozorafestival.eu) — 2026-datoen var passert
+      dates: '23 Jul – 3 Aug 2027', from: '2027-07-23', to: '2027-08-03', // oppdatert 07.09.2026 (ticket.ozorafestival.eu) — 2026-datoen var passert
       grad: 'linear-gradient(135deg,#1a0a05,#3a1a0a,#5e2a0d)',
       theme: 'One of Europe’s largest — a culturally diverse art and trance gathering.',
       tags: ['Psytrance', 'Progressive', 'Chill Dome', 'Art'],
@@ -54,7 +54,7 @@ const World = (() => {
     },
     {
       emoji: '🏔️', name: 'Burning Mountain', loc: 'Zernez, Switzerland 🇨🇭',
-      dates: '24 – 27 Jun 2027', // oppdatert 07.09.2026 (burning-mountain.ch) — 2026-datoen var passert
+      dates: '24 – 27 Jun 2027', from: '2027-06-24', to: '2027-06-27', // oppdatert 07.09.2026 (burning-mountain.ch) — 2026-datoen var passert
       grad: 'linear-gradient(135deg,#0a1020,#13243f,#1c3a5c)',
       theme: 'Immersive alpine progressive psytrance at 1500 m in the Engadin valley.',
       tags: ['Progressive', 'Psytrance', 'Alpine', 'Open Air'],
@@ -64,7 +64,7 @@ const World = (() => {
     },
     {
       emoji: '🌏', name: 'Earth Frequency Festival', loc: 'Woodford, QLD, Australia 🇦🇺',
-      dates: '23 – 26 Oct 2026',
+      dates: '23 – 26 Oct 2026', from: '2026-10-23', to: '2026-10-26',
       grad: 'linear-gradient(135deg,#0a1a0d,#143018,#1c4a26)',
       theme: 'A large Australian gathering — psytrance, world music, art and the environment.',
       tags: ['Psytrance', 'World Music', 'Arts', 'Community'],
@@ -94,7 +94,7 @@ const World = (() => {
     },
     {
       emoji: '🪶', name: 'Indian Spirit', loc: 'Eldena, Germany 🇩🇪',
-      dates: '25 – 30 Aug 2027', // oppdatert 07.09.2026 (Music Festival Wizard) — 2026-datoen var passert
+      dates: '25 – 30 Aug 2027', from: '2027-08-25', to: '2027-08-30', // oppdatert 07.09.2026 (Music Festival Wizard) — 2026-datoen var passert
       grad: 'linear-gradient(135deg,#1a0f05,#3d240b,#5c3a10)',
       theme: 'Germany’s biggest psytrance festival — Sun, Moon and Mushroom stages plus a Fire Tent and its own Chill Out stage.',
       tags: ['Psytrance', 'Chill Out Stage', 'Open Air', 'Germany'],
@@ -115,7 +115,7 @@ const World = (() => {
     },
     {
       emoji: '🛩️', name: 'VooV Experience', loc: 'Putlitz, Germany 🇩🇪',
-      dates: '16 – 19 Jul 2027',
+      dates: '16 – 19 Jul 2027', from: '2027-07-16', to: '2027-07-19',
       grad: 'linear-gradient(135deg,#050d1f,#0b2044,#123566)',
       theme: 'A German institution since 1992, held on an old airfield between Hamburg and Berlin — main floor, chill floor and a strong old-school Goa heritage.',
       tags: ['Goa Trance', 'Psytrance', 'Chill Floor', 'Since 1992'],
@@ -156,7 +156,7 @@ const World = (() => {
     },
     {
       emoji: '🏝️', name: 'Tribal Gathering', loc: 'Caribbean coast, Panama 🇵🇦',
-      dates: '5 – 22 Mar 2027',
+      dates: '5 – 22 Mar 2027', from: '2027-03-05', to: '2027-03-22',
       grad: 'linear-gradient(135deg,#03161a,#073038,#0c4c52)',
       theme: '18 days on a Caribbean beach with indigenous tribes from around the world — week one house, techno, D&B and world beats, week two full psytrance.',
       tags: ['Psytrance', 'World Beats', 'Beach', '18 Days', 'Indigenous Cultures'],
@@ -166,7 +166,7 @@ const World = (() => {
     },
     {
       emoji: '🦅', name: 'Origin Festival', loc: 'Helderstroom, South Africa 🇿🇦',
-      dates: '29 – 31 Jan 2027',
+      dates: '29 – 31 Jan 2027', from: '2027-01-29', to: '2027-01-31',
       grad: 'linear-gradient(135deg,#1a0714,#330d28,#4d1440)',
       theme: 'A deliberately small Cape gathering 125 km from Cape Town — the Origin floor curated by Nano Records and Riverside Beats by TenFold.',
       tags: ['Psytrance', 'Nano Records', 'Riverside', 'Small Capacity'],
@@ -217,6 +217,11 @@ const World = (() => {
       ],
     },
   ];
+
+  // Gjer FESTIVALS lesbar frå Node (api/send-email.js sin ukentlige e-post) uten
+  // å duplisere festivaldatoane. `module` finst ikke i nettleseren, så denne
+  // linja er et no-op der — kun require('../js/world.js') fra serveren treffer.
+  if (typeof module !== 'undefined' && module.exports) module.exports = { FESTIVALS };
 
   // ── Klubbar & scener ──────────────────────────────────────────────────
   // `events` = kommande planar (vert vist som «Planar framover» med RA-lenkjer).

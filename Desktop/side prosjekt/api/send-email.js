@@ -1,6 +1,12 @@
 const { Resend } = require('resend');
 const { getPlan, fmtKr, fmtDate, nextRenewal, PRO_BENEFITS } = require('./_plans');
 const { cleanArticles } = require('./_strip');
+// Éin kjelde til sannhet for sendeplan/festivaldatoar — les direkte frå frontend-
+// filene i staden for å halde ein handoppdatert kopi i sync (sjå RADIO_SHOWS/
+// EVENT_CALENDAR under). js/shows.js og js/world.js eksporterer via
+// `module.exports` (eit no-op i nettlesaren) berre for dette formålet.
+const { SHOWS } = require('../js/shows.js');
+const { FESTIVALS } = require('../js/world.js');
 
 // Kanonisk nettadresse for ALLE e-postlenker (aktivering, tilbakestilling, kjøp).
 // Brukes som standard slik at lenkene alltid peker til det offisielle domenet —
@@ -370,84 +376,34 @@ const FEATURED_STATIONS = [
   ['🎛️', 'Underground',    'Raw & hypnotic techno'],
 ];
 
-// Veke-programmet — speglar SHOWS i js/shows.js (#/shows). Bevisst hardkoda av
-// same grunn som stasjonane. `day`: 0 = søndag. Timane er i norsk tid.
-const RADIO_SHOWS = [
-  { day: 0, start: 14, end: 18, emoji: '🚀', name: 'Mission Control Sunday', host: 'Space Command',        genre: 'Ambient Space Music' },
-  { day: 0, start: 22, end: 2,  emoji: '🌠', name: 'Stellar PSY Night',      host: 'Stellar Collective',    genre: 'Psytrance · Psychedelic' },
-  { day: 0, start: 4,  end: 7,  emoji: '🌑', name: 'Dark Zone Transmission', host: 'Dark Zone',             genre: 'Dark Ambient · Drone' },
-  { day: 1, start: 7,  end: 10, emoji: '🌌', name: 'Drone Morning',          host: 'Ambient Collective',    genre: 'Ambient · Drone' },
-  { day: 1, start: 12, end: 15, emoji: '🌿', name: 'Psychill Afternoon',     host: 'MultiHuman EntheoMusic',genre: 'Psychill · Psybient' },
-  { day: 2, start: 7,  end: 10, emoji: '🌅', name: 'Goa Sunrise',            host: 'Suburbs of Goa',        genre: 'Psytrance · Goa' },
-  { day: 2, start: 21, end: 24, emoji: '💊', name: 'Techno Underground',     host: 'DJ Digitalis',          genre: 'Techno · Minimal' },
-  { day: 3, start: 18, end: 21, emoji: '🌿', name: 'Chill Wednesday',        host: 'Lush Sessions',         genre: 'Chill · Downtempo' },
-  { day: 3, start: 21, end: 24, emoji: '💧', name: 'Fluid Chillroom',        host: 'Fluid Collective',      genre: 'Psychill · Experimental' },
-  { day: 4, start: 18, end: 21, emoji: '🛋️', name: 'Chillout Lounge',        host: 'Lounge Sessions',       genre: 'Chill Out · Lounge' },
-  { day: 4, start: 23, end: 3,  emoji: '🛸', name: 'Space Travel',           host: 'Cosmic Station',        genre: 'Space Music · Ambient' },
-  { day: 5, start: 3,  end: 6,  emoji: '💀', name: 'Dark Drone Ritual',      host: 'The Void Wanderer',     genre: 'Dark Ambient · Drone' },
-  { day: 5, start: 15, end: 18, emoji: '🌀', name: 'The Trip Sessions',      host: 'The Trip',              genre: 'Psychill · Trip-Hop' },
-  { day: 5, start: 20, end: 23, emoji: '🎷', name: 'Groove Friday',          host: 'Nu-Jazz Collective',    genre: 'Nu-Jazz · Trip-Hop' },
-  { day: 6, start: 0,  end: 4,  emoji: '🌑', name: 'Deep Space Saturday',    host: 'Deep Space One',        genre: 'Deep Ambient · Electronic' },
-  { day: 6, start: 12, end: 15, emoji: '🥗', name: 'Groove Salad Sessions',  host: 'Groove Salad',          genre: 'Downtempo · IDM' },
-  { day: 6, start: 18, end: 21, emoji: '🌀', name: 'Progressive Psy Session',host: 'Trance Around',         genre: 'Progressive Psy · Trance' },
-  { day: 6, start: 21, end: 24, emoji: '🎲', name: 'Dice Radio Athens',      host: 'Dice Radio',            genre: 'Underground · Greek Electronic' },
-  { day: 3, start: 0,  end: 3,  emoji: '🍄', name: 'DMT FM Sessions',        host: 'DMT FM',                genre: 'Psytrance · Goa' },
-  { day: 0, start: 7,  end: 10, emoji: '🌙', name: 'Babaganousha Radio',     host: 'Babaganousha',          genre: 'Psytrance · Goa' },
-  { day: 4, start: 21, end: 23, emoji: '🌌', name: 'Astral Trance Radio',    host: 'ATR',                   genre: 'Progressive Psy · Trance' },
-  { day: 1, start: 15, end: 18, emoji: '🎧', name: 'n5MD Nightscapes',       host: 'n5MD Radio',            genre: 'Downtempo · Ambient' },
-  { day: 2, start: 10, end: 13, emoji: '🧿', name: 'Psyndora Radio',         host: 'Psyndora',              genre: 'Psytrance · Goa' },
-  { day: 3, start: 3,  end: 6,  emoji: '🍄', name: 'Babaganousha Labs',      host: 'Babaganousha Labs',     genre: 'Psytrance · Goa' },
-  { day: 4, start: 0,  end: 3,  emoji: '🌀', name: 'RR Progressive',         host: 'RR Progressive',        genre: 'Progressive Psy · Trance' },
-  { day: 6, start: 8,  end: 11, emoji: '🌫️', name: 'Ambient Psychill',       host: '1.FM',                  genre: 'Psychill · Ambient' },
-  { day: 1, start: 18, end: 21, emoji: '🎐', name: 'Groove Salad Classic',   host: 'Groove Salad Classic',  genre: 'Downtempo · Chillout' },
-  { day: 1, start: 21, end: 24, emoji: '🫧', name: 'Smooth Chill',           host: 'Smooth Chill',          genre: 'Downtempo · Chillout' },
-  { day: 2, start: 0,  end: 3,  emoji: '💊', name: 'Defcon Techno',          host: 'Defcon',                genre: 'Techno Underground · EDM' },
-  { day: 4, start: 15, end: 18, emoji: '🔥', name: 'radiOzora Trance Hour',  host: 'radiOzora',             genre: 'Psytrance · Psychedelic' },
-  { day: 0, start: 10, end: 14, emoji: '🌿', name: 'radiOzora Chill Hour',   host: 'radiOzora',             genre: 'Psychill · Downtempo' },
-  { day: 5, start: 6,  end: 9,  emoji: '🔮', name: 'Radio Q37 Sessions',     host: 'Radio Q37',             genre: 'Psytrance · Ambient Dub' },
-];
+// Veke-programmet — bygd direkte frå SHOWS i js/shows.js (#/shows), IKKJE ein
+// hardkoda kopi lenger. `day`: 0 = søndag. Timane er i norsk tid. Legg til/
+// endre eit program i js/shows.js, og e-posten følgjer automatisk med.
+const RADIO_SHOWS = SHOWS.map(s => ({
+  day: s.day, start: s.startHour, end: s.endHour,
+  emoji: s.emoji, name: s.name, host: s.host, genre: s.genre,
+}));
 
-// Faste datoar frå #/world (festivalar + klubbkveldar). `to` er ISO-datoen
-// arrangementet er over — alt som har vore blir filtrert bort, og lista er
-// sortert på `to`, så e-posten alltid viser det som står nærmast for tur og
-// aldri lovar ein fest som gjekk i fjor.
-//
-// Speglar FESTIVALS/CLUBS i js/world.js. Berre oppføringar med FAST dato er med:
-// dei som står som «Annually · Jul», «Biennial · New Year» e.l. har inga dato å
-// telje ned til, og høyrer difor heime på sida — ikkje i ein kalender.
-// Oppdater denne når World-sida får nye datoar.
-const EVENT_CALENDAR = [
-  // Oppdatert/rydda 07.09.2026: IT Athens sine to juli-2026-datoar er borte
-  // (same fiks som js/world.js Clubs), og ZNA/Mo:Dem/Free Earth/Hadra er
-  // fjerna herifrå (ikkje frå World-sida) fordi 2027-datoane deira enno
-  // ikkje er offisielt stadfesta — denne lista krev FAST dato per kommentaren
-  // over, så eit gjettedato høyrer ikkje heime her. Sjå js/world.js for den
-  // mjukare "Expected …"-forma dei står med der.
-  { emoji: '🏔️', name: 'Burning Mountain',                loc: 'Zernez, Switzerland',      when: '24 – 27 Jun 2027',    from: '2027-06-24', to: '2027-06-27', url: 'https://www.burning-mountain.ch/' },
-  { emoji: '🔥', name: 'OZORA Festival',                   loc: 'Dádpuszta, Hungary',       when: '23 Jul – 3 Aug 2027', from: '2027-07-23', to: '2027-08-03', url: 'https://ozorafestival.eu/' },
-  { emoji: '🪶', name: 'Indian Spirit',                    loc: 'Eldena, Germany',          when: '25 – 30 Aug 2027',    from: '2027-08-25', to: '2027-08-30', url: 'https://www.indian-spirit.de/' },
-  { emoji: '🌏', name: 'Earth Frequency Festival',         loc: 'Woodford, QLD, Australia', when: '23–26 Oct 2026',      from: '2026-10-23', to: '2026-10-26', url: 'https://www.earthfrequency.com.au/' },
-  { emoji: '🦅', name: 'Origin Festival',                  loc: 'Helderstroom, South Africa', when: '29–31 Jan 2027',    from: '2027-01-29', to: '2027-01-31', url: 'https://originfestival.com/' },
-  { emoji: '🏝️', name: 'Tribal Gathering',                loc: 'Caribbean coast, Panama',  when: '5–22 Mar 2027',       from: '2027-03-05', to: '2027-03-22', url: 'https://www.tribalgathering.com/' },
-  { emoji: '🛩️', name: 'VooV Experience',                 loc: 'Putlitz, Germany',         when: '16–19 Jul 2027',      from: '2027-07-16', to: '2027-07-19', url: 'https://www.voov.de/' },
-  { emoji: '🌌', name: 'Boom Festival — 30 years',         loc: 'Idanha-a-Nova, Portugal',  when: '18–25 Jul 2027',      from: '2027-07-18', to: '2027-07-25', url: 'https://www.boomfestival.org/' },
-];
+// Faste datoar frå #/world — bygd direkte frå FESTIVALS i js/world.js, IKKJE ein
+// hardkoda kopi lenger. Berre oppføringar med strukturert `from`/`to` (ISO) er
+// med: dei som berre har fritekst-datoen «Annually · Jul», «Expected …» e.l.
+// har ingen ISO-dato å telje ned til, og fell difor naturleg ut her — akkurat
+// som før, men no automatisk i staden for ei handoppdatert liste. Legg
+// `from`/`to` til ein festival i js/world.js når datoen er stadfesta, og han
+// dukkar opp her av seg sjølv (fjern felta att når datoen blir usikker igjen).
+const EVENT_CALENDAR = FESTIVALS
+  .filter(f => f.from && f.to)
+  .map(f => ({
+    emoji: f.emoji, name: f.name, loc: f.loc, when: f.dates,
+    from: f.from, to: f.to,
+    url: (f.links && f.links[0] && f.links[0].url) || '',
+  }));
 
-// Kuraterte "New releases"-saker frå js/magazine.js sin MAGAZINE-array.
-// Same duplisering-problem som RADIO_SHOWS/EVENT_CALENDAR: serveren kan ikkje
-// importere ein frontend-modul, og readMagazine() under les KUN AI-cache-
-// tabellen magazine_cache — aldri denne kuraterte lista. Utan denne dupliserte
-// kopien ville handplukka utgjevingar (Cryo Chamber, Drumcomplex osv.) aldri
-// nådd nokon på e-post, same om kor mange dei blir. Berre dei med ei ekte,
-// spesifikk dato er med — «Ongoing»/«Updated monthly»-sakene høyrer heime på
-// sida, ikkje i eit "nytt no"-utval. Oppdater denne når nye "New releases"-
-// saker med ekte dato blir lagt til i js/magazine.js.
-const NEW_RELEASES = [
-  { tittel: 'Anjunadeep 16', ingress: 'The sixteenth edition of the compilation series, released February 2026.', kilde: { navn: 'Anjunadeep 16 (Bandcamp)' }, kilde_url: 'https://anjunadeep.bandcamp.com/album/anjunadeep-16' },
-  { tittel: 'Aes Dana — Perimeters (Remaster 2025)', ingress: 'Ultimae dusts off a downtempo classic.', kilde: { navn: 'Ultimae Records' }, kilde_url: 'https://ultimae.com/' },
-  { tittel: 'Drumcomplex returns to his own DCMX with «Supernova»', ingress: 'Tough, no-nonsense German techno — 139 BPM, raw and uncompromising.', kilde: { navn: 'DCMX (Beatport)' }, kilde_url: 'https://www.beatport.com/release/supernova/5823425' },
-  { tittel: 'Void Stasis returns with «Specimen 7»', ingress: 'A sci-fi dark ambient voyage on Cryo Chamber, mastered by label head Simon Heath.', kilde: { navn: 'Cryo Chamber (Bandcamp)' }, kilde_url: 'https://cryochamber.bandcamp.com/album/specimen-7' },
-];
+// "New releases"-saker: AI-cache-tabellen magazine_cache, sjangeren 'labels'
+// ('new releases, compilations, label news and signings', sjå GENRES i
+// api/magazine.js). Ikkje lenger ei handkuratert liste — same kjelde som
+// «New in the magazine»/«Festival & party news» under, friskna opp av same
+// cron to gonger dagleg (06/18). Sjå readMagazine() + kallet i handleren.
 
 const DAY_NAMES  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const DAY_SHORT  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -890,7 +846,7 @@ module.exports = async (req, res) => {
       ? cleanArticles(b.magazine)
       : allArts.filter(a => !shownTitles.has(String(a.tittel || a.title || ''))).slice(0, 3);
     const festivals  = Array.isArray(b.festivals) ? cleanArticles(b.festivals) : await readMagazine('festivals', 3);
-    const releases   = Array.isArray(b.releases) ? cleanArticles(b.releases) : NEW_RELEASES;
+    const releases   = Array.isArray(b.releases) ? cleanArticles(b.releases) : await readMagazine('labels', 4);
     const shows      = Array.isArray(b.shows)  ? b.shows  : upcomingShows(osloClock(now), 4);
     const events     = Array.isArray(b.events) ? b.events : upcomingEvents(now, 4);
     subject = "What's coming up on SiriusFM — shows, magazine stories & new releases 🎧";

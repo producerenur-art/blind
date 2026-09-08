@@ -389,6 +389,11 @@ const Shows = (() => {
     },
   ];
 
+  // Gjer SHOWS lesbar frå Node (api/send-email.js sin ukentlige e-post) uten å
+  // duplisere sendeplanen. `module` finst ikke i nettleseren, så denne linja er
+  // et no-op der — kun require('../js/shows.js') fra serveren treffer den.
+  if (typeof module !== 'undefined' && module.exports) module.exports = { SHOWS };
+
   const DAYS_NO = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const DAYS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
