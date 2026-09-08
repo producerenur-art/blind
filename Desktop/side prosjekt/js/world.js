@@ -810,6 +810,17 @@ const World = (() => {
         { label: 'dj-surgeon.com', kind: 'web', url: 'https://dj-surgeon.com/' },
       ],
     },
+    {
+      // Lagt til 08.09.2026 (brukar-forespurt), verifisert: begge lenkjene lastar.
+      emoji: '🕯️', name: 'Kammarheit', loc: 'Sweden 🇸🇪 · Dark Ambient / Dungeon Synth (Pär Boström, since 2000)',
+      theme: 'Pär Boström’s dark ambient project, based in Umeå — a post-apocalyptic stillness among subterranean halls, deep chasms and abandoned places. A recurring collaborator with Atrium Carceri (Simon Heath) on Cryo Chamber, and a veteran voice on its dungeon-synth offshoot Cryo Crypt.',
+      tags: ['Dark Ambient', 'Dungeon Synth', 'Cryo Chamber'],
+      grad: 'linear-gradient(135deg,#0a0a0a,#1a1005)',
+      links: [
+        { label: 'kammarheit.com', kind: 'web', url: 'https://kammarheit.com/' },
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://kammarheit.bandcamp.com/' },
+      ],
+    },
   ];
 
   // ── Web radios from around the world ──────────────────────────────────
