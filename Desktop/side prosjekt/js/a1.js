@@ -17,7 +17,7 @@ const A1 = (() => {
     { name: 'Marshall Vian Summers',     url: 'https://marshallsummers.com/' },
     { name: 'New Knowledge Library',     url: 'https://newknowledgelibrary.org/' },
     { name: 'Book Yoga Retreats',        url: 'https://www.bookyogaretreats.com/' },
-    { name: 'The New Message',           url: 'https://www.newmessage.org/book-intro/the-worldwide-community-of-the-new-message-from-god-introduction/' },
+    { name: 'The New Message',           url: 'https://www.newmessage.org/about/introduction-to-the-new-message/' }, // gamal URL var 404, retta 08.09.2026
     { name: 'The Great Waves of Change', url: 'https://www.greatwavesofchange.org/' },
     { name: 'Allies of Humanity',        url: 'https://www.alliesofhumanity.org/' },
   ];
