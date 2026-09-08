@@ -216,6 +216,59 @@ const World = (() => {
         { label: 'darkmofo.net.au', kind: 'web', url: 'https://darkmofo.net.au/' },
       ],
     },
+    // ── Lagt til 08.09.2026 (brukar-forespurt, same sjanger), verifisert via
+    // research-agent — alle offisielle sider levande. Diskonterte kandidatar
+    // (nedlagt/ustadfesta/ikkje verifiserbar) IKKJE tatt med, sjå commit-melding.
+    {
+      emoji: '🏜️', name: 'Waking Life', loc: 'Crato, Portugal 🇵🇹',
+      dates: 'Expected mid-Jun 2027 (not yet official)', // 2026-datoen (16–22 jun) alt passert
+      grad: 'linear-gradient(135deg,#1f1006,#3d200c,#5c3512)',
+      theme: 'A desert rave in the Alentejo since 2017 — five days of underground electronic and experimental music with immersive art installations woven through the festival grounds and a dedicated Chill Out stage away from the dancefloors.',
+      tags: ['Experimental', 'Downtempo', 'Art Installations', 'Desert', 'Since 2017'],
+      links: [
+        { label: 'wakinglife.pt', kind: 'web', url: 'https://wakinglife.pt/' },
+      ],
+    },
+    {
+      emoji: '🌳', name: 'Dreamersland Festival', loc: 'Bolimów Forest, Poland 🇵🇱',
+      dates: '14 – 18 Jul 2027', from: '2027-07-14', to: '2027-07-18',
+      grad: 'linear-gradient(135deg,#06140a,#0e2f18,#164a28)',
+      theme: 'An alcohol- and substance-free transformational gathering on the edge of a nature reserve — meadows, forest and a river frame five days of psychedelic and organic electronic music, workshops, bonfire jams and multilingual community programming.',
+      tags: ['Transformational', 'Forest', 'Alcohol-Free', 'Community', 'Poland'],
+      links: [
+        { label: 'dreamersland.eu', kind: 'web', url: 'https://dreamersland.eu/en/' },
+      ],
+    },
+    {
+      emoji: '🌴', name: 'Envision Festival', loc: 'Uvita, Costa Rica 🇨🇷',
+      dates: 'Expected late Feb – early Mar 2027 (not yet official)', // 2026-datoen (23 feb–2 mar) alt passert
+      grad: 'linear-gradient(135deg,#04140f,#0a2e22,#0f4a37)',
+      theme: 'Founded in 2011 where Costa Rican rainforest meets the Pacific — six stages (Luna, Sol, Lapa, Templo Cielo, Estrella, Village) blending psytrance and genre-crossing electronic music with yoga, permaculture, art installations and jungle immersion.',
+      tags: ['Psytrance', 'Transformational', 'Jungle', 'Yoga & Wellness', 'Since 2011'],
+      links: [
+        { label: 'envisionfestival.com', kind: 'web', url: 'https://www.envisionfestival.com/' },
+      ],
+    },
+    {
+      emoji: '💧', name: 'Own Spirit Festival', loc: 'Baldellou, Spain 🇪🇸',
+      dates: 'Expected early Sep 2027 (not yet official)', // 2026-datoen (2–7 sep) alt passert
+      grad: 'linear-gradient(135deg,#0a0f1f,#161f44,#212f66)',
+      theme: 'A transformational gathering beside the Santa Ana reservoir since 2015 — the main Dancefloor runs psytrance, full-on, progressive and forest, the experimental Temple of Frequencies covers darkprog, downtempo and psydub, and a Holistic Zone hosts wellness workshops.',
+      tags: ['Psytrance', 'Forest', 'Psydub', 'Holistic Zone', 'Since 2015'],
+      links: [
+        { label: 'ownspiritfestival.org', kind: 'web', url: 'https://www.ownspiritfestival.org/' },
+      ],
+    },
+    {
+      emoji: '🌄', name: 'Luminate Festival', loc: 'Takaka Hill, Golden Bay, New Zealand 🇳🇿',
+      dates: 'Expected late Jan 2027 (not yet official)', // siste utgåve jan–feb 2026 alt passert
+      grad: 'linear-gradient(135deg,#0a1420,#123048,#1b4a6c)',
+      theme: 'A sub-alpine gathering at 750 m on Canaan Downs — melodic and uplifting psytrance, progressive, psydub and chill out alongside a zero-waste, no-alcohol ethos and its own "Lumins" alternative-currency system.',
+      tags: ['Psytrance', 'Psydub', 'Zero-Waste', 'Alpine', 'New Zealand'],
+      links: [
+        { label: 'luminatefestival.co.nz', kind: 'web', url: 'https://luminatefestival.co.nz/' },
+      ],
+    },
   ];
 
   // Gjer FESTIVALS lesbar frå Node (api/send-email.js sin ukentlige e-post) uten
