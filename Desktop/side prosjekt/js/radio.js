@@ -825,6 +825,7 @@ const Radio = (() => {
             <!-- Video-visualisering: lydløs, loopet 4K-kosmos fra YouTube.
                  Lyden kommer alltid fra radioen — denne iframen er kun visuell. -->
             <iframe id="radio-vis-video" title="Cosmos video (muted)" allow="autoplay; encrypted-media" frameborder="0"></iframe>
+            <div class="radio-vis-credit" id="radio-vis-credit" hidden></div>
             <div class="radio-vis-overlay" id="radio-idle">
               <div class="radio-idle-text">
                 <div style="font-size:3rem;margin-bottom:0.5rem">${Icon('radio')}</div>
@@ -2204,7 +2205,7 @@ const Radio = (() => {
     if (typeof mode === 'string' && mode.startsWith('ai_')) {
       const id = mode.slice(3);
       const meta = visMeta[id] || {};
-      return { id, emoji: meta.emoji || '✨', label: meta.label || 'Playing' };
+      return { id, emoji: meta.emoji || '✨', label: meta.label || 'Playing', channel: meta.channel || null };
     }
     return null;
   }
@@ -2246,6 +2247,22 @@ const Radio = (() => {
     sizeVisVideo();
     forceVisRepaint(frame);   // mal den nye videoen med en gang (ikke først ved muse-hover)
     document.getElementById('radio-idle')?.classList.add('hidden');
+    updateVisCredit(mode);
+  }
+  // Liten kreditering nederst i videoen: hvilken YouTube-kanal klippet er fra.
+  // Kun AI-hentede visuals har kanalnavn (fra /api/visuals-fresh) — klassikerne
+  // (VIS_CLASSICS) mangler dette feltet, så kreditten skjules pent for dem.
+  function updateVisCredit(mode) {
+    const el = document.getElementById('radio-vis-credit');
+    if (!el) return;
+    const item = visualItemForMode(mode);
+    const channel = item && item.channel;
+    if (channel) {
+      el.textContent = '🎬 ' + channel;
+      el.hidden = false;
+    } else {
+      el.hidden = true;
+    }
   }
   // Chrome/Safari maler av og til ikke den nye iframen før noe endrer stilen
   // (f.eks. muse-hover på en knapp). Tving en repaint ved å nudge transformen
@@ -2264,6 +2281,8 @@ const Radio = (() => {
     frame.classList.remove('active');
     frame.src = '';   // stopp avspilling helt (frigjør ressurser)
     visVideoLoaded = null;
+    const credit = document.getElementById('radio-vis-credit');
+    if (credit) credit.hidden = true;
     // Vis idle-teksten igjen om ingenting spiller
     if (!(currentStation && isPlaying)) document.getElementById('radio-idle')?.classList.remove('hidden');
   }
@@ -2297,7 +2316,7 @@ const Radio = (() => {
     items.forEach(it => {
       const mode = it.mode || aiModeOf(it.id);
       if (!it.mode) AI_VIDEOS[mode] = it.id;
-      visMeta[it.id] = { emoji: it.emoji, label: it.label };
+      visMeta[it.id] = { emoji: it.emoji, label: it.label, channel: it.channel || null };
       const btn = document.createElement('button');
       btn.className = 'vis-btn' + (visMode === mode ? ' active' : '');
       btn.textContent = `${it.emoji || '🌀'} ${it.label || 'AI visual'}`;

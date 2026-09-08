@@ -2709,6 +2709,29 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(34,
   z-index: 1;
 }
 #radio-vis-video.active { display: block; }
+/* Kreditering: hvilken YouTube-kanal den aktive AI-visualen er fra (se
+   api/visuals-fresh.js → channel-feltet). Skjules for klassikerne, som
+   mangler kanalnavn. Ligger over videoen, under kontroll-knappene. */
+.radio-vis-credit {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
+  max-width: calc(100% - 20px);
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(8, 6, 20, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(150,110,255,0.18);
+  color: var(--text2, #b9c0d4);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
 .radio-vis-overlay {
   position: absolute;
   inset: 0;

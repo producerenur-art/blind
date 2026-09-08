@@ -308,6 +308,7 @@ function toItem(cand, key, aiById, i) {
     group: key,
     emoji: meta.emoji || GROUP_EMOJI[key] || '🌀',
     label: meta.label || (GROUP_LABEL[key] + (i ? ' ' + (i + 1) : '')),
+    channel: cand.channel || null,   // YouTube-kanalen som laga videoen — for kreditering i UI
   };
 }
 
