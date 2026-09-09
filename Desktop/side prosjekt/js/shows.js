@@ -531,6 +531,42 @@ const Shows = (() => {
       desc: 'Atmospheric ambient and dronescapes to carry the afternoon.',
       stream: 'dronezone',
     },
+    {
+      id: 'psyndora-friday-session',
+      name: 'Psyndora Friday Session',
+      host: 'Psyndora',
+      day: 5, // Friday
+      startHour: 9, endHour: 12,
+      genre: 'Psytrance · Progressive · Goa',
+      emoji: '🧿',
+      color: '#a855f7',
+      desc: 'Psytrance, progressive and goa to open a Friday morning.',
+      stream: 'psyndora',
+    },
+    {
+      id: 'lush-friday-grooves',
+      name: 'Lush Friday Grooves',
+      host: 'Lush',
+      day: 5, // Friday
+      startHour: 12, endHour: 15,
+      genre: 'Downtempo · Chillout',
+      emoji: '🌊',
+      color: '#14b8a6',
+      desc: 'Sensuous, slow-moving electronic grooves to ease into Friday afternoon.',
+      stream: 'lush',
+    },
+    {
+      id: 'friday-edm-warmup',
+      name: 'Friday EDM Warmup',
+      host: 'SomaFM Specials',
+      day: 5, // Friday
+      startHour: 18, endHour: 20,
+      genre: 'EDM · House',
+      emoji: '🪩',
+      color: '#ec4899',
+      desc: 'An eclectic electronic block party to bridge the afternoon into Friday night.',
+      stream: 'specials',
+    },
   ];
 
   // Gjer SHOWS lesbar frå Node (api/send-email.js sin ukentlige e-post) uten å
