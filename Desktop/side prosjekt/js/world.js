@@ -959,29 +959,9 @@ const World = (() => {
       links: [{ label: 'psychedelic.fm', kind: 'web', url: 'https://www.psychedelic.fm/' }],
     },
     {
-      emoji: '🕉️', name: 'Suburbs of Goa', loc: 'Indian electronica & psytrance',
-      grad: 'linear-gradient(135deg,#1a1405,#3a2e0a)',
-      links: [{ play: 'suburbsofgoa' }],
-    },
-    {
-      emoji: '🌀', name: 'The Trip', loc: 'Psychedelic electronica & trip-hop',
-      grad: 'linear-gradient(135deg,#0d0829,#2a0d5e)',
-      links: [{ play: 'thetrip' }],
-    },
-    {
-      // Denne lista hadde ingen dark ambient/drone- eller techno-radio frå før —
-      // same hol som Labels/Artists/Media. Alle tre `play`-id-ane finst allereie
-      // i STATIONS (radio.js), så dette er berre nye vindauge inn til dei.
-      emoji: '💀', name: 'Doomed — Dark Drone', loc: 'Dark ambient & dark drone electronics',
-      grad: 'linear-gradient(135deg,#0a0a0a,#1a0505)',
-      links: [{ play: 'doomed' }],
-    },
-    {
-      emoji: '💊', name: 'Digitalis', loc: 'Hypnotic techno & minimal grooves',
-      grad: 'linear-gradient(135deg,#1a0505,#2e0808)',
-      links: [{ play: 'digitalis' }],
-    },
-    {
+      // SomaFM (ice2.somafm.com) rekvirerte 09.09.2026 fjerning av alle strøymane
+      // sine frå tenesta — Suburbs of Goa, The Trip, Doomed og Digitalis var
+      // alle SomaFM-kanalar utan att det stod noko stad, og er difor fjerna.
       emoji: '🌿', name: 'radiOzora Chill', loc: 'OZORA Festival radio — chill & downtempo · Budapest 🇭🇺',
       grad: 'linear-gradient(135deg,#04130a,#0a2e16)',
       links: [{ play: 'radiozora-chill' }],

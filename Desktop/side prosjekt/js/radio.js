@@ -28,23 +28,12 @@ const Radio = (() => {
     // FEATURED
     // ════════════════════════════════════════════
     {
-      id: 'stellar-psy', cat: 'Stellar',
-      name: 'Stellar PSY',
-      url:  'https://ice2.somafm.com/spacestation-128-mp3',
-      emoji: '🌠', color: '#22c55e',
-      desc: 'Psychedelic Dub · SiriusFM\'s main station',
-      featured: true,
-    },
-
-    // ════════════════════════════════════════════
-    // RADIO Q37
-    // ════════════════════════════════════════════
-    {
       id: 'radioq37', cat: 'Radio Q37',
       name: 'Radio Q37',
       url:  'https://radioq.radioca.st/stream',
       emoji: '🔮', color: '#e11d48',
       desc: 'Radio for the mind travellers — Psychill · Ambient Dub · Deep Trance',
+      featured: true,
     },
 
     // ════════════════════════════════════════════
@@ -73,13 +62,6 @@ const Radio = (() => {
     // ════════════════════════════════════════════
     // PSYTRANCE / GOA  ▲ høyest energi
     // ════════════════════════════════════════════
-    {
-      id: 'suburbsofgoa', cat: 'Psytrance / Goa',
-      name: 'Suburbs of Goa',
-      url:  'https://ice2.somafm.com/suburbsofgoa-128-mp3',
-      emoji: '🕉️', color: '#f59e0b',
-      desc: 'Indian electronica & psytrance ✓',
-    },
     {
       id: 'dmtfm', cat: 'Psytrance / Goa',
       name: 'DMT FM — Psytrance 24/7',
@@ -137,77 +119,8 @@ const Radio = (() => {
     },
 
     // ════════════════════════════════════════════
-    // EDM / HOUSE / TECHNO
-    // ════════════════════════════════════════════
-    {
-      id: 'digitalis', cat: 'EDM / House / Techno',
-      name: 'Digitalis',
-      url:  'https://ice2.somafm.com/digitalis-256-mp3',
-      emoji: '💊', color: '#ef4444',
-      desc: 'Hypnotic techno & minimal ✓',
-    },
-    {
-      id: 'defcon', cat: 'EDM / House / Techno',
-      name: 'DEF CON Radio',
-      url:  'https://ice2.somafm.com/defcon-128-mp3',
-      emoji: '🔐', color: '#64748b',
-      desc: 'Underground techno & hacker electronica ✓',
-    },
-    {
-      id: 'specials', cat: 'EDM / House / Techno',
-      name: 'SomaFM Specials',
-      url:  'https://ice2.somafm.com/specials-128-mp3',
-      emoji: '⭐', color: '#0891b2',
-      desc: 'Eclectic electronic block party & dance ✓',
-    },
-
-
-    // ════════════════════════════════════════════
-    // LO-FI / IDM
-    // ════════════════════════════════════════════
-    {
-      id: 'cliqhop', cat: 'Lo-Fi / IDM',
-      name: 'Cliqhop IDM',
-      url:  'https://ice2.somafm.com/cliqhop-256-mp3',
-      emoji: '🔮', color: '#4ade80',
-      desc: 'Clicks, cuts & beeping IDM ✓',
-    },
-    {
-      id: 'poptron', cat: 'Lo-Fi / IDM',
-      name: 'PopTron',
-      url:  'https://ice2.somafm.com/poptron-128-mp3',
-      emoji: '🤖', color: '#06b6d4',
-      desc: 'Electropop & hypnotic synth grooves ✓',
-    },
-
-    // ════════════════════════════════════════════
-    // DUB / REGGAE
-    // ════════════════════════════════════════════
-    {
-      id: 'heavyweightreggae', cat: 'Dub / Reggae',
-      name: 'Heavyweight Reggae',
-      url:  'https://ice2.somafm.com/reggae-128-mp3',
-      emoji: '🎚️', color: '#16a34a',
-      desc: 'Reggae, ska & deep dub ✓',
-    },
-
-    // ════════════════════════════════════════════
     // PSYBIENT / PSYCHILL
     // ════════════════════════════════════════════
-    {
-      id: 'thetrip', cat: 'Psybient / Psychill',
-      name: 'The Trip',
-      url:  'https://ice2.somafm.com/thetrip-128-mp3',
-      emoji: '🌀', color: '#22c55e',
-      desc: 'Progressive trip-hop & psychedelic electronica ✓',
-    },
-    {
-      id: 'fluid', cat: 'Psybient / Psychill',
-      name: 'Fluid',
-      url:  'https://ice2.somafm.com/fluid-128-mp3',
-      emoji: '💧', color: '#06b6d4',
-      desc: 'Psychedelic, electronic, experimental ✓',
-    },
     {
       id: 'ambientpsy-1fm', cat: 'Psybient / Psychill',
       name: 'Ambient Psychill (1.FM)',
@@ -229,34 +142,6 @@ const Radio = (() => {
     // CHILL OUT / DOWNTEMPO
     // ════════════════════════════════════════════
     {
-      id: 'groovesalad', cat: 'Chill Out / Downtempo',
-      name: 'Groove Salad',
-      url:  'https://ice2.somafm.com/groovesalad-256-mp3',
-      emoji: '🥗', color: '#10b981',
-      desc: 'IDM, trip-hop & electronic downtempo ✓',
-    },
-    {
-      id: 'gsclassic', cat: 'Chill Out / Downtempo',
-      name: 'Groove Salad Classic',
-      url:  'https://ice2.somafm.com/gsclassic-128-mp3',
-      emoji: '🎐', color: '#14b8a6',
-      desc: 'Classic chillout grooves from the early 2000s ✓',
-    },
-    {
-      id: 'lush', cat: 'Chill Out / Downtempo',
-      name: 'Lush',
-      url:  'https://ice2.somafm.com/lush-128-mp3',
-      emoji: '🌿', color: '#16a34a',
-      desc: 'Sensuous, slow-moving electronic grooves ✓',
-    },
-    {
-      id: 'beatblender', cat: 'Chill Out / Downtempo',
-      name: 'Beat Blender',
-      url:  'https://ice2.somafm.com/beatblender-128-mp3',
-      emoji: '🎚️', color: '#ec4899',
-      desc: 'Deep electronic beats & downtempo ✓',
-    },
-    {
       id: '1fm-chillout', cat: 'Chill Out / Downtempo',
       name: '1.FM Chillout Lounge',
       url:  'https://strm112.1.fm/chilloutlounge_mobile_mp3',
@@ -264,69 +149,11 @@ const Radio = (() => {
       desc: '1.FM — electronic chill lounge 24/7',
     },
     {
-      id: 'n5md', cat: 'Chill Out / Downtempo',
-      name: 'n5MD Radio',
-      url:  'https://ice2.somafm.com/n5md-128-mp3',
-      emoji: '🌌', color: '#6366f1',
-      desc: 'Emotional downtempo & ambient electronica ✓',
-    },
-    {
       id: 'smoothchill', cat: 'Chill Out / Downtempo',
       name: 'Smooth Chill',
       url:  'https://media-ssl.musicradio.com/SmoothChillMP3',
       emoji: '🫧', color: '#0ea5e9',
       desc: 'Relaxing chill & soul — UK 🇬🇧',
-    },
-
-
-    // ════════════════════════════════════════════
-    // AMBIENT / SPACE
-    // ════════════════════════════════════════════
-    {
-      id: 'spacestation', cat: 'Ambient / Space',
-      name: 'Space Station',
-      url:  'https://ice2.somafm.com/spacestation-128-mp3',
-      emoji: '🛸', color: '#0ea5e9',
-      desc: 'Spacemusic & ambient electronica ✓',
-    },
-    {
-      id: 'deepspaceone', cat: 'Ambient / Space',
-      name: 'Deep Space One',
-      url:  'https://ice2.somafm.com/deepspaceone-128-mp3',
-      emoji: '🌑', color: '#1e40af',
-      desc: 'Deep electronic ambient ✓',
-    },
-    {
-      id: 'missioncontrol', cat: 'Ambient / Space',
-      name: 'Mission Control',
-      url:  'https://ice2.somafm.com/missioncontrol-128-mp3',
-      emoji: '🚀', color: '#f97316',
-      desc: 'Ambient space music ✓',
-    },
-
-    // ════════════════════════════════════════════
-    // DRONE / DARK DRONE  ▼ dypest energi
-    // ════════════════════════════════════════════
-    {
-      id: 'dronezone', cat: 'Drone / Dark Drone',
-      name: 'Drone Zone',
-      url:  'https://ice2.somafm.com/dronezone-256-mp3',
-      emoji: '🌌', color: '#4f46e5',
-      desc: 'Atmospheric ambient & dronescape ✓',
-    },
-    {
-      id: 'doomed', cat: 'Drone / Dark Drone',
-      name: 'Doomed — Dark Drone',
-      url:  'https://ice2.somafm.com/doomed-256-mp3',
-      emoji: '💀', color: '#7f1d1d',
-      desc: 'Dark ambient & dark drone electronics ✓',
-    },
-    {
-      id: 'darkzone', cat: 'Drone / Dark Drone',
-      name: 'Dark Zone',
-      url:  'https://ice2.somafm.com/darkzone-256-mp3',
-      emoji: '🌑', color: '#0d0d1a',
-      desc: 'The darker side of deep ambient — music for staring into the Abyss ✓',
     },
   ];
 

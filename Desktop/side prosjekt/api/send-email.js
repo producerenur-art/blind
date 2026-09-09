@@ -369,11 +369,14 @@ function promoHtml(name, siteUrl, unsubscribeUrl) {
 
 // Utvalde kanalar — speglar dei featured stasjonane i js/radio.js. Bevisst
 // hardkoda (sjølvstendig) så e-posten ikkje treng frontend-modulane.
+// 09.09.2026: alle fire opphavlege oppføringane (Stellar PSY, Deep Space,
+// Underground) var SomaFM-strøymar SomaFM sjølv kravde fjerna — bytta ut med
+// dei fire stasjonane som faktisk er igjen etter opprydninga.
 const FEATURED_STATIONS = [
-  ['🌠', 'Stellar PSY',    'Psychedelic Dub · SiriusFM\'s main station'],
-  ['🔮', 'Radio Q37',      'Psytrance · around the clock'],
-  ['🌌', 'Deep Space',     'Ambient · deep listening'],
-  ['🎛️', 'Underground',    'Raw & hypnotic techno'],
+  ['🔮', 'Radio Q37',      'Psychill · Ambient Dub · Deep Trance — SiriusFM\'s main station'],
+  ['🔥', 'radiOzora Trance', 'OZORA Festival radio — psytrance 24/7'],
+  ['🍄', 'DMT FM',          'Psytrance · Goa — Tenerife 24/7'],
+  ['🌌', 'Babaganousha',    'Psychedelic · Goa · Psytrance'],
 ];
 
 // Veke-programmet — bygd direkte frå SHOWS i js/shows.js (#/shows), IKKJE ein

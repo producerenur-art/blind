@@ -915,18 +915,21 @@ const App = (() => {
     // Home radio widget controller
     window.HomeRadio = (() => {
       const GENRE_IDS = {
-        psytrance:   ['suburbsofgoa'],
-        downtempo:   ['groovesalad', 'beatblender', 'fluid', 'n5md'],
-        // Techno Underground + Psychill er foreløpig kun YouTube-fanene (AI-rotasjon).
-        // Ingen radiokanal-kort her — kanallistene ellers står som før.
+        // SomaFM (ice2.somafm.com) rekvirerte fjerning av alle strøymar frå tenesta
+        // deira 09.09.2026 — psytrance/downtempo/ambient/dub/dark-drone mista difor
+        // stasjonskorta sine (dei var utelukkande SomaFM-kanalar). Same fallback
+        // som techno/psychill alt brukte: berre YouTube-fanen (AI-rotasjon), ingen
+        // radiokanal-kort her.
+        psytrance:   [],
+        downtempo:   [],
         techno:      [],
         psychill:    [],
         progressive: ['trancearound', 'atr', 'rr-progressive'],
-        ambient:     ['spacestation', 'deepspaceone', 'missioncontrol', 'dronezone'],
-        goa:         ['suburbsofgoa', 'dmtfm', 'psyndora', 'babaganousha', 'babaganousha-labs'],
-        dub:         ['stellar-psy', 'heavyweightreggae'],
-        chillout:    ['1fm-chillout', 'smoothchill', 'lush'],
-        'dark-drone':['dronezone', 'doomed', 'darkzone'],
+        ambient:     [],
+        goa:         ['dmtfm', 'psyndora', 'babaganousha', 'babaganousha-labs'],
+        dub:         [],
+        chillout:    ['1fm-chillout', 'smoothchill'],
+        'dark-drone':[],
       };
       let _currentId = null;
       let _playing = false;
