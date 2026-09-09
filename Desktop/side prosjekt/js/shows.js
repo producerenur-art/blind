@@ -567,6 +567,18 @@ const Shows = (() => {
       desc: 'An eclectic electronic block party to bridge the afternoon into Friday night.',
       stream: 'specials',
     },
+    {
+      id: 'midnight-abyss',
+      name: 'Midnight Abyss',
+      host: 'Dark Zone',
+      day: 5, // Friday
+      startHour: 23, endHour: 24,
+      genre: 'Dark Ambient · Drone',
+      emoji: '🌑',
+      color: '#0d0d1a',
+      desc: "Friday's last hour — staring into the abyss before Deep Space Saturday takes over at midnight.",
+      stream: 'darkzone',
+    },
   ];
 
   // Gjer SHOWS lesbar frå Node (api/send-email.js sin ukentlige e-post) uten å
