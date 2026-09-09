@@ -1056,7 +1056,7 @@ const World = (() => {
               <div class="world-stat"><span>${LABELS.length}</span> labels</div>
               <div class="world-stat"><span>${ARTISTS.length}</span> artists</div>
               <div class="world-stat"><span>${MEDIA.length}</span> magazines</div>
-              <div class="world-stat"><span>${RADIOS.length}</span> radios</div>
+              <div class="world-stat"><span>${window.Radio?.stations?.length || RADIOS.length}</span> radios</div>
             </div>
             <a class="shows-live-btn" href="#/radio">${Icon('radio')} Open the radio player</a>
           </div>
