@@ -2,11 +2,6 @@
 const Radio = (() => {
 
   // ── External player embeds (iframe) ──────────────────────────────────
-  // 'q37' (radioq37.com/player/) fjerna 07.09.2026: utgått SSL-sertifikat
-  // (verifisert via WebFetch — "certificate has expired"), og var uansett
-  // aldri ferdig sett opp (koden hadde kommentaren "bytt til din faktiske
-  // player-URL"). Ekte Radio Q37-lyd finst framleis via STATIONS-oppføringa
-  // 'radioq37' (radioq.radioca.st, verifisert 200 OK) — ingenting gjekk tapt.
   const EXTERNAL_PLAYERS = [
     {
       id: 'dice-radio',
@@ -25,18 +20,6 @@ const Radio = (() => {
   const STATIONS = [
 
     // ════════════════════════════════════════════
-    // FEATURED
-    // ════════════════════════════════════════════
-    {
-      id: 'radioq37', cat: 'Radio Q37',
-      name: 'Radio Q37',
-      url:  'https://radioq.radioca.st/stream',
-      emoji: '🔮', color: '#e11d48',
-      desc: 'Radio for the mind travellers — Psychill · Ambient Dub · Deep Trance',
-      featured: true,
-    },
-
-    // ════════════════════════════════════════════
     // radiOzora — OZORA Festival Radio (Airtime · live now-playing)
     // ════════════════════════════════════════════
     {
@@ -46,6 +29,7 @@ const Radio = (() => {
       npApi: 'https://trance.airtime.pro/api/live-info-v2',
       emoji: '🔥', color: '#f97316',
       desc: 'OZORA Festival radio — psytrance 24/7 · Budapest 🇭🇺',
+      featured: true,
     },
     {
       // Verifisert 07.09.2026: chill.out.airtime.pro/chill_a svarer 200, og

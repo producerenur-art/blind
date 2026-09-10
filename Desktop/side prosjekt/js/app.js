@@ -1071,7 +1071,7 @@ const App = (() => {
       }
 
       function autoStart() {
-        const defaultId = 'radioq37';
+        const defaultId = 'radiozora-trance';
         Radio.playStation(defaultId);
         _updateDisplay(defaultId);
       }

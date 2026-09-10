@@ -1,14 +1,13 @@
 # Data — radiostasjoner (ordrett fra `js/radio.js`)
 
-Alle 30 stasjoner i `STATIONS` + 3 i `EXTERNAL_PLAYERS`. Felt: `id, cat, name, url, emoji,
+Alle 29 stasjoner i `STATIONS` + 1 i `EXTERNAL_PLAYERS`. Felt: `id, cat, name, url, emoji,
 color, desc` (+ `featured`/`live`). Hører til [[05-radio]]. Kopier verbatim ved gjenoppbygging.
 
-## STATIONS (30)
+## STATIONS (29)
 
 | id | cat | name | emoji | color | url | desc |
 |----|-----|------|-------|-------|-----|------|
 | stellar-psy | Stellar | Stellar PSY | 🌠 | #7c3aed | https://ice2.somafm.com/spacestation-128-mp3 | Psychedelic Dub · Sound Core sin hovedkanal (featured) |
-| radioq37 | Radio Q37 | Radio Q37 | 🔮 | #e11d48 | https://radioq.radioca.st/stream | Radio for the mind travellers — Psychill · Ambient Dub · Deep Trance |
 | suburbsofgoa | Psytrance / Goa | Suburbs of Goa | 🕉️ | #f59e0b | https://ice2.somafm.com/suburbsofgoa-128-mp3 | Indian electronica & psytrance ✓ |
 | dmtfm | Psytrance / Goa | DMT FM — Psytrance 24/7 | 🍄 | #22c55e | https://dc1.serverse.com/proxy/ywycfrxn/stream | Psytrance · Goa · Psychedelic trance — Tenerife ✓ |
 | psyndora | Psytrance / Goa | Psyndora Psytrance | 🧿 | #06b6d4 | https://cast.magicstreams.gr:9111/stream/1/ | Psytrance · Progressive · Goa · Fullon ✓ |
@@ -38,12 +37,10 @@ color, desc` (+ `featured`/`live`). Hører til [[05-radio]]. Kopier verbatim ved
 | doomed | Drone / Dark Drone | Doomed — Dark Drone | 💀 | #7f1d1d | https://ice2.somafm.com/doomed-256-mp3 | Dark ambient & dark drone electronics ✓ |
 | darkzone | Drone / Dark Drone | Dark Zone | 🌑 | #0d0d1a | https://ice2.somafm.com/darkzone-256-mp3 | The darker side of deep ambient — music for staring into the Abyss ✓ |
 
-## EXTERNAL_PLAYERS (3, iframe-embeds)
+## EXTERNAL_PLAYERS (1, iframe-embeds)
 
 | id | name | emoji | color | url | live | desc |
 |----|------|-------|-------|-----|------|------|
-| q37 | Radio Q37 | 📡 | #e11d48 | https://radioq37.com/player/ | ja | Radio for the mind travellers |
-| u-recken | U‑Recken (U+2011 non-breaking hyphen) | 🌀 | #7c3aed | https://bandcamp.com/EmbeddedPlayer/album=4028077808/size=large/bgcol=181a1b/linkcol=7c3aed/tracklist=true/transparent=true/ | — | Psytrance to chill out (Bandcamp: Best Of DigiCult & U-Recken) |
 | dice-radio | Dice Radio | 🎲 | #1d4ed8 | https://www.diceradio.gr/ | ja | Greek electronic & underground radio |
 
 **Merk:** ✓ i `desc` = 100 % gratis, ingen konto. Energirekkefølge i lista: Psytrance (høyest)

@@ -7,14 +7,14 @@ verdens web-radio. Moduler: `radio.js` (`Radio`), `radioDock.js` (`RadioDock`),
 
 ## Funksjoner (brukervendt)
 
-- **Stasjonsbibliotek (30 stasjoner)** gruppert i kategorier (Stellar, Radio Q37,
+- **Stasjonsbibliotek (29 stasjoner)** gruppert i kategorier (Stellar, radiOzora,
   Psytrance/Goa, Progressive, EDM/House/Techno, Lo-Fi/IDM, Dub/Reggae, Psybient/Psychill,
   Chill/Downtempo, Ambient/Space, Drone/Dark Drone). Hver: emoji, navn, beskrivelse,
-  play/mute. **Live-indikator** på aktiv kanal. Featured: «Stellar PSY». Full liste ordrett:
+  play/mute. **Live-indikator** på aktiv kanal. Featured: «radiOzora Trance». Full liste ordrett:
   [[data/radiostasjoner]].
 - **Egne strømmer:** legg til URL (mp3/aac/ogg) + navn → lagres i `pv_custom_streams`;
   play/mute/slett.
-- **Eksterne spillere (embeds):** Radio Q37 (LIVE), U‑Recken (Bandcamp), Dice Radio (LIVE) i
+- **Eksterne spillere (embeds):** Dice Radio (LIVE) i
   resizbart panel (kant-drag; dobbeltklikk = reset). Liste: [[data/radiostasjoner]].
 - **Verdens-radiosøk (Radio Browser API):** sanntidssøk på navn + tag (parallelt, dedup på
   UUID), favicon/land/sjanger/bitrate, spill inline eller lagre til egne strømmer.

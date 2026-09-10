@@ -373,8 +373,8 @@ function promoHtml(name, siteUrl, unsubscribeUrl) {
 // Underground) var SomaFM-strøymar SomaFM sjølv kravde fjerna — bytta ut med
 // dei fire stasjonane som faktisk er igjen etter opprydninga.
 const FEATURED_STATIONS = [
-  ['🔮', 'Radio Q37',      'Psychill · Ambient Dub · Deep Trance — SiriusFM\'s main station'],
-  ['🔥', 'radiOzora Trance', 'OZORA Festival radio — psytrance 24/7'],
+  ['🔥', 'radiOzora Trance', 'OZORA Festival radio — psytrance 24/7 — SiriusFM\'s main station'],
+  ['🌿', 'radiOzora Chill', 'OZORA Festival radio — chill & downtempo 24/7'],
   ['🍄', 'DMT FM',          'Psytrance · Goa — Tenerife 24/7'],
   ['🌌', 'Babaganousha',    'Psychedelic · Goa · Psytrance'],
 ];

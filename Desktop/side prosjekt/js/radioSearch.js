@@ -30,7 +30,7 @@ const RadioSearch = (() => {
     { label: 'Chill Out',     emoji: '🛋️', terms: ['chillout', 'chill out', 'lounge'],
       cats: ['Chill Out / Downtempo'] },
     { label: 'Psychill',      emoji: '💧', terms: ['psychill', 'psybient', 'psychedelic chillout', 'chillout psy'],
-      cats: ['Psybient / Psychill', 'Radio Q37'] },
+      cats: ['Psybient / Psychill'] },
     { label: 'Downtempo',     emoji: '🌿', terms: ['downtempo', 'trip hop', 'dub'],
       cats: ['Chill Out / Downtempo', 'Dub / Reggae', 'Lo-Fi / IDM'] },
     { label: 'Ambient',       emoji: '🌫️', terms: ['ambient', 'ambient electronic', 'space ambient'],

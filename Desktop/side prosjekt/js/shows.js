@@ -172,16 +172,16 @@ const Shows = (() => {
       stream: 'radiozora-chill',
     },
     {
-      id: 'radio-q37-sessions',
-      name: 'Radio Q37 Sessions',
-      host: 'Radio Q37',
+      id: 'friday-morning-chill',
+      name: 'Friday Morning Chill',
+      host: 'radiOzora Chill',
       day: 5, // Friday
       startHour: 6, endHour: 9,
-      genre: 'Psytrance · Ambient Dub',
-      emoji: '🔮',
-      color: '#e11d48',
-      desc: 'Radio for the mind travellers — psychill, ambient dub and deep trance to open Friday.',
-      stream: 'radioq37',
+      genre: 'Psychill · Downtempo',
+      emoji: '🌿',
+      color: '#22c55e',
+      desc: 'Chill and downtempo to open Friday gently.',
+      stream: 'radiozora-chill',
     },
     {
       id: 'slow-monday',
@@ -239,11 +239,11 @@ const Shows = (() => {
     // same mønster som resten av lista alt brukte.
     // ════════════════════════════════════════════
     {
-      id: 'sunday-deep-transmission', name: 'Sunday Deep Transmission', host: 'Radio Q37',
+      id: 'sunday-deep-transmission', name: 'Sunday Deep Transmission', host: 'radiOzora Chill',
       day: 0, startHour: 0, endHour: 3,
-      genre: 'Psychill · Ambient Dub', emoji: '🔮', color: '#e11d48',
+      genre: 'Psychill · Ambient Dub', emoji: '🌿', color: '#22c55e',
       desc: 'Deep trance and ambient dub to open Sunday in the small hours.',
-      stream: 'radioq37',
+      stream: 'radiozora-chill',
     },
     {
       id: 'labs-sunday-sunrise', name: 'Labs Sunday Sunrise', host: 'Babaganousha Labs',
@@ -337,11 +337,11 @@ const Shows = (() => {
       stream: 'atr',
     },
     {
-      id: 'tuesday-late-transmission', name: 'Tuesday Late Transmission', host: 'Radio Q37',
+      id: 'tuesday-late-transmission', name: 'Tuesday Late Transmission', host: 'radiOzora Chill',
       day: 2, startHour: 21, endHour: 24,
-      genre: 'Psychill · Ambient Dub', emoji: '🔮', color: '#e11d48',
+      genre: 'Psychill · Ambient Dub', emoji: '🌿', color: '#22c55e',
       desc: 'Deep trance and ambient dub to close out Tuesday.',
-      stream: 'radioq37',
+      stream: 'radiozora-chill',
     },
     {
       id: 'midweek-progressive', name: 'Midweek Progressive', host: 'RR Progressive',
@@ -400,11 +400,11 @@ const Shows = (() => {
       stream: 'psyndora',
     },
     {
-      id: 'thursday-deep-trance-midday', name: 'Thursday Deep Trance Midday', host: 'Radio Q37',
+      id: 'thursday-deep-trance-midday', name: 'Thursday Deep Trance Midday', host: 'radiOzora Chill',
       day: 4, startHour: 12, endHour: 15,
-      genre: 'Psychill · Ambient Dub', emoji: '🔮', color: '#e11d48',
+      genre: 'Psychill · Ambient Dub', emoji: '🌿', color: '#22c55e',
       desc: 'Deep trance and ambient dub through Thursday midday.',
-      stream: 'radioq37',
+      stream: 'radiozora-chill',
     },
     {
       id: 'thursday-night-psychill', name: 'Thursday Night Psychill', host: 'MultiHuman EntheoMusic',
@@ -456,11 +456,11 @@ const Shows = (() => {
       stream: 'radiozora-trance',
     },
     {
-      id: 'saturday-deep-transmission', name: 'Saturday Deep Transmission', host: 'Radio Q37',
+      id: 'saturday-deep-transmission', name: 'Saturday Deep Transmission', host: 'radiOzora Chill',
       day: 6, startHour: 0, endHour: 3,
-      genre: 'Psychill · Ambient Dub', emoji: '🔮', color: '#e11d48',
+      genre: 'Psychill · Ambient Dub', emoji: '🌿', color: '#22c55e',
       desc: 'Deep trance and ambient dub to open Saturday.',
-      stream: 'radioq37',
+      stream: 'radiozora-chill',
     },
     {
       id: 'saturday-predawn-goa', name: 'Saturday Predawn Goa', host: 'Babaganousha',

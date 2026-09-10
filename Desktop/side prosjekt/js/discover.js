@@ -113,7 +113,7 @@ const Discover = (() => {
     techno:       ['EDM / House / Techno', 'Lo-Fi / IDM'],
     house:        ['EDM / House / Techno'],
     chill:        ['Chill Out / Downtempo', 'Psybient / Psychill', 'Dub / Reggae'],
-    experimental: ['Lo-Fi / IDM', 'Ambient / Space', 'Radio Q37'],
+    experimental: ['Lo-Fi / IDM', 'Ambient / Space'],
     drone:        ['Drone / Dark Drone', 'Ambient / Space'],
   };
 
