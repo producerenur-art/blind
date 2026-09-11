@@ -62,6 +62,19 @@ const GENRE_QUERIES = {
 };
 const GENRES = Object.keys(GENRE_QUERIES);
 
+// Enkelte sjangre hentes fra utvalgte kanaler i stedet for et åpent nøkkelordsøk
+// — brukeren pekte disse ut fordi de har lange sett/podcast-episoder som passer
+// sjangeren bedre enn generisk YouTube-relevans. Kanal-id (UC...) er stabil selv
+// om handle/visningsnavn endres.
+const CHANNEL_SOURCES = {
+  chillout: [
+    { id: 'UCAepXw94EhaO0CZV9f5D3fQ', name: 'ChillSpaceTV' },
+    { id: 'UCNHbHR2KOc851Kkb_TJ2Orw', name: 'savvaskalt2233' },
+    { id: 'UC1PtAfzqXQJGvGCEMAwT30Q', name: 'ThePsychedelicMuse' },
+    { id: 'UCZ5CZVrynMMzHAMBy8jDpZw', name: 'Altar Records Podcast (FeedFreqMusic)' },
+  ],
+};
+
 // Hvor mange sett frontenden får å rotere i per sjanger.
 const SHORTLIST = 6;
 
@@ -107,6 +120,45 @@ async function searchYouTube(query, apiKey, publishedAfter) {
     const seen = new Set(fresh.map(c => c.id));
     return fresh.concat(wide.filter(c => !seen.has(c.id)));
   } catch (_) { return fresh; }
+}
+
+// Nyeste videoer fra én bestemt kanal (CHANNEL_SOURCES) — ingen nøkkelord,
+// bare nyest-først fra kanalen selv, låst til lange opplastinger (sett/podcast).
+async function searchYouTubeChannel(channelId, apiKey, max = 8) {
+  const params = new URLSearchParams({
+    part: 'snippet',
+    type: 'video',
+    channelId,
+    maxResults: String(max),
+    videoEmbeddable: 'true',
+    videoDuration: 'long',
+    order: 'date',
+    key: apiKey,
+  });
+  const r = await fetch(`${YT_SEARCH}?${params}`);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const reason = data && data.error && data.error.errors && data.error.errors[0] && data.error.errors[0].reason;
+    throw new Error('youtube:' + (reason || r.status));
+  }
+  return (data.items || [])
+    .filter(it => it.id && it.id.videoId)
+    .map(it => ({
+      id: it.id.videoId,
+      title: clampStr(it.snippet && it.snippet.title, 160),
+      channel: clampStr(it.snippet && it.snippet.channelTitle, 80),
+    }));
+}
+
+// Slå sammen ferskeste videoer fra alle kanalene i en CHANNEL_SOURCES-liste.
+async function searchChannelSources(sources, apiKey) {
+  const lists = await Promise.all(sources.map(ch => searchYouTubeChannel(ch.id, apiKey).catch(() => [])));
+  const seen = new Set(); const merged = [];
+  for (const list of lists) for (const c of list) {
+    if (seen.has(c.id)) continue;
+    seen.add(c.id); merged.push(c);
+  }
+  return merged;
 }
 
 // La Haiku rangere de beste ekte DJ-settene/miksene per sjanger blant kandidatene.
@@ -175,8 +227,13 @@ module.exports = async (req, res) => {
   const publishedAfter = new Date(now.getTime() - 365 * 24 * 3600 * 1000).toISOString();
 
   try {
-    // 1) Søk alle sjangre parallelt (spillbare kandidater).
+    // 1) Søk alle sjangre parallelt (spillbare kandidater). Sjangre i
+    // CHANNEL_SOURCES henter fra utvalgte kanaler i stedet for nøkkelordsøk.
     const results = await Promise.all(GENRES.map(async g => {
+      if (CHANNEL_SOURCES[g]) {
+        try { return [g, await searchChannelSources(CHANNEL_SOURCES[g], ytKey)]; }
+        catch (_) { return [g, []]; }
+      }
       const variants = GENRE_QUERIES[g];
       const q = variants[slot % variants.length];
       try { return [g, await searchYouTube(`${q} ${year}`, ytKey, publishedAfter)]; }

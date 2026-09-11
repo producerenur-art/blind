@@ -957,7 +957,7 @@ const App = (() => {
         ambient:     'https://www.youtube.com/embed/wXk0hq7RB1A?list=RDwXk0hq7RB1A',
         goa:         'https://www.youtube.com/embed/dtk5CdOvVuc?list=RDdtk5CdOvVuc',
         dub:         'https://www.youtube.com/embed/videoseries?list=PLv1XAUg92fX9rVnD0r0ek-7monLM4JINL',
-        chillout:    'https://www.youtube.com/embed/ZyViV-SDyT0?list=RDZyViV-SDyT0',
+        chillout:    'https://www.youtube.com/embed/h0u_VOW_et4?list=RDh0u_VOW_et4',
         'dark-drone':'https://www.youtube.com/embed/PCEseGXzjqo?list=RDPCEseGXzjqo',
       };
 
