@@ -957,6 +957,8 @@ const App = (() => {
         ambient:     'https://www.youtube.com/embed/wXk0hq7RB1A?list=RDwXk0hq7RB1A',
         goa:         'https://www.youtube.com/embed/dtk5CdOvVuc?list=RDdtk5CdOvVuc',
         dub:         'https://www.youtube.com/embed/videoseries?list=PLv1XAUg92fX9rVnD0r0ek-7monLM4JINL',
+        chillout:    'https://www.youtube.com/embed/ZyViV-SDyT0?list=RDZyViV-SDyT0',
+        'dark-drone':'https://www.youtube.com/embed/PCEseGXzjqo?list=RDPCEseGXzjqo',
       };
 
       // Dagens sett for en sjanger: plukk i den AI-rangerte shortlisten etter
