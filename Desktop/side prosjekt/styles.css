@@ -2172,6 +2172,30 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(34,
   0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
 }
 
+/* ── Eier "går live"-merke (fiolett) — HELT ANNA tyding enn den raude
+   .radio-live-badge/.live-dot-sm over («denne 24/7-stasjonen strøymer live»).
+   Dette betyr «eigaren av SiriusFM/SoundCore er personleg live no» — bevisst
+   fiolett (#a78bfa) i staden for raudt, så dei to aldri blir forveksla. Sjå
+   js/radio.js (_renderLiveBadge) og js/liveGlobal.js. Markupen brukast inline
+   (spec-fastsett), så desse klassene er berre her for keyframes + evt.
+   framtidig gjenbruk utan inline-stil. */
+.owner-live-badge {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em;
+  color: #a78bfa; background: rgba(167,139,250,0.14);
+  border: 1px solid rgba(167,139,250,0.35);
+  border-radius: 99px; padding: 0.15rem 0.45rem;
+  vertical-align: middle; margin-right: 0.25rem;
+}
+.owner-live-dot {
+  display: inline-block; width: 5px; height: 5px;
+  border-radius: 50%; background: #a78bfa;
+  animation: livePulseA 1.2s ease-in-out infinite;
+}
+@keyframes livePulseA {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+}
+
 .player-progress-row { display: flex; align-items: center; gap: 0.6rem; width: 100%; font-size: 0.7rem; color: var(--text3); }
 .progress-track {
   position: relative;

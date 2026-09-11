@@ -33,6 +33,12 @@ const CONFIG = {
   SUPABASE_ANON_KEY: localStorage.getItem('sc_supabase_anon')   || 'sb_publishable_JEV-NS9FGZ_KpSvQTPwlZg_LlyVy_eS',  // offentlig publishable key (trygg i frontend)
   SUPABASE_BUCKET:   localStorage.getItem('sc_supabase_bucket') || 'soundcore-media',
 
+  // Eier-nøkkel for global "gå live"-status (js/livemix.js + supabase/migrations/0022_live_broadcast.sql).
+  // MÅ være nøyaktig samme streng som `insert into live_broadcast_secret` i den migrasjonen —
+  // en FAST verdi satt av deg, IKKE noe som genereres/vinnes automatisk (det var det som var
+  // sikkerhetshullet før: "første som kaller funksjonen, vinner" kunne låse deg ute av din egen bryter).
+  LIVE_BROADCAST_SECRET: '4e41fb896708c20de1bd6be1cef21b52ca0f43ea534d0d5e',
+
   save(anthropicKey, ejsService, ejsTmplAct, ejsTmplRst, ejsTmplMsg, ejsPubKey) {
     localStorage.setItem('pv_anthropic_key',   anthropicKey);
     localStorage.setItem('pv_ejs_service',     ejsService);

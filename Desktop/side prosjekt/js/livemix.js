@@ -229,7 +229,34 @@ const LiveMix = (() => {
   // som signaling). State er modul-scopet så sendingen/lyden overlever at
   // modalen lukkes (App.closeModal() skjuler bare overlayet, tømmer ikke DOM).
   const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null, devBypass: false, ownerBypass: false,
-    visual: 'image', coverUrl: '', coverImg: null, canvas: null, canvasRaf: null, camStream: null, outStream: null };
+    visual: 'image', coverUrl: '', coverImg: null, canvas: null, canvasRaf: null, camStream: null, outStream: null, presenterName: '' };
+
+  // ── Global "gå live"-status (auto-switchover for ALLE besøkende) ──────
+  // Skriving er RPC-gata bak ein FAST eigar-hemmelegheit, sett i
+  // supabase/migrations/0022_live_broadcast.sql sin egen INSERT (IKKJE
+  // adoptert frå fyrste kall — det var eit reelt sikkerheitshól: sidan denne
+  // eine globale raden styrer lyden til ALLE besøkande, kunne ein tilfeldig
+  // besøkande ha kalla funksjonen FØR eigaren og låst eigaren ute permanent).
+  // MÅ vere nøyaktig lik CONFIG.LIVE_BROADCAST_SECRET.
+  function _liveSecret() {
+    return (typeof CONFIG !== 'undefined' && CONFIG.LIVE_BROADCAST_SECRET) || '';
+  }
+
+  // Fire-and-forget: publiser/avpubliser den globale live-statusen som
+  // js/liveGlobal.js les/abonnerer på for å bytte over ALLE besøkende
+  // (innlogga eller ikkje), uansett kva 24/7-stasjon dei høyrer på.
+  async function _publishLiveStatus(isLive) {
+    try {
+      if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) return;
+      const { error } = await SC_Storage.client().rpc('set_live_broadcast_status', {
+        p_secret:         _liveSecret(),
+        p_is_live:        !!isLive,
+        p_presenter_name: isLive ? (_bc.presenterName || '') : '',
+        p_room:           isLive ? (_bc.room || '') : '',
+      });
+      if (error) _bcLog('Global «gå live»-status ikke publisert: ' + error.message);
+    } catch (e) { _bcLog('Global «gå live»-status feilet: ' + (e.message || e)); }
+  }
 
   // Finn en booking hvis tidsvindu dekker nå (10 min slingringsmonn før start).
   // Booking uten slot («avtales senere») regnes som alltid aktiv. Både betalte
@@ -364,6 +391,9 @@ const LiveMix = (() => {
           ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(34,197,94,0.12);color:#22c55e;margin:0 0 1rem">${_I('clock')} Aktiv tid: ${_bc.activeBooking.slot ? _fmtDateTime(_bc.activeBooking.slot) : 'avtales senere'}${_bc.activeBooking.test ? ' · TEST' : ''}</div>`
           : (_bc.devBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">🧪 Lokal test — booking-gate forbigått</div>`
               : (_bc.ownerBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">${_I('radio')} Eier — sender uten booking</div>` : ''))}
+        <label style="${lbl}">Ditt artist-/presentatørnavn</label>
+        <input id="bc-presenter" value="${_esc(_bc.presenterName || '')}" placeholder="Ditt artistnavn" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
+        <p style="font-size:0.74rem;color:var(--text3);margin:-0.55rem 0 0.9rem">Vises til ALLE besøkende på siden som «med {navnet ditt}» mens du er live — de blir automatisk byttet over fra stasjonen sin til sendingen din.</p>
         <label style="${lbl}">Rom-navn</label>
         <input id="bc-room" value="${_esc(_bc.room || 'test')}" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
         <label style="${lbl}">Lyd-inngang (DJ-ruting)</label>
@@ -467,8 +497,9 @@ const LiveMix = (() => {
 
   async function bcGo() {
     try {
-      const sel = _byId('bc-dev'), roomEl = _byId('bc-room');
+      const sel = _byId('bc-dev'), roomEl = _byId('bc-room'), presEl = _byId('bc-presenter');
       const room = (roomEl && roomEl.value.trim()) || 'test'; _bc.room = room;
+      _bc.presenterName = (presEl && presEl.value.trim()) || '';
       _bc.stream = await navigator.mediaDevices.getUserMedia({ audio: {
         deviceId: { exact: sel.value }, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2,
       } });
@@ -489,10 +520,16 @@ const LiveMix = (() => {
       });
       _bcSetLive(true);
       _bcLog('Du er LIVE i rom «' + room + '» (' + (vTrack ? (_bc.visual === 'camera' ? 'kamera' : 'bilde') : 'kun lyd') + '). Spill i DJ-programmet.');
+      // Publiser til den globale statusen SIST, etter at sendingen faktisk er i gang
+      // — så ingen besøkende byttes over til et rom som ennå ikke sender noe.
+      _publishLiveStatus(true);
     } catch (e) { _bcLog('FEIL gå live: ' + e.message); if (typeof App !== 'undefined') App.toast('Kunne ikke gå live: ' + e.message, 'error'); }
   }
 
   function bcStop() {
+    // Fire-and-forget: fjern den globale live-statusen FØRST, slik at besøkende
+    // byttes tilbake til stasjonen sin selv om resten av oppryddingen under feiler.
+    _publishLiveStatus(false);
     if (_bc.raf) cancelAnimationFrame(_bc.raf); _bc.raf = null;
     if (_bc.canvasRaf) { clearInterval(_bc.canvasRaf); _bc.canvasRaf = null; }
     if (_bc.dj) { _bc.dj.stop(); _bc.dj = null; }
@@ -512,7 +549,43 @@ const LiveMix = (() => {
     if (dev) dev.disabled = live; if (room) room.disabled = live;
     if (dot) dot.style.background = live ? '#ef4444' : '#9aa3b2';
     if (st) st.textContent = live ? 'LIVE — sender' : 'Inaktiv';
+    _refreshOwnerButton();
   }
+
+  // ── Eigar-inngang: liten "Gå live"-knapp i navigasjonen ──────────────
+  // I dag finst det INGEN stad i sjølve appen som opnar denne DJ-konsollen —
+  // ho blei berre nådd frå det frittståande verktøyet tools/broadcast-cloud.html.
+  // Same sjølvmonterande mønster som js/livePresence.js sin admin-pille
+  // (søsken av #nav-links, som overlever at renderNav bygger #nav-links på
+  // nytt igjen; oppdatert ved innlogging/utlogging via hashchange). Kun synleg
+  // for eigaren (_isOwner) — ingen ny booking-/planleggings-UI, berre ein
+  // knapp som kallar den EKSISTERANDE goLive()/bcStop()-mekanismen.
+  let _ownerBtn = null;
+  function _mountOwnerButton() {
+    const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
+    if (!_isOwner(cur)) { _removeOwnerButton(); return; }
+    if (!_ownerBtn) {
+      _ownerBtn = document.createElement('button');
+      _ownerBtn.id = 'owner-golive-btn';
+      _ownerBtn.type = 'button';
+      _ownerBtn.setAttribute('aria-label', 'Gå live');
+      _ownerBtn.style.cssText = 'display:inline-flex;align-items:center;gap:0.35rem;font-size:0.75rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;border:1px solid rgba(239,68,68,0.35);background:rgba(239,68,68,0.12);color:#ef4444;cursor:pointer;margin-right:0.5rem;white-space:nowrap';
+      const nav = document.getElementById('main-nav');
+      const links = document.getElementById('nav-links');
+      if (nav && links) nav.insertBefore(_ownerBtn, links);
+      else if (nav) nav.appendChild(_ownerBtn);
+      else document.body.appendChild(_ownerBtn);
+    }
+    _refreshOwnerButton();
+  }
+  function _refreshOwnerButton() {
+    if (!_ownerBtn) return;
+    const live = !!_bc.dj;
+    _ownerBtn.title = live ? 'Du er live — trykk for å stoppe' : 'Gå live — send direkte til alle besøkende på siden';
+    _ownerBtn.innerHTML = live ? '🔴 LIVE — Stopp' : ('📡 ' + 'Gå live');
+    _ownerBtn.onclick = live ? bcStop : () => goLive();
+  }
+  function _removeOwnerButton() { if (_ownerBtn) { _ownerBtn.remove(); _ownerBtn = null; } }
 
   function _bcStartMeter() {
     if (_bc.raf) cancelAnimationFrame(_bc.raf);
@@ -602,11 +675,23 @@ const LiveMix = (() => {
     if (typeof App !== 'undefined') App.closeModal();
   }
 
+  // Monter eigar-knappen med det same (om innlogga alt) og hald han oppdatert
+  // ved innlogging/utlogging — same oppstartsmønster som js/livePresence.js.
+  function _initOwnerEntry() {
+    _mountOwnerButton();
+    window.addEventListener('hashchange', _mountOwnerButton);
+  }
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _initOwnerEntry);
+    else _initOwnerEntry();
+  }
+
   return {
     openBooking, step, startCheckout, testPurchase, completeFromSession, showReceipt,
     priceFor, _makeBooking, RATE_KR, RATE_ORE,
     goLive, bcPerm, bcGo, bcStop, bcSetVisual, bcSetImage, tuneIn, tuneInJoin, tuneOut,
     canGoLive,
+    isBroadcastingHere: () => !!_bc.dj,
   };
 })();
 
