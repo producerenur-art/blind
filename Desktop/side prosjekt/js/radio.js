@@ -150,6 +150,20 @@ const Radio = (() => {
       emoji: '🌑', color: '#6366f1',
       desc: 'Deep atmospheric ambient — UK 🇬🇧',
     },
+    {
+      id: 'dark-city-signal', cat: 'Dark Ambient / Drone',
+      name: 'Dark City Signal',
+      url:  'https://audiostream.hkprime.com/stream',
+      emoji: '🖤', color: '#6366f1',
+      desc: 'Dark ambient · doom · industrial',
+    },
+    {
+      id: 'systrum-ssr1', cat: 'Dark Ambient / Drone',
+      name: 'Systrum Sistum SSR1',
+      url:  'https://systrum.net:8443/SSR1',
+      emoji: '🌫️', color: '#6366f1',
+      desc: 'Ambient · drone · experimental',
+    },
 
     // ════════════════════════════════════════════
     // TECHNO UNDERGROUND
@@ -160,6 +174,20 @@ const Radio = (() => {
       url:  'https://uzic.ice.infomaniak.ch/uzic-128.aac',
       emoji: '⚙️', color: '#a855f7',
       desc: 'Minimal & underground techno — Switzerland 🇨🇭',
+    },
+    {
+      id: 'technolovers-techno', cat: 'Techno Underground',
+      name: 'Technolovers Techno',
+      url:  'https://stream.technolovers.fm/techno?ref=radiobrowser',
+      emoji: '🎛️', color: '#a855f7',
+      desc: 'Techno · minimal · hard techno',
+    },
+    {
+      id: 'remember-vip-techno', cat: 'Techno Underground',
+      name: 'Remember VIP Techno',
+      url:  'https://stream-153.zeno.fm/xilwjn4t17qvv',
+      emoji: '🕳️', color: '#a855f7',
+      desc: 'Dark techno · hard techno · minimal',
     },
   ];
 

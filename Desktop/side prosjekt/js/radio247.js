@@ -13,12 +13,12 @@ const Radio247 = (() => {
   const SCHEDULE = [
     { start: 0,  end: 1,  genre: 'goa',         label: 'Psytrance / Goa',      stationIds: ['dmtfm', 'psyndora', 'babaganousha'] },
     { start: 1,  end: 3,  genre: 'progressive', label: 'Progressive',          stationIds: ['trancearound', 'atr', 'rr-progressive'] },
-    { start: 3,  end: 6,  genre: 'dark-drone',  label: 'Dark Drone',           stationIds: ['ambient-abyss'] },
+    { start: 3,  end: 6,  genre: 'dark-drone',  label: 'Dark Drone',           stationIds: ['ambient-abyss', 'dark-city-signal', 'systrum-ssr1'] },
     { start: 6,  end: 12, genre: 'psychill',    label: 'Psybient / Ambient',   stationIds: ['ambientpsy-1fm', 'multihuman'] },
     { start: 12, end: 16, genre: 'chillout',    label: 'Downtempo / Psychill', stationIds: ['1fm-chillout', 'smoothchill'] },
     { start: 16, end: 18, genre: 'progressive', label: 'Progressive',          stationIds: ['trancearound', 'atr', 'rr-progressive'] },
     { start: 18, end: 20, genre: 'goa',         label: 'Psytrance / Goa',      stationIds: ['dmtfm', 'psyndora', 'babaganousha'] },
-    { start: 20, end: 23, genre: 'techno',      label: 'Techno Underground',   stationIds: ['uzic-techno'] },
+    { start: 20, end: 23, genre: 'techno',      label: 'Techno Underground',   stationIds: ['uzic-techno', 'technolovers-techno', 'remember-vip-techno'] },
     { start: 23, end: 24, genre: 'goa',         label: 'Psytrance / Goa',      stationIds: ['dmtfm', 'psyndora', 'babaganousha'] },
   ];
 
