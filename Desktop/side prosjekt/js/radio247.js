@@ -60,15 +60,31 @@ const Radio247 = (() => {
     return { ...SCHEDULE[(i + 1) % SCHEDULE.length] };
   }
 
-  function _applyBlock(block) {
+  // Kort lokal jingle-fil (same som stasjons-ID-jinglane A/C/D) — brukast som
+  // ei bru mellom sjangrar ved AUTOMATISKE bytte, så overgangen aldri blir
+  // stille dødtid mens den nye strøymen koblar til.
+  const TRANSITION_JINGLE = 'assets/jingles/jingle-a.mp3';
+
+  // `opts.transition = true` = automatisk bytte (frå _tick(), midt i
+  // avspeling) → bru med jingelen over. Utan flagget (frå play(), første
+  // klikk) → koble rett til, ingenting å bru over enno.
+  function _applyBlock(block, opts) {
+    opts = opts || {};
     const sid = block.stationIds && block.stationIds.length ? block.stationIds[0] : null;
     _lastStationId = sid;
     if (!sid || typeof Radio === 'undefined') return;
     // Ikkje spel av same stasjon på nytt (ville berre togglet han av via
     // Radio.playStation sin "same id = toggle"-regel).
     if (Radio.currentStation && Radio.currentStation.id === sid && Radio.isPlaying) return;
-    _selfCall = true;
-    try { Radio.playStation(sid); } finally { _selfCall = false; }
+    const doSwitch = () => {
+      _selfCall = true;
+      try { Radio.playStation(sid); } finally { _selfCall = false; }
+    };
+    if (opts.transition && Radio.isPlaying && Radio.playLocalClip) {
+      Radio.playLocalClip(TRANSITION_JINGLE, doSwitch);
+    } else {
+      doSwitch();
+    }
   }
 
   // Kalt frå Radio.playStation() (js/radio.js) kvar gong NOKON startar ein
@@ -172,7 +188,7 @@ const Radio247 = (() => {
     const block = currentBlock();
     if (block.index === _lastBlockIndex) return;
     _lastBlockIndex = block.index;
-    _applyBlock(block);
+    _applyBlock(block, { transition: true });
     _rerenderHost();
   }
 

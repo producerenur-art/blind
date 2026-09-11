@@ -247,6 +247,9 @@ const Radio = (() => {
   // Spel éin lokal jingle-fil gjennom DET DELTE audio-elementet, med ei
   // ferdig-callback. Dempar volumet mens jingelen spelar, gjenopprettar det
   // nøyaktige volumet etterpå (påverkar aldri brukaren sin valde styrke).
+  // Eksponert som Radio.playLocalClip — Radio247 (js/radio247.js) bruker han
+  // til å bru over sjangerbytta i "24-Hour Cycle"-hjulet, så overgangen
+  // aldri blir stille dødtid mens den nye strøymen koblar til.
   function _playLocalClip(url, onDone) {
     const audio = getAudio();
     if (!audio || !url) { onDone(); return; }
@@ -2713,6 +2716,7 @@ const Radio = (() => {
     toggleAiChat, sendAiMessage, onAiKeydown,
     setAsFavorite, openEmbed, closeEmbed, stopForMusicPlayer,
     enterLiveTakeover, exitLiveTakeover, attachLiveStream, setLivePresenterName, isLiveTakeoverActive,
+    playLocalClip: _playLocalClip,
     get isPlaying() { return isPlaying; },
     get currentStation() { return currentStation; },
     get volume() { return volume; },
