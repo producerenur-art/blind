@@ -10,16 +10,23 @@
 const Radio247 = (() => {
   // [start, end) i norsk lokaltid, 24-timars klokke (desimaltimar). Må
   // dekke heile 0–24 utan hol.
+  const GOA_IDS         = ['dmtfm', 'psyndora', 'babaganousha', 'jointil-beattrance', 'record-goa-psy', 'technolovers-psytrance', 'goanight'];
+  const PROGRESSIVE_IDS = ['trancearound', 'atr', 'rr-progressive', 'record-trancemission', 'technolovers-trance', 'dfm-avb'];
+  const DARK_DRONE_IDS  = ['ambient-abyss', 'dark-city-signal', 'systrum-ssr1', 'indiebeat-ambient', 'modular-station', 'alswin-ambient'];
+  const PSYCHILL_IDS    = ['ambientpsy-1fm', 'multihuman', 'diceradio-psybient', 'mixlive-psybient-sunset', 'paradisehunter-chillout'];
+  const CHILLOUT_IDS    = ['1fm-chillout', 'smoothchill', 'chilloutzone-lautfm', 'brokenbeats', 'anon-fm', 'cafedelmar', 'epic-lounge-sleep', 'epic-piano-chillout'];
+  const TECHNO_IDS      = ['uzic-techno', 'technolovers-techno', 'remember-vip-techno', 'melodic-technolovers', 'piratefm-electronica'];
+
   const SCHEDULE = [
-    { start: 0,  end: 1,  genre: 'goa',         label: 'Psytrance / Goa',      stationIds: ['dmtfm', 'psyndora', 'babaganousha'] },
-    { start: 1,  end: 3,  genre: 'progressive', label: 'Progressive',          stationIds: ['trancearound', 'atr', 'rr-progressive'] },
-    { start: 3,  end: 6,  genre: 'dark-drone',  label: 'Dark Drone',           stationIds: ['ambient-abyss', 'dark-city-signal', 'systrum-ssr1'] },
-    { start: 6,  end: 12, genre: 'psychill',    label: 'Psybient / Ambient',   stationIds: ['ambientpsy-1fm', 'multihuman'] },
-    { start: 12, end: 16, genre: 'chillout',    label: 'Downtempo / Psychill', stationIds: ['1fm-chillout', 'smoothchill'] },
-    { start: 16, end: 18, genre: 'progressive', label: 'Progressive',          stationIds: ['trancearound', 'atr', 'rr-progressive'] },
-    { start: 18, end: 20, genre: 'goa',         label: 'Psytrance / Goa',      stationIds: ['dmtfm', 'psyndora', 'babaganousha'] },
-    { start: 20, end: 23, genre: 'techno',      label: 'Techno Underground',   stationIds: ['uzic-techno', 'technolovers-techno', 'remember-vip-techno'] },
-    { start: 23, end: 24, genre: 'goa',         label: 'Psytrance / Goa',      stationIds: ['dmtfm', 'psyndora', 'babaganousha'] },
+    { start: 0,  end: 1,  genre: 'goa',         label: 'Psytrance / Goa',      stationIds: GOA_IDS },
+    { start: 1,  end: 3,  genre: 'progressive', label: 'Progressive',          stationIds: PROGRESSIVE_IDS },
+    { start: 3,  end: 6,  genre: 'dark-drone',  label: 'Dark Drone',           stationIds: DARK_DRONE_IDS },
+    { start: 6,  end: 12, genre: 'psychill',    label: 'Psybient / Ambient',   stationIds: PSYCHILL_IDS },
+    { start: 12, end: 16, genre: 'chillout',    label: 'Downtempo / Psychill', stationIds: CHILLOUT_IDS },
+    { start: 16, end: 18, genre: 'progressive', label: 'Progressive',          stationIds: PROGRESSIVE_IDS },
+    { start: 18, end: 20, genre: 'goa',         label: 'Psytrance / Goa',      stationIds: GOA_IDS },
+    { start: 20, end: 23, genre: 'techno',      label: 'Techno Underground',   stationIds: TECHNO_IDS },
+    { start: 23, end: 24, genre: 'goa',         label: 'Psytrance / Goa',      stationIds: GOA_IDS },
   ];
 
   let _active = false;
@@ -79,11 +86,17 @@ const Radio247 = (() => {
   // `dayIndex` valfri — utan han, dagens rotasjon. Med han (også fortid/
   // framtid), same formel — rotasjonen er deterministisk, så "arkivet"
   // under kan REKNE UT kva som spelte ein gitt dag i staden for å logge det.
+  // `block.start` er lagt til som ein FASE-forskyving, ikkje berre dagsteljaren
+  // åleine — same sjanger (t.d. Goa) opptrer 3 gonger same dag (00, 18, 23) og
+  // deler same stasjonspol; utan forskyvinga ville alle tre plukka NØYAKTIG
+  // same stasjon same dag (dei deler dayIndex). Start-timen er unik per rad i
+  // SCHEDULE, så kvar rad får si eiga fase — framleis heilt deterministisk.
   function _pickStationId(block, dayIndex) {
     if (!block.stationIds || !block.stationIds.length) return null;
     const n = block.stationIds.length;
     const di = dayIndex === undefined ? _osloDayIndex() : dayIndex;
-    return block.stationIds[((di % n) + n) % n]; // trygg modulo også for negative dagar
+    const phased = di + block.start;
+    return block.stationIds[((phased % n) + n) % n]; // trygg modulo også for negative dagar
   }
 
   function _stationName(sid) {

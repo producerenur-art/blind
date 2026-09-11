@@ -76,6 +76,34 @@ const Radio = (() => {
       emoji: '🧪', color: '#4ade80',
       desc: 'Psychedelic · Goa · Psytrance ✓',
     },
+    {
+      id: 'jointil-beattrance', cat: 'Psytrance / Goa',
+      name: '#joint radio Beat Trance',
+      url:  'https://jointil.com/stream-beat',
+      emoji: '🥁', color: '#4ade80',
+      desc: 'Goa trance · psychedelic trance',
+    },
+    {
+      id: 'record-goa-psy', cat: 'Psytrance / Goa',
+      name: 'Record Goa Psy',
+      url:  'https://radiorecord.hostingradio.ru/goa96.aacp',
+      emoji: '🔮', color: '#4ade80',
+      desc: 'Goa trance · psychedelic trance',
+    },
+    {
+      id: 'technolovers-psytrance', cat: 'Psytrance / Goa',
+      name: 'Technolovers Psytrance',
+      url:  'https://stream.technolovers.fm/psytrance?ref=radiobrowser',
+      emoji: '🌀', color: '#4ade80',
+      desc: 'Dark psytrance · progressive psytrance',
+    },
+    {
+      id: 'goanight', cat: 'Psytrance / Goa',
+      name: 'Goanight',
+      url:  'https://goanight.stream.laut.fm/goanight',
+      emoji: '🌙', color: '#4ade80',
+      desc: 'Goa · psytrance',
+    },
 
     // ════════════════════════════════════════════
     // PROGRESSIVE PSY / TRANCE
@@ -101,6 +129,27 @@ const Radio = (() => {
       emoji: '🎛️', color: '#2563eb',
       desc: 'Progressive house, non-stop',
     },
+    {
+      id: 'record-trancemission', cat: 'Progressive Psy / Trance',
+      name: 'Record Trancemission',
+      url:  'https://radiorecord.hostingradio.ru/tm96.aacp',
+      emoji: '📡', color: '#2563eb',
+      desc: 'Trance · progressive trance',
+    },
+    {
+      id: 'technolovers-trance', cat: 'Progressive Psy / Trance',
+      name: 'Technolovers Trance',
+      url:  'https://stream.technolovers.fm/trance?ref=radiobrowser',
+      emoji: '🌐', color: '#2563eb',
+      desc: 'Progressive trance · uplifting',
+    },
+    {
+      id: 'dfm-avb', cat: 'Progressive Psy / Trance',
+      name: 'DFM Armin van Buuren',
+      url:  'https://dfm.hostingradio.ru/avburren96.aacp',
+      emoji: '🎧', color: '#2563eb',
+      desc: 'Progressive trance',
+    },
 
     // ════════════════════════════════════════════
     // PSYBIENT / PSYCHILL
@@ -121,6 +170,27 @@ const Radio = (() => {
       emoji: '🌿', color: '#10b981',
       desc: 'Entheogenic psychill & world — Brazil 🇧🇷',
     },
+    {
+      id: 'diceradio-psybient', cat: 'Psybient / Psychill',
+      name: 'DiceRadio Psybient',
+      url:  'https://s2.radio.co/s4648f1c61/listen',
+      emoji: '🎲', color: '#8854d0',
+      desc: 'Psybient',
+    },
+    {
+      id: 'mixlive-psybient-sunset', cat: 'Psybient / Psychill',
+      name: 'MixLive Psybient Sunset',
+      url:  'https://listen.openstream.co/6517/audio',
+      emoji: '🌅', color: '#8854d0',
+      desc: 'Psybient sunset session',
+    },
+    {
+      id: 'paradisehunter-chillout', cat: 'Psybient / Psychill',
+      name: 'Paradisehunter Chillout',
+      url:  'https://radio.paradisehunter.de/listen/chillout/radio.mp3',
+      emoji: '🏝️', color: '#8854d0',
+      desc: 'Chillout · psychill — Germany 🇩🇪',
+    },
 
     // ════════════════════════════════════════════
     // CHILL OUT / DOWNTEMPO
@@ -138,6 +208,48 @@ const Radio = (() => {
       url:  'https://media-ssl.musicradio.com/SmoothChillMP3',
       emoji: '🫧', color: '#0ea5e9',
       desc: 'Relaxing chill & soul — UK 🇬🇧',
+    },
+    {
+      id: 'chilloutzone-lautfm', cat: 'Chill Out / Downtempo',
+      name: 'Chill Out Zone',
+      url:  'https://stream.laut.fm/chilloutzone',
+      emoji: '🧊', color: '#0ea5e9',
+      desc: 'Chillout zone',
+    },
+    {
+      id: 'brokenbeats', cat: 'Chill Out / Downtempo',
+      name: 'Brokenbeats',
+      url:  'https://stream.brokenbeats.net/tune',
+      emoji: '🎼', color: '#0ea5e9',
+      desc: 'Atmospheric downtempo · drum and bass',
+    },
+    {
+      id: 'anon-fm', cat: 'Chill Out / Downtempo',
+      name: 'Anon.FM',
+      url:  'https://icecast.anon.fm/radio',
+      emoji: '🕶️', color: '#0ea5e9',
+      desc: 'Downtempo · experimental · psychedelic',
+    },
+    {
+      id: 'cafedelmar', cat: 'Chill Out / Downtempo',
+      name: 'Café del Mar',
+      url:  'https://streams.radio.co/se1a320b47/listen',
+      emoji: '🌊', color: '#0ea5e9',
+      desc: 'Ibiza chillout — Spain 🇪🇸',
+    },
+    {
+      id: 'epic-lounge-sleep', cat: 'Chill Out / Downtempo',
+      name: 'Epic Lounge — Sleep & Meditation',
+      url:  'https://stream.epic-lounge.com/sleep-meditation?ref=radiobrowser',
+      emoji: '🌙', color: '#0ea5e9',
+      desc: 'Ambient sleep & meditation',
+    },
+    {
+      id: 'epic-piano-chillout', cat: 'Chill Out / Downtempo',
+      name: 'Chillout Piano',
+      url:  'https://stream.epic-piano.com/chillout-piano?ref=radiobrowser',
+      emoji: '🎹', color: '#0ea5e9',
+      desc: 'Chillout piano',
     },
 
     // ════════════════════════════════════════════
@@ -164,6 +276,27 @@ const Radio = (() => {
       emoji: '🌫️', color: '#6366f1',
       desc: 'Ambient · drone · experimental',
     },
+    {
+      id: 'indiebeat-ambient', cat: 'Dark Ambient / Drone',
+      name: 'The Indie Beat — Ambient',
+      url:  'https://azura.theindiebeat.fm/listen/the_indie_beat_radio_-_ambient/radio.mp3',
+      emoji: '🌘', color: '#6366f1',
+      desc: 'Dark ambient · deep ambient',
+    },
+    {
+      id: 'modular-station', cat: 'Dark Ambient / Drone',
+      name: 'Modular-Station',
+      url:  'https://broadcast.modular-station.com/radio/8000/radio.aac',
+      emoji: '🔌', color: '#6366f1',
+      desc: 'Ambient · modular synthesis · soundscape',
+    },
+    {
+      id: 'alswin-ambient', cat: 'Dark Ambient / Drone',
+      name: 'Alswin Ambient Music',
+      url:  'https://server7.radio-streams.net/proxy/jwoiiktx/stream',
+      emoji: '🕯️', color: '#6366f1',
+      desc: 'Ambient · cinematic · meditation',
+    },
 
     // ════════════════════════════════════════════
     // TECHNO UNDERGROUND
@@ -188,6 +321,20 @@ const Radio = (() => {
       url:  'https://stream-153.zeno.fm/xilwjn4t17qvv',
       emoji: '🕳️', color: '#a855f7',
       desc: 'Dark techno · hard techno · minimal',
+    },
+    {
+      id: 'melodic-technolovers', cat: 'Techno Underground',
+      name: 'Melodic House & Techno',
+      url:  'https://stream.technolovers.fm/melodic-house-techno?ref=radiobrowser-2',
+      emoji: '🎶', color: '#a855f7',
+      desc: 'Melodic house & techno',
+    },
+    {
+      id: 'piratefm-electronica', cat: 'Techno Underground',
+      name: 'Electronica Vibes — Pirate Radio GR',
+      url:  'https://live.piratefm.net/electronica_vibes',
+      emoji: '🏴', color: '#a855f7',
+      desc: 'Electronica · melodic techno — Greece 🇬🇷',
     },
   ];
 
