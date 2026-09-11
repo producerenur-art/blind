@@ -585,29 +585,9 @@ const Radio = (() => {
             <div id="radio-search-results" class="radio-search-results hidden"></div>
           </div>
           ${(() => {
-            const r247 = (typeof Radio247 !== 'undefined') ? Radio247.currentBlock() : null;
-            const r247Active = (typeof Radio247 !== 'undefined') && Radio247.isActive();
-            const r247Html = r247 ? `
-              <div class="stellar-featured-card r247-card" id="r247-card">
-                <div class="stellar-featured-glow" style="background:#a855f7"></div>
-                <div class="stellar-featured-inner">
-                  <div class="stellar-featured-emoji">${iconForEmoji('🌘')}</div>
-                  <div class="stellar-featured-info">
-                    <div class="stellar-featured-label">${Icon('star')} 24-Hour Cycle</div>
-                    <div class="stellar-featured-name">SiriusFM</div>
-                    <div class="stellar-featured-desc">Now: ${escHtml(r247.label)} · until ${r247.untilLabel} · Next: ${escHtml(Radio247.nextBlock().label)}</div>
-                  </div>
-                  <button class="stellar-featured-play" onclick="event.stopPropagation();Radio247.toggle()">
-                    ${r247Active ? '⏸' : '▶'}
-                  </button>
-                </div>
-                ${r247Active && r247.ytFallbackId ? `<iframe class="r247-yt-embed" src="https://www.youtube.com/embed/${r247.ytFallbackId}?autoplay=1&list=RD${r247.ytFallbackId}" allow="autoplay; encrypted-media" allowfullscreen></iframe>` : ''}
-                ${r247Active ? '<div class="stellar-live-bar"><span></span><span></span><span></span><span></span><span></span></div>' : ''}
-                <div class="r247-subscribe" onclick="event.stopPropagation()">
-                  <input type="email" id="r247-sub-email" class="r247-sub-input" placeholder="Get today's schedule by email" autocomplete="email">
-                  <button class="r247-sub-btn" title="Subscribe" onclick="Radio247.subscribeFromInput()">${Icon('bell')}</button>
-                </div>
-              </div>` : '';
+            const r247Html = (typeof Radio247 !== 'undefined')
+              ? Radio247.cardHtml('r247-card', { showUntilNext: true, subscribe: true })
+              : '';
             const featured = STATIONS.find(s => s.featured);
             const featuredHtml = featured ? `
               <div class="stellar-featured-card" id="rbtn-${featured.id}" onclick="Radio.playStation('${featured.id}')">

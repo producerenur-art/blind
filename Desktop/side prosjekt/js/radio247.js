@@ -101,9 +101,55 @@ const Radio247 = (() => {
     _lastStationId = null;
   }
 
+  // Rerender kva side som helst som for tida viser eit 24/7-kort, etter play/
+  // stop/blokkbytte — /radio og /shows har kvar sin eigen render(), og berre
+  // éin av dei er montert om gongen.
+  function _rerenderHost() {
+    try {
+      if (document.getElementById('radio-page') && typeof Radio !== 'undefined' && Radio.render) Radio.render();
+      else if (document.getElementById('shows-page') && typeof Shows !== 'undefined' && Shows.render) Shows.render();
+    } catch (_) {}
+  }
+
   function toggle() {
     if (_active) stop(); else play();
-    if (typeof Radio !== 'undefined' && Radio.render && document.getElementById('radio-page')) Radio.render();
+    _rerenderHost();
+  }
+
+  function _escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+
+  // Delt kort-markup — brukt av både js/radio.js (full versjon, med
+  // påmeldingsfelt) og js/shows.js (kompakt versjon som banner over
+  // "Weekly schedule"). `opts.subscribe` slår på e-postfeltet.
+  function cardHtml(id, opts) {
+    opts = opts || {};
+    const b = currentBlock();
+    const active = _active;
+    const desc = opts.showUntilNext
+      ? `Now: ${_escHtml(b.label)} · until ${b.untilLabel} · Next: ${_escHtml(nextBlock().label)}`
+      : `Now: ${_escHtml(b.label)}`;
+    return `
+      <div class="stellar-featured-card r247-card" id="${id}">
+        <div class="stellar-featured-glow" style="background:#a855f7"></div>
+        <div class="stellar-featured-inner">
+          <div class="stellar-featured-emoji">${iconForEmoji('🌘')}</div>
+          <div class="stellar-featured-info">
+            <div class="stellar-featured-label">${Icon('star')} 24-Hour Cycle — always on</div>
+            <div class="stellar-featured-name">SiriusFM</div>
+            <div class="stellar-featured-desc">${desc}</div>
+          </div>
+          <button class="stellar-featured-play" onclick="event.stopPropagation();Radio247.toggle()">
+            ${active ? '⏸' : '▶'}
+          </button>
+        </div>
+        ${active && b.ytFallbackId ? `<iframe class="r247-yt-embed" src="https://www.youtube.com/embed/${b.ytFallbackId}?autoplay=1&list=RD${b.ytFallbackId}" allow="autoplay; encrypted-media" allowfullscreen></iframe>` : ''}
+        ${active ? '<div class="stellar-live-bar"><span></span><span></span><span></span><span></span><span></span></div>' : ''}
+        ${opts.subscribe ? `
+        <div class="r247-subscribe" onclick="event.stopPropagation()">
+          <input type="email" id="r247-sub-email" class="r247-sub-input" placeholder="Get today's schedule by email" autocomplete="email">
+          <button class="r247-sub-btn" title="Subscribe" onclick="Radio247.subscribeFromInput()">${Icon('bell')}</button>
+        </div>` : ''}
+      </div>`;
   }
 
   // Sjekk kvart minutt om me har krysset ei blokkgrense — bytt kjelde stille
@@ -148,7 +194,7 @@ const Radio247 = (() => {
   }
 
   return {
-    play, stop, toggle, isActive, currentBlock, nextBlock,
+    play, stop, toggle, isActive, currentBlock, nextBlock, cardHtml,
     notifyManualPlay, subscribeFromInput, init,
     get schedule() { return SCHEDULE; },
   };
