@@ -250,7 +250,7 @@ const Radio247 = (() => {
           </div>
         </div>
         ${active ? '<div class="stellar-live-bar"><span></span><span></span><span></span><span></span><span></span></div>' : ''}
-        ${opts.subscribe ? `
+        ${opts.subscribe && !_isSubscribed() ? `
         <div class="r247-subscribe" onclick="event.stopPropagation()">
           <input type="email" id="r247-sub-email" class="r247-sub-input" placeholder="Get today's schedule by email" autocomplete="email">
           <button class="r247-sub-btn" title="Subscribe" onclick="Radio247.subscribeFromInput()">${Icon('bell')}</button>
@@ -278,6 +278,17 @@ const Radio247 = (() => {
 
   // Påmelding til den daglige e-posten med dagens skjema (api/radio247-digest.js)
   // — EGEN liste, atskilt fra det vanlige "Updates"-nyhetsbrevet (js/newsletter.js).
+  // Hugsar påmelding lokalt (same mønster som Unsubscribe sin pv_marketing_optout)
+  // slik at abonnements-raden forsvinn med det same og ikkje kjem tilbake på
+  // seinare besøk — ingen grunn til å be same brukar om e-posten på nytt.
+  const SUBSCRIBED_KEY = 'pv_r247_subscribed';
+  function _isSubscribed() {
+    try { return localStorage.getItem(SUBSCRIBED_KEY) === '1'; } catch (_) { return false; }
+  }
+  function _markSubscribed() {
+    try { localStorage.setItem(SUBSCRIBED_KEY, '1'); } catch (_) {}
+  }
+
   async function subscribeFromInput() {
     const inp = document.getElementById('r247-sub-email');
     const email = String((inp && inp.value) || '').trim();
@@ -293,6 +304,8 @@ const Radio247 = (() => {
       if (res.ok && body.success) {
         if (inp) inp.value = '';
         toast('Subscribed to the daily schedule ✓', 'success');
+        _markSubscribed();
+        _rerenderHost();
       } else {
         toast(body.error || 'Could not subscribe right now.', 'error');
       }
