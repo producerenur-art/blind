@@ -127,7 +127,9 @@ async function rankWithAI(candidatesByGenre, apiKey) {
     `inntil ${SHORTLIST} beste ferske, EKTE DJ-settene / miksene / live-opptakene per ` +
     'sjanger, best først. Unngå intervjuer, reaksjoner, AI-generert støy, ' +
     '«10 hours»-looper, enkeltspor og spillelister. Hold deg strengt på sjanger — ' +
-    'techno skal være undergrunns-techno, ikke EDM/mainstream. Svar med KUN et ' +
+    'techno skal være undergrunns-techno, ikke EDM/mainstream. Samme videoId eller ' +
+    'samme kanal/artist skal ALDRI velges i mer enn én sjangers liste — velg en ' +
+    'annen kandidat for den sjangeren i stedet. Svar med KUN et ' +
     'JSON-objekt som mapper sjangernavn → array av valgte videoId-er, ingen annen ' +
     'tekst. Bruk kun videoId-er fra listen.';
   const userMsg = 'Kandidater:\n' + lines.join('\n') + '\n\nReturner kun JSON-objektet.';
@@ -206,6 +208,36 @@ module.exports = async (req, res) => {
         console.error('radio-fresh ai:', e && e.message ? e.message : e);
         // Behold YouTube-fallback-rangeringen.
       }
+    }
+
+    // 4) Global dedupe på tvers av sjangre — samme video-ID eller samme
+    // YouTube-kanal (artist) skal ALDRI opptre i mer enn én sjangers liste
+    // (søkene for f.eks. downtempo og psychill overlapper ofte, og både
+    // AI-rangeringen og YouTube-fallbacken manglet denne sperren — det ga
+    // synlige dubletter i HomeRadio-widgeten, f.eks. samme sett under både
+    // Downtempo og Psychill). Fast rekkefølge på GENRES avgjør hvem som
+    // «eier» kanalen; sjangre lenger nede fyller heller på med neste
+    // ubrukte kandidat fra sitt eget søk.
+    const seenIds = new Set();
+    const seenChannels = new Set();
+    for (const g of GENRES) {
+      const kept = [];
+      for (const c of (sets[g] || [])) {
+        if (seenIds.has(c.id) || (c.channel && seenChannels.has(c.channel))) continue;
+        kept.push(c);
+        seenIds.add(c.id);
+        if (c.channel) seenChannels.add(c.channel);
+      }
+      if (kept.length < SHORTLIST) {
+        for (const c of (candidatesByGenre[g] || [])) {
+          if (kept.length >= SHORTLIST) break;
+          if (seenIds.has(c.id) || (c.channel && seenChannels.has(c.channel))) continue;
+          kept.push(c);
+          seenIds.add(c.id);
+          if (c.channel) seenChannels.add(c.channel);
+        }
+      }
+      sets[g] = kept;
     }
 
     // Bakoverkompatibelt felt: ett valgt sett per sjanger (toppen av shortlisten).
