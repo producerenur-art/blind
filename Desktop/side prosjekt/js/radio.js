@@ -274,7 +274,7 @@ const Radio = (() => {
   }
 
   function _initJingleSchedule() {
-    _scheduleJingle(JINGLES.a, 0.75, 0.75); // kvart 45. min (0.75 t)
+    _scheduleJingle(JINGLES.a, 65 / 60, 65 / 60); // kvart 1t 5min (65 min)
     _scheduleJingle(JINGLES.c, 3, 4);       // kvar 3.-4. time
     _scheduleJingle(JINGLES.d, 6, 8);       // kvar 6.-8. time
   }
