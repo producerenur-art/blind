@@ -139,6 +139,28 @@ const Radio = (() => {
       emoji: '🫧', color: '#0ea5e9',
       desc: 'Relaxing chill & soul — UK 🇬🇧',
     },
+
+    // ════════════════════════════════════════════
+    // DARK AMBIENT / DRONE  ▼ botn av 24-Hour Cycle-hjulet
+    // ════════════════════════════════════════════
+    {
+      id: 'ambient-abyss', cat: 'Dark Ambient / Drone',
+      name: 'Ambient Abyss Broadcasting',
+      url:  'https://broadcast.shoutstream.co.uk:8068/stream',
+      emoji: '🌑', color: '#6366f1',
+      desc: 'Deep atmospheric ambient — UK 🇬🇧',
+    },
+
+    // ════════════════════════════════════════════
+    // TECHNO UNDERGROUND
+    // ════════════════════════════════════════════
+    {
+      id: 'uzic-techno', cat: 'Techno Underground',
+      name: 'UZIC Techno Minimal',
+      url:  'https://uzic.ice.infomaniak.ch/uzic-128.aac',
+      emoji: '⚙️', color: '#a855f7',
+      desc: 'Minimal & underground techno — Switzerland 🇨🇭',
+    },
   ];
 
   // Group by category

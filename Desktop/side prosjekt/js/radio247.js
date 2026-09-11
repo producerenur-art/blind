@@ -5,24 +5,20 @@
 //   natt-topp (Techno) → Psytrance/Goa → Progressive → Dark Drone (botn,
 //   tidleg) → Psybient/Ambient (dag) → Downtempo/Psychill → Progressive →
 //   Psytrance/Goa → topp igjen.
-// Dei fleste blokkene bruker ekte strøymar som alt finst i STATIONS
-// (js/radio.js). Dark Drone og Techno Underground har ingen ekte strøym
-// enno, så dei blokkene viser i staden det same AI-kuraterte
-// YouTube-fallback-settet som HomeRadio-widgeten (js/app.js) bruker for
-// desse sjangrane.
+// Alle blokkene bruker ekte lyd-strøymar frå STATIONS (js/radio.js) — ingen
+// video, rein lytting akkurat som alle andre radiokanalar på sida.
 const Radio247 = (() => {
   // [start, end) i norsk lokaltid, 24-timars klokke (desimaltimar). Må
-  // dekke heile 0–24 utan hol. `stationIds` tom = ingen ekte strøym →
-  // `ytFallbackId` brukes i staden.
+  // dekke heile 0–24 utan hol.
   const SCHEDULE = [
     { start: 0,  end: 1,  genre: 'goa',         label: 'Psytrance / Goa',      stationIds: ['dmtfm', 'psyndora', 'babaganousha'] },
     { start: 1,  end: 3,  genre: 'progressive', label: 'Progressive',          stationIds: ['trancearound', 'atr', 'rr-progressive'] },
-    { start: 3,  end: 6,  genre: 'dark-drone',  label: 'Dark Drone',           stationIds: [], ytFallbackId: 'PCEseGXzjqo' },
+    { start: 3,  end: 6,  genre: 'dark-drone',  label: 'Dark Drone',           stationIds: ['ambient-abyss'] },
     { start: 6,  end: 12, genre: 'psychill',    label: 'Psybient / Ambient',   stationIds: ['ambientpsy-1fm', 'multihuman'] },
     { start: 12, end: 16, genre: 'chillout',    label: 'Downtempo / Psychill', stationIds: ['1fm-chillout', 'smoothchill'] },
     { start: 16, end: 18, genre: 'progressive', label: 'Progressive',          stationIds: ['trancearound', 'atr', 'rr-progressive'] },
     { start: 18, end: 20, genre: 'goa',         label: 'Psytrance / Goa',      stationIds: ['dmtfm', 'psyndora', 'babaganousha'] },
-    { start: 20, end: 23, genre: 'techno',      label: 'Techno Underground',   stationIds: [], ytFallbackId: 'uvAwk-ITdVw' },
+    { start: 20, end: 23, genre: 'techno',      label: 'Techno Underground',   stationIds: ['uzic-techno'] },
     { start: 23, end: 24, genre: 'goa',         label: 'Psytrance / Goa',      stationIds: ['dmtfm', 'psyndora', 'babaganousha'] },
   ];
 
@@ -142,7 +138,6 @@ const Radio247 = (() => {
             ${active ? '⏸' : '▶'}
           </button>
         </div>
-        ${active && b.ytFallbackId ? `<iframe class="r247-yt-embed" src="https://www.youtube.com/embed/${b.ytFallbackId}?autoplay=1&list=RD${b.ytFallbackId}" allow="autoplay; encrypted-media" allowfullscreen></iframe>` : ''}
         ${active ? '<div class="stellar-live-bar"><span></span><span></span><span></span><span></span><span></span></div>' : ''}
         ${opts.subscribe ? `
         <div class="r247-subscribe" onclick="event.stopPropagation()">

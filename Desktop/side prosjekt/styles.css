@@ -1228,11 +1228,8 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   gap: 3px; height: 18px; padding-bottom: 0.5rem;
 }
 .r247-card { border-color: rgba(168,85,247,0.35); }
+.r247-card .stellar-featured-label { color: #38bdf8; }
 .r247-card:hover { box-shadow: 0 8px 32px rgba(168,85,247,0.3); }
-.r247-yt-embed {
-  position: relative; z-index: 1; display: block; width: 100%; aspect-ratio: 16/9;
-  border: 0; border-radius: 0 0 16px 16px;
-}
 .r247-subscribe {
   position: relative; z-index: 1; display: flex; gap: 0.5rem;
   padding: 0 1rem 0.9rem;
