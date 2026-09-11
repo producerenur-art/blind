@@ -10,12 +10,20 @@
 const Radio247 = (() => {
   // [start, end) i norsk lokaltid, 24-timars klokke (desimaltimar). Må
   // dekke heile 0–24 utan hol.
-  const GOA_IDS         = ['dmtfm', 'psyndora', 'babaganousha', 'jointil-beattrance', 'record-goa-psy', 'technolovers-psytrance', 'goanight'];
-  const PROGRESSIVE_IDS = ['trancearound', 'atr', 'rr-progressive', 'record-trancemission', 'technolovers-trance', 'dfm-avb'];
+  // NB: fleire station-id-ar vart plukka bort 11.09.2026 etter ein live CORS-feil
+  // — technolovers.fm/epic-lounge/epic-piano/piratefm/mixlive/chilloutzone-lautfm
+  // omdirigerer alle til eit anna opphav der FØRSTE hopp (omdirigeringssvaret,
+  // ikkje sluttmålet) manglar Access-Control-Allow-Origin. Nettlesaren blokkerer
+  // heile kjeda uansett kva sluttmålet sender — stadfesta med curl + reell
+  // avspeling. Sjå api/radio-healthcheck.js for framtidige kandidatar; berre
+  // legg til ein ny id her viss du har stadfesta at HEILE kjeda (ikkje berre
+  // sluttmålet) har CORS, eller at URL-en ikkje omdirigerer i det heile.
+  const GOA_IDS         = ['dmtfm', 'psyndora', 'babaganousha', 'jointil-beattrance', 'record-goa-psy', 'goanight'];
+  const PROGRESSIVE_IDS = ['trancearound', 'atr', 'rr-progressive', 'record-trancemission', 'dfm-avb'];
   const DARK_DRONE_IDS  = ['ambient-abyss', 'dark-city-signal', 'systrum-ssr1', 'indiebeat-ambient', 'modular-station', 'alswin-ambient'];
-  const PSYCHILL_IDS    = ['ambientpsy-1fm', 'multihuman', 'diceradio-psybient', 'mixlive-psybient-sunset', 'paradisehunter-chillout'];
-  const CHILLOUT_IDS    = ['1fm-chillout', 'smoothchill', 'chilloutzone-lautfm', 'brokenbeats', 'anon-fm', 'cafedelmar', 'epic-lounge-sleep', 'epic-piano-chillout'];
-  const TECHNO_IDS      = ['uzic-techno', 'technolovers-techno', 'remember-vip-techno', 'melodic-technolovers', 'piratefm-electronica'];
+  const PSYCHILL_IDS    = ['ambientpsy-1fm', 'multihuman', 'diceradio-psybient', 'paradisehunter-chillout'];
+  const CHILLOUT_IDS    = ['1fm-chillout', 'smoothchill', 'brokenbeats', 'anon-fm', 'cafedelmar'];
+  const TECHNO_IDS      = ['uzic-techno', 'remember-vip-techno'];
 
   const SCHEDULE = [
     { start: 0,  end: 1,  genre: 'goa',         label: 'Psytrance / Goa',      stationIds: GOA_IDS },

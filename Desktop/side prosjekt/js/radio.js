@@ -79,7 +79,12 @@ const Radio = (() => {
     {
       id: 'jointil-beattrance', cat: 'Psytrance / Goa',
       name: '#joint radio Beat Trance',
-      url:  'https://jointil.com/stream-beat',
+      // jointil.com/stream-beat redirect til denne — men sjølve redirect-svaret
+      // MANGLA Access-Control-Allow-Origin (målet har det), og nettlesaren
+      // blokkerer heile kjeda når FØRSTE hopp ikkje har CORS-header, sjølv om
+      // sluttmålet gjer det. Peik rett på sluttmålet i staden — stadfesta live
+      // 11.09.2026 at redirect-versjonen feila med CORS-feil i konsollen.
+      url:  'https://betelgeuse.nucast.co.uk/stream/jrn-beat',
       emoji: '🥁', color: '#4ade80',
       desc: 'Goa trance · psychedelic trance',
     },
@@ -89,13 +94,6 @@ const Radio = (() => {
       url:  'https://radiorecord.hostingradio.ru/goa96.aacp',
       emoji: '🔮', color: '#4ade80',
       desc: 'Goa trance · psychedelic trance',
-    },
-    {
-      id: 'technolovers-psytrance', cat: 'Psytrance / Goa',
-      name: 'Technolovers Psytrance',
-      url:  'https://stream.technolovers.fm/psytrance?ref=radiobrowser',
-      emoji: '🌀', color: '#4ade80',
-      desc: 'Dark psytrance · progressive psytrance',
     },
     {
       id: 'goanight', cat: 'Psytrance / Goa',
@@ -137,13 +135,6 @@ const Radio = (() => {
       desc: 'Trance · progressive trance',
     },
     {
-      id: 'technolovers-trance', cat: 'Progressive Psy / Trance',
-      name: 'Technolovers Trance',
-      url:  'https://stream.technolovers.fm/trance?ref=radiobrowser',
-      emoji: '🌐', color: '#2563eb',
-      desc: 'Progressive trance · uplifting',
-    },
-    {
       id: 'dfm-avb', cat: 'Progressive Psy / Trance',
       name: 'DFM Armin van Buuren',
       url:  'https://dfm.hostingradio.ru/avburren96.aacp',
@@ -178,13 +169,6 @@ const Radio = (() => {
       desc: 'Psybient',
     },
     {
-      id: 'mixlive-psybient-sunset', cat: 'Psybient / Psychill',
-      name: 'MixLive Psybient Sunset',
-      url:  'https://listen.openstream.co/6517/audio',
-      emoji: '🌅', color: '#8854d0',
-      desc: 'Psybient sunset session',
-    },
-    {
       id: 'paradisehunter-chillout', cat: 'Psybient / Psychill',
       name: 'Paradisehunter Chillout',
       url:  'https://radio.paradisehunter.de/listen/chillout/radio.mp3',
@@ -210,13 +194,6 @@ const Radio = (() => {
       desc: 'Relaxing chill & soul — UK 🇬🇧',
     },
     {
-      id: 'chilloutzone-lautfm', cat: 'Chill Out / Downtempo',
-      name: 'Chill Out Zone',
-      url:  'https://stream.laut.fm/chilloutzone',
-      emoji: '🧊', color: '#0ea5e9',
-      desc: 'Chillout zone',
-    },
-    {
       id: 'brokenbeats', cat: 'Chill Out / Downtempo',
       name: 'Brokenbeats',
       url:  'https://stream.brokenbeats.net/tune',
@@ -236,20 +213,6 @@ const Radio = (() => {
       url:  'https://streams.radio.co/se1a320b47/listen',
       emoji: '🌊', color: '#0ea5e9',
       desc: 'Ibiza chillout — Spain 🇪🇸',
-    },
-    {
-      id: 'epic-lounge-sleep', cat: 'Chill Out / Downtempo',
-      name: 'Epic Lounge — Sleep & Meditation',
-      url:  'https://stream.epic-lounge.com/sleep-meditation?ref=radiobrowser',
-      emoji: '🌙', color: '#0ea5e9',
-      desc: 'Ambient sleep & meditation',
-    },
-    {
-      id: 'epic-piano-chillout', cat: 'Chill Out / Downtempo',
-      name: 'Chillout Piano',
-      url:  'https://stream.epic-piano.com/chillout-piano?ref=radiobrowser',
-      emoji: '🎹', color: '#0ea5e9',
-      desc: 'Chillout piano',
     },
 
     // ════════════════════════════════════════════
@@ -309,32 +272,11 @@ const Radio = (() => {
       desc: 'Minimal & underground techno — Switzerland 🇨🇭',
     },
     {
-      id: 'technolovers-techno', cat: 'Techno Underground',
-      name: 'Technolovers Techno',
-      url:  'https://stream.technolovers.fm/techno?ref=radiobrowser',
-      emoji: '🎛️', color: '#a855f7',
-      desc: 'Techno · minimal · hard techno',
-    },
-    {
       id: 'remember-vip-techno', cat: 'Techno Underground',
       name: 'Remember VIP Techno',
       url:  'https://stream-153.zeno.fm/xilwjn4t17qvv',
       emoji: '🕳️', color: '#a855f7',
       desc: 'Dark techno · hard techno · minimal',
-    },
-    {
-      id: 'melodic-technolovers', cat: 'Techno Underground',
-      name: 'Melodic House & Techno',
-      url:  'https://stream.technolovers.fm/melodic-house-techno?ref=radiobrowser-2',
-      emoji: '🎶', color: '#a855f7',
-      desc: 'Melodic house & techno',
-    },
-    {
-      id: 'piratefm-electronica', cat: 'Techno Underground',
-      name: 'Electronica Vibes — Pirate Radio GR',
-      url:  'https://live.piratefm.net/electronica_vibes',
-      emoji: '🏴', color: '#a855f7',
-      desc: 'Electronica · melodic techno — Greece 🇬🇷',
     },
   ];
 
