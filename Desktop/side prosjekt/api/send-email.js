@@ -7,6 +7,7 @@ const { cleanArticles } = require('./_strip');
 // `module.exports` (eit no-op i nettlesaren) berre for dette formålet.
 const { SHOWS } = require('../js/shows.js');
 const { FESTIVALS } = require('../js/world.js');
+const { SCHEDULE: RADIO247_SCHEDULE } = require('../js/radio247.js');
 
 // Kanonisk nettadresse for ALLE e-postlenker (aktivering, tilbakestilling, kjøp).
 // Brukes som standard slik at lenkene alltid peker til det offisielle domenet —
@@ -416,6 +417,46 @@ const MAG_TABLE = 'magazine_cache';
 // Kva klokka og kva vekedag det er i Noreg. Serveren køyrer i UTC, men
 // programmet i js/shows.js er sett opp i norsk tid — utan denne omrekninga
 // ville e-posten peika på feil sending om sommaren (UTC+2).
+// SCHEDULE-blokkane (js/radio247.js) er i norsk lokaltid (Europe/Oslo) —
+// bygg dagens rekkefølge, roter til dagens starttidspunkt (dagen begynner
+// 00:00, blokkane ligg alt i stigande rekkefølge).
+function radio247Rows(SCHEDULE) {
+  const fmt = h => String(Math.floor(h) % 24).padStart(2, '0') + ':00';
+  return SCHEDULE.map(b =>
+    `<tr>
+      <td style="padding:0.5rem 0.75rem;vertical-align:top;width:90px;color:#f59e0b;font-weight:700;font-size:0.85rem;border-top:1px solid rgba(255,255,255,0.06)">${fmt(b.start)}–${fmt(b.end)}</td>
+      <td style="padding:0.5rem 0.75rem;vertical-align:top;color:#e2e8f0;font-weight:600;font-size:0.9rem;border-top:1px solid rgba(255,255,255,0.06)">${escHtml(b.label)}</td>
+    </tr>`).join('');
+}
+
+function radio247Html(name, siteUrl, unsubscribeUrl, SCHEDULE) {
+  const base = (siteUrl || '').replace(/\/$/, '');
+  const radioUrl = `${base}/#/radio`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:'Inter',Arial,sans-serif">
+  <div style="max-width:560px;margin:2rem auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(168,85,247,0.3)">
+    <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:2rem;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:1.75rem;font-weight:800;letter-spacing:-0.5px">🌘 24-Hour Cycle</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:0.4rem 0 0;font-size:0.9rem">Today's schedule on SiriusFM</p>
+    </div>
+    <div style="padding:2rem;color:#e2e8f0">
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1rem">Hi ${escHtml(name)}! Here's today's genre wheel — deep and dark in the early hours, building up to a peak at night, then winding back down. All times are Norwegian time (CET/CEST).</p>
+      <table style="width:100%;border-collapse:collapse;margin:0 0 1.25rem">${radio247Rows(SCHEDULE)}</table>
+      <div style="text-align:center;margin:1.5rem 0 0.5rem">
+        <a href="${radioUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;padding:0.875rem 2rem;border-radius:8px;font-weight:700;font-size:1rem">▶ Listen now</a>
+      </div>
+    </div>
+    <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
+      <p style="color:#475569;font-size:0.75rem;margin:0 0 0.4rem">© ${new Date().getFullYear()} SiriusFM</p>
+      <a href="${unsubscribeUrl}" style="color:#64748b;font-size:0.72rem">Unsubscribe from this schedule</a>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 function osloClock(now) {
   try {
     const parts = new Intl.DateTimeFormat('en-GB', {
@@ -732,6 +773,23 @@ function escHtml(str) {
 // (newsletter_subscribers.unsubscribed_at, se migrasjon 0021) — en mottaker uten
 // konto har kun sistnevnte, en registrert bruker sjekkes mot begge (en aldri
 // meldt opp gjeste-rad finnes rett og slett ikke, og teller da ikke som avmeldt).
+// Eiga, atskilt avmeldingssjekk for "🌘 24-Hour Cycle"-lista — IKKE same
+// tabell som isUnsubscribed() under (den styrer det generelle nyhetsbrevet).
+async function isRadio247Unsubscribed(email) {
+  const url  = process.env.SUPABASE_URL;
+  const key  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const addr = String(email || '').toLowerCase().trim();
+  if (!url || !key || !addr) return false;
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const db = createClient(url, key, { auth: { persistSession: false } });
+    const { data, error } = await db.from('radio247_subscribers').select('unsubscribed_at').ilike('email', addr).maybeSingle();
+    return !error && !!(data && data.unsubscribed_at);
+  } catch {
+    return false;
+  }
+}
+
 async function isUnsubscribed(email) {
   const url  = process.env.SUPABASE_URL;
   const key  = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -857,6 +915,13 @@ module.exports = async (req, res) => {
     html = liveNowHtml(toName, siteUrl, unsubUrl, {
       stations: b.stations, shows, magazine, interviews, festivals, releases, events,
     });
+  } else if (type === 'radio247_digest') {
+    if (await isRadio247Unsubscribed(toEmail)) {
+      return res.status(200).json({ success: true, skipped: 'unsubscribed' });
+    }
+    subject = "🌘 Today's 24-Hour Cycle schedule — SiriusFM";
+    const unsubUrl = req.body?.unsubscribeUrl || `${siteUrl}/api/radio247-unsubscribe?email=${encodeURIComponent(toEmail)}`;
+    html = radio247Html(toName, siteUrl, unsubUrl, RADIO247_SCHEDULE);
   } else {
     return res.status(400).json({ error: 'Unknown email type' });
   }

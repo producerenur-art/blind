@@ -1227,6 +1227,26 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   display: flex; align-items: flex-end; justify-content: center;
   gap: 3px; height: 18px; padding-bottom: 0.5rem;
 }
+.r247-card { border-color: rgba(168,85,247,0.35); }
+.r247-card:hover { box-shadow: 0 8px 32px rgba(168,85,247,0.3); }
+.r247-yt-embed {
+  position: relative; z-index: 1; display: block; width: 100%; aspect-ratio: 16/9;
+  border: 0; border-radius: 0 0 16px 16px;
+}
+.r247-subscribe {
+  position: relative; z-index: 1; display: flex; gap: 0.5rem;
+  padding: 0 1rem 0.9rem;
+}
+.r247-sub-input {
+  flex: 1; min-width: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; padding: 0.5rem 0.7rem; color: #e2e8f0; font-size: 0.8rem;
+}
+.r247-sub-input::placeholder { color: #64748b; }
+.r247-sub-btn {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
 .stellar-live-bar span {
   width: 3px; border-radius: 99px;
   background: linear-gradient(180deg, #86efac, #22c55e);

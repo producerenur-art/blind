@@ -371,7 +371,35 @@ async function subscribe(db, body) {
   return { status: 200, body: { success: true } };
 }
 
-const ACTIONS = { register, login, activate, forgot, reset, resend, unsubscribe, resubscribe, subscribe };
+// ── "🌘 24-Hour Cycle"-varsling — egen liste, atskilt fra det ukentlige
+// nyhetsbrevet (newsletter_subscribers) på brukerens eksplisitte ønske.
+async function radio247subscribe(db, body) {
+  const email = String(body.email || '').toLowerCase().trim();
+  if (!email || !email.includes('@')) return { status: 400, body: { error: 'Invalid email address' } };
+  const { error } = await db.from('radio247_subscribers')
+    .upsert({ email, unsubscribed_at: null }, { onConflict: 'email' });
+  if (error) {
+    if (tableMissing(error)) {
+      console.warn('radio247_subscribers-tabellen finnes ikke ennå — kjør supabase/migrations/0023_radio247_subscribers.sql.');
+      return { status: 503, body: { error: 'Radio247 storage not provisioned', notProvisioned: true } };
+    }
+    return { status: 500, body: { error: 'Could not save your email' } };
+  }
+  return { status: 200, body: { success: true } };
+}
+async function radio247unsubscribe(db, body) {
+  const email = String(body.email || '').toLowerCase().trim();
+  if (!email || !email.includes('@')) return { status: 400, body: { error: 'Invalid email address' } };
+  try {
+    await db.from('radio247_subscribers').update({ unsubscribed_at: new Date().toISOString() }).ilike('email', email);
+  } catch (_) { /* best effort */ }
+  return { status: 200, body: { success: true } };
+}
+
+const ACTIONS = {
+  register, login, activate, forgot, reset, resend, unsubscribe, resubscribe, subscribe,
+  radio247subscribe, radio247unsubscribe,
+};
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
