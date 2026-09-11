@@ -643,6 +643,29 @@ const Shows = (() => {
           </div>
         </div>
 
+        <!-- 24-HOUR CYCLE — always-on day-arc channel, separate from the
+             per-day shows below (same wheel every day, see js/radio247.js). -->
+        ${(() => {
+          if (typeof Radio247 === 'undefined') return '';
+          const b = Radio247.currentBlock();
+          const n = Radio247.nextBlock();
+          return `
+        <div class="section" style="max-width:900px">
+          <div class="stellar-featured-card r247-card" id="r247-shows-card" onclick="Router.go('/radio')">
+            <div class="stellar-featured-glow" style="background:#a855f7"></div>
+            <div class="stellar-featured-inner">
+              <div class="stellar-featured-emoji">${iconForEmoji('🌘')}</div>
+              <div class="stellar-featured-info">
+                <div class="stellar-featured-label">${Icon('star')} 24-Hour Cycle — always on</div>
+                <div class="stellar-featured-name">${escHtml(Radio247.sourceName(b))}</div>
+                <div class="stellar-featured-desc">Now: ${escHtml(b.label)} · until ${b.untilLabel} · Next: ${escHtml(n.label)}</div>
+              </div>
+              <button class="stellar-featured-play" onclick="event.stopPropagation();Router.go('/radio')">${Icon('radio')}</button>
+            </div>
+          </div>
+        </div>`;
+        })()}
+
         <!-- ON AIR -->
         ${live ? `
         <div class="section" style="max-width:900px">
