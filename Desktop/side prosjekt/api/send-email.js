@@ -761,6 +761,33 @@ function copyrightReportHtml(info) {
 </html>`;
 }
 
+function radioHealthcheckHtml(failed) {
+  const row = f => `<tr>
+    <td style="padding:0.45rem 0.75rem;color:#e2e8f0;font-size:0.85rem;vertical-align:top;border-top:1px solid rgba(255,255,255,0.06)">${escHtml(f.name)}<br><span style="color:#64748b;font-size:0.75rem">${escHtml(f.cat || '')}</span></td>
+    <td style="padding:0.45rem 0.75rem;color:#f87171;font-size:0.82rem;vertical-align:top;border-top:1px solid rgba(255,255,255,0.06);word-break:break-word">${escHtml(f.error || ('HTTP ' + f.status))}</td>
+  </tr>`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:'Inter',Arial,sans-serif">
+  <div style="max-width:620px;margin:2rem auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(239,68,68,0.35)">
+    <div style="background:linear-gradient(135deg,#ef4444,#7c3aed);padding:1.5rem 2rem;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:1.4rem;font-weight:800;letter-spacing:-0.5px">📻 Radio health check — Sirius<span style="color:#fde68a">FM</span></h1>
+    </div>
+    <div style="padding:1.75rem 2rem;color:#e2e8f0">
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1rem">${failed.length} station${failed.length === 1 ? '' : 's'} didn't respond on the daily check:</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden">
+        ${failed.map(row).join('')}
+      </table>
+    </div>
+    <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
+      <p style="color:#475569;font-size:0.75rem;margin:0">Automatic alert from SiriusFM · © ${new Date().getFullYear()}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -856,6 +883,15 @@ module.exports = async (req, res) => {
       profileUsername: b.profileUsername, reason: b.reason, originalUrl: b.originalUrl,
       details: b.details, reporter: b.reporter, route: b.route, time: b.time,
     });
+  } else if (type === 'radio_healthcheck') {
+    // Daglig varsel frå api/radio-healthcheck.js. Mottakar sett på serveren —
+    // ingen brukarinput, same regel som bug-/opphavsrettsrapport.
+    const b = req.body || {};
+    const failed = Array.isArray(b.failed) ? b.failed : [];
+    if (!failed.length) return res.status(200).json({ success: true, skipped: 'no failures' });
+    to = process.env.BUG_REPORT_EMAIL || 'post@siriusfm.no';
+    subject = `📻 ${failed.length} radio station${failed.length === 1 ? '' : 's'} down — SiriusFM health check`;
+    html = radioHealthcheckHtml(failed);
   } else if (!toEmail || !toName) {
     return res.status(400).json({ error: 'Missing required fields' });
   } else if (type === 'activation') {

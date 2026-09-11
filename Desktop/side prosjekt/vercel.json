@@ -25,6 +25,10 @@
     {
       "path": "/api/radio247-digest",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/radio-healthcheck",
+      "schedule": "0 5 * * *"
     }
   ],
   "functions": {
@@ -39,6 +43,9 @@
     },
     "api/radio247-digest.js": {
       "maxDuration": 300
+    },
+    "api/radio-healthcheck.js": {
+      "maxDuration": 120
     }
   }
 }
