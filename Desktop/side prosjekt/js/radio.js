@@ -634,7 +634,7 @@ const Radio = (() => {
                 </div>
               </div>` : '';
             const r247Html = (typeof Radio247 !== 'undefined')
-              ? Radio247.cardHtml('r247-card', { showUntilNext: true, subscribe: true, schedule: true })
+              ? Radio247.cardHtml('r247-card', { showUntilNext: true, subscribe: true, schedule: true, archive: true })
               : '';
             const featured = STATIONS.find(s => s.featured);
             const featuredHtml = featured ? `

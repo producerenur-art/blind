@@ -60,6 +60,38 @@ const Radio247 = (() => {
     return { ...SCHEDULE[(i + 1) % SCHEDULE.length] };
   }
 
+  // Dagsnummer i norsk kalendertid — endrar seg ved midnatt Oslo-tid, same
+  // grensa som resten av hjulet. Brukast til å ROTERE kva for ei av dei
+  // ekte, kuraterte stasjonane i ein blokk som spelar — same sjanger-blokk
+  // (t.d. Psytrance/Goa) spelar IKKJE nødvendigvis same stasjon to dagar på
+  // rad; ho syklar gjennom heile lista (dmtfm → psyndora → babaganousha →
+  // dmtfm → …) etter kor mange ekte alternativ blokka har.
+  function _osloDayIndex() {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Oslo', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(new Date());
+    const y = Number((parts.find(p => p.type === 'year') || {}).value || 0);
+    const m = Number((parts.find(p => p.type === 'month') || {}).value || 1);
+    const d = Number((parts.find(p => p.type === 'day') || {}).value || 1);
+    return Math.floor(Date.UTC(y, m - 1, d) / 86400000);
+  }
+
+  // `dayIndex` valfri — utan han, dagens rotasjon. Med han (også fortid/
+  // framtid), same formel — rotasjonen er deterministisk, så "arkivet"
+  // under kan REKNE UT kva som spelte ein gitt dag i staden for å logge det.
+  function _pickStationId(block, dayIndex) {
+    if (!block.stationIds || !block.stationIds.length) return null;
+    const n = block.stationIds.length;
+    const di = dayIndex === undefined ? _osloDayIndex() : dayIndex;
+    return block.stationIds[((di % n) + n) % n]; // trygg modulo også for negative dagar
+  }
+
+  function _stationName(sid) {
+    if (!sid || typeof Radio === 'undefined') return null;
+    const s = (Radio.stations || []).find(x => x.id === sid);
+    return s ? s.name : null;
+  }
+
   // Kort lokal jingle-fil (same som stasjons-ID-jinglane A/C/D) — brukast som
   // ei bru mellom sjangrar ved AUTOMATISKE bytte, så overgangen aldri blir
   // stille dødtid mens den nye strøymen koblar til.
@@ -70,7 +102,7 @@ const Radio247 = (() => {
   // klikk) → koble rett til, ingenting å bru over enno.
   function _applyBlock(block, opts) {
     opts = opts || {};
-    const sid = block.stationIds && block.stationIds.length ? block.stationIds[0] : null;
+    const sid = _pickStationId(block);
     _lastStationId = sid;
     if (!sid || typeof Radio === 'undefined') return;
     // Ikkje spel av same stasjon på nytt (ville berre togglet han av via
@@ -142,7 +174,30 @@ const Radio247 = (() => {
           <td>${_fmtHour(b.start)}–${_fmtHour(b.end)}</td>
           <td>${_escHtml(b.label)}</td>
         </tr>`).join('')}
-    </table>`;
+    </table>
+    <div class="r247-schedule-note" onclick="event.stopPropagation()">↻ Repeats daily — 23:00–00:00 loops straight back into 00:00–01:00</div>`;
+  }
+
+  // "Arkiv" for den sjangeren som spelar NO: kva ekte stasjon som var på
+  // same tidsblokk dei siste 5 dagane. Ikkje ein logg (ingen database) —
+  // rotasjonen er ein rein funksjon av dato, så fortida kan alltid reknast
+  // ut på nytt. Viser ingenting for blokker med berre éin ekte stasjon
+  // (ingenting å rotere mellom enno).
+  function archiveHtml() {
+    const b = currentBlock();
+    if (!b.stationIds || b.stationIds.length < 2) return '';
+    const today = _osloDayIndex();
+    const rows = [];
+    for (let back = 0; back < 5; back++) {
+      const sid = _pickStationId(b, today - back);
+      const name = _stationName(sid) || sid;
+      const label = back === 0 ? 'Today' : back === 1 ? 'Yesterday' : `${back} days ago`;
+      rows.push(`<tr><td>${label}</td><td>${_escHtml(name)}</td></tr>`);
+    }
+    return `<div class="r247-archive" onclick="event.stopPropagation()">
+      <div class="r247-archive-title">${Icon('clock')} ${_escHtml(b.label)} — recent rotation</div>
+      <table class="r247-schedule-table">${rows.join('')}</table>
+    </div>`;
   }
 
   // Delt kort-markup — brukt av både js/radio.js (full versjon, med
@@ -153,9 +208,11 @@ const Radio247 = (() => {
     opts = opts || {};
     const b = currentBlock();
     const active = _active;
+    const stationName = _stationName(_pickStationId(b));
+    const nowText = stationName ? `${_escHtml(b.label)} — ${_escHtml(stationName)}` : _escHtml(b.label);
     const desc = opts.showUntilNext
-      ? `Now: ${_escHtml(b.label)} · until ${b.untilLabel} · Next: ${_escHtml(nextBlock().label)}`
-      : `Now: ${_escHtml(b.label)}`;
+      ? `Now: ${nowText} · until ${b.untilLabel} · Next: ${_escHtml(nextBlock().label)}`
+      : `Now: ${nowText}`;
     return `
       <div class="stellar-featured-card r247-card" id="${id}">
         <div class="stellar-featured-glow" style="background:#a855f7"></div>
@@ -178,6 +235,7 @@ const Radio247 = (() => {
           <button class="r247-sub-btn" title="Subscribe" onclick="Radio247.subscribeFromInput()">${Icon('bell')}</button>
         </div>` : ''}
         ${opts.schedule ? scheduleTableHtml() : ''}
+        ${opts.archive ? archiveHtml() : ''}
       </div>`;
   }
 
