@@ -7,7 +7,7 @@
    - Live-data (Gun.js-relays, Supabase, /api/, alt cross-origin): rett til nettverket, aldri cache.
    skipWaiting + clients.claim gjer at ein ny SW tar over med ein gong, utan å vente på
    at alle faner er lukka. Bump CACHE ved behov. */
-const CACHE = 'siriusfm-v256';
+const CACHE = 'siriusfm-v257';
 const CORE = ['/', '/index.html', '/manifest.json',
   '/assets/icon-192.png', '/assets/icon-512.png'];
 

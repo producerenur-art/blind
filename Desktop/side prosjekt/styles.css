@@ -7584,6 +7584,17 @@ body.edge-idle #about-tab-handle {
   transform: translateY(-50%) translateX(115%);
   pointer-events: none;
 }
+/* 24-Hour Cycle-abonner-bjellen fader kun bort på /radio (kort-id "r247-card"
+   finst berre der — js/shows.js sitt kort har id "r247-shows-card" og er
+   difor upåverka, bjella skal vere synleg der og alle andre URL-ar). */
+#r247-card .r247-sub-btn {
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+body.edge-idle #r247-card .r247-sub-btn {
+  opacity: 0;
+  transform: translateX(40%);
+  pointer-events: none;
+}
 
 /* Widgets inside the dock flow in the column instead of self-positioning */
 #dock #dock-links-widget {
