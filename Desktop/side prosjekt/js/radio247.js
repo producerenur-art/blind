@@ -64,14 +64,6 @@ const Radio247 = (() => {
     return { ...SCHEDULE[(i + 1) % SCHEDULE.length] };
   }
 
-  function sourceName(block) {
-    if (block.stationIds && block.stationIds.length) {
-      const s = (typeof Radio !== 'undefined' && Radio.stations || []).find(x => x.id === block.stationIds[0]);
-      return s ? s.name : block.label;
-    }
-    return block.label + ' · AI video';
-  }
-
   function _applyBlock(block) {
     const sid = block.stationIds && block.stationIds.length ? block.stationIds[0] : null;
     _lastStationId = sid;
@@ -156,7 +148,7 @@ const Radio247 = (() => {
   }
 
   return {
-    play, stop, toggle, isActive, currentBlock, nextBlock, sourceName,
+    play, stop, toggle, isActive, currentBlock, nextBlock,
     notifyManualPlay, subscribeFromInput, init,
     get schedule() { return SCHEDULE; },
   };

@@ -594,7 +594,7 @@ const Radio = (() => {
                   <div class="stellar-featured-emoji">${iconForEmoji('🌘')}</div>
                   <div class="stellar-featured-info">
                     <div class="stellar-featured-label">${Icon('star')} 24-Hour Cycle</div>
-                    <div class="stellar-featured-name">${escHtml(Radio247.sourceName(r247))}</div>
+                    <div class="stellar-featured-name">SiriusFM</div>
                     <div class="stellar-featured-desc">Now: ${escHtml(r247.label)} · until ${r247.untilLabel} · Next: ${escHtml(Radio247.nextBlock().label)}</div>
                   </div>
                   <button class="stellar-featured-play" onclick="event.stopPropagation();Radio247.toggle()">

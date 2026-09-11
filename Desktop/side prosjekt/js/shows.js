@@ -657,8 +657,8 @@ const Shows = (() => {
               <div class="stellar-featured-emoji">${iconForEmoji('🌘')}</div>
               <div class="stellar-featured-info">
                 <div class="stellar-featured-label">${Icon('star')} 24-Hour Cycle — always on</div>
-                <div class="stellar-featured-name">${escHtml(Radio247.sourceName(b))}</div>
-                <div class="stellar-featured-desc">Now: ${escHtml(b.label)} · until ${b.untilLabel} · Next: ${escHtml(n.label)}</div>
+                <div class="stellar-featured-name">SiriusFM</div>
+                <div class="stellar-featured-desc">Now: ${escHtml(b.label)}</div>
               </div>
               <button class="stellar-featured-play" onclick="event.stopPropagation();Router.go('/radio')">${Icon('radio')}</button>
             </div>
@@ -688,6 +688,7 @@ const Shows = (() => {
           <div class="section-header">
             <div class="section-title">${Icon('calendar')} Weekly schedule</div>
           </div>
+          ${typeof Radio247 !== 'undefined' ? `<div style="color:var(--text2);font-size:0.82rem;margin:-1rem 0 1.25rem;display:flex;align-items:center;gap:0.4rem">${Icon('sparkles')} 24-Hour Cycle next up: ${escHtml(Radio247.nextBlock().label)} at ${Radio247.currentBlock().untilLabel}</div>` : ''}
           <div class="sched-grid">
             ${scheduleGrid()}
           </div>
