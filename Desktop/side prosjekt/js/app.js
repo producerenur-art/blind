@@ -926,7 +926,9 @@ const App = (() => {
         psychill:    [],
         progressive: ['trancearound', 'atr', 'rr-progressive'],
         ambient:     [],
-        goa:         ['dmtfm', 'psyndora', 'babaganousha', 'babaganousha-labs'],
+        // Regel: aldri same artist to gongar i same sjangerrad. «Babaganousha
+        // Labs» er same artist som «Babaganousha Radio» → berre éin av dei her.
+        goa:         ['dmtfm', 'psyndora', 'babaganousha'],
         dub:         [],
         chillout:    ['1fm-chillout', 'smoothchill'],
         'dark-drone':[],
