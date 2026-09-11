@@ -1524,6 +1524,23 @@ const Radio = (() => {
       const playIcon = btn.querySelector('.station-play-btn');
       if (playIcon) playIcon.textContent = '▶';
     });
+    // Denne funksjonen blir kalla både synkront (frå playStation) OG
+    // asynkront (når StreamFix sin 'playing'-vakt faktisk stadfestar at
+    // strøymen kom i gang), så det blanke resettet over kan overskrive
+    // SiriusFM 24/7-raden si eiga aktiv/ikon-tilstand lenge etter at
+    // Radio247 sitt eige render() alt hadde sett han riktig. Rett han her
+    // — uansett når/kvifor denne funksjonen køyrer — mot Radio247 sin
+    // eigen sanning, ikkje mot `activeId`/`isPlaying` (som gjeld ekte
+    // STATIONS-oppføringar, ikkje det virtuelle 24/7-hjulet).
+    if (typeof Radio247 !== 'undefined' && Radio247.isActive) {
+      const r247Row = document.getElementById('rbtn-sirius247');
+      if (r247Row) {
+        const on = Radio247.isActive();
+        r247Row.classList.toggle('active', on);
+        const playIcon = r247Row.querySelector('.station-play-btn');
+        if (playIcon) playIcon.textContent = on ? '⏸' : '▶';
+      }
+    }
     const active = document.getElementById(`rbtn-${activeId}`);
     if (active) {
       active.classList.add('active');
