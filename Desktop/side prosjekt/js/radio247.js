@@ -81,22 +81,6 @@ const Radio247 = (() => {
 
   function isActive() { return _active; }
 
-  function play() {
-    _active = true;
-    const block = currentBlock();
-    _lastBlockIndex = block.index;
-    _applyBlock(block);
-  }
-
-  function stop() {
-    _active = false;
-    if (_lastStationId && typeof Radio !== 'undefined' &&
-        Radio.currentStation && Radio.currentStation.id === _lastStationId && Radio.isPlaying) {
-      Radio.togglePlay();
-    }
-    _lastStationId = null;
-  }
-
   // Rerender kva side som helst som for tida viser eit 24/7-kort, etter play/
   // stop/blokkbytte — /radio og /shows har kvar sin eigen render(), og berre
   // éin av dei er montert om gongen.
@@ -107,16 +91,48 @@ const Radio247 = (() => {
     } catch (_) {}
   }
 
+  function play() {
+    _active = true;
+    const block = currentBlock();
+    _lastBlockIndex = block.index;
+    _applyBlock(block);
+    _rerenderHost();
+  }
+
+  function stop() {
+    _active = false;
+    if (_lastStationId && typeof Radio !== 'undefined' &&
+        Radio.currentStation && Radio.currentStation.id === _lastStationId && Radio.isPlaying) {
+      Radio.togglePlay();
+    }
+    _lastStationId = null;
+    _rerenderHost();
+  }
+
   function toggle() {
     if (_active) stop(); else play();
-    _rerenderHost();
   }
 
   function _escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
 
+  // Kompakt tidsplan for HEILE hjulet (9 blokker, same kvar dag — dette ER
+  // sjølve "veke"-planen for denne kanalen, ikkje del av per-dag-tabellen
+  // lenger nede på /shows).
+  function scheduleTableHtml() {
+    const now = currentBlock().index;
+    return `<table class="r247-schedule-table" onclick="event.stopPropagation()">
+      ${SCHEDULE.map((b, i) => `
+        <tr class="${i === now ? 'r247-schedule-now' : ''}">
+          <td>${_fmtHour(b.start)}–${_fmtHour(b.end)}</td>
+          <td>${_escHtml(b.label)}</td>
+        </tr>`).join('')}
+    </table>`;
+  }
+
   // Delt kort-markup — brukt av både js/radio.js (full versjon, med
   // påmeldingsfelt) og js/shows.js (kompakt versjon som banner over
-  // "Weekly schedule"). `opts.subscribe` slår på e-postfeltet.
+  // "Weekly schedule"). `opts.subscribe` slår på e-postfeltet, `opts.schedule`
+  // viser kanalens eigen 9-blokks døgnplan under kortet.
   function cardHtml(id, opts) {
     opts = opts || {};
     const b = currentBlock();
@@ -130,13 +146,14 @@ const Radio247 = (() => {
         <div class="stellar-featured-inner">
           <div class="stellar-featured-emoji">${iconForEmoji('🌘')}</div>
           <div class="stellar-featured-info">
-            <div class="stellar-featured-label">${Icon('star')} 24-Hour Cycle — always on</div>
+            <div class="stellar-featured-label">${Icon('star')} 24-Hour Cycle — non-stop web radio</div>
             <div class="stellar-featured-name">SiriusFM</div>
             <div class="stellar-featured-desc">${desc}</div>
           </div>
-          <button class="stellar-featured-play" onclick="event.stopPropagation();Radio247.toggle()">
-            ${active ? '⏸' : '▶'}
-          </button>
+          <div class="r247-controls" onclick="event.stopPropagation()">
+            <button class="r247-play-btn" title="Play" ${active ? 'disabled' : ''} onclick="Radio247.play()">${Icon('play')} Play</button>
+            <button class="r247-stop-btn" title="Stop" ${!active ? 'disabled' : ''} onclick="Radio247.stop()">${Icon('square')} Stop</button>
+          </div>
         </div>
         ${active ? '<div class="stellar-live-bar"><span></span><span></span><span></span><span></span><span></span></div>' : ''}
         ${opts.subscribe ? `
@@ -144,6 +161,7 @@ const Radio247 = (() => {
           <input type="email" id="r247-sub-email" class="r247-sub-input" placeholder="Get today's schedule by email" autocomplete="email">
           <button class="r247-sub-btn" title="Subscribe" onclick="Radio247.subscribeFromInput()">${Icon('bell')}</button>
         </div>` : ''}
+        ${opts.schedule ? scheduleTableHtml() : ''}
       </div>`;
   }
 
@@ -155,7 +173,7 @@ const Radio247 = (() => {
     if (block.index === _lastBlockIndex) return;
     _lastBlockIndex = block.index;
     _applyBlock(block);
-    if (typeof Radio !== 'undefined' && Radio.render && document.getElementById('radio-page')) Radio.render();
+    _rerenderHost();
   }
 
   function init() {

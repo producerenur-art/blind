@@ -608,7 +608,7 @@ const Radio = (() => {
           </div>
           ${(() => {
             const r247Html = (typeof Radio247 !== 'undefined')
-              ? Radio247.cardHtml('r247-card', { showUntilNext: true, subscribe: true })
+              ? Radio247.cardHtml('r247-card', { showUntilNext: true, subscribe: true, schedule: true })
               : '';
             const featured = STATIONS.find(s => s.featured);
             const featuredHtml = featured ? `
