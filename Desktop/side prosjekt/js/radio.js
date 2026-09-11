@@ -610,6 +610,29 @@ const Radio = (() => {
             <div id="radio-search-results" class="radio-search-results hidden"></div>
           </div>
           ${(() => {
+            // Kompakt rad i sjølve stasjonslista — same utsjånad/play-knapp som
+            // radiOzora/DMT FM/osv, i tillegg til det store 24/7-kortet lenger
+            // ned (som har skjema + påmelding). Ligg heilt øverst, over kategoriane.
+            const r247Active = typeof Radio247 !== 'undefined' && Radio247.isActive();
+            const r247RowHtml = typeof Radio247 !== 'undefined' ? `
+              <div class="radio-category">SIRIUSFM 24/7</div>
+              <div
+                class="radio-station-btn ${r247Active ? 'active' : ''}"
+                id="rbtn-sirius247"
+                style="--station-color:#38bdf8"
+                onclick="Radio247.toggle()"
+              >
+                <span class="station-emoji">${iconForEmoji('🌘')}</span>
+                <span class="station-info">
+                  <span class="station-name">SiriusFM 24/7</span>
+                  <span class="station-desc">Non-stop day-arc — ${escHtml(Radio247.currentBlock().label)} now</span>
+                </span>
+                <div class="station-actions">
+                  <button class="station-play-btn" title="Play / Stop" onclick="event.stopPropagation();Radio247.toggle()">
+                    ${r247Active ? '⏸' : '▶'}
+                  </button>
+                </div>
+              </div>` : '';
             const r247Html = (typeof Radio247 !== 'undefined')
               ? Radio247.cardHtml('r247-card', { showUntilNext: true, subscribe: true, schedule: true })
               : '';
@@ -655,7 +678,7 @@ const Radio = (() => {
                 </div>
               `).join('')}
             `).join('');
-            return r247Html + featuredHtml + rest;
+            return r247RowHtml + r247Html + featuredHtml + rest;
           })()}
           ${customStreams.length ? `
             <div class="radio-category">Your streams</div>
