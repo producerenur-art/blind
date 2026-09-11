@@ -125,8 +125,16 @@ const Radio247 = (() => {
       _selfCall = true;
       try { Radio.playStation(sid); } finally { _selfCall = false; }
     };
-    if (opts.transition && Radio.isPlaying && Radio.playLocalClip) {
-      Radio.playLocalClip(TRANSITION_JINGLE, doSwitch);
+    // Ikkje start VÅR overgangsjingle midt i ein A/C/D-stasjonsjingle eller
+    // live-annonse frå radio.js sin eigen jingle-planleggjar — dei deler det
+    // same <audio>-elementet. Fell trygt tilbake til rett kobling (kort
+    // avbrot, ikkje krasj) i det sjeldne tilfellet begge skulle inntreffe samtidig.
+    if (opts.transition && Radio.isPlaying && Radio.playLocalClip && !Radio.jingleBusy) {
+      if (Radio.beginJingle) Radio.beginJingle();
+      Radio.playLocalClip(TRANSITION_JINGLE, () => {
+        if (Radio.endJingle) Radio.endJingle();
+        doSwitch();
+      });
     } else {
       doSwitch();
     }

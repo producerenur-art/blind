@@ -2932,6 +2932,14 @@ const Radio = (() => {
     setAsFavorite, openEmbed, closeEmbed, stopForMusicPlayer,
     enterLiveTakeover, exitLiveTakeover, attachLiveStream, setLivePresenterName, isLiveTakeoverActive,
     playLocalClip: _playLocalClip,
+    // Delt "opptatt"-flagg for Radio247 (js/radio247.js) sin overgangsjingle
+    // OG A/C/D-jinglane her — begge deler det same <audio>-elementet, så
+    // ingen av dei skal starte medan den andre pågår. begin/end er kontrollerte
+    // mutatorar (ikkje ein open setter) rundt det same interne flagget som
+    // _playStationJingle alt sjekkar/set.
+    get jingleBusy() { return _jingleBusy; },
+    beginJingle() { _jingleBusy = true; },
+    endJingle() { _jingleBusy = false; },
     get isPlaying() { return isPlaying; },
     get currentStation() { return currentStation; },
     get volume() { return volume; },
