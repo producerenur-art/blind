@@ -10819,6 +10819,14 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 }
 .stellar-cta:hover { box-shadow: 0 0 36px rgba(167,139,250,0.42); }
 
+/* «Open Drone Zone» (Discover) — samme blå/lilla som «Listen now» over,
+   i staden for .btn-primary sin delte grøne (--accentG). Bruk-spesifikt:
+   rører ikkje dei 124 andre .btn-primary-knappane på siten. */
+.disc-drone-zone-btn {
+  background: linear-gradient(100deg, #7dd3fc 0%, #9fb8fd 55%, #a78bfa 100%) !important;
+  color: #0a1020;
+}
+
 /* «Create free profile» · «Chat» · «Log in» */
 .stellar-hero-actions .btn-ghost { color: var(--sfm-solid); }
 .stellar-hero-actions .btn-ghost:hover { color: #ffffff; border-color: rgba(159,216,253,0.45); }

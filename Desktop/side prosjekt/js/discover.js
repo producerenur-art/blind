@@ -1091,7 +1091,7 @@ const Discover = (() => {
           </div>` : ''}
         <div class="disc-genre-panel-acts">
           ${activeGenre === 'drone'
-            ? `<button class="btn btn-primary btn-sm" onclick="Discover.openDroneZone()">${Icon('radio')} Open Drone Zone</button>` : ''}
+            ? `<button class="btn btn-primary btn-sm disc-drone-zone-btn" onclick="Discover.openDroneZone()">${Icon('radio')} Open Drone Zone</button>` : ''}
         </div>
       </div>`;
   }
