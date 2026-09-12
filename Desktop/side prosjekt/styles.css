@@ -7578,12 +7578,14 @@ body:has(.radio-visualizer-wrap.vis-size-full.vis-controls-shown) #fc-dock {
 #dock-ai-btn,
 #dock-info-btn,
 #dock-links-widget,
+#dock-updates-widget,
 #about-tab-handle {
   transition: opacity 0.45s ease, transform 0.45s ease, visibility 0.45s;
 }
 body.edge-idle #dock-ai-btn,
 body.edge-idle #dock-info-btn,
-body.edge-idle #dock-links-widget {
+body.edge-idle #dock-links-widget,
+body.edge-idle #dock-updates-widget {
   opacity: 0;
   transform: translateX(180%);
   pointer-events: none;

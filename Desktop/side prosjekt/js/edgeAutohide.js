@@ -15,7 +15,7 @@
   // Ikke skjul mens en av panelene deres står åpne.
   function panelsOpen() {
     return !!document.querySelector(
-      '.ai-asst:not(.hidden), #dock-links-panel.open, #about-panel.open'
+      '.ai-asst:not(.hidden), #dock-links-panel.open, #dock-updates-panel.open, #about-panel.open'
     );
   }
 
