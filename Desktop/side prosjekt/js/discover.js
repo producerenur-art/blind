@@ -103,18 +103,27 @@ const Discover = (() => {
 
   // Maps genre tags to Radio station categories for the radio-favoritt tab
   // NB: verdiane må vere kategorinamn som faktisk finst i Radio.stations (`cat`).
-  // Fleire av dei gamle ('Techno / Minimal', 'EDM / House', 'Psytrance / Progressive')
-  // fanst ikkje lenger, så sjangrane gav tom radioliste.
+  // Fleire av dei gamle ('Techno / Minimal', 'EDM / House', 'Psytrance / Progressive',
+  // 'Ambient / Space', 'Stellar', 'Lo-Fi / IDM', 'EDM / House / Techno', 'Dub / Reggae',
+  // 'Drone / Dark Drone') fanst ikkje lenger etter at STATIONS vart rydda opp i CORS-
+  // opprydninga 11.09.2026 — denne kommentaren fanst allereie, men verdiane vart aldri
+  // faktisk retta, så 6 av 8 faner synte 0 stasjonar (stadfesta 2026-09-12: berre
+  // psytrance og chill fungerte). Verkelege kategoriar i Radio.stations akkurat no:
+  // 'Psytrance / Goa', 'Progressive Psy / Trance', 'Dark Ambient / Drone',
+  // 'Psybient / Psychill', 'Chill Out / Downtempo', 'Techno Underground', 'radiOzora'.
+  // Det finst ingen dedikert hus-kategori — house/experimental peiker difor på det
+  // næraste reelle alternativet i staden for å stå tomme, men aldri det NØYAKTIG
+  // same settet som ein annan fane (ingen to faner skal vise identisk radioliste).
   const GENRE_RADIO_CATS = {
     all:          null,
-    ambient:      ['Ambient / Space', 'Stellar'],
-    electronic:   ['Lo-Fi / IDM', 'EDM / House / Techno', 'Stellar'],
+    ambient:      ['Dark Ambient / Drone', 'Psybient / Psychill'],
+    electronic:   ['Techno Underground', 'Progressive Psy / Trance', 'Psytrance / Goa'],
     psytrance:    ['Psytrance / Goa', 'Progressive Psy / Trance', 'Psybient / Psychill', 'radiOzora'],
-    techno:       ['EDM / House / Techno', 'Lo-Fi / IDM'],
-    house:        ['EDM / House / Techno'],
-    chill:        ['Chill Out / Downtempo', 'Psybient / Psychill', 'Dub / Reggae'],
-    experimental: ['Lo-Fi / IDM', 'Ambient / Space'],
-    drone:        ['Drone / Dark Drone', 'Ambient / Space'],
+    techno:       ['Techno Underground'],
+    house:        ['Progressive Psy / Trance'],
+    chill:        ['Chill Out / Downtempo', 'Psybient / Psychill'],
+    experimental: ['Progressive Psy / Trance', 'Psybient / Psychill'],
+    drone:        ['Dark Ambient / Drone'],
   };
 
   // «Live activity» viste tidligere FAKE_ACTIVITY — oppdiktede brukernavn,
