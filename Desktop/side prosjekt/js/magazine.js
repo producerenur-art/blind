@@ -270,6 +270,17 @@ const Magazine = (() => {
       ],
     },
     {
+      id: 'label-black-hole', kategori: 'Labels', emoji: '🕳️', grad: G.natt,
+      tittel: 'Black Hole Recordings',
+      ingress: 'The Dutch trance powerhouse behind the long-running In Trance We Trust series.',
+      genres: ['trance', 'prog-house'], dato: 'Breda, Netherlands', forfatter: 'SiriusFM editorial team',
+      kilde: { navn: 'blackholerecordings.com', url: 'https://www.blackholerecordings.com/' },
+      brodtekst: [
+        'Black Hole Recordings was founded in Breda in 1997 by Tijs Verwest (Tiësto) and Arny Bink, and has anchored Dutch club trance ever since — Tiësto himself left in 2009 to start Musical Freedom, but the label carried on.',
+        'Its best-known arm, In Trance We Trust, launched a year later as a dedicated sublabel and compilation series for the genre’s harder, club-oriented side. The first mix came from Misja Helsloot in 1998; today Richard Durand co-runs the A&R alongside Mark Meeuwissen.',
+      ],
+    },
+    {
       id: 'label-anjunadeep', kategori: 'Labels', emoji: '🌊', grad: G.hav,
       tittel: 'Anjunadeep',
       ingress: 'The London label behind one of the world’s best-known deep/melodic house sounds.',
