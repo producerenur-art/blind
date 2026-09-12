@@ -159,14 +159,37 @@ async function dbWrite(genre, articles) {
 // er fylt før noen besøker fanen. Kallene går gjennom CDN (ikke funksjonen direkte),
 // og har ikke ?warm=1 — så ingen løkke. `fresh=1` tvinger nytt AI-søk selv om det
 // ligger noe i databasen, ellers ville oppvarmingen bare lest sin egen gamle kopi.
+//
+// Køyrt i mindre, forskjøvne grupper i staden for alle ~19 sjangrane samtidig —
+// full samtidigheit trefte Anthropic sine rate-/samtidigheitsgrenser for enkelte
+// sjangrar KVAR EINASTE RUNDE (stadfesta 2026-09-12: techno-underground, festivals
+// og psytrance stod stille sidan 17.08 medan andre sjangrar friskna opp fint), og
+// feilen synte seg aldri — ein mislykka sjanger berre heldt fram med den gamle,
+// utdaterte lista si i det stille. Mindre grupper + kort pause mellom held summen
+// av samtidige AI-kall nede utan å sprenge funksjonens 120s-budsjett (WARM_BATCH_SIZE
+// grupper på ~19/7 ≈ 3 rundar, kvar rundt avgrensa av det tregaste enkeltkallet i
+// gruppa, ikkje summen — bør halde godt under budsjettet sjølv om eit par kall må
+// gjennom den interne ein-gongs-retryen sin i askModel()).
+const WARM_BATCH_SIZE = 7;
+const WARM_BATCH_DELAY_MS = 1500;
+function _sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 async function warmAll(req) {
   const host = req.headers['x-forwarded-host'] || req.headers.host;
   if (!host) return { warmed: 0 };
   const proto = /^localhost|127\.0\.0\.1/.test(host) ? 'http' : 'https';
   const base = `${proto}://${host}/api/magazine?fresh=1&genre=`;
-  const results = await Promise.allSettled(
-    WARM.map(g => fetch(base + encodeURIComponent(g)).then(r => r.json().catch(() => ({}))))
-  );
+
+  const results = [];
+  for (let i = 0; i < WARM.length; i += WARM_BATCH_SIZE) {
+    const batch = WARM.slice(i, i + WARM_BATCH_SIZE);
+    const batchResults = await Promise.allSettled(
+      batch.map(g => fetch(base + encodeURIComponent(g)).then(r => r.json().catch(() => ({}))))
+    );
+    results.push(...batchResults);
+    if (i + WARM_BATCH_SIZE < WARM.length) await _sleep(WARM_BATCH_DELAY_MS);
+  }
+
   const ok = (r) => r.status === 'fulfilled' && r.value && Array.isArray(r.value.articles) && r.value.articles.length;
   const empty = WARM.filter((g, i) => !ok(results[i]));
   if (empty.length) console.error('magazine warm: tomt for', empty.join(', '));
