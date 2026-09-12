@@ -645,7 +645,7 @@ const Shows = (() => {
 
         <!-- 24-HOUR CYCLE — always-on day-arc channel, separate from the
              per-day shows below (same wheel every day, see js/radio247.js). -->
-        ${typeof Radio247 !== 'undefined' ? `<div class="section" style="max-width:900px">${Radio247.cardHtml('r247-shows-card', { subscribe: true, schedule: true, archive: true })}</div>` : ''}
+        ${typeof Radio247 !== 'undefined' ? `<div class="section" style="max-width:900px">${Radio247.cardHtml('r247-shows-card', { subscribe: true, schedule: true })}</div>` : ''}
 
         <!-- ON AIR -->
         ${live ? `
