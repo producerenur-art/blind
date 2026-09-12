@@ -1139,7 +1139,7 @@ const Radio = (() => {
     const title = document.getElementById('player-title');
     const artist = document.getElementById('player-artist');
     const art    = document.getElementById('player-artwork');
-    if (title)  title.textContent  = info.name || 'Radio';
+    if (title)  title.textContent  = info.shortName || info.name || 'Radio';
     if (artist) artist.innerHTML   = `<span class="radio-live-badge"><span class="live-dot-sm"></span> LIVE</span> ${escHtml(info.desc || 'Live stream')}`;
     if (art)    { art.style.backgroundImage = ''; art.querySelector('.artwork-note').innerHTML = iconForEmoji(info.emoji, 'radio'); art.querySelector('.artwork-note').style.display = ''; }
 
@@ -1421,7 +1421,7 @@ const Radio = (() => {
     const desc = document.getElementById('np-desc');
     const art  = document.getElementById('np-art');
     const emoji= document.getElementById('np-emoji');
-    if (name)  name.textContent  = station.name;
+    if (name)  name.textContent  = station.shortName || station.name;
     if (desc)  desc.textContent  = station.desc;
     if (emoji) emoji.innerHTML = iconForEmoji(station.emoji);
     if (art)   art.style.background = `linear-gradient(135deg,${station.color},${station.color}88)`;
