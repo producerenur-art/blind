@@ -137,6 +137,7 @@ const Radio = (() => {
     {
       id: 'dfm-avb', cat: 'Progressive Psy / Trance',
       name: 'DFM Armin van Buuren',
+      shortName: 'Armin van Buuren',
       url:  'https://dfm.hostingradio.ru/avburren96.aacp',
       emoji: '🎧', color: '#2563eb',
       desc: 'Progressive trance',

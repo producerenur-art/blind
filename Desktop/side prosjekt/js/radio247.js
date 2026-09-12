@@ -107,10 +107,14 @@ const Radio247 = (() => {
     return block.stationIds[((phased % n) + n) % n]; // trygg modulo også for negative dagar
   }
 
+  // `shortName` overstyrer visningsnavnet i "Now:"-linja for stasjonar der
+  // det fulle namnet ber med seg eit nettverksprefiks (t.d. "DFM Armin van
+  // Buuren") som ikkje seier noko om innhaldet — då er berre kunstnarnamnet
+  // interessant. Dei fleste stasjonar treng ikkje dette; namnet ER identiteten.
   function _stationName(sid) {
     if (!sid || typeof Radio === 'undefined') return null;
     const s = (Radio.stations || []).find(x => x.id === sid);
-    return s ? s.name : null;
+    return s ? (s.shortName || s.name) : null;
   }
 
   // Kort lokal jingle-fil (same som stasjons-ID-jinglane A/C/D) — brukast som
