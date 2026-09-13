@@ -2837,6 +2837,14 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(34,
   pointer-events: none;
 }
 .vis-mode-stack > .vis-style-row { pointer-events: auto; }
+/* #vis-ai-row spenner nesten hele bredden av visualizeren (for å kunne bryte
+   AI-knappene pent til flere linjer), men sjappene er justify-content:flex-end
+   pakket til høyre — det tomme feltet til venstre i boksen sitt bounding-rect
+   fanget likevel klikk og blokkerte ±-zoomknappene nederst til venstre.
+   Slå av pointer-events på selve raden og skru det på igjen kun for knappene. */
+#vis-ai-row { pointer-events: none; }
+#vis-ai-row .vis-btn,
+#vis-ai-row .vis-ai-label { pointer-events: auto; }
 .vis-mode-stack .vis-style-row {
   position: static;                    /* ikke lenger stablet på samme punkt */
   bottom: auto;
