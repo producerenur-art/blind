@@ -11,6 +11,7 @@ const Radio = (() => {
       desc: 'Greek electronic & underground radio',
       url: 'https://www.diceradio.gr/',
       live: true,
+      partner: true,
     },
   ];
 
@@ -68,6 +69,7 @@ const Radio = (() => {
       url:  'https://babaganousha.net:8443/stream/1/',
       emoji: '🌌', color: '#4ade80',
       desc: 'Psychedelic · Goa · Psytrance ✓',
+      partner: true,
     },
     {
       id: 'babaganousha-labs', cat: 'Psytrance / Goa',
@@ -75,6 +77,7 @@ const Radio = (() => {
       url:  'https://babaganousha.net:9443/stream/1/',
       emoji: '🧪', color: '#4ade80',
       desc: 'Psychedelic · Goa · Psytrance ✓',
+      partner: true,
     },
     {
       id: 'jointil-beattrance', cat: 'Psytrance / Goa',
@@ -786,6 +789,7 @@ const Radio = (() => {
                     <span class="station-desc">${s.desc}</span>
                   </span>
                   <div class="station-actions">
+                    ${s.partner ? '<span class="ext-player-partner-badge" title="Bekreftet samarbeidspartner">PARTNER</span>' : ''}
                     <button class="station-play-btn" title="Play / Stop" onclick="event.stopPropagation();Radio.playStation('${s.id}')">
                       ${currentStation?.id === s.id && isPlaying ? '⏸' : '▶'}
                     </button>
@@ -832,6 +836,7 @@ const Radio = (() => {
                 <span class="station-desc">${p.desc}</span>
               </span>
               <div class="station-actions">
+                ${p.partner ? '<span class="ext-player-partner-badge" title="Bekreftet samarbeidspartner">PARTNER</span>' : ''}
                 ${p.live ? '<span class="ext-player-badge">LIVE</span>' : ''}
                 <button class="station-play-btn" title="Play" onclick="event.stopPropagation();Radio.openEmbed('${p.id}')">▶</button>
                 <button class="station-vol-btn" title="Mute / Unmute" onclick="event.stopPropagation();Radio.toggleMute()">${muted ? '🔇' : '🔊'}</button>

@@ -3906,6 +3906,19 @@ body:has(.radio-visualizer-wrap.vis-size-full.vis-controls-shown) #fc-dock {
   flex-shrink: 0;
 }
 
+.ext-player-partner-badge {
+  margin-left: auto;
+  background: rgba(234,179,8,0.15);
+  color: #eab308;
+  border: 1px solid rgba(234,179,8,0.3);
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0.1rem 0.35rem;
+  flex-shrink: 0;
+}
+
 /* ════════════════════════════════════════════
    RADIO — Set as favourite button
    ════════════════════════════════════════════ */
