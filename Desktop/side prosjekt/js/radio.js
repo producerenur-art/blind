@@ -167,7 +167,7 @@ const Radio = (() => {
     },
     {
       id: 'diceradio-psybient', cat: 'Psybient / Psychill',
-      name: 'DiceRadio Psybient',
+      name: 'DiceRadio',
       url:  'https://s2.radio.co/s4648f1c61/listen',
       emoji: '🎲', color: '#8854d0',
       desc: 'Psybient',
@@ -2277,6 +2277,18 @@ const Radio = (() => {
   const VIS_VIDEOS = {};
   VIS_CLASSICS.forEach(v => { VIS_VIDEOS[v.mode] = v.id; });
 
+  // Brukaren sitt eige spesial-ynskje (13.09.2026): dukk IKKJE opp i den vanlege
+  // rotasjonen som klassikarane — for annleis/valdeleg stil til å rotere like
+  // ofte. Vis han berre éin fast dag av sju (alltid same vekedag, uavhengig av
+  // når koden vart deploya — dagar-sidan-epoch % 7 driv aldri). Lydlaus som alt
+  // anna i AI visuals-raden (mute=1 er felles for alle video-modus, sjå
+  // visVideoSrc). IKKJE rør denne utan eksplisitt beskjed frå brukaren.
+  const WEEKLY_SPECIAL = { mode: 'video_htf', id: 'PgWYZctea40', emoji: '🐿️', label: 'Happy Tree Friends', group: 'special' };
+  VIS_VIDEOS[WEEKLY_SPECIAL.mode] = WEEKLY_SPECIAL.id;
+  function isWeeklySpecialDay() {
+    return Math.floor(Date.now() / 86400000) % 7 === 0;
+  }
+
   // ── Roterende utvalg ────────────────────────────────────────────────────
   // AI-modusene får navn etter video-id-en («ai_<id>»), ikke plassnummer, så en
   // valgt visual peker på SAMME video selv om raden blir bygget på nytt med et
@@ -2347,6 +2359,7 @@ const Radio = (() => {
   function visualItemForMode(mode) {
     const classic = VIS_CLASSICS.find(v => v.mode === mode);
     if (classic) return classic;
+    if (mode === WEEKLY_SPECIAL.mode) return WEEKLY_SPECIAL;
     if (typeof mode === 'string' && mode.startsWith('ai_')) {
       const id = mode.slice(3);
       const meta = visMeta[id] || {};
@@ -2370,7 +2383,13 @@ const Radio = (() => {
     // Videoen som spilles nå skal alltid ha sin egen knapp, først i raden.
     const cur = isVideoMode(visMode) ? visualItemForMode(visMode) : null;
     if (cur && !seen.has(cur.id)) merged.unshift(cur);
-    return applyAiVisualPin(merged);
+    const pinned = applyAiVisualPin(merged);
+    // Sjeldan spesial-slot (sjå WEEKLY_SPECIAL over): kjem KUN til på sin faste
+    // dag, som ein ekstra knapp — påverkar ikkje resten av rotasjonen elles.
+    if (isWeeklySpecialDay() && !pinned.some(it => it && it.id === WEEKLY_SPECIAL.id)) {
+      pinned.push(WEEKLY_SPECIAL);
+    }
+    return pinned;
   }
   const isVideoMode = m =>
     Object.prototype.hasOwnProperty.call(VIS_VIDEOS, m) ||
