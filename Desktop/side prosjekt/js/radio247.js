@@ -111,10 +111,18 @@ const Radio247 = (() => {
   // det fulle namnet ber med seg eit nettverksprefiks (t.d. "DFM Armin van
   // Buuren") som ikkje seier noko om innhaldet — då er berre kunstnarnamnet
   // interessant. Dei fleste stasjonar treng ikkje dette; namnet ER identiteten.
+  // Brukarønske 13.09.2026: heile ".FM"-endinga (t.d. "TranceAround.FM",
+  // "Anon.FM") er visuell støy i denne raden — kutt han her, berre for
+  // "Now:"-linja/arkivet. Rører IKKJE `.name` i js/radio.js, så stasjonslista
+  // og alt anna som viser same stasjon held fram uendra. Treff berre ENDINGA
+  // (`\.FM$`), ikkje midt i namnet — «1.FM Chillout Lounge» og
+  // «Ambient Psychill (1.FM)» har ikkje ".FM" sist, så dei påverkast ikkje.
   function _stationName(sid) {
     if (!sid || typeof Radio === 'undefined') return null;
     const s = (Radio.stations || []).find(x => x.id === sid);
-    return s ? (s.shortName || s.name) : null;
+    if (!s) return null;
+    const name = s.shortName || s.name;
+    return name ? name.replace(/\.FM$/i, '') : name;
   }
 
   // Kort lokal jingle-fil (same som stasjons-ID-jinglane A/C/D) — brukast som
