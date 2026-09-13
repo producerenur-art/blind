@@ -170,7 +170,7 @@ const Radio = (() => {
       name: 'DiceRadio',
       url:  'https://s2.radio.co/s4648f1c61/listen',
       emoji: '🎲', color: '#8854d0',
-      desc: 'Psybient',
+      desc: '',
       partner: true,
     },
     {
