@@ -820,7 +820,6 @@ const Radio = (() => {
             const partnerStations  = STATIONS.filter(s => s.partner);
             const partnerExternals = EXTERNAL_PLAYERS.filter(p => p.partner);
             const partnersHtml = (partnerStations.length || partnerExternals.length) ? `
-              <div class="radio-category">🤝 Partners</div>
               ${partnerStations.map(stationBtnHtml).join('')}
               ${partnerExternals.map(extPlayerBtnHtml).join('')}
             ` : '';
