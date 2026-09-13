@@ -468,8 +468,10 @@ const Discover = (() => {
 
   function genreRadioStations() {
     const cats = GENRE_RADIO_CATS[activeGenre];
-    if (!cats) return Radio.stations;
-    return Radio.stations.filter(s => cats.includes(s.cat));
+    const list = cats ? Radio.stations.filter(s => cats.includes(s.cat)) : Radio.stations;
+    // Bekreftede samarbeidspartnere (Babaganousha, Dice Radio) øverst overalt
+    // her, same prioritering som Partners-seksjonen på radio-siden.
+    return [...list].sort((a, b) => (b.partner ? 1 : 0) - (a.partner ? 1 : 0));
   }
 
   function isArtistUerfaren(track) {
