@@ -783,13 +783,15 @@ const Radio = (() => {
                   style="--station-color:${s.color}"
                   onclick="Radio.playStation('${s.id}')"
                 >
-                  <span class="station-emoji">${iconForEmoji(s.emoji)}</span>
+                  <span class="station-emoji-wrap">
+                    <span class="station-emoji">${iconForEmoji(s.emoji)}</span>
+                    ${s.partner ? '<span class="partner-badge" title="Bekreftet samarbeidspartner">✓</span>' : ''}
+                  </span>
                   <span class="station-info">
                     <span class="station-name">${s.name}</span>
                     <span class="station-desc">${s.desc}</span>
                   </span>
                   <div class="station-actions">
-                    ${s.partner ? '<span class="ext-player-partner-badge" title="Bekreftet samarbeidspartner">PARTNER</span>' : ''}
                     <button class="station-play-btn" title="Play / Stop" onclick="event.stopPropagation();Radio.playStation('${s.id}')">
                       ${currentStation?.id === s.id && isPlaying ? '⏸' : '▶'}
                     </button>
@@ -830,13 +832,15 @@ const Radio = (() => {
               style="--station-color:${p.color}"
               onclick="Radio.openEmbed('${p.id}')"
             >
-              <span class="station-emoji">${iconForEmoji(p.emoji)}</span>
+              <span class="station-emoji-wrap">
+                <span class="station-emoji">${iconForEmoji(p.emoji)}</span>
+                ${p.partner ? '<span class="partner-badge" title="Bekreftet samarbeidspartner">✓</span>' : ''}
+              </span>
               <span class="station-info">
                 <span class="station-name">${p.name}</span>
                 <span class="station-desc">${p.desc}</span>
               </span>
               <div class="station-actions">
-                ${p.partner ? '<span class="ext-player-partner-badge" title="Bekreftet samarbeidspartner">PARTNER</span>' : ''}
                 ${p.live ? '<span class="ext-player-badge">LIVE</span>' : ''}
                 <button class="station-play-btn" title="Play" onclick="event.stopPropagation();Radio.openEmbed('${p.id}')">▶</button>
                 <button class="station-vol-btn" title="Mute / Unmute" onclick="event.stopPropagation();Radio.toggleMute()">${muted ? '🔇' : '🔊'}</button>
