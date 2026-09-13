@@ -117,6 +117,7 @@ const Share = (() => {
       return;
     }
 
+    const username = (cur && cur.username) || rec.username || rec.uploaderUsername || '';
     let image = rec.coverUrl || null;
     if (isVideo && !_isPublic(image)) {
       if (window.App) App.toast('Creating preview image…', 'info', 2500);
@@ -126,6 +127,11 @@ const Share = (() => {
         try { await DB.put(store, { ...rec, posterUrl: poster }); } catch (_) { /* ignore */ }
       }
     }
+    // No cover (and, for video, no poster either): fall back to the uploader's
+    // own profile photo so the social preview is never the generic SiriusFM
+    // cover — this is what makes "share my track" show *them*, on every
+    // platform, regardless of whether they bothered to set a cover image.
+    if (!_isPublic(image)) image = _avatarUrl(username) || image;
 
     const url = buildUrl({
       kind: isVideo ? 'video' : 'audio',
@@ -134,7 +140,7 @@ const Share = (() => {
       image,
       media,
       mime: rec.mime || rec.type || '',
-      username: (cur && cur.username) || rec.username || rec.uploaderUsername || '',
+      username,
     });
 
     return shareUrl(url, title, rec.artist || '', {
