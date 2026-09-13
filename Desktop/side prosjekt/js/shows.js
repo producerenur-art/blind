@@ -703,24 +703,6 @@ const Shows = (() => {
             <span class="text-muted text-sm">AI-fresh from the whole world + our own picks</span>
           </div>
           <div id="shows-fresh-events"></div>
-          <a class="shows-festival-card" href="https://www.dacru.be/" target="_blank" rel="noopener noreferrer"
-             style="margin-bottom:1rem">
-            <div class="shows-festival-banner" style="background:linear-gradient(135deg,#0e0d1f,#1b1040,#0d0a2e)">
-              <div class="shows-festival-emoji">${Icon('mountain')}</div>
-              <div class="shows-festival-dates">Jun 18–21, 2026</div>
-            </div>
-            <div class="shows-festival-body">
-              <div class="shows-festival-name">Solomonari Festival 2026</div>
-              <div class="shows-festival-loc">${Icon('map-pin')} Transylvania, Romania 🇷🇴</div>
-              <div class="shows-festival-theme">The Transylvanian Gathering — by DaCru Records</div>
-              <div class="shows-festival-tags">
-                <span class="shows-festival-tag">${Icon('wind')} Psychedelic Trance</span>
-                <span class="shows-festival-tag">${Icon('zap')} Full-On</span>
-                <span class="shows-festival-tag">🇧🇪 DaCru Records</span>
-              </div>
-              <div class="shows-festival-cta">More info at dacru.be ${Icon('arrow-right')}</div>
-            </div>
-          </a>
           <a class="shows-festival-card" href="https://shunyatarecords.bandcamp.com/" target="_blank" rel="noopener noreferrer"
              style="margin-bottom:1rem">
             <div class="shows-festival-banner" style="background:linear-gradient(135deg,#050510,#0d0d2e,#150d3a)">
@@ -775,27 +757,6 @@ const Shows = (() => {
                 <span class="shows-festival-tag">${Icon('crown')} T.I.P. Records</span>
               </div>
               <div class="shows-festival-cta">Official website ${Icon('arrow-right')}</div>
-            </div>
-          </a>
-          <a class="shows-festival-card" href="https://hadratrancefestival.net/en/home/" target="_blank" rel="noopener noreferrer">
-            <div class="shows-festival-banner" style="background:linear-gradient(135deg,#1a0a2e,#16213e,#0f3460)">
-              <div class="shows-festival-emoji">${Icon('star')}</div>
-              <div class="shows-festival-dates">Aug 27–30, 2026</div>
-            </div>
-            <div class="shows-festival-body">
-              <div class="shows-festival-name">Hadra Trance Festival 2026</div>
-              <div class="shows-festival-loc">${Icon('map-pin')} Vieure, Allier, France 🇫🇷</div>
-              <div class="shows-festival-theme">Solar Punk Chronicles: The Seed</div>
-              <div class="shows-festival-tags">
-                <span class="shows-festival-tag">${Icon('wind')} Psytrance</span>
-                <span class="shows-festival-tag">${Icon('zap')} Techno</span>
-                <span class="shows-festival-tag">${Icon('leaf')} Downtempo</span>
-                <span class="shows-festival-tag">${Icon('music')} Live</span>
-                <span class="shows-festival-tag">4 stages</span>
-                <span class="shows-festival-tag">68 artists</span>
-                <span class="shows-festival-tag">90h of music</span>
-              </div>
-              <div class="shows-festival-cta">See programme & tickets ${Icon('arrow-right')}</div>
             </div>
           </a>
         </div>
