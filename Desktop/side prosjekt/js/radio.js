@@ -291,6 +291,63 @@ const Radio = (() => {
   // (t.d. Discover-kortet «Chill Afternoon» → «Chill Out / Downtempo»).
   const catId = cat => 'radio-cat-' + String(cat).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
+  // Éin stasjonsrad — delt mellom kategori-listene og Partners-seksjonen øverst,
+  // så oppslaget kun finst éin plass.
+  function stationBtnHtml(s) {
+    return `
+      <div
+        class="radio-station-btn ${currentStation?.id === s.id ? 'active' : ''}"
+        id="rbtn-${s.id}"
+        style="--station-color:${s.color}"
+        onclick="Radio.playStation('${s.id}')"
+      >
+        <span class="station-emoji-wrap">
+          <span class="station-emoji">${iconForEmoji(s.emoji)}</span>
+          ${s.partner ? '<span class="partner-badge" title="Bekreftet samarbeidspartner">✓</span>' : ''}
+        </span>
+        <span class="station-info">
+          <span class="station-name">${s.name}</span>
+          <span class="station-desc">${s.desc}</span>
+        </span>
+        <div class="station-actions">
+          <button class="station-play-btn" title="Play / Stop" onclick="event.stopPropagation();Radio.playStation('${s.id}')">
+            ${currentStation?.id === s.id && isPlaying ? '⏸' : '▶'}
+          </button>
+          <button class="station-vol-btn" title="Mute / Unmute" onclick="event.stopPropagation();Radio.toggleMute()">
+            ${muted ? '🔇' : '🔊'}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Same for eksterne embed-spelarar (t.d. Dice Radio) — same oppslag, delt
+  // mellom Partners-seksjonen og «External players» nede.
+  function extPlayerBtnHtml(p) {
+    return `
+      <div
+        class="radio-station-btn ext-player-btn"
+        id="rbtn-ext-${p.id}"
+        style="--station-color:${p.color}"
+        onclick="Radio.openEmbed('${p.id}')"
+      >
+        <span class="station-emoji-wrap">
+          <span class="station-emoji">${iconForEmoji(p.emoji)}</span>
+          ${p.partner ? '<span class="partner-badge" title="Bekreftet samarbeidspartner">✓</span>' : ''}
+        </span>
+        <span class="station-info">
+          <span class="station-name">${p.name}</span>
+          <span class="station-desc">${p.desc}</span>
+        </span>
+        <div class="station-actions">
+          ${p.live ? '<span class="ext-player-badge">LIVE</span>' : ''}
+          <button class="station-play-btn" title="Play" onclick="event.stopPropagation();Radio.openEmbed('${p.id}')">▶</button>
+          <button class="station-vol-btn" title="Mute / Unmute" onclick="event.stopPropagation();Radio.toggleMute()">${muted ? '🔇' : '🔊'}</button>
+        </div>
+      </div>
+    `;
+  }
+
   // State
   let currentStation = null;
   let isPlaying = false;
@@ -757,6 +814,15 @@ const Radio = (() => {
             const r247Html = (typeof Radio247 !== 'undefined')
               ? Radio247.cardHtml('r247-card', { showUntilNext: true, subscribe: true, schedule: true })
               : '';
+            // Bekreftede samarbeidspartnere (Babaganousha, Dice Radio) — pinnet
+            // rett under SiriusFM 24/7, over resten av kategoriane.
+            const partnerStations  = STATIONS.filter(s => s.partner);
+            const partnerExternals = EXTERNAL_PLAYERS.filter(p => p.partner);
+            const partnersHtml = (partnerStations.length || partnerExternals.length) ? `
+              <div class="radio-category">🤝 Partners</div>
+              ${partnerStations.map(stationBtnHtml).join('')}
+              ${partnerExternals.map(extPlayerBtnHtml).join('')}
+            ` : '';
             const featured = STATIONS.find(s => s.featured);
             const featuredHtml = featured ? `
               <div class="stellar-featured-card" id="rbtn-${featured.id}" onclick="Radio.playStation('${featured.id}')">
@@ -774,35 +840,15 @@ const Radio = (() => {
                 </div>
                 ${currentStation?.id === featured.id && isPlaying ? '<div class="stellar-live-bar"><span></span><span></span><span></span><span></span><span></span></div>' : ''}
               </div>` : '';
-            const rest = CATEGORIES.filter(c => c !== 'Stellar').map(cat => `
-              <div class="radio-category" id="${catId(cat)}">${cat}</div>
-              ${STATIONS.filter(s => s.cat === cat).map(s => `
-                <div
-                  class="radio-station-btn ${currentStation?.id === s.id ? 'active' : ''}"
-                  id="rbtn-${s.id}"
-                  style="--station-color:${s.color}"
-                  onclick="Radio.playStation('${s.id}')"
-                >
-                  <span class="station-emoji-wrap">
-                    <span class="station-emoji">${iconForEmoji(s.emoji)}</span>
-                    ${s.partner ? '<span class="partner-badge" title="Bekreftet samarbeidspartner">✓</span>' : ''}
-                  </span>
-                  <span class="station-info">
-                    <span class="station-name">${s.name}</span>
-                    <span class="station-desc">${s.desc}</span>
-                  </span>
-                  <div class="station-actions">
-                    <button class="station-play-btn" title="Play / Stop" onclick="event.stopPropagation();Radio.playStation('${s.id}')">
-                      ${currentStation?.id === s.id && isPlaying ? '⏸' : '▶'}
-                    </button>
-                    <button class="station-vol-btn" title="Mute / Unmute" onclick="event.stopPropagation();Radio.toggleMute()">
-                      ${muted ? '🔇' : '🔊'}
-                    </button>
-                  </div>
-                </div>
-              `).join('')}
-            `).join('');
-            return r247RowHtml + r247Html + featuredHtml + rest;
+            const rest = CATEGORIES.filter(c => c !== 'Stellar').map(cat => {
+              const inCat = STATIONS.filter(s => s.cat === cat && !s.partner);
+              if (!inCat.length) return '';   // heile kategorien var berre partnere → dropp overskrifta
+              return `
+                <div class="radio-category" id="${catId(cat)}">${cat}</div>
+                ${inCat.map(stationBtnHtml).join('')}
+              `;
+            }).join('');
+            return r247RowHtml + r247Html + partnersHtml + featuredHtml + rest;
           })()}
           ${customStreams.length ? `
             <div class="radio-category">Your streams</div>
@@ -823,30 +869,14 @@ const Radio = (() => {
               </div>
             `).join('')}
           ` : ''}
-          <!-- External embedded players -->
-          <div class="radio-category">${Icon('globe')} External players</div>
-          ${EXTERNAL_PLAYERS.map(p => `
-            <div
-              class="radio-station-btn ext-player-btn"
-              id="rbtn-ext-${p.id}"
-              style="--station-color:${p.color}"
-              onclick="Radio.openEmbed('${p.id}')"
-            >
-              <span class="station-emoji-wrap">
-                <span class="station-emoji">${iconForEmoji(p.emoji)}</span>
-                ${p.partner ? '<span class="partner-badge" title="Bekreftet samarbeidspartner">✓</span>' : ''}
-              </span>
-              <span class="station-info">
-                <span class="station-name">${p.name}</span>
-                <span class="station-desc">${p.desc}</span>
-              </span>
-              <div class="station-actions">
-                ${p.live ? '<span class="ext-player-badge">LIVE</span>' : ''}
-                <button class="station-play-btn" title="Play" onclick="event.stopPropagation();Radio.openEmbed('${p.id}')">▶</button>
-                <button class="station-vol-btn" title="Mute / Unmute" onclick="event.stopPropagation();Radio.toggleMute()">${muted ? '🔇' : '🔊'}</button>
-              </div>
-            </div>
-          `).join('')}
+          <!-- External embedded players (partnere vises alt i Partners-seksjonen øverst) -->
+          ${(() => {
+            const rest = EXTERNAL_PLAYERS.filter(p => !p.partner);
+            return rest.length ? `
+              <div class="radio-category">${Icon('globe')} External players</div>
+              ${rest.map(extPlayerBtnHtml).join('')}
+            ` : '';
+          })()}
 
           <!-- AI Assistant -->
           <div class="radio-ai-wrap">

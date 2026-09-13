@@ -3029,11 +3029,16 @@ body:has(.radio-visualizer-wrap.vis-size-full.vis-controls-shown) #fc-dock {
   max-width: 100%;
 }
 
-/* ±-zoomknapper (nederst til venstre) */
+/* ±-zoomknapper — øverst i midten. Nede er opptatt av modus-/AI-visuals-
+   knappene, som kan vekse til fleire rader og nå heilt inn mot midten på
+   smalare breidder — reint sentrum er difor IKKJE trygt. Øvst har berre
+   størrelse-forvala (venstre) og «Style»-knappen (høgre), begge faste og
+   smale, så midten der er alltid fri. */
 .vis-zoom-row {
   position: absolute;
-  bottom: 0.75rem;
-  left: 0.75rem;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   gap: 0.35rem;
   z-index: 2;
