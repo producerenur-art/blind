@@ -26,7 +26,7 @@ const MODEL = 'claude-haiku-4-5-20251001';
 // så miksen aldri kollapser til bare romfilm eller bare fraktaler.
 // Søkeord på engelsk gir best YouTube-treff. Året settes inn dynamisk.
 //
-// ANTALL SØK ER BEVISST LAVT (12 til sammen): YouTube-prosjektet har ~100 søk
+// ANTALL SØK ER BEVISST LAVT (13 til sammen): YouTube-prosjektet har ~100 søk
 // per DAG (dagskvoten «Search Queries per day»), delt med /api/radio-fresh og
 // søket i appen. Hvert søk henter 15 treff, så én spørring per gruppe gir nok
 // å velge blant.
@@ -68,9 +68,17 @@ const GROUPS = [
     key: 'darkdrone', want: 2, hint: 'dark ambient / ritual drone visuals',
     queries: ['dark ambient background 4k loop no text'],
   },
+  {
+    // Brukarønske 13.09.2026: rein kanal-avgrensa henting (channelId), IKKE eit
+    // generelt søkeord — held seg oppdatert med nye opplastingar frå denne
+    // kanalen, same 24t-oppdatering som resten av poolen.
+    key: 'natureworld', want: 3, hint: '"Beautiful World 4K Film Music" channel — real cinematic 4K nature/landscape footage',
+    channelId: 'UCfdyhdY_-5AA4hRI8cW3zOg',
+    queries: ['4k cinematic nature landscape'],
+  },
 ];
 
-const WANT = GROUPS.reduce((n, g) => n + g.want, 0); // 26 plasser i poolen
+const WANT = GROUPS.reduce((n, g) => n + g.want, 0); // 29 plasser i poolen
 
 // Titler som nesten alltid betyr «ikke en rein visual-loop» (prat, tutorials,
 // lyric-videoer, musikk-mikser med statisk cover, tekst-tunge videoer).
@@ -91,7 +99,8 @@ function clampEmoji(s) {
 }
 
 // Ett YouTube-søk → liste med spillbare kandidater {id,title,channel}.
-async function searchYouTube(query, apiKey) {
+// `channelId` (valgfritt) avgrenser søket til én bestemt kanal.
+async function searchYouTube(query, apiKey, channelId) {
   const params = new URLSearchParams({
     part: 'snippet',
     type: 'video',
@@ -104,6 +113,7 @@ async function searchYouTube(query, apiKey) {
     q: query,
     key: apiKey,
   });
+  if (channelId) params.set('channelId', channelId);
   const r = await fetch(`${YT_SEARCH}?${params}`);
   const data = await r.json().catch(() => ({}));
   if (!r.ok) {
@@ -131,9 +141,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // YouTube svarer 429 rateLimitExceeded når man fyrer av alle søkene på én gang.
 // Da kom tilfeldige sjangre tomme tilbake og miksen ble skjev (målt live).
 // Derfor: prøv på nytt et par ganger på forbigående feil.
-async function searchWithRetry(query, apiKey, tries = 3) {
+async function searchWithRetry(query, apiKey, channelId, tries = 3) {
   for (let attempt = 0; ; attempt++) {
-    try { return await searchYouTube(query, apiKey); }
+    try { return await searchYouTube(query, apiKey, channelId); }
     catch (e) {
       const msg = String((e && e.message) || '');
       if (msg === 'youtube:quotaDaily') throw e;      // nytteløst å prøve igjen i dag
@@ -151,7 +161,7 @@ const SEARCH_CONCURRENCY = 4;
 const SEARCH_STAGGER_MS = 120;   // liten forskyvning inne i pulja → ingen skarp burst
 async function collectCandidates(year, apiKey) {
   const jobs = [];
-  GROUPS.forEach(g => g.queries.forEach(q => jobs.push({ key: g.key, q })));
+  GROUPS.forEach(g => g.queries.forEach(q => jobs.push({ key: g.key, q, channelId: g.channelId })));
   const results = [];
   let quotaOut = false;
   for (let i = 0; i < jobs.length; i += SEARCH_CONCURRENCY) {
@@ -159,7 +169,10 @@ async function collectCandidates(year, apiKey) {
     const chunk = jobs.slice(i, i + SEARCH_CONCURRENCY);
     results.push(...await Promise.all(chunk.map(async (j, n) => {
       await sleep(n * SEARCH_STAGGER_MS);
-      try { return { key: j.key, list: await searchWithRetry(`${j.q} ${year}`, apiKey) }; }
+      // Kanal-avgrensa søk (channelId) treng ikke årstallet i teksten — kanalen er
+      // allerede avgrensinga.
+      const q = j.channelId ? j.q : `${j.q} ${year}`;
+      try { return { key: j.key, list: await searchWithRetry(q, apiKey, j.channelId) }; }
       catch (e) {
         const msg = (e && e.message) || String(e);
         if (msg === 'youtube:quotaDaily') quotaOut = true;
@@ -238,8 +251,8 @@ async function pickWithAI(byGroup, apiKey) {
 // som hører til gruppa, deretter toppkandidatene om AI valgte for få.
 // `aiById` = id → {emoji,label} fra AI. Fyller vi fra kandidatlista lager vi et
 // enkelt navn fra gruppa i stedet.
-const GROUP_EMOJI = { psy: '🌈', kaleido: '🔷', fractal: '🌀', ai: '🎨', surreal: '🌄', flow: '🌊', space: '🛰️' };
-const GROUP_LABEL = { psy: 'Psychedelia', kaleido: 'Mandala', fractal: 'Fractal', ai: 'AI art', surreal: 'Surreal', flow: 'Flow', space: 'Space' };
+const GROUP_EMOJI = { psy: '🌈', kaleido: '🔷', fractal: '🌀', ai: '🎨', surreal: '🌄', flow: '🌊', space: '🛰️', natureworld: '🌍' };
+const GROUP_LABEL = { psy: 'Psychedelia', kaleido: 'Mandala', fractal: 'Fractal', ai: 'AI art', surreal: 'Surreal', flow: 'Flow', space: 'Space', natureworld: 'Beautiful World' };
 
 function buildItems(byGroup, picks) {
   const aiById = {};

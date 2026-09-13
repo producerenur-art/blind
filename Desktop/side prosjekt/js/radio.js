@@ -2273,6 +2273,22 @@ const Radio = (() => {
     { mode: 'video28', id: 'xGsDRoDwYDw', emoji: '✨', label: 'Deforum',      group: 'ai'      },
     { mode: 'video29', id: 'lKygub953UQ', emoji: '🌌', label: 'Cosmos',       group: 'space'   },
     { mode: 'video30', id: 'IsnIhcE9HOs', emoji: '💫', label: 'Kaleidoscope', group: 'kaleido' },
+    // Steampunk-serien (brukarønske 13.09.2026): heile spelelista «Steampunk Fantasy
+    // Cities | Cinematic Clockwork Worlds in 4K» (Fantasy Realms), lagt inn i vanleg
+    // rotasjon på lik linje med resten av klassikarane — IKKJE ein sjeldan spesial.
+    { mode: 'video31', id: '7ijCOrFyoPs', emoji: '⚙️', label: 'Empire of Steam', group: 'steampunk' },
+    { mode: 'video32', id: 'kJDW5pwVWoE', emoji: '🛫', label: 'Sky Wars',        group: 'steampunk' },
+    { mode: 'video33', id: 'Fx9TqU_5bME', emoji: '📜', label: 'Steam Legends',   group: 'steampunk' },
+    { mode: 'video34', id: 'XNhSH9FZBpA', emoji: '🏙️', label: 'Empire Awakens', group: 'steampunk' },
+    { mode: 'video35', id: '9d8cdzMHiCA', emoji: '👑', label: 'Steam Kingdom',  group: 'steampunk' },
+    { mode: 'video36', id: 'pS--SPF2Yjw', emoji: '🏛️', label: 'City of Brass', group: 'steampunk' },
+    { mode: 'video37', id: 'mK2LMIG_jHI', emoji: '🏰', label: 'Clockwork Realm', group: 'steampunk' },
+    { mode: 'video38', id: 'BcsVZZwMqI4', emoji: '🎶', label: 'Steam Ambience', group: 'steampunk' },
+    { mode: 'video39', id: 'fqNtN6A08Gs', emoji: '🏭', label: 'Metropolis',     group: 'steampunk' },
+    { mode: 'video40', id: 'K2yA8OUjpmM', emoji: '✈️', label: 'Retro Flight',   group: 'steampunk' },
+    { mode: 'video41', id: 'K0d5Kx2KQGg', emoji: '🌆', label: 'Steam World',    group: 'steampunk' },
+    { mode: 'video42', id: 'oWwMi1OXEig', emoji: '📖', label: 'Retro Legends',  group: 'steampunk' },
+    { mode: 'video43', id: 'aJ7LhHLv70g', emoji: '🌇', label: 'Golden City',    group: 'steampunk' },
   ];
   const VIS_VIDEOS = {};
   VIS_CLASSICS.forEach(v => { VIS_VIDEOS[v.mode] = v.id; });
@@ -2287,6 +2303,17 @@ const Radio = (() => {
   VIS_VIDEOS[WEEKLY_SPECIAL.mode] = WEEKLY_SPECIAL.id;
   function isWeeklySpecialDay() {
     return Math.floor(Date.now() / 86400000) % 7 === 0;
+  }
+
+  // Ny sjeldan spesial (brukarønske 13.09.2026): same mekanikk som WEEKLY_SPECIAL
+  // over, men på ein 8-dagars syklus i staden for 7. Dukk berre opp den eine
+  // dagen av åtte, som ein ekstra knapp — påverkar ikkje resten av rotasjonen.
+  // Lydlaus som alt anna (mute=1 er felles, sjå visVideoSrc). IKKJE rør denne
+  // utan eksplisitt beskjed frå brukaren.
+  const EIGHT_DAY_SPECIAL = { mode: 'video_anubis', id: 'viPklp0ccsw', emoji: '🏺', label: 'Golden Anubis', group: 'special' };
+  VIS_VIDEOS[EIGHT_DAY_SPECIAL.mode] = EIGHT_DAY_SPECIAL.id;
+  function isEightDaySpecialDay() {
+    return Math.floor(Date.now() / 86400000) % 8 === 0;
   }
 
   // ── Roterende utvalg ────────────────────────────────────────────────────
@@ -2360,6 +2387,7 @@ const Radio = (() => {
     const classic = VIS_CLASSICS.find(v => v.mode === mode);
     if (classic) return classic;
     if (mode === WEEKLY_SPECIAL.mode) return WEEKLY_SPECIAL;
+    if (mode === EIGHT_DAY_SPECIAL.mode) return EIGHT_DAY_SPECIAL;
     if (typeof mode === 'string' && mode.startsWith('ai_')) {
       const id = mode.slice(3);
       const meta = visMeta[id] || {};
@@ -2388,6 +2416,10 @@ const Radio = (() => {
     // dag, som ein ekstra knapp — påverkar ikkje resten av rotasjonen elles.
     if (isWeeklySpecialDay() && !pinned.some(it => it && it.id === WEEKLY_SPECIAL.id)) {
       pinned.push(WEEKLY_SPECIAL);
+    }
+    // Same for den 8-dagars spesialen (sjå EIGHT_DAY_SPECIAL over).
+    if (isEightDaySpecialDay() && !pinned.some(it => it && it.id === EIGHT_DAY_SPECIAL.id)) {
+      pinned.push(EIGHT_DAY_SPECIAL);
     }
     return pinned;
   }
