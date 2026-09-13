@@ -2661,6 +2661,14 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(34,
   color: var(--text2);
   letter-spacing: 0.03em;
 }
+.radio-welcome-sub2 {
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
 .radio-now-playing {
   padding: 1.5rem 2rem;
   border-bottom: 1px solid var(--border);
