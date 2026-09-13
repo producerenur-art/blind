@@ -10,6 +10,10 @@
 // Tallet vises KUN for admin (brukernavn i CONFIG.ADMIN_USERS). Alle bidrar til
 // heartbeaten, men bare admin ser pillen. Degraderer pent: er ikke Supabase
 // konfigurert, er alt her no-ops.
+//
+// Pillen viser òg «· Σ N» — totalt antall unike besøk NOENSINNE (0024_visit_log.sql),
+// ikke bare de siste 45 sekundene. Logges én gang per økt/fane (_logVisit, kalt fra
+// init — IKKE fra heartbeaten _ping, som ville logget samme fane på nytt hvert 25s).
 const LivePresence = (() => {
   const PING_MS = 25000;          // heartbeat-intervall (må matche 45s-vindu i SQL)
   const POLL_MS = 20000;          // hvor ofte admin-visningen oppdateres
@@ -63,6 +67,27 @@ const LivePresence = (() => {
     } catch { return null; }
   }
 
+  // Historisk besøkstelling (0024_visit_log.sql) — i motsetning til _count() over
+  // (kun de siste 45 sekundene) husker denne ALT siden lansering. Logges ÉN gong
+  // per økt/fane (ikke per heartbeat), samme id som presence_ping bruker.
+  let _visitLogged = false;
+  async function _logVisit() {
+    if (_visitLogged || !_enabled()) return;
+    _visitLogged = true;   // ikke prøv på nytt i denne fanen selv om kallet feiler
+    try { await _client().rpc('log_visit', { p_id: _visitorId() }); }
+    catch { /* fire-and-forget */ }
+  }
+
+  async function _total() {
+    if (!_enabled()) return null;
+    try {
+      const { data, error } = await _client().rpc('visit_count');
+      if (error) return null;
+      const n = Number(data);
+      return Number.isFinite(n) ? n : null;
+    } catch { return null; }
+  }
+
   // ── Admin-visning ───────────────────────────────────────────────────────
   function _isAdmin() {
     const me = (window.Auth && Auth.current && Auth.current()) ? Auth.current() : null;
@@ -82,7 +107,8 @@ const LivePresence = (() => {
     _pill.innerHTML =
       '<span class="visitors-eye" aria-hidden="true">👁</span>' +
       '<span class="online-pill-num visitors-num">–</span>' +
-      '<span class="online-pill-label">on site</span>';
+      '<span class="online-pill-label">on site</span>' +
+      '<span class="online-pill-label visitors-total">· Σ –</span>';
     // Monter som SØSKEN av #nav-links (samme mønster som OnlineWidget) → knappen
     // overlever renderNav som bygger #nav-links på nytt.
     const nav   = document.getElementById('main-nav');
@@ -99,16 +125,19 @@ const LivePresence = (() => {
   async function _refreshPill() {
     if (!_isAdmin()) { _removePill(); return; }   // logget ut / ikke admin → skjul
     _mountPill();
-    const n = await _count();
+    const [n, total] = await Promise.all([_count(), _total()]);
     if (_pill) {
       const num = _pill.querySelector('.visitors-num');
       if (num) num.textContent = (n == null ? '–' : String(n));
+      const tot = _pill.querySelector('.visitors-total');
+      if (tot) tot.textContent = '· Σ ' + (total == null ? '–' : String(total));
     }
   }
 
   function init() {
     if (!_enabled()) return;
     _ping();
+    _logVisit();
     _pingTimer = setInterval(_ping, PING_MS);
     // Ping straks en skjult fane blir synlig igjen (intervallet kan ha stått i ro).
     document.addEventListener('visibilitychange', () => { if (!document.hidden) _ping(); });
@@ -120,7 +149,7 @@ const LivePresence = (() => {
     window.addEventListener('hashchange', _refreshPill);
   }
 
-  return { init, count: _count };
+  return { init, count: _count, total: _total };
 })();
 window.LivePresence = LivePresence;
 
