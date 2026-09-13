@@ -1156,6 +1156,11 @@ const Radio = (() => {
 
   function _playUrl(url, info) {
     const audio = getAudio();
+    // Viss ein partnar-embed (t.d. Dice Radio-iframen) står open frå før, lukk
+    // han fyrst — elles blir embed-ruta ståande over visualizeren for godt,
+    // uansett kva stasjon brukaren vel etterpå.
+    const embedWrap = document.getElementById('radio-embed-wrap');
+    if (embedWrap && !embedWrap.classList.contains('hidden')) closeEmbed();
     // Mark player as radio mode
     window._radioMode = true;
     stopNowPlayingPoll();   // clear any previous channel's live poll
