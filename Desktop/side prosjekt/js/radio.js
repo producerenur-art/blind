@@ -111,7 +111,7 @@ const Radio = (() => {
     // ════════════════════════════════════════════
     {
       id: 'trancearound', cat: 'Progressive Psy / Trance',
-      name: 'TranceAround.FM',
+      name: 'TranceAround',
       url:  'https://strm112.1.fm/trance_mobile_mp3',
       emoji: '🌀', color: '#9333ea',
       desc: '1.FM — trance around the clock',
