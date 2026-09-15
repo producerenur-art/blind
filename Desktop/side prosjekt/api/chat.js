@@ -11,6 +11,27 @@ const ALLOWED_MODELS = new Set([
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
 const MAX_TOKENS_CAP = 1024;
 
+// Enkel kostnadssperre: maks meldinger per IP per minutt. In-memory (ikkje
+// database) — billigste vegen, held ut vanleg spam-misbruk. Nullstiller seg
+// ved kald start av funksjonen, og tel ikkje på tvers av fleire samtidige
+// instansar — akseptabelt for trafikkmengda her, ikkje meint å stoppe ein
+// målretta åtak frå mange IP-ar.
+const RATE_LIMIT = 15;      // meldinger
+const RATE_WINDOW_MS = 60 * 1000;
+const _hits = new Map();    // ip -> [timestamps]
+
+function rateLimited(ip) {
+  const now = Date.now();
+  const arr = (_hits.get(ip) || []).filter(t => now - t < RATE_WINDOW_MS);
+  arr.push(now);
+  _hits.set(ip, arr);
+  // Rydd sjeldan i heile kartet så det ikkje veks ubegrensa over tid.
+  if (_hits.size > 500 && Math.random() < 0.01) {
+    for (const [k, v] of _hits) if (!v.some(t => now - t < RATE_WINDOW_MS)) _hits.delete(k);
+  }
+  return arr.length > RATE_LIMIT;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -18,6 +39,11 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+  if (rateLimited(ip)) {
+    return res.status(429).json({ error: 'Too many messages — please slow down and try again in a minute.' });
+  }
 
   const body = req.body || {};
   const { system, messages } = body;
