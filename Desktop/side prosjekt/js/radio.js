@@ -451,6 +451,33 @@ const Radio = (() => {
     return String(name || '').toLowerCase().replace(/[^a-z]/g, '');
   }
 
+  // Kort volum-uttoning/inntoning rundt automatiske kjeldebytte (24/7-hjulet,
+  // jinglar, stasjonsbytte) — brukarønske 15.09.2026: overgangane skal ikkje
+  // høyrest ut som eit hardt kutt/hakk. Toner IKKJE bort sjølve
+  // buffer-forseinkinga ein ny live-strøym treng for å kobla til, men
+  // maskerer det harde kuttet så overgangen opplevast mjuk. Avbryt ein
+  // eventuell pågåande fade før ein ny startar (t.d. raske bytte).
+  const FADE_MS = 350;
+  let _fadeTimer = null;
+  function _fadeVolume(audio, to, ms, onDone) {
+    if (_fadeTimer) { clearInterval(_fadeTimer); _fadeTimer = null; }
+    if (!audio || !(ms > 0)) { if (audio) audio.volume = to; onDone?.(); return; }
+    const from = audio.volume;
+    const steps = 12;
+    const stepMs = ms / steps;
+    let i = 0;
+    _fadeTimer = setInterval(() => {
+      i++;
+      audio.volume = Math.max(0, Math.min(1, from + (to - from) * (i / steps)));
+      if (i >= steps) {
+        clearInterval(_fadeTimer);
+        _fadeTimer = null;
+        audio.volume = to;
+        onDone?.();
+      }
+    }, stepMs);
+  }
+
   // Spel éin lokal jingle-fil gjennom DET DELTE audio-elementet, med ei
   // ferdig-callback. Dempar volumet mens jingelen spelar, gjenopprettar det
   // nøyaktige volumet etterpå (påverkar aldri brukaren sin valde styrke).
@@ -467,12 +494,20 @@ const Radio = (() => {
       audio.volume = prevVolume;
     };
     function done() { cleanup(); onDone(); }
-    try { audio.srcObject = null; } catch (e) {}
-    audio.volume = prevVolume * JINGLE_VOLUME_SCALE;
-    audio.src = url;
-    audio.addEventListener('ended', done, { once: true });
-    audio.addEventListener('error', done, { once: true });
-    audio.play()?.catch(done);
+    const startClip = () => {
+      try { audio.srcObject = null; } catch (e) {}
+      audio.volume = 0;
+      audio.src = url;
+      audio.addEventListener('ended', done, { once: true });
+      audio.addEventListener('error', done, { once: true });
+      audio.play()?.catch(done);
+      _fadeVolume(audio, prevVolume * JINGLE_VOLUME_SCALE, FADE_MS);
+    };
+    // Ton ut det som spelar no FØR me byter kjelde (t.d. Radio247 sin
+    // overgangsjingel midt i ein live-strøym) — elles høyrest byttet ut som
+    // eit hardt kutt. Ingenting å tone ut viss ingenting spelar frå før.
+    if (!audio.paused) _fadeVolume(audio, 0, FADE_MS, startClip);
+    else startClip();
   }
 
   // A/C/D: avbryt gjeldande stasjon kort, spel jingelen, koble så til stasjonen
@@ -1233,7 +1268,10 @@ const Radio = (() => {
 
     audio.src  = url;
     audio.load();
-    audio.volume = volume;
+    // Start lydlaust og ton inn når strøymen faktisk byrjar spele (sjå
+    // onStarted under) — unngår at ein ny stasjon smell inn i full styrke
+    // rett etter ein jingel eller eit anna bytte (brukarønske 15.09.2026).
+    audio.volume = 0;
 
     // Vaktbikkje: eit avvist play()-løfte er ikkje nok. Ein blokkert eller daud
     // strøym kan «lukkast» og så berre vere stille, så vi ventar på ei verkeleg
@@ -1245,6 +1283,7 @@ const Radio = (() => {
       if (settled) return;
       settled = true;
       isPlaying = true;
+      _fadeVolume(audio, volume, FADE_MS);
       updatePlayBtn(true);
       document.getElementById('radio-idle')?.classList.add('hidden');
       initAudioContext();
