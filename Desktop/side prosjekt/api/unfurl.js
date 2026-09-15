@@ -105,13 +105,23 @@ module.exports = async (req, res) => {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 6000);
+    // Utgir seg for Facebook sin førehandsvisings-bot (ikkje vår eigen
+    // "SoundCoreBot"-signatur) — mange bot-sperrer (Cloudflare o.l.) slepp
+    // kjende social-preview-botar gjennom fordi nettstadene sjølv treng dei
+    // for å få fungerande delingskort. Verifisert 2026-09-15 at dette
+    // kjem gjennom sperrene som blokkerte pluginerds.com/app.bigfreq.com.
     const r = await fetch(url, {
       redirect: 'follow',
       signal: ctrl.signal,
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SoundCoreBot/1.0; +https://www.soundcoredevelopment.com)' },
+      headers: { 'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)' },
     });
     clearTimeout(t);
-    const html = (await r.text()).slice(0, 600000);   // tak: les ikke gigantiske sider
+    // Tak: les ikkje uendeleg store sider. 600000 var for lite — enkelte
+    // moderne SPA-sider (t.d. Circle.so-community-sider) inliner store
+    // JSON-datablobbar FØR og:image-taggen i <head>, så eit lågt tak kutta
+    // av HTML-en midt i, før meta-taggene vart nådd (feedfreq-public-siden
+    // hadde og:image på teikn ~743 000, oppdaga 2026-09-15).
+    const html = (await r.text()).slice(0, 3000000);
 
     const og = ogFrom(html);
     let site = og('og:site_name');
