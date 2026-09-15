@@ -1250,9 +1250,6 @@ const Discover = (() => {
           </div>
         </div>
 
-        <!-- TAB BAR (Musikk | Finn folk) -->
-        ${renderTabBar()}
-
         <!-- MUSIC TAB -->
         <div id="disc-music-tab">
           <!-- GENRE TAGS -->
