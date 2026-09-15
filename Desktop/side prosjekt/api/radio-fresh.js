@@ -68,10 +68,27 @@ const GENRES = Object.keys(GENRE_QUERIES);
 // om handle/visningsnavn endres.
 const CHANNEL_SOURCES = {
   chillout: [
-    { id: 'UCAepXw94EhaO0CZV9f5D3fQ', name: 'ChillSpaceTV' },
-    { id: 'UCNHbHR2KOc851Kkb_TJ2Orw', name: 'savvaskalt2233' },
-    { id: 'UC1PtAfzqXQJGvGCEMAwT30Q', name: 'ThePsychedelicMuse' },
+    // NB 15.09: dei tre første id-ane hadde feil `name` (kopiert i feil
+    // rekkefølge 11.09) — retta her. `id` var alltid rett, så dette endra
+    // ikkje kva videoar som vart henta, berre visningsnamnet i koden.
+    { id: 'UCAepXw94EhaO0CZV9f5D3fQ', name: 'ThePsychedelicMuse' },
+    { id: 'UCNHbHR2KOc851Kkb_TJ2Orw', name: 'ChillSpaceTV' },
+    { id: 'UC1PtAfzqXQJGvGCEMAwT30Q', name: 'CosmicSoundwaves' },
     { id: 'UCZ5CZVrynMMzHAMBy8jDpZw', name: 'Altar Records Podcast (FeedFreqMusic)' },
+    { id: 'UClA7J-lgi0iOIB2PfNTxJSQ', name: 'savvaskalt2233' },
+    { id: 'UC1NVzQ7LH4l2kILWQW4_cxg', name: 'ChilloutLoungeMusic' },
+    { id: 'UCwVQIkAtyZzQSA-OY1rsGig', name: 'MusicLabChill' },
+  ],
+  ambient: [
+    { id: 'UCfIpQNeKNXP8frD1J34iY2g', name: 'PsyAmb' },
+    { id: 'UCdCdZg90LAvxLWpl-yEj0Og', name: 'Ambient Outpost' },
+  ],
+  dub: [
+    { id: 'UC5KVbq3TRmUQ2JT0ChJYbOw', name: 'JohnGPositiveVibes' },
+  ],
+  'dark-drone': [
+    { id: 'UC66pwdPpdLwSwdtZKZ1xWZg', name: 'Aevum Requies' },
+    { id: 'UCVHOgH4XEyYx-ZEaya1XqCQ', name: 'Cryo Chamber' },
   ],
 };
 
@@ -228,16 +245,29 @@ module.exports = async (req, res) => {
 
   try {
     // 1) Søk alle sjangre parallelt (spillbare kandidater). Sjangre i
-    // CHANNEL_SOURCES henter fra utvalgte kanaler i stedet for nøkkelordsøk.
+    // CHANNEL_SOURCES får dei kuraterte kanalane SLÅTT SAMAN med det vanlege
+    // nøkkelordsøket (ikkje anten/eller) — kanalane er ekstra, kvalitetssikra
+    // kandidatar, ikkje ei innsnevring. Retta 15.09: dark-drone/ambient hadde
+    // frå før heilt gode treff via nøkkelordsøk åleine; å byte dei heilt ut
+    // med berre 2 faste kanalar ville gjort utvalet snevrare, ikkje betre.
     const results = await Promise.all(GENRES.map(async g => {
+      const parts = [];
       if (CHANNEL_SOURCES[g]) {
-        try { return [g, await searchChannelSources(CHANNEL_SOURCES[g], ytKey)]; }
-        catch (_) { return [g, []]; }
+        try { parts.push(...await searchChannelSources(CHANNEL_SOURCES[g], ytKey)); }
+        catch (_) { /* behald det nøkkelordsøket gir */ }
       }
-      const variants = GENRE_QUERIES[g];
-      const q = variants[slot % variants.length];
-      try { return [g, await searchYouTube(`${q} ${year}`, ytKey, publishedAfter)]; }
-      catch (_) { return [g, []]; }
+      if (GENRE_QUERIES[g]) {
+        const variants = GENRE_QUERIES[g];
+        const q = variants[slot % variants.length];
+        try { parts.push(...await searchYouTube(`${q} ${year}`, ytKey, publishedAfter)); }
+        catch (_) { /* behald det kanalkjeldene gir */ }
+      }
+      const seen = new Set(); const merged = [];
+      for (const c of parts) {
+        if (seen.has(c.id)) continue;
+        seen.add(c.id); merged.push(c);
+      }
+      return [g, merged];
     }));
     const candidatesByGenre = Object.fromEntries(results);
 
