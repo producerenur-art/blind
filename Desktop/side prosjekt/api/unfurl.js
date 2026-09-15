@@ -13,6 +13,22 @@ const EMBED_HOSTS = [
   'w.soundcloud.com', 'www.youtube.com', 'open.spotify.com', 'bandcamp.com',
 ];
 
+// Nokre vertar blokkerer server-side henting med ei Cloudflare-utfordring
+// ("Just a moment…") slik at og:image aldri kjem gjennom — manuelt
+// verifiserte bilete som backup for desse. Nøkkel = url utan sluttskråstrek.
+const MANUAL_IMAGE_OVERRIDES = {
+  'https://pluginerds.com/12-best-websites-buy-vst-plugins':
+    'https://pluginerds.com/wp-content/uploads/2026/03/Native-Instruments-plugins.png',
+  // app.bigfreq.com (Circle.so/revex) svarar med og:image berre for enkelte
+  // IP-regionar/fingerprint — Vercel-funksjonen (anna region enn brukaren)
+  // får sida utan biletet sjølv om det finst når ein hentar frå Noreg.
+  'https://app.bigfreq.com/communities/groups/bigfreq-public/home':
+    'https://storage.googleapis.com/revex-communities-production/uZS08OKmdLEAK9rfCDfX/groups/c28d0022-557b-4054-bae7-e5f3128021a5',
+};
+function manualImageFor(url) {
+  return MANUAL_IMAGE_OVERRIDES[String(url || '').replace(/\/+$/, '')] || '';
+}
+
 function decodeEntities(s) {
   return String(s || '')
     .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'")
@@ -101,18 +117,20 @@ module.exports = async (req, res) => {
     let site = og('og:site_name');
     if (!site) { try { site = new URL(url).hostname.replace(/^www\./, ''); } catch (e) { site = ''; } }
     const title = og('og:title') || (html.match(/<title[^>]*>([^<]*)<\/title>/i) || [, ''])[1].trim();
+    const image = safeHttps(og('og:image') || og('og:image:secure_url') || og('twitter:image')) || manualImageFor(url);
 
     res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800');
     return res.status(200).json({
       url,
       title: title || '',
-      image: safeHttps(og('og:image') || og('og:image:secure_url') || og('twitter:image')),
+      image,
       site: site || '',
       desc: og('og:description') || '',
       embed: buildEmbed(url, og),
     });
   } catch (e) {
-    return res.status(200).json({ url, error: 'unfurl_failed' });
+    const image = manualImageFor(url);
+    return res.status(200).json(image ? { url, image, error: 'unfurl_failed' } : { url, error: 'unfurl_failed' });
   }
 };
 
