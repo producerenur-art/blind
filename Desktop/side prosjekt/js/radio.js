@@ -2351,6 +2351,26 @@ const Radio = (() => {
     return Math.floor(Date.now() / 86400000) % 8 === 0;
   }
 
+  // Ekte NASA/ISS-opptak (brukarønske 15.09.2026): «ikkje for mykje, men
+  // innimellom» — same sjeldan-spesial-mekanikk som over, men annankvar dag
+  // (% 2), og med tre videoar som roterer etter dag-indeks i staden for éin
+  // fast. Alle er ekte opptak (offisiell NASA-kanal + David Peterson sine
+  // arkiv-tidsforløp frå ISS), ingen pressekonferansar/prat. Lydlaus som alt
+  // anna (mute=1 felles, sjå visVideoSrc). IKKJE rør utan eksplisitt beskjed.
+  const SPACE_SPECIAL_SET = [
+    { mode: 'video_iss1', id: '6jq8-UjhHh4', emoji: '🌅', label: 'ISS Sunrise/Sunset',   group: 'special' }, // NASA (offisiell kanal)
+    { mode: 'video_iss2', id: 'GOAEIMx39-w', emoji: '🌍', label: 'World Outside My Window', group: 'special' }, // David Peterson, ekte ISS-arkiv
+    { mode: 'video_iss3', id: 'FG0fTKAqZ5g', emoji: '🌃', label: 'All Alone in the Night', group: 'special' }, // David Peterson, ekte ISS-arkiv
+  ];
+  SPACE_SPECIAL_SET.forEach(v => { VIS_VIDEOS[v.mode] = v.id; });
+  function isSpaceSpecialDay() {
+    return Math.floor(Date.now() / 86400000) % 2 === 0;
+  }
+  function spaceSpecialOfToday() {
+    const day = Math.floor(Date.now() / 86400000);
+    return SPACE_SPECIAL_SET[day % SPACE_SPECIAL_SET.length];
+  }
+
   // ── Roterende utvalg ────────────────────────────────────────────────────
   // AI-modusene får navn etter video-id-en («ai_<id>»), ikke plassnummer, så en
   // valgt visual peker på SAMME video selv om raden blir bygget på nytt med et
@@ -2423,6 +2443,8 @@ const Radio = (() => {
     if (classic) return classic;
     if (mode === WEEKLY_SPECIAL.mode) return WEEKLY_SPECIAL;
     if (mode === EIGHT_DAY_SPECIAL.mode) return EIGHT_DAY_SPECIAL;
+    const spaceSpecial = SPACE_SPECIAL_SET.find(v => v.mode === mode);
+    if (spaceSpecial) return spaceSpecial;
     if (typeof mode === 'string' && mode.startsWith('ai_')) {
       const id = mode.slice(3);
       const meta = visMeta[id] || {};
@@ -2455,6 +2477,11 @@ const Radio = (() => {
     // Same for den 8-dagars spesialen (sjå EIGHT_DAY_SPECIAL over).
     if (isEightDaySpecialDay() && !pinned.some(it => it && it.id === EIGHT_DAY_SPECIAL.id)) {
       pinned.push(EIGHT_DAY_SPECIAL);
+    }
+    // Ekte NASA/ISS-opptak annankvar dag (sjå SPACE_SPECIAL_SET over).
+    if (isSpaceSpecialDay()) {
+      const today = spaceSpecialOfToday();
+      if (!pinned.some(it => it && it.id === today.id)) pinned.push(today);
     }
     return pinned;
   }
