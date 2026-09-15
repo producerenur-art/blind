@@ -31,6 +31,7 @@ const Radio = (() => {
       emoji: '🔥', color: '#f97316',
       desc: 'OZORA Festival radio — psytrance 24/7 · Budapest 🇭🇺',
       featured: true,
+      partner: true,
     },
     {
       // Verifisert 07.09.2026: chill.out.airtime.pro/chill_a svarer 200, og
@@ -42,6 +43,7 @@ const Radio = (() => {
       npApi: 'https://chill.airtime.pro/api/live-info-v2',
       emoji: '🌿', color: '#22c55e',
       desc: 'OZORA Festival radio — chill & downtempo 24/7 · Budapest 🇭🇺',
+      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -53,6 +55,7 @@ const Radio = (() => {
       url:  'https://dc1.serverse.com/proxy/ywycfrxn/stream',
       emoji: '🍄', color: '#22c55e',
       desc: 'Psytrance · Goa · Psychedelic trance — Tenerife ✓',
+      partner: true,
     },
     {
       id: 'psyndora', cat: 'Psytrance / Goa',
@@ -62,6 +65,7 @@ const Radio = (() => {
       url:  'https://cast.magicstreams.gr/sc/psyndora/stream',
       emoji: '🧿', color: '#06b6d4',
       desc: 'Psytrance · Progressive · Goa · Fullon ✓',
+      partner: true,
     },
     {
       id: 'babaganousha', cat: 'Psytrance / Goa',
@@ -90,6 +94,7 @@ const Radio = (() => {
       url:  'https://betelgeuse.nucast.co.uk/stream/jrn-beat',
       emoji: '🥁', color: '#4ade80',
       desc: 'Goa trance · psychedelic trance',
+      partner: true,
     },
     {
       id: 'record-goa-psy', cat: 'Psytrance / Goa',
@@ -97,6 +102,7 @@ const Radio = (() => {
       url:  'https://radiorecord.hostingradio.ru/goa96.aacp',
       emoji: '🔮', color: '#4ade80',
       desc: 'Goa trance · psychedelic trance',
+      partner: true,
     },
     {
       id: 'goanight', cat: 'Psytrance / Goa',
@@ -104,6 +110,7 @@ const Radio = (() => {
       url:  'https://goanight.stream.laut.fm/goanight',
       emoji: '🌙', color: '#4ade80',
       desc: 'Goa · psytrance',
+      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -115,6 +122,7 @@ const Radio = (() => {
       url:  'https://strm112.1.fm/trance_mobile_mp3',
       emoji: '🌀', color: '#9333ea',
       desc: '1.FM — trance around the clock',
+      partner: true,
     },
     {
       id: 'atr', cat: 'Progressive Psy / Trance',
@@ -122,6 +130,7 @@ const Radio = (() => {
       url:  'https://strm112.1.fm/atr_mobile_mp3',
       emoji: '🎚️', color: '#22c55e',
       desc: '1.FM — uplifting & progressive trance',
+      partner: true,
     },
     {
       id: 'rr-progressive', cat: 'Progressive Psy / Trance',
@@ -129,6 +138,7 @@ const Radio = (() => {
       url:  'https://radiorecord.hostingradio.ru/progr96.aacp',
       emoji: '🎛️', color: '#2563eb',
       desc: 'Progressive house, non-stop',
+      partner: true,
     },
     {
       id: 'record-trancemission', cat: 'Progressive Psy / Trance',
@@ -136,6 +146,7 @@ const Radio = (() => {
       url:  'https://radiorecord.hostingradio.ru/tm96.aacp',
       emoji: '📡', color: '#2563eb',
       desc: 'Trance · progressive trance',
+      partner: true,
     },
     {
       id: 'dfm-avb', cat: 'Progressive Psy / Trance',
@@ -144,6 +155,7 @@ const Radio = (() => {
       url:  'https://dfm.hostingradio.ru/avburren96.aacp',
       emoji: '🎧', color: '#2563eb',
       desc: 'Progressive trance',
+      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -155,6 +167,7 @@ const Radio = (() => {
       url:  'https://strm112.1.fm/ambientpsy_mobile_mp3',
       emoji: '🌫️', color: '#8854d0',
       desc: '1.FM — ambient psychill 24/7',
+      partner: true,
     },
     {
       id: 'multihuman', cat: 'Psybient / Psychill',
@@ -164,6 +177,7 @@ const Radio = (() => {
       npType:'icecast',
       emoji: '🌿', color: '#10b981',
       desc: 'Entheogenic psychill & world — Brazil 🇧🇷',
+      partner: true,
     },
     {
       id: 'diceradio-psybient', cat: 'Psybient / Psychill',
@@ -179,6 +193,7 @@ const Radio = (() => {
       url:  'https://radio.paradisehunter.de/listen/chillout/radio.mp3',
       emoji: '🏝️', color: '#8854d0',
       desc: 'Chillout · psychill — Germany 🇩🇪',
+      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -190,6 +205,7 @@ const Radio = (() => {
       url:  'https://strm112.1.fm/chilloutlounge_mobile_mp3',
       emoji: '🛋️', color: '#0ea5e9',
       desc: '1.FM — electronic chill lounge 24/7',
+      partner: true,
     },
     {
       id: 'smoothchill', cat: 'Chill Out / Downtempo',
@@ -197,6 +213,7 @@ const Radio = (() => {
       url:  'https://media-ssl.musicradio.com/SmoothChillMP3',
       emoji: '🫧', color: '#0ea5e9',
       desc: 'Relaxing chill & soul — UK 🇬🇧',
+      partner: true,
     },
     {
       id: 'brokenbeats', cat: 'Chill Out / Downtempo',
@@ -204,6 +221,7 @@ const Radio = (() => {
       url:  'https://stream.brokenbeats.net/tune',
       emoji: '🎼', color: '#0ea5e9',
       desc: 'Atmospheric downtempo · drum and bass',
+      partner: true,
     },
     {
       id: 'anon-fm', cat: 'Chill Out / Downtempo',
@@ -211,6 +229,7 @@ const Radio = (() => {
       url:  'https://icecast.anon.fm/radio',
       emoji: '🕶️', color: '#0ea5e9',
       desc: 'Downtempo · experimental · psychedelic',
+      partner: true,
     },
     {
       id: 'cafedelmar', cat: 'Chill Out / Downtempo',
@@ -218,6 +237,7 @@ const Radio = (() => {
       url:  'https://streams.radio.co/se1a320b47/listen',
       emoji: '🌊', color: '#0ea5e9',
       desc: 'Ibiza chillout — Spain 🇪🇸',
+      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -229,6 +249,7 @@ const Radio = (() => {
       url:  'https://broadcast.shoutstream.co.uk:8068/stream',
       emoji: '🌑', color: '#6366f1',
       desc: 'Deep atmospheric ambient — UK 🇬🇧',
+      partner: true,
     },
     {
       id: 'dark-city-signal', cat: 'Dark Ambient / Drone',
@@ -236,6 +257,7 @@ const Radio = (() => {
       url:  'https://audiostream.hkprime.com/stream',
       emoji: '🖤', color: '#6366f1',
       desc: 'Dark ambient · doom · industrial',
+      partner: true,
     },
     {
       id: 'systrum-ssr1', cat: 'Dark Ambient / Drone',
@@ -243,6 +265,7 @@ const Radio = (() => {
       url:  'https://systrum.net:8443/SSR1',
       emoji: '🌫️', color: '#6366f1',
       desc: 'Ambient · drone · experimental',
+      partner: true,
     },
     {
       id: 'indiebeat-ambient', cat: 'Dark Ambient / Drone',
@@ -250,6 +273,7 @@ const Radio = (() => {
       url:  'https://azura.theindiebeat.fm/listen/the_indie_beat_radio_-_ambient/radio.mp3',
       emoji: '🌘', color: '#6366f1',
       desc: 'Dark ambient · deep ambient',
+      partner: true,
     },
     {
       id: 'modular-station', cat: 'Dark Ambient / Drone',
@@ -257,6 +281,7 @@ const Radio = (() => {
       url:  'https://broadcast.modular-station.com/radio/8000/radio.aac',
       emoji: '🔌', color: '#6366f1',
       desc: 'Ambient · modular synthesis · soundscape',
+      partner: true,
     },
     {
       id: 'alswin-ambient', cat: 'Dark Ambient / Drone',
@@ -264,6 +289,7 @@ const Radio = (() => {
       url:  'https://server7.radio-streams.net/proxy/jwoiiktx/stream',
       emoji: '🕯️', color: '#6366f1',
       desc: 'Ambient · cinematic · meditation',
+      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -275,6 +301,7 @@ const Radio = (() => {
       url:  'https://uzic.ice.infomaniak.ch/uzic-128.aac',
       emoji: '⚙️', color: '#a855f7',
       desc: 'Minimal & underground techno — Switzerland 🇨🇭',
+      partner: true,
     },
     {
       id: 'remember-vip-techno', cat: 'Techno Underground',
@@ -282,6 +309,7 @@ const Radio = (() => {
       url:  'https://stream-153.zeno.fm/xilwjn4t17qvv',
       emoji: '🕳️', color: '#a855f7',
       desc: 'Dark techno · hard techno · minimal',
+      partner: true,
     },
   ];
 
@@ -2279,16 +2307,23 @@ const Radio = (() => {
     { mode: 'video31', id: '7ijCOrFyoPs', emoji: '⚙️', label: 'Empire of Steam', group: 'steampunk' },
     { mode: 'video32', id: 'kJDW5pwVWoE', emoji: '🛫', label: 'Sky Wars',        group: 'steampunk' },
     { mode: 'video33', id: 'Fx9TqU_5bME', emoji: '📜', label: 'Steam Legends',   group: 'steampunk' },
-    { mode: 'video34', id: 'XNhSH9FZBpA', emoji: '🏙️', label: 'Empire Awakens', group: 'steampunk' },
-    { mode: 'video35', id: '9d8cdzMHiCA', emoji: '👑', label: 'Steam Kingdom',  group: 'steampunk' },
     { mode: 'video36', id: 'pS--SPF2Yjw', emoji: '🏛️', label: 'City of Brass', group: 'steampunk' },
     { mode: 'video37', id: 'mK2LMIG_jHI', emoji: '🏰', label: 'Clockwork Realm', group: 'steampunk' },
-    { mode: 'video38', id: 'BcsVZZwMqI4', emoji: '🎶', label: 'Steam Ambience', group: 'steampunk' },
     { mode: 'video39', id: 'fqNtN6A08Gs', emoji: '🏭', label: 'Metropolis',     group: 'steampunk' },
-    { mode: 'video40', id: 'K2yA8OUjpmM', emoji: '✈️', label: 'Retro Flight',   group: 'steampunk' },
-    { mode: 'video41', id: 'K0d5Kx2KQGg', emoji: '🌆', label: 'Steam World',    group: 'steampunk' },
-    { mode: 'video42', id: 'oWwMi1OXEig', emoji: '📖', label: 'Retro Legends',  group: 'steampunk' },
-    { mode: 'video43', id: 'aJ7LhHLv70g', emoji: '🌇', label: 'Golden City',    group: 'steampunk' },
+    // Trimma 13→6 (15.09.2026): dei 6 mest visuelt særeigne att, resten var for
+    // like til å bidra med variasjon (sjå [[siriusfm-visuals-special-slots]]).
+    // Fyller gapet med darkdrone/ai/surreal frå brukaren sin lenkjebatch (15.09),
+    // vetta via oEmbed (mute=1 uansett, sjå [[siriusfm-ai-visuals-alltid-lydlos]]).
+    { mode: 'video44', id: 'zu3M2LBktTg', emoji: '🕸️', label: 'Clockwork Firmament', group: 'darkdrone' }, // Aibient
+    { mode: 'video45', id: 'qX8ZOr65e9s', emoji: '⏳', label: 'Forgotten Machine',    group: 'darkdrone' }, // Aibient
+    { mode: 'video46', id: '9qfGdTQJjDU', emoji: '🗿', label: 'Hall of Ancients',     group: 'darkdrone' }, // Aibient
+    { mode: 'video47', id: 'LXPar3NiY1g', emoji: '🕳️', label: 'Reality Dissolves',   group: 'darkdrone' }, // Aibient
+    { mode: 'video48', id: 'HKU1aYIBs3k', emoji: '🌠', label: 'Nebula Swirl',        group: 'ai'       }, // AI Manifest
+    { mode: 'video49', id: 'V8tchO267lU', emoji: '🌫️', label: 'Hallucinated Nebula', group: 'ai'       }, // AI Manifest
+    { mode: 'video50', id: 'Kyb5C4KzH08', emoji: '📼', label: 'Vintage Future',      group: 'ai'       }, // Wakening Dreams
+    { mode: 'video51', id: 'sAiLaFaYTxU', emoji: '🛸', label: 'Cosmic Dreamscape',   group: 'ai'       }, // Wakening Dreams
+    { mode: 'video52', id: 'VBwBg9g7Yog', emoji: '🏰', label: 'Quiet Gardens',       group: 'surreal'  }, // Surreal AI
+    { mode: 'video53', id: 'Gqfx-yw9H0E', emoji: '🎭', label: 'Mistress of Nonsense', group: 'surreal' }, // Kelly Boesch AI Art
   ];
   const VIS_VIDEOS = {};
   VIS_CLASSICS.forEach(v => { VIS_VIDEOS[v.mode] = v.id; });
