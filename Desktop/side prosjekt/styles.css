@@ -1214,6 +1214,7 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .stellar-featured-desc { font-size: 0.72rem; color: var(--text2); margin-top: 0.15rem; }
+.r247-next-up { color: var(--text3); display: inline-block; margin-top: 0.15rem; }
 .stellar-featured-play {
   width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
   background: linear-gradient(135deg, #22c55e, #4ade80);

@@ -251,8 +251,10 @@ const Radio247 = (() => {
     const active = _active;
     const stationName = _stationName(_pickStationId(b));
     const nowText = stationName ? `${_escHtml(b.label)} — ${_escHtml(stationName)}` : _escHtml(b.label);
+    // Brukarønske 15.09.2026: «Next up» på EIGA linje rett under «Now:»,
+    // ikkje slengt inn på same linje som før.
     const desc = opts.showUntilNext
-      ? `Now: ${nowText} · until ${b.untilLabel} · Next: ${_escHtml(nextBlock().label)}`
+      ? `Now: ${nowText}<br><span class="r247-next-up">Next up: ${_escHtml(nextBlock().label)} at ${b.untilLabel}</span>`
       : `Now: ${nowText}`;
     return `
       <div class="stellar-featured-card r247-card" id="${id}">
