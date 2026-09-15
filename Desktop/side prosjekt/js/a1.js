@@ -45,7 +45,7 @@ const A1 = (() => {
   const VKEY_LEGACY = 'a1_user_videos';        // gamal lokal-only liste (før 15.09.2026)
   const SHARED_CACHE_KEY = 'a1_shared_cache';  // rask lokal cache av det delte feedet
   const MIGRATED_KEY = 'a1_shared_migrated_v1';   // uendra nøkkel — migrering skjedde alt; berre repair-passet under rettar tidsstempla
-  const REPAIR_KEY = 'a1_shared_repaired_v1';
+  const REPAIR_KEY = 'a1_shared_repaired_v2';   // v2: v1-reparasjonen hadde sjølv ein 0-er-falsy-bug (Egyptra fekk ts=no i staden for 0)
   let _sharedLinks = [];   // { id, title, url, thumb, addedAt, author, _k } — nyaste først
   let _sharedSubbed = false;
 
@@ -98,7 +98,11 @@ const A1 = (() => {
     if (!me || typeof SC === 'undefined' || !SC.gun || !SC.gun()) return null;
     const p = {
       id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-      author: me.username, authorDisplay: me.displayName, ts: Number(ts) || Date.now(),
+      // MERK: `Number(ts) || Date.now()` ville feilaktig erstatta ein ekte
+      // ts på 0 (svært gamle lenker utan opphavleg addedAt) med "no", sidan
+      // 0 er falsy i JS — difor eksplisitt null/undefined-sjekk her.
+      author: me.username, authorDisplay: me.displayName,
+      ts: (ts === null || ts === undefined || Number.isNaN(Number(ts))) ? Date.now() : Number(ts),
       audience: 'public', kind: 'link', name: name || '',
       mediaUrl: url || '', youtubeId: '', sourceId: '', text: '',
       label: 'a1', coverUrl: thumb || '', buyUrl: '',
