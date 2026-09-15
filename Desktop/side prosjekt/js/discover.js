@@ -1017,7 +1017,10 @@ const Discover = (() => {
   // kunne dras). Knappen viser valgt kategori; boksen lister alle vertikalt.
   function renderTabBar() {
     const cur = TABS.find(t => t.id === activeTab) || TABS[0];
-    const items = TABS.map(t => `
+    // «Music» er standardvisningen når man lander på Discover — overflødig å
+    // også kunne velge den fra sin egen liste, så den utelates fra menyen
+    // (toggle-knappen viser fortsatt «Music» som gjeldende fane som før).
+    const items = TABS.filter(t => t.id !== 'music').map(t => `
         <button class="disc-tab-btn ${t.id === activeTab ? 'active' : ''}" type="button"
           role="menuitem" data-tab="${t.id}" onclick="Discover.switchTab('${t.id}')">
           ${Icon(t.icon)} ${_tabLabel(t)}</button>`).join('');
