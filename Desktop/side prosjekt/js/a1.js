@@ -44,8 +44,9 @@ const A1 = (() => {
   // desse frå den vanlege Community-veggen (matchesFilter).
   const VKEY_LEGACY = 'a1_user_videos';        // gamal lokal-only liste (før 15.09.2026)
   const SHARED_CACHE_KEY = 'a1_shared_cache';  // rask lokal cache av det delte feedet
-  const MIGRATED_KEY = 'a1_shared_migrated_v1';
-  let _sharedLinks = [];   // { id, title, url, thumb, addedAt, author } — nyaste først
+  const MIGRATED_KEY = 'a1_shared_migrated_v1';   // uendra nøkkel — migrering skjedde alt; berre repair-passet under rettar tidsstempla
+  const REPAIR_KEY = 'a1_shared_repaired_v1';
+  let _sharedLinks = [];   // { id, title, url, thumb, addedAt, author, _k } — nyaste først
   let _sharedSubbed = false;
 
   function _loadSharedCache() {
@@ -56,14 +57,15 @@ const A1 = (() => {
   }
   // Slår saman ein Community-post (frå Gun eller Supabase) inn i _sharedLinks.
   // Returnerer true om noko faktisk endra seg (så kallaren veit om ho skal re-rendere).
-  function _mergeSharedPost(p) {
+  function _mergeSharedPost(p, gunKey) {
     if (!p || !p.id || p.label !== 'a1' || !p.mediaUrl) return false;
     const entry = {
       id: p.id, title: p.name || host(p.mediaUrl), url: p.mediaUrl,
       thumb: p.coverUrl || '', addedAt: Number(p.ts) || 0, author: p.author || '',
+      _k: gunKey || (p._k || ''),
     };
     const i = _sharedLinks.findIndex(x => x.id === entry.id);
-    if (i === -1) _sharedLinks.push(entry); else _sharedLinks[i] = entry;
+    if (i === -1) _sharedLinks.push(entry); else _sharedLinks[i] = { ...entry, _k: entry._k || _sharedLinks[i]._k };
     _sharedLinks.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
     return true;
   }
@@ -75,8 +77,8 @@ const A1 = (() => {
   function _subscribeShared() {
     if (_sharedSubbed || typeof SC === 'undefined' || !SC.gun || !SC.gun()) return;
     _sharedSubbed = true;
-    SC.sub(SC.gun().get(SC.NS.posts).get('posts'), (p) => {
-      if (_mergeSharedPost(p)) { _saveSharedCache(); _rerenderVideos(); }
+    SC.sub(SC.gun().get(SC.NS.posts).get('posts'), (p, key) => {
+      if (_mergeSharedPost(p, key)) { _saveSharedCache(); _rerenderVideos(); }
     });
   }
   // Varig, på-tvers-av-einingar: hent siste frå Supabase (Gun-relayer er ikkje
@@ -88,20 +90,64 @@ const A1 = (() => {
     posts.forEach(p => { if (_mergeSharedPost(p)) changed = true; });
     if (changed) { _saveSharedCache(); _rerenderVideos(); }
   }
+  // Rå Gun+Supabase-skriving MED eit sjølvvalt tidsstempel — i motsetnad til
+  // Community.shareMedia() (som alltid set ts:Date.now()), slik at migrering
+  // kan bevare NÅR lenka faktisk vart lagt til, ikkje når migreringa køyrde.
+  function _rawSharePost(name, url, thumb, ts) {
+    const me = (typeof Auth !== 'undefined' && Auth.current && Auth.current()) || null;
+    if (!me || typeof SC === 'undefined' || !SC.gun || !SC.gun()) return null;
+    const p = {
+      id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      author: me.username, authorDisplay: me.displayName, ts: Number(ts) || Date.now(),
+      audience: 'public', kind: 'link', name: name || '',
+      mediaUrl: url || '', youtubeId: '', sourceId: '', text: '',
+      label: 'a1', coverUrl: thumb || '', buyUrl: '',
+    };
+    try { SC.gun().get(SC.NS.posts).get('posts').set(p); } catch {}
+    if (typeof CommunitySync !== 'undefined') CommunitySync.push(p);
+    return p;
+  }
   // Éin gong: flytt gamle localStorage-only-lenker (lagt til før denne fiksen)
-  // inn i det delte feedet, så dei ikkje berre forsvinn for brukaren som hadde dei.
+  // inn i det delte feedet MED rett opprinneleg dato, så dei ikkje berre
+  // forsvinn for brukaren som hadde dei OG hamnar i rett rekkefølge.
   function _migrateLegacyOnce() {
     try {
       if (localStorage.getItem(MIGRATED_KEY) === '1') return;
       const legacy = JSON.parse(localStorage.getItem(VKEY_LEGACY) || '[]');
-      const me = (typeof Auth !== 'undefined' && Auth.current && Auth.current()) || null;
-      if (me && typeof Community !== 'undefined' && Community.shareMedia && legacy.length) {
-        legacy.forEach(v => {
-          if (!v || !v.url) return;
-          Community.shareMedia({ kind: 'link', name: v.title || host(v.url), url: v.url, coverUrl: v.thumb || '', label: 'a1', audience: 'public' });
-        });
-      }
+      if (legacy.length) legacy.forEach(v => { if (v && v.url) _rawSharePost(v.title || host(v.url), v.url, v.thumb || '', v.addedAt); });
       localStorage.setItem(MIGRATED_KEY, '1');
+    } catch {}
+  }
+  // Éin gong: rett opp dei FØRSTE migreringane (før denne fiksen) som feilaktig
+  // fekk ts=migreringstidspunktet i staden for opphavleg addedAt — dei enda
+  // difor i feil rekkefølge («denne veka er det siste nederst», bruka-
+  // rapport 15.09.2026). Slettar den feil-tidsstempla posten og lagar ho på
+  // nytt med rett dato, henta frå den framleis-intakte lokale VKEY_LEGACY.
+  async function _repairMigrationOnce() {
+    try {
+      if (localStorage.getItem(REPAIR_KEY) === '1') return;
+      localStorage.setItem(REPAIR_KEY, '1');
+      const me = (typeof Auth !== 'undefined' && Auth.current && Auth.current()) || null;
+      const legacy = JSON.parse(localStorage.getItem(VKEY_LEGACY) || '[]');
+      if (!me || typeof CommunitySync === 'undefined' || !legacy.length) return;
+      const posts = await CommunitySync.list(300);
+      let changed = false;
+      for (const p of posts) {
+        if (!p || p.label !== 'a1' || p.author !== me.username) continue;
+        const match = legacy.find(v => v && v.url === p.mediaUrl);
+        if (!match) continue;
+        const wantTs = Number(match.addedAt) || 0;
+        if (Number(p.ts) === wantTs) continue;   // allereie rett
+        try {
+          await CommunitySync.remove(p.id, p.author);
+          const local = _sharedLinks.find(x => x.id === p.id);
+          try { if (local && local._k) SC.gun().get(SC.NS.posts).get('posts').get(local._k).put(null); } catch {}
+          _rawSharePost(p.name, p.mediaUrl, p.coverUrl, wantTs);
+          _sharedLinks = _sharedLinks.filter(x => x.id !== p.id);
+          changed = true;
+        } catch (e) { console.warn('[A1] repair feila for', p.id, e); }   // ikkje la éin feil stoppe resten
+      }
+      if (changed) await _hydrateShared();
     } catch {}
   }
   function userVideos() { return _sharedLinks; }
@@ -348,6 +394,15 @@ const A1 = (() => {
       </a>`;
   }
 
+  // Ekte spelbart medium (YouTube eller direkte videofil) vs. ei vanleg
+  // nettside-lenke. Brukarønske 15.09.2026 ("url skal funke å trykke direkte
+  // til sidene"): dei fleste delte A1-lenker er ARTIKLAR/nettsider, ikkje
+  // videofiler — å prøve å "spele" dei i ein <video>-tag ga ein øydelagd
+  // spelar og hindra folk i å faktisk kome seg til sida. Berre ekte
+  // spelbart innhald skal bruke den inline "feature"-spelaren; alt anna
+  // skal opne direkte i ny fane, akkurat som "Sites of the week"-korta.
+  function isPlayableVideo(u) { return !!ytId(u) || /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(String(u || '')); }
+
   function videoMarkup() {
     const vids = allVideos();
     if (!vids.length) {
@@ -360,19 +415,26 @@ const A1 = (() => {
     // sidan vids[0] då alltid ville vore same globale video).
     const feat = userVideos().length ? vids[0] : (rotate(vids) || vids[0]);
     const yt = ytId(feat.url);
+    const featThumb = yt ? '' : (feat.thumb || '');
     const player = yt
       ? `<iframe class="a1-video-frame" src="https://www.youtube-nocookie.com/embed/${yt}" title="${esc(feat.title || 'Video')}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
-      : `<video class="a1-video-frame" src="${esc(feat.url)}" controls playsinline></video>`;
+      : isPlayableVideo(feat.url)
+        ? `<video class="a1-video-frame" src="${esc(feat.url)}" controls playsinline></video>`
+        : `<a class="a1-video-frame a1-video-link-feat" href="${esc(feat.url)}" target="_blank" rel="noopener noreferrer">
+             ${featThumb ? `<img src="${esc(featThumb)}" alt="" loading="lazy">` : `<span class="a1-video-thumb-fallback">${Icon('globe')}</span>`}
+             <span class="a1-video-link-cta">${Icon('arrow-up-right')} Visit site</span>
+           </a>`;
     const others = vids.map((v, i) => ({ v, i })).filter(o => o.v !== feat).slice(0, 6).map(({ v, i }) => {
       const id = ytId(v.url);
       const thumb = id ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : (v.thumb || '');
-      return `<button class="a1-video-thumb" onclick="A1.featureVideo(${i})" title="${esc(v.title || 'Video')}">
-        ${thumb ? `<img src="${thumb}" alt="" loading="lazy">` : `<span class="a1-video-thumb-fallback">${Icon('play')}</span>`}
+      const shareBtn = `<span class="a1-video-thumb-share" title="Share" onclick="event.preventDefault();event.stopPropagation();A1.shareLink('${jsq(v.url)}','${jsq(v.title || host(v.url))}','${jsq(thumb)}')">${Icon('share')}</span>`;
+      const inner = `${thumb ? `<img src="${thumb}" alt="" loading="lazy">` : `<span class="a1-video-thumb-fallback">${Icon(isPlayableVideo(v.url) ? 'play' : 'globe')}</span>`}
         <span class="a1-video-thumb-title">${esc(v.title || host(v.url))}</span>
-        <span class="a1-video-thumb-share" title="Share" onclick="event.stopPropagation();A1.shareLink('${jsq(v.url)}','${jsq(v.title || host(v.url))}','${jsq(thumb)}')">${Icon('share')}</span>
-      </button>`;
+        ${shareBtn}`;
+      return isPlayableVideo(v.url)
+        ? `<button class="a1-video-thumb" onclick="A1.featureVideo(${i})" title="${esc(v.title || 'Video')}">${inner}</button>`
+        : `<a class="a1-video-thumb" href="${esc(v.url)}" target="_blank" rel="noopener noreferrer" title="${esc(v.title || host(v.url))} — opens in a new tab">${inner}</a>`;
     }).join('');
-    const featThumb = ytId(feat.url) ? '' : (feat.thumb || '');
     return `
       <div class="a1-video-player">
         <span class="a1-feat-badge">${Icon('star')} Video of the week</span>
@@ -395,6 +457,7 @@ const A1 = (() => {
     _migrateLegacyOnce();
     _subscribeShared();
     _hydrateShared();
+    _repairMigrationOnce();
 
     app.innerHTML = `
       <div class="a1-page">

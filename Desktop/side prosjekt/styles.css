@@ -9288,6 +9288,16 @@ body.edge-idle #r247-card .r247-sub-btn {
 .a1-video-share-btn:hover { background: rgba(34,197,94,0.3); border-color: rgba(34,197,94,0.6); }
 .a1-video-share-btn svg { width: 14px; height: 14px; }
 .a1-video-frame { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; background: #000; }
+.a1-video-link-feat { position: relative; text-decoration: none; }
+.a1-video-link-feat img { display: block; width: 100%; height: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.a1-video-link-feat .a1-video-thumb-fallback { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 9; color: var(--text2); }
+.a1-video-link-cta {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: rgba(12,10,24,0.85); border: 1px solid rgba(255,255,255,0.25); color: #fff;
+  font-weight: 700; font-size: 0.9rem; padding: 0.6rem 1.1rem; border-radius: 999px;
+}
+.a1-video-link-feat:hover .a1-video-link-cta { background: rgba(34,197,94,0.4); border-color: rgba(34,197,94,0.7); }
 .a1-video-cap { padding: 0.6rem 0.9rem; background: rgba(12,10,24,0.85); font-weight: 600; font-size: 0.88rem; }
 .a1-video-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.65rem; margin-top: 0.85rem; }
 .a1-video-thumb { position: relative; padding: 0; border: 1px solid var(--border2); border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.04); cursor: pointer; text-align: left; }
