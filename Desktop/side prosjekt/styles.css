@@ -10872,6 +10872,13 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
   color: #0a1020;
 }
 
+/* «Share»-knappen i forsida sin komponer-boks — same blå/lilla som over,
+   i staden for .btn-primary sin delte grøne. */
+.sc-composer-send {
+  background: linear-gradient(100deg, #7dd3fc 0%, #9fb8fd 55%, #a78bfa 100%) !important;
+  color: #0a1020;
+}
+
 /* «Create free profile» · «Chat» · «Log in» */
 .stellar-hero-actions .btn-ghost { color: var(--sfm-solid); }
 .stellar-hero-actions .btn-ghost:hover { color: #ffffff; border-color: rgba(159,216,253,0.45); }
