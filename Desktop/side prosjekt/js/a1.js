@@ -290,7 +290,12 @@ const A1 = (() => {
     if (!vids.length) {
       return `<div class="a1-video-empty">${Icon('film')}<p>No videos yet. Paste a YouTube or video link below — it rotates automatically every week.</p></div>`;
     }
-    const feat = rotate(vids) || vids[0];
+    // Brukarønske 15.09.2026: det nyaste brukar-lagt-til-lenka skal ALLTID
+    // vere den store, framheva videoen — ikkje underlagt vekerotasjonen.
+    // Vekerotasjonen gjeld berre dei kuraterte VIDEOS når ingen brukar-
+    // videoar finst enno (elles ville rotasjonen aldri vist variasjon,
+    // sidan vids[0] då alltid ville vore same globale video).
+    const feat = userVideos().length ? vids[0] : (rotate(vids) || vids[0]);
     const yt = ytId(feat.url);
     const player = yt
       ? `<iframe class="a1-video-frame" src="https://www.youtube-nocookie.com/embed/${yt}" title="${esc(feat.title || 'Video')}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
