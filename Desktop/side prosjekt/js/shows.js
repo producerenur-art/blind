@@ -669,7 +669,7 @@ const Shows = (() => {
           <div class="section-header">
             <div class="section-title">${Icon('calendar')} Weekly schedule</div>
           </div>
-          ${typeof Radio247 !== 'undefined' ? `<div style="color:var(--text2);font-size:0.82rem;margin:-1rem 0 1.25rem;display:flex;align-items:center;gap:0.4rem">${Icon('sparkles')} SiriusFM 24/7-Hour Cycle</div>` : ''}
+          ${typeof Radio247 !== 'undefined' ? `<div style="color:var(--text2);font-size:0.82rem;margin:-1rem 0 1.25rem;display:flex;align-items:center;gap:0.4rem">${Icon('sparkles')} SiriusFM 24/7</div>` : ''}
           <div class="sched-grid">
             ${scheduleGrid()}
           </div>
