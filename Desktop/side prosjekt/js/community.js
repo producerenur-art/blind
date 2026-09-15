@@ -848,7 +848,10 @@ const Community = (() => {
       case 'video':   return p.kind === 'video' || p.kind === 'youtube';
       case 'bilete':  return p.kind === 'blend' || p.kind === 'image';
       case 'innlegg': return !p.kind || p.kind === 'text';
-      default:        return true;
+      // A1-delte lenker (label:'a1', sjå js/a1.js) gjenbrukar Community sin
+      // Gun+Supabase-lagring, men skal IKKJE dukke opp på den vanlege
+      // Community-veggen — dei har sitt eige galleri på A1-fana.
+      default:        return p.label !== 'a1';
     }
   }
 

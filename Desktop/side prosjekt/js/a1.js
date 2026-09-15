@@ -34,22 +34,85 @@ const A1 = (() => {
     { title: 'Allies of Humanity — Book Four',                                      url: 'https://www.youtube.com/watch?v=UJ8iNy95U9k' },
   ];
 
-  // ── Brukar-lagra videoar (gratis, live — lagra lokalt i nettlesaren) ──
-  // Nyaste-først: sortert på `addedAt` (brukarønske 15.09.2026). Eldre
-  // oppføringar utan `addedAt` (lagt til før dette feltet fanst) hamnar
-  // sist, ikkje øverst.
-  const VKEY = 'a1_user_videos';
-  function userVideos() {
-    let v; try { v = JSON.parse(localStorage.getItem(VKEY)) || []; } catch { v = []; }
-    return v.slice().sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+  // ── Delte lenker/videoar (Gun + Supabase — synlege for ALLE innlogga) ──
+  // Brukarønske 15.09.2026: "alle kan dele her" — dette skal vere eit delt
+  // feed, ikkje berre synleg i nettlesaren som la det til. Gjenbrukar
+  // Community sin eksisterande Gun+Supabase-infrastruktur (Community.
+  // shareMedia/CommunitySync — same mønster som Community-veggen og radio-
+  // chatten) i staden for å byggje ny lagring frå botnen. Kvar oppføring
+  // merkast `label:'a1'` slik at community.js sitt "Alt"-filter kan skjule
+  // desse frå den vanlege Community-veggen (matchesFilter).
+  const VKEY_LEGACY = 'a1_user_videos';        // gamal lokal-only liste (før 15.09.2026)
+  const SHARED_CACHE_KEY = 'a1_shared_cache';  // rask lokal cache av det delte feedet
+  const MIGRATED_KEY = 'a1_shared_migrated_v1';
+  let _sharedLinks = [];   // { id, title, url, thumb, addedAt, author } — nyaste først
+  let _sharedSubbed = false;
+
+  function _loadSharedCache() {
+    try { _sharedLinks = JSON.parse(localStorage.getItem(SHARED_CACHE_KEY)) || []; } catch { _sharedLinks = []; }
   }
-  function saveUserVideos(v) { try { localStorage.setItem(VKEY, JSON.stringify(v)); } catch {} }
-  function allVideos() { return [...userVideos(), ...VIDEOS]; }
+  function _saveSharedCache() {
+    try { localStorage.setItem(SHARED_CACHE_KEY, JSON.stringify(_sharedLinks.slice(0, 60))); } catch {}
+  }
+  // Slår saman ein Community-post (frå Gun eller Supabase) inn i _sharedLinks.
+  // Returnerer true om noko faktisk endra seg (så kallaren veit om ho skal re-rendere).
+  function _mergeSharedPost(p) {
+    if (!p || !p.id || p.label !== 'a1' || !p.mediaUrl) return false;
+    const entry = {
+      id: p.id, title: p.name || host(p.mediaUrl), url: p.mediaUrl,
+      thumb: p.coverUrl || '', addedAt: Number(p.ts) || 0, author: p.author || '',
+    };
+    const i = _sharedLinks.findIndex(x => x.id === entry.id);
+    if (i === -1) _sharedLinks.push(entry); else _sharedLinks[i] = entry;
+    _sharedLinks.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+    return true;
+  }
+  function _rerenderVideos() {
+    const wrap = document.getElementById('a1-video-wrap');
+    if (wrap) wrap.innerHTML = videoMarkup();
+  }
+  // Sanntid: nye delte lenker frå ANDRE brukarar dukkar opp med ein gong.
+  function _subscribeShared() {
+    if (_sharedSubbed || typeof SC === 'undefined' || !SC.gun || !SC.gun()) return;
+    _sharedSubbed = true;
+    SC.sub(SC.gun().get(SC.NS.posts).get('posts'), (p) => {
+      if (_mergeSharedPost(p)) { _saveSharedCache(); _rerenderVideos(); }
+    });
+  }
+  // Varig, på-tvers-av-einingar: hent siste frå Supabase (Gun-relayer er ikkje
+  // pålitelege på tvers av nettlesarar/einingar — same grunn som Community).
+  async function _hydrateShared() {
+    if (typeof CommunitySync === 'undefined') return;
+    const posts = await CommunitySync.list(300);
+    let changed = false;
+    posts.forEach(p => { if (_mergeSharedPost(p)) changed = true; });
+    if (changed) { _saveSharedCache(); _rerenderVideos(); }
+  }
+  // Éin gong: flytt gamle localStorage-only-lenker (lagt til før denne fiksen)
+  // inn i det delte feedet, så dei ikkje berre forsvinn for brukaren som hadde dei.
+  function _migrateLegacyOnce() {
+    try {
+      if (localStorage.getItem(MIGRATED_KEY) === '1') return;
+      const legacy = JSON.parse(localStorage.getItem(VKEY_LEGACY) || '[]');
+      const me = (typeof Auth !== 'undefined' && Auth.current && Auth.current()) || null;
+      if (me && typeof Community !== 'undefined' && Community.shareMedia && legacy.length) {
+        legacy.forEach(v => {
+          if (!v || !v.url) return;
+          Community.shareMedia({ kind: 'link', name: v.title || host(v.url), url: v.url, coverUrl: v.thumb || '', label: 'a1', audience: 'public' });
+        });
+      }
+      localStorage.setItem(MIGRATED_KEY, '1');
+    } catch {}
+  }
+  function userVideos() { return _sharedLinks; }
+  function allVideos() { return [..._sharedLinks, ...VIDEOS]; }
 
   // ── Hjelparar ────────────────────────────────────────────────────────
   function host(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return String(u); } }
   function favicon(u) { return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host(u))}&sz=128`; }
   function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  // Trygg for bruk inni ein enkelt-sitert onclick-attributt (esc() åleine dekker ikkje ').
+  function jsq(s) { return String(s == null ? '' : s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
   function ytId(u) { const m = String(u).match(/(?:youtu\.be\/|[?&]v=|embed\/|shorts\/)([\w-]{11})/); return m ? m[1] : null; }
 
   // ── Universal-søk: opnar eit eksternt søk i ny fane ──────────────────
@@ -306,11 +369,14 @@ const A1 = (() => {
       return `<button class="a1-video-thumb" onclick="A1.featureVideo(${i})" title="${esc(v.title || 'Video')}">
         ${thumb ? `<img src="${thumb}" alt="" loading="lazy">` : `<span class="a1-video-thumb-fallback">${Icon('play')}</span>`}
         <span class="a1-video-thumb-title">${esc(v.title || host(v.url))}</span>
+        <span class="a1-video-thumb-share" title="Share" onclick="event.stopPropagation();A1.shareLink('${jsq(v.url)}','${jsq(v.title || host(v.url))}','${jsq(thumb)}')">${Icon('share')}</span>
       </button>`;
     }).join('');
+    const featThumb = ytId(feat.url) ? '' : (feat.thumb || '');
     return `
       <div class="a1-video-player">
         <span class="a1-feat-badge">${Icon('star')} Video of the week</span>
+        <button type="button" class="a1-video-share-btn" title="Share" onclick="A1.shareLink('${jsq(feat.url)}','${jsq(feat.title || host(feat.url))}','${jsq(featThumb)}')">${Icon('share')} Share</button>
         ${player}
         <div class="a1-video-cap">${esc(feat.title || host(feat.url))}</div>
       </div>
@@ -325,7 +391,10 @@ const A1 = (() => {
 
     const featLink = rotate(LINKS) || LINKS[0];
     const restLinks = LINKS.filter(l => l !== featLink);
-    _backfillThumbs();
+    _loadSharedCache();
+    _migrateLegacyOnce();
+    _subscribeShared();
+    _hydrateShared();
 
     app.innerHTML = `
       <div class="a1-page">
@@ -413,59 +482,57 @@ const A1 = (() => {
     }
   }
 
-  // ── Legg til brukar-video (gratis, lokalt) ───────────────────────────
-  function addVideo(e) {
+  // ── Del ei ny lenke/video med ALLE (krev innlogging) ─────────────────
+  // Brukarønske 15.09.2026: "alle kan dele her" + "dei må ha brukarkonto".
+  // Community.shareMedia() krev sjølv innlogging (returnerer null elles),
+  // så login-kravet er handheva same stad som resten av sida.
+  async function addVideo(e) {
     e.preventDefault();
     const url = (document.getElementById('a1-vid-url').value || '').trim();
     const title = (document.getElementById('a1-vid-title').value || '').trim();
     if (!url) return false;
-    const v = userVideos();
-    v.push({ title: title || host(url), url, addedAt: Date.now() });
-    saveUserVideos(v);
-    const wrap = document.getElementById('a1-video-wrap');
-    if (wrap) wrap.innerHTML = videoMarkup();
-    document.getElementById('a1-vid-url').value = '';
-    document.getElementById('a1-vid-title').value = '';
-    if (typeof App !== 'undefined' && App.toast) App.toast('Video added ✓', 'success');
-    fetchThumbFor(url);
+    const me = (typeof Auth !== 'undefined' && Auth.current && Auth.current()) || null;
+    if (!me || typeof Community === 'undefined' || !Community.shareMedia) {
+      if (typeof App !== 'undefined' && App.toast) App.toast('Log in to share a link.', 'error');
+      return false;
+    }
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    const name = title || host(url);
+    const thumb = await _fetchOgImage(url);   // ekte forhandsbilete FØR posting, ikkje etterpå
+    const id = Community.shareMedia({ kind: 'link', name, url, coverUrl: thumb, label: 'a1', audience: 'public' });
+    if (btn) btn.disabled = false;
+    if (id) {
+      _mergeSharedPost({ id, name, mediaUrl: url, coverUrl: thumb, ts: Date.now(), author: me.username });
+      _saveSharedCache();
+      _rerenderVideos();
+      document.getElementById('a1-vid-url').value = '';
+      document.getElementById('a1-vid-title').value = '';
+      if (typeof App !== 'undefined' && App.toast) App.toast('Shared with everyone ✓', 'success');
+    } else if (typeof App !== 'undefined' && App.toast) {
+      App.toast('Could not share — try again.', 'error');
+    }
     return false;
   }
 
-  // ── Forhandsbilete for ikkje-YouTube-lenkjer ────────────────────────────
-  // Brukarønske 15.09.2026: ei lenkje skal ALLTID få eit forhandsbilete i
-  // korta, uansett kven som legg ho til — ikkje berre eit generisk
-  // avspel-ikon. Hentar og:image server-side via det delte /api/unfurl-
-  // endepunktet (same som lenkje-førehandsvisingar elles på siten) og lagrar
-  // det på oppføringa, så det ikkje må hentast på nytt kvar gong. Køyrer i
-  // bakgrunnen — blokkerer aldri sjølve avspel-ikon-visinga.
-  const _thumbTried = new Set();
-  function fetchThumbFor(url) {
-    if (ytId(url) || _thumbTried.has(url)) return;
-    _thumbTried.add(url);
-    fetch('/api/unfurl?url=' + encodeURIComponent(url))
-      .then(r => r.json())
-      .then(data => {
-        if (!data || !data.image) return;
-        const list = userVideos();
-        const hit = list.find(x => x.url === url);
-        if (!hit || hit.thumb) return;
-        hit.thumb = data.image;
-        saveUserVideos(list);
-        const w = document.getElementById('a1-video-wrap');
-        if (w) w.innerHTML = videoMarkup();
-      })
-      .catch(() => {});
+  // Hentar og:image server-side (det delte /api/unfurl-endepunktet, same som
+  // lenke-førehandsvisingar elles på siten) FØR ei lenke vert delt, slik at
+  // alle ser eit ekte bilete med ein gong — aldri berre eit generisk ikon.
+  async function _fetchOgImage(url) {
+    if (ytId(url)) return '';
+    try {
+      const r = await fetch('/api/unfurl?url=' + encodeURIComponent(url));
+      const data = await r.json();
+      return (data && data.image) || '';
+    } catch { return ''; }
   }
-  // Etterfyll manglande bilete/dato for lenkjer lagt til FØR denne fiksen
-  // (t.d. Egyptra-lenkja) — køyrer éin gong per side-opning.
-  function _backfillThumbs() {
-    const list = userVideos();
-    let changed = false;
-    list.forEach(v => {
-      if (v.addedAt == null) { v.addedAt = 0; changed = true; }
-      if (!v.thumb && !ytId(v.url)) fetchThumbFor(v.url);
-    });
-    if (changed) saveUserVideos(list);
+
+  // Del vidare til sosiale medium (del-knapp på kvart kort) — trenger ikkje
+  // innlogging, kven som helst som ser sida kan dele lenka vidare.
+  function shareLink(url, title, thumb) {
+    if (typeof Share !== 'undefined' && Share.shareUrl) {
+      Share.shareUrl(url, title || host(url), null, { image: thumb || '', preferMenu: true });
+    }
   }
 
   // Vel ein bestemt brukar-video som «ukas» (manuell overstyring i økta)
@@ -481,5 +548,5 @@ const A1 = (() => {
       `<span class="a1-feat-badge">${Icon('star')} Now playing</span>${player}<div class="a1-video-cap">${esc(v.title||host(v.url))}</div>`;
   }
 
-  return { render, searchOn, askA1FromSearch, addVideo, featureVideo, chatAsk, toggleChat, closeChat, openChat };
+  return { render, searchOn, askA1FromSearch, addVideo, featureVideo, shareLink, chatAsk, toggleChat, closeChat, openChat };
 })();
