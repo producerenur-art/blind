@@ -4544,10 +4544,6 @@ body:has(.radio-visualizer-wrap.vis-size-full.vis-controls-shown) #fc-dock {
   background: var(--surface); padding: 1rem 1.1rem 0.9rem; margin-top: 0.25rem;
 }
 .disc-genre-panel .disc-section-header { margin-top: 0; }
-.disc-genre-panel-sub {
-  color: var(--text2); font-size: 0.85rem; line-height: 1.5; margin: 0 0 0.6rem;
-}
-.disc-genre-panel-sub a { color: #38bdf8; }
 .disc-genre-panel-list {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.15rem 0.75rem;
 }

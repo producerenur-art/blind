@@ -1073,11 +1073,6 @@ const Discover = (() => {
           <h2 class="disc-section-title">${iconForEmoji(emoji)} ${escHtml(label)} on SiriusFM</h2>
           <span class="disc-section-count">${stations.length} stations</span>
         </div>
-        <p class="disc-genre-panel-sub">
-          ${tracks.length
-            ? `${tracks.length} community track${tracks.length === 1 ? '' : 's'} — <a href="#/login">log in</a> to listen. Meanwhile: radio that fits ${escHtml(label)}.`
-            : `No community tracks in this genre yet — here is radio that fits ${escHtml(label)}.`}
-        </p>
         ${stations.length ? `
           <div class="disc-genre-panel-list">
             ${stations.map(s => `
