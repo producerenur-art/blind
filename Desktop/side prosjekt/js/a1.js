@@ -400,7 +400,7 @@ const A1 = (() => {
       <div class="a1-page">
         <header class="a1-hero">
           <div class="a1-hero-badge">${Icon('sparkles')} A1</div>
-          <h1>A1 — your AI + the whole web</h1>
+          <h1>The Whole Web Search</h1>
           <p>Ask A1 anything, search the entire web, and explore this week's featured sites and videos. All free.</p>
         </header>
 
