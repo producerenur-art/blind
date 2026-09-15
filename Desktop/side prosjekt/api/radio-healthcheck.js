@@ -37,6 +37,9 @@ function authorised(req) {
   if (req.headers['x-vercel-cron']) return true;
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
+  // Vercel legg automatisk på denne Bearer-headeren på eigne cron-kall når
+  // CRON_SECRET er sett — sjå api/live-reminder.js for kvifor dette er lagt til.
+  if (req.headers['authorization'] === `Bearer ${secret}`) return true;
   const given = req.headers['x-cron-secret'] || (req.query && req.query.secret);
   return given === secret;
 }

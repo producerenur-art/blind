@@ -23,6 +23,11 @@ function authorised(req) {
   if (req.headers['x-vercel-cron']) return true;
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
+  // Når CRON_SECRET er sett, legg Vercel automatisk på denne som Bearer-token
+  // på sine eigne cron-kall (Vercel sin offisielle mekanisme). Lagt til 15.09
+  // etter at fredagens cron (ekte vercel-cron/1.0 user-agent) likevel fekk 401
+  // på x-vercel-cron-headeren åleine — Bearer-sjekket er den robuste vegen.
+  if (req.headers['authorization'] === `Bearer ${secret}`) return true;
   const given = req.headers['x-cron-secret'] || (req.query && req.query.secret);
   return given === secret;
 }
