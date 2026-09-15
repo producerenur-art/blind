@@ -69,6 +69,23 @@ const GROUPS = [
     queries: ['dark ambient background 4k loop no text'],
   },
   {
+    // Brukarønske 15.09.2026: same kanal-avgrensa mønster som natureworld under —
+    // held seg oppdatert med nye opplastingar frå Aibient automatisk.
+    key: 'aibient', want: 2, hint: 'Aibient channel — cinematic AI dreamscapes, dark/ritual mood',
+    channelId: 'UCo0jbvIx4hn-fHHXozO6zhw',
+    queries: ['psychedelic ai dreamscape cinematic'],
+  },
+  {
+    key: 'aimanifest', want: 2, hint: 'AI Manifest channel — AI-generated nebula/cosmic visualizations',
+    channelId: 'UCZP0CSIDCKjtgw-nWTsh5Kg',
+    queries: ['ai nebula cosmic visualization'],
+  },
+  {
+    key: 'wakeningdreams', want: 2, hint: 'Wakening Dreams channel — AI dreamscape short films, cosmic/surreal',
+    channelId: 'UCTIf9J1GwOitfRJc39pTUow',
+    queries: ['ai dreamscape cosmic short film'],
+  },
+  {
     // Brukarønske 13.09.2026: rein kanal-avgrensa henting (channelId), IKKE eit
     // generelt søkeord — held seg oppdatert med nye opplastingar frå denne
     // kanalen, same 24t-oppdatering som resten av poolen.
