@@ -35,10 +35,16 @@ const A1 = (() => {
   ];
 
   // ── Brukar-lagra videoar (gratis, live — lagra lokalt i nettlesaren) ──
+  // Nyaste-først: sortert på `addedAt` (brukarønske 15.09.2026). Eldre
+  // oppføringar utan `addedAt` (lagt til før dette feltet fanst) hamnar
+  // sist, ikkje øverst.
   const VKEY = 'a1_user_videos';
-  function userVideos() { try { return JSON.parse(localStorage.getItem(VKEY)) || []; } catch { return []; } }
+  function userVideos() {
+    let v; try { v = JSON.parse(localStorage.getItem(VKEY)) || []; } catch { v = []; }
+    return v.slice().sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+  }
   function saveUserVideos(v) { try { localStorage.setItem(VKEY, JSON.stringify(v)); } catch {} }
-  function allVideos() { return [...VIDEOS, ...userVideos()]; }
+  function allVideos() { return [...userVideos(), ...VIDEOS]; }
 
   // ── Hjelparar ────────────────────────────────────────────────────────
   function host(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return String(u); } }
@@ -291,7 +297,7 @@ const A1 = (() => {
       : `<video class="a1-video-frame" src="${esc(feat.url)}" controls playsinline></video>`;
     const others = vids.map((v, i) => ({ v, i })).filter(o => o.v !== feat).slice(0, 6).map(({ v, i }) => {
       const id = ytId(v.url);
-      const thumb = id ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : '';
+      const thumb = id ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : (v.thumb || '');
       return `<button class="a1-video-thumb" onclick="A1.featureVideo(${i})" title="${esc(v.title || 'Video')}">
         ${thumb ? `<img src="${thumb}" alt="" loading="lazy">` : `<span class="a1-video-thumb-fallback">${Icon('play')}</span>`}
         <span class="a1-video-thumb-title">${esc(v.title || host(v.url))}</span>
@@ -314,6 +320,7 @@ const A1 = (() => {
 
     const featLink = rotate(LINKS) || LINKS[0];
     const restLinks = LINKS.filter(l => l !== featLink);
+    _backfillThumbs();
 
     app.innerHTML = `
       <div class="a1-page">
@@ -408,14 +415,52 @@ const A1 = (() => {
     const title = (document.getElementById('a1-vid-title').value || '').trim();
     if (!url) return false;
     const v = userVideos();
-    v.push({ title: title || host(url), url });
+    v.push({ title: title || host(url), url, addedAt: Date.now() });
     saveUserVideos(v);
     const wrap = document.getElementById('a1-video-wrap');
     if (wrap) wrap.innerHTML = videoMarkup();
     document.getElementById('a1-vid-url').value = '';
     document.getElementById('a1-vid-title').value = '';
     if (typeof App !== 'undefined' && App.toast) App.toast('Video added ✓', 'success');
+    fetchThumbFor(url);
     return false;
+  }
+
+  // ── Forhandsbilete for ikkje-YouTube-lenkjer ────────────────────────────
+  // Brukarønske 15.09.2026: ei lenkje skal ALLTID få eit forhandsbilete i
+  // korta, uansett kven som legg ho til — ikkje berre eit generisk
+  // avspel-ikon. Hentar og:image server-side via det delte /api/unfurl-
+  // endepunktet (same som lenkje-førehandsvisingar elles på siten) og lagrar
+  // det på oppføringa, så det ikkje må hentast på nytt kvar gong. Køyrer i
+  // bakgrunnen — blokkerer aldri sjølve avspel-ikon-visinga.
+  const _thumbTried = new Set();
+  function fetchThumbFor(url) {
+    if (ytId(url) || _thumbTried.has(url)) return;
+    _thumbTried.add(url);
+    fetch('/api/unfurl?url=' + encodeURIComponent(url))
+      .then(r => r.json())
+      .then(data => {
+        if (!data || !data.image) return;
+        const list = userVideos();
+        const hit = list.find(x => x.url === url);
+        if (!hit || hit.thumb) return;
+        hit.thumb = data.image;
+        saveUserVideos(list);
+        const w = document.getElementById('a1-video-wrap');
+        if (w) w.innerHTML = videoMarkup();
+      })
+      .catch(() => {});
+  }
+  // Etterfyll manglande bilete/dato for lenkjer lagt til FØR denne fiksen
+  // (t.d. Egyptra-lenkja) — køyrer éin gong per side-opning.
+  function _backfillThumbs() {
+    const list = userVideos();
+    let changed = false;
+    list.forEach(v => {
+      if (v.addedAt == null) { v.addedAt = 0; changed = true; }
+      if (!v.thumb && !ytId(v.url)) fetchThumbFor(v.url);
+    });
+    if (changed) saveUserVideos(list);
   }
 
   // Vel ein bestemt brukar-video som «ukas» (manuell overstyring i økta)
