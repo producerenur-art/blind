@@ -367,6 +367,10 @@ const App = (() => {
         ${item('#/shows','calendar','Shows')}
         ${item('#/world','globe','World')}
         ${item('#/magazine','book','Magazine')}
+        ${item('#/live-archive','radio','Live-arkiv')}
+        ${btn("if(window.LiveGuest)LiveGuest.openApply()",'radio','Søk om å gå live')}
+        ${item('#/go-live/mine','clock','Mine live-forespørsler')}
+        ${(window.LiveGuestAdmin && LiveGuestAdmin._isOwner(user)) ? item('#/go-live/admin','lock','Sendeforespørsler') : ''}
         ${item('#/a1','sparkles','A1')}
         ${item('#/studio','image','Studio')}
         <div class="nav-more-sep"></div>
@@ -383,6 +387,7 @@ const App = (() => {
       ${item('#/shows','calendar','Shows')}
       ${item('#/world','globe','World')}
       ${item('#/magazine','book','Magasin')}
+      ${item('#/live-archive','radio','Live-arkiv')}
       ${item('#/a1','sparkles','A1')}
     `;
   }
@@ -3242,6 +3247,12 @@ const App = (() => {
     Router.define('/magazine',                 () => Magazine.renderGenre('alle'));
     Router.define('/magazine/sjanger/:genre',  ({ genre }) => Magazine.renderGenre(genre));
     Router.define('/magazine/:id',             ({ id }) => Magazine.render(id));
+    // Eksterne live-sendinger: forespørsel → eier-godkjenning → offentlig arkiv.
+    // Se js/liveGuest.js, js/liveGuestAdmin.js, js/liveArchive.js.
+    Router.define('/go-live/mine',       () => { if (window.LiveGuest) LiveGuest.renderMine(); });
+    Router.define('/go-live/admin',      () => { if (window.LiveGuestAdmin) LiveGuestAdmin.render(); });
+    Router.define('/live-archive',       () => { if (window.LiveArchive) LiveArchive.render(); });
+    Router.define('/live-archive/:id',   ({ id }) => { if (window.LiveArchive) LiveArchive.render(id); });
     Router.define('/a1',                 () => A1.render());
     Router.define('/community',          () => { if (window.Community) Community.render(); });
     Router.define('/grupper',            () => { if (window.Groups) Groups.render(); });
