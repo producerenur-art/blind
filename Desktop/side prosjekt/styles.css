@@ -13,7 +13,11 @@
   border: 1px solid rgba(34,197,94,.5); border-radius: 12px;
   padding: .8rem 1rem; margin-bottom: 1.25rem;
 }
-.shop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+/* Faste kolonnetal (aldri auto-fit) — 4 faste planer skal alltid dele seg jamt,
+   aldri la siste kortet stå åleine på ei halvtom rad. */
+.shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+@media (min-width: 680px) { .shop-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 420px) { .shop-grid { grid-template-columns: 1fr; } }
 .shop-card {
   position: relative; background: rgba(10,10,15,0.82);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
@@ -65,13 +69,15 @@
 }
 .shop-offer-banner--holiday .shop-offer-banner-icon { background: rgba(74,222,128,.18); color: #9fd8fd; }
 
-/* Framheva plan-kort for månadens tilbod */
-.shop-plan--offer { border-color: rgba(134,239,172,.55); box-shadow: 0 0 0 1px rgba(134,239,172,.3), 0 8px 28px rgba(134,239,172,.16); }
+/* Framheva plan-kort for månadens tilbod — eiga blå fargeidentitet, skilt frå
+   den grøn/rosa "Best value"-fargen slik at dei to merka ikkje ser ut som
+   same signal på to ulike kort samtidig. */
+.shop-plan--offer { border-color: rgba(56,189,248,.5); box-shadow: 0 0 0 1px rgba(56,189,248,.28), 0 8px 28px rgba(37,99,235,.16); }
 .shop-plan--holiday { border-color: rgba(74,222,128,.55); box-shadow: 0 0 0 1px rgba(74,222,128,.3), 0 8px 28px rgba(22,163,74,.18); }
 .shop-offer-ribbon {
   position: absolute; top: 1rem; left: 1rem; font-size: .72rem; font-weight: 700;
   padding: .25rem .55rem; border-radius: 999px; color: #fff;
-  background: linear-gradient(90deg, #22c55e, #ec4899);
+  background: linear-gradient(90deg, #2563eb, #38bdf8);
 }
 .shop-offer-ribbon--holiday { background: linear-gradient(90deg, #dc2626, #16a34a); }
 
@@ -4442,7 +4448,7 @@ body:has(.radio-visualizer-wrap.vis-size-full.vis-controls-shown) #fc-dock {
   background: none; border: none; color: var(--text3); font-size: 1.1rem;
   cursor: pointer; line-height: 1; padding: 0.2rem 0.4rem;
 }
-.dl-modal-close:hover { color: var(--text1); }
+.dl-modal-close:hover { color: var(--text); }
 .dl-modal-header { text-align: center; margin-bottom: 1.25rem; }
 .dl-modal-icon   { font-size: 2.5rem; margin-bottom: 0.4rem; }
 .dl-modal-title  { margin: 0 0 0.3rem; font-size: 1.1rem; font-weight: 700; }
@@ -6051,7 +6057,7 @@ body:has(.radio-visualizer-wrap.vis-size-full.vis-controls-shown) #fc-dock {
   background: none; border: none; cursor: pointer; padding: 0.1rem 0.25rem;
   color: var(--text3); font-size: 0.75rem; border-radius: 6px; line-height: 1;
 }
-.dj-pm-act:hover { color: var(--text1); background: var(--surface2); }
+.dj-pm-act:hover { color: var(--text); background: var(--surface2); }
 .dj-pm-input-row {
   display: flex; gap: 0.5rem; padding: 0.75rem 1rem;
   border-top: 1px solid var(--border); flex-shrink: 0; background: var(--bg2);
@@ -6063,10 +6069,10 @@ body:has(.radio-visualizer-wrap.vis-size-full.vis-controls-shown) #fc-dock {
   cursor: pointer; padding: 0.4rem 0.6rem; color: var(--text2);
   display: flex; align-items: center; gap: 0.25rem; font-size: 0.8rem;
 }
-.dj-pm-emoji-btn:hover, .dj-pm-gif-btn:hover { background: var(--surface2); color: var(--text1); }
+.dj-pm-emoji-btn:hover, .dj-pm-gif-btn:hover { background: var(--surface2); color: var(--text); }
 .dj-pm-emoji-pop {
   position: absolute; bottom: 100%; left: 1rem; margin-bottom: 0.5rem;
-  background: var(--bg1); border: 1px solid var(--border); border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
   padding: 0.5rem; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
   display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.15rem;
   z-index: 20;
@@ -7581,7 +7587,7 @@ body:has(.radio-visualizer-wrap.vis-size-full.vis-controls-shown) #fc-dock {
   line-height: 1.65;
   margin-bottom: 1.1rem;
 }
-.bg-notice-body strong { color: var(--text1); }
+.bg-notice-body strong { color: var(--text); }
 .bg-notice-body em { color: #9fd8fd; font-style: normal; }
 .bg-notice-preview {
   border-radius: 10px;
@@ -8160,7 +8166,7 @@ body.edge-idle #r247-card .r247-sub-btn {
 .web-radio-card:hover { background: rgba(255,255,255,0.04); border-color: var(--sc, var(--accent)); }
 .wrc-emoji { font-size: 1.3rem; flex-shrink: 0; }
 .wrc-info { flex: 1; min-width: 0; }
-.wrc-name { font-weight: 600; font-size: 0.88rem; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wrc-name { font-weight: 600; font-size: 0.88rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wrc-desc { font-size: 0.74rem; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wrc-play {
   background: var(--sc, var(--accent)); color: #fff;
@@ -8176,7 +8182,7 @@ body.edge-idle #r247-card .r247-sub-btn {
   padding: 0.25rem 0 0.5rem;
 }
 .hadra-artist-pill {
-  background: rgba(99,60,180,0.18); color: var(--text1);
+  background: rgba(99,60,180,0.18); color: var(--text);
   border: 1px solid rgba(34,197,94,0.3);
   border-radius: 20px; padding: 0.25rem 0.7rem;
   font-size: 0.78rem; white-space: nowrap;
@@ -8200,7 +8206,7 @@ body.edge-idle #r247-card .r247-sub-btn {
 .shows-festival-emoji { font-size: 2.8rem; }
 .shows-festival-dates { font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.9); }
 .shows-festival-body { padding: 1.1rem 1.4rem 1.3rem; background: var(--card); }
-.shows-festival-name { font-size: 1.1rem; font-weight: 700; color: var(--text1); margin-bottom: 0.2rem; }
+.shows-festival-name { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem; }
 .shows-festival-loc  { font-size: 0.82rem; color: var(--text2); margin-bottom: 0.2rem; }
 .shows-festival-theme { font-size: 0.8rem; color: #38bdf8; font-style: italic; margin-bottom: 0.65rem; }
 .shows-festival-tags {
@@ -8232,7 +8238,7 @@ body.edge-idle #r247-card .r247-sub-btn {
   padding: 0.28rem 0.65rem; cursor: pointer;
   transition: background 0.16s, color 0.16s, border-color 0.16s, transform 0.12s;
 }
-.world-link:hover { color: var(--text1); background: rgba(34,197,94,0.16); border-color: rgba(34,197,94,0.45); transform: translateY(-1px); }
+.world-link:hover { color: var(--text); background: rgba(34,197,94,0.16); border-color: rgba(34,197,94,0.45); transform: translateY(-1px); }
 .world-link svg { width: 13px; height: 13px; }
 .world-link--play {
   color: #fff; background: var(--accent); border-color: var(--accent);
@@ -8251,7 +8257,7 @@ body.edge-idle #r247-card .r247-sub-btn {
   border: 1px solid var(--border); border-radius: 10px; padding: 0.4rem 0.6rem;
   transition: background 0.16s, color 0.16s, border-color 0.16s, transform 0.12s;
 }
-.world-event:hover { color: var(--text1); background: rgba(34,197,94,0.16); border-color: rgba(34,197,94,0.45); transform: translateY(-1px); }
+.world-event:hover { color: var(--text); background: rgba(34,197,94,0.16); border-color: rgba(34,197,94,0.45); transform: translateY(-1px); }
 .world-event-date {
   flex-shrink: 0; font-size: 0.68rem; font-weight: 700; color: #38bdf8;
   font-family: 'Space Grotesk', sans-serif;
@@ -8268,7 +8274,7 @@ body.edge-idle #r247-card .r247-sub-btn {
 }
 .world-stat span {
   display: block; font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.4rem; font-weight: 800; color: var(--text1); line-height: 1.1;
+  font-size: 1.4rem; font-weight: 800; color: var(--text); line-height: 1.1;
 }
 .world-outro {
   display: flex; align-items: center; gap: 1rem;
@@ -8508,7 +8514,7 @@ body.edge-idle #r247-card .r247-sub-btn {
 }
 .hr-tab:hover {
   background: rgba(34,197,94,0.12);
-  color: var(--text1);
+  color: var(--text);
 }
 .hr-tab.hr-tab-active {
   background: rgba(34,197,94,0.22);
@@ -9488,7 +9494,7 @@ body.edge-idle #r247-card .r247-sub-btn {
 .fc-msg-act .icon { width: 11px; height: 11px; }
 .fc-emoji-pop {
   position: absolute; bottom: 100%; left: 0.5rem; margin-bottom: 0.35rem;
-  background: var(--bg1); border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   padding: 0.4rem; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
   display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.1rem;
   z-index: 20;
@@ -9539,6 +9545,10 @@ body.edge-idle #r247-card .r247-sub-btn {
 
 /* ── Community-vegg / Innlegg ── */
 .community-wrap { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem 5rem; transition: transform 0.15s ease; }
+/* Embed inne i profil-fane — ingen mobil-dock å klarere, og sida sitt eige
+   panel gir alt padding den trenger, så bunn-padden frå full-side-varianten
+   skal ikkje dobles opp her. */
+.community-wrap--embed { padding: 0.25rem 0 0; max-width: none; margin: 0; }
 
 /* Zoom-kontroller — faste i hjørnene, zoomer ikke med innholdet */
 .community-zoom { position: fixed; bottom: 6rem; z-index: 150; }
@@ -9575,7 +9585,7 @@ body.edge-idle #r247-card .r247-sub-btn {
 .community-composer-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-top: 0.55rem; flex-wrap: wrap; }
 .community-emoji-pop {
   display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.15rem;
-  background: var(--bg1); border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   padding: 0.5rem; margin-top: 0.5rem;
 }
 .community-emoji-pop.hidden { display: none; }
