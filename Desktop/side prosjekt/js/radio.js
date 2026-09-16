@@ -31,7 +31,6 @@ const Radio = (() => {
       emoji: '🔥', color: '#f97316',
       desc: 'OZORA Festival radio — psytrance 24/7 · Budapest 🇭🇺',
       featured: true,
-      partner: true,
     },
     {
       // Verifisert 07.09.2026: chill.out.airtime.pro/chill_a svarer 200, og
@@ -43,7 +42,6 @@ const Radio = (() => {
       npApi: 'https://chill.airtime.pro/api/live-info-v2',
       emoji: '🌿', color: '#22c55e',
       desc: 'OZORA Festival radio — chill & downtempo 24/7 · Budapest 🇭🇺',
-      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -55,7 +53,6 @@ const Radio = (() => {
       url:  'https://dc1.serverse.com/proxy/ywycfrxn/stream',
       emoji: '🍄', color: '#22c55e',
       desc: 'Psytrance · Goa · Psychedelic trance — Tenerife ✓',
-      partner: true,
     },
     {
       id: 'psyndora', cat: 'Psytrance / Goa',
@@ -65,7 +62,6 @@ const Radio = (() => {
       url:  'https://cast.magicstreams.gr/sc/psyndora/stream',
       emoji: '🧿', color: '#06b6d4',
       desc: 'Psytrance · Progressive · Goa · Fullon ✓',
-      partner: true,
     },
     {
       id: 'babaganousha', cat: 'Psytrance / Goa',
@@ -94,7 +90,6 @@ const Radio = (() => {
       url:  'https://betelgeuse.nucast.co.uk/stream/jrn-beat',
       emoji: '🥁', color: '#4ade80',
       desc: 'Goa trance · psychedelic trance',
-      partner: true,
     },
     {
       id: 'record-goa-psy', cat: 'Psytrance / Goa',
@@ -102,7 +97,6 @@ const Radio = (() => {
       url:  'https://radiorecord.hostingradio.ru/goa96.aacp',
       emoji: '🔮', color: '#4ade80',
       desc: 'Goa trance · psychedelic trance',
-      partner: true,
     },
     {
       id: 'goanight', cat: 'Psytrance / Goa',
@@ -110,7 +104,6 @@ const Radio = (() => {
       url:  'https://goanight.stream.laut.fm/goanight',
       emoji: '🌙', color: '#4ade80',
       desc: 'Goa · psytrance',
-      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -122,7 +115,6 @@ const Radio = (() => {
       url:  'https://strm112.1.fm/trance_mobile_mp3',
       emoji: '🌀', color: '#9333ea',
       desc: '1.FM — trance around the clock',
-      partner: true,
     },
     {
       id: 'atr', cat: 'Progressive Psy / Trance',
@@ -130,7 +122,6 @@ const Radio = (() => {
       url:  'https://strm112.1.fm/atr_mobile_mp3',
       emoji: '🎚️', color: '#22c55e',
       desc: '1.FM — uplifting & progressive trance',
-      partner: true,
     },
     {
       id: 'rr-progressive', cat: 'Progressive Psy / Trance',
@@ -138,7 +129,6 @@ const Radio = (() => {
       url:  'https://radiorecord.hostingradio.ru/progr96.aacp',
       emoji: '🎛️', color: '#2563eb',
       desc: 'Progressive house, non-stop',
-      partner: true,
     },
     {
       id: 'record-trancemission', cat: 'Progressive Psy / Trance',
@@ -146,7 +136,6 @@ const Radio = (() => {
       url:  'https://radiorecord.hostingradio.ru/tm96.aacp',
       emoji: '📡', color: '#2563eb',
       desc: 'Trance · progressive trance',
-      partner: true,
     },
     {
       id: 'dfm-avb', cat: 'Progressive Psy / Trance',
@@ -155,7 +144,6 @@ const Radio = (() => {
       url:  'https://dfm.hostingradio.ru/avburren96.aacp',
       emoji: '🎧', color: '#2563eb',
       desc: 'Progressive trance',
-      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -167,7 +155,6 @@ const Radio = (() => {
       url:  'https://strm112.1.fm/ambientpsy_mobile_mp3',
       emoji: '🌫️', color: '#8854d0',
       desc: '1.FM — ambient psychill 24/7',
-      partner: true,
     },
     {
       id: 'multihuman', cat: 'Psybient / Psychill',
@@ -177,7 +164,6 @@ const Radio = (() => {
       npType:'icecast',
       emoji: '🌿', color: '#10b981',
       desc: 'Entheogenic psychill & world — Brazil 🇧🇷',
-      partner: true,
     },
     {
       id: 'diceradio-psybient', cat: 'Psybient / Psychill',
@@ -193,7 +179,6 @@ const Radio = (() => {
       url:  'https://radio.paradisehunter.de/listen/chillout/radio.mp3',
       emoji: '🏝️', color: '#8854d0',
       desc: 'Chillout · psychill — Germany 🇩🇪',
-      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -205,7 +190,6 @@ const Radio = (() => {
       url:  'https://strm112.1.fm/chilloutlounge_mobile_mp3',
       emoji: '🛋️', color: '#0ea5e9',
       desc: '1.FM — electronic chill lounge 24/7',
-      partner: true,
     },
     {
       id: 'smoothchill', cat: 'Chill Out / Downtempo',
@@ -213,7 +197,6 @@ const Radio = (() => {
       url:  'https://media-ssl.musicradio.com/SmoothChillMP3',
       emoji: '🫧', color: '#0ea5e9',
       desc: 'Relaxing chill & soul — UK 🇬🇧',
-      partner: true,
     },
     {
       id: 'brokenbeats', cat: 'Chill Out / Downtempo',
@@ -221,7 +204,6 @@ const Radio = (() => {
       url:  'https://stream.brokenbeats.net/tune',
       emoji: '🎼', color: '#0ea5e9',
       desc: 'Atmospheric downtempo · drum and bass',
-      partner: true,
     },
     {
       id: 'anon-fm', cat: 'Chill Out / Downtempo',
@@ -229,7 +211,6 @@ const Radio = (() => {
       url:  'https://icecast.anon.fm/radio',
       emoji: '🕶️', color: '#0ea5e9',
       desc: 'Downtempo · experimental · psychedelic',
-      partner: true,
     },
     {
       id: 'cafedelmar', cat: 'Chill Out / Downtempo',
@@ -237,7 +218,6 @@ const Radio = (() => {
       url:  'https://streams.radio.co/se1a320b47/listen',
       emoji: '🌊', color: '#0ea5e9',
       desc: 'Ibiza chillout — Spain 🇪🇸',
-      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -249,7 +229,6 @@ const Radio = (() => {
       url:  'https://broadcast.shoutstream.co.uk:8068/stream',
       emoji: '🌑', color: '#6366f1',
       desc: 'Deep atmospheric ambient — UK 🇬🇧',
-      partner: true,
     },
     {
       id: 'dark-city-signal', cat: 'Dark Ambient / Drone',
@@ -257,7 +236,6 @@ const Radio = (() => {
       url:  'https://audiostream.hkprime.com/stream',
       emoji: '🖤', color: '#6366f1',
       desc: 'Dark ambient · doom · industrial',
-      partner: true,
     },
     {
       id: 'systrum-ssr1', cat: 'Dark Ambient / Drone',
@@ -265,7 +243,6 @@ const Radio = (() => {
       url:  'https://systrum.net:8443/SSR1',
       emoji: '🌫️', color: '#6366f1',
       desc: 'Ambient · drone · experimental',
-      partner: true,
     },
     {
       id: 'indiebeat-ambient', cat: 'Dark Ambient / Drone',
@@ -273,7 +250,6 @@ const Radio = (() => {
       url:  'https://azura.theindiebeat.fm/listen/the_indie_beat_radio_-_ambient/radio.mp3',
       emoji: '🌘', color: '#6366f1',
       desc: 'Dark ambient · deep ambient',
-      partner: true,
     },
     {
       id: 'modular-station', cat: 'Dark Ambient / Drone',
@@ -281,7 +257,6 @@ const Radio = (() => {
       url:  'https://broadcast.modular-station.com/radio/8000/radio.aac',
       emoji: '🔌', color: '#6366f1',
       desc: 'Ambient · modular synthesis · soundscape',
-      partner: true,
     },
     {
       id: 'alswin-ambient', cat: 'Dark Ambient / Drone',
@@ -289,7 +264,6 @@ const Radio = (() => {
       url:  'https://server7.radio-streams.net/proxy/jwoiiktx/stream',
       emoji: '🕯️', color: '#6366f1',
       desc: 'Ambient · cinematic · meditation',
-      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -301,7 +275,6 @@ const Radio = (() => {
       url:  'https://uzic.ice.infomaniak.ch/uzic-128.aac',
       emoji: '⚙️', color: '#a855f7',
       desc: 'Minimal & underground techno — Switzerland 🇨🇭',
-      partner: true,
     },
     {
       id: 'remember-vip-techno', cat: 'Techno Underground',
@@ -309,7 +282,6 @@ const Radio = (() => {
       url:  'https://stream-153.zeno.fm/xilwjn4t17qvv',
       emoji: '🕳️', color: '#a855f7',
       desc: 'Dark techno · hard techno · minimal',
-      partner: true,
     },
   ];
 
@@ -323,9 +295,16 @@ const Radio = (() => {
   // Éin stasjonsrad — delt mellom kategori-listene og Partners-seksjonen øverst,
   // så oppslaget kun finst éin plass.
   function stationBtnHtml(s) {
+    // Når SiriusFM 24/7 styrer avspelinga, spelar han av ein ekte stasjon
+    // under panseret (sjå js/radio247.js) — utan denne sjekken ville BÅDE
+    // 24/7-raden ØVST og den underliggande stasjonsraden her (t.d. "Record
+    // Trancemission") vist seg som "spelar no" samtidig. Kun 24/7-raden skal
+    // vise seg som live mens cyclusen styrer avspelinga.
+    const r247Active = typeof Radio247 !== 'undefined' && Radio247.isActive();
+    const isThisPlaying = currentStation?.id === s.id && isPlaying && !r247Active;
     return `
       <div
-        class="radio-station-btn ${currentStation?.id === s.id ? 'active' : ''}"
+        class="radio-station-btn ${currentStation?.id === s.id && !r247Active ? 'active' : ''}"
         id="rbtn-${s.id}"
         style="--station-color:${s.color}"
         onclick="Radio.playStation('${s.id}')"
@@ -340,7 +319,7 @@ const Radio = (() => {
         </span>
         <div class="station-actions">
           <button class="station-play-btn" title="Play / Stop" onclick="event.stopPropagation();Radio.playStation('${s.id}')">
-            ${currentStation?.id === s.id && isPlaying ? '⏸' : '▶'}
+            ${isThisPlaying ? '⏸' : '▶'}
           </button>
           <button class="station-vol-btn" title="Mute / Unmute" onclick="event.stopPropagation();Radio.toggleMute()">
             ${muted ? '🔇' : '🔊'}
@@ -1870,8 +1849,13 @@ const Radio = (() => {
         if (playIcon) playIcon.textContent = on ? '⏸' : '▶';
       }
     }
+    // Same grunn som SiriusFM 24/7-retten over: viss 24/7-hjulet er det som
+    // styrer avspelinga, skal den underliggande ekte stasjonsraden (t.d.
+    // Record Trancemission) IKKJE også vise seg som "spelar no" — då ville
+    // same strøymen vist "live" to gonger samtidig i lista.
+    const r247Owns = typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive();
     const active = document.getElementById(`rbtn-${activeId}`);
-    if (active) {
+    if (active && !r247Owns) {
       active.classList.add('active');
       const playIcon = active.querySelector('.station-play-btn');
       if (isPlaying) {
