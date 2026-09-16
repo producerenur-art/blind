@@ -18,7 +18,7 @@ const Notify = (() => {
   const ICON = {
     upload: 'music', comment: 'message', wall: 'message',
     friend_request: 'users', friend_accept: 'party', post: 'edit', message: 'mail',
-    reaction: 'heart', magazine: 'book',
+    reaction: 'heart', magazine: 'book', mention: 'hash',
   };
 
   function timeAgo(ts) {

@@ -311,7 +311,12 @@ const Share = (() => {
         title, artist: author, image, media, username: rec.author,
       });
     } else {
-      url = `${SITE}/#/u/${encodeURIComponent(rec.author || '')}`;
+      // Reine tekst-/privat-innlegg har ikkje eit offentleg OG-bilde å byggje
+      // /s/<payload>-uthentingssida rundt — link i staden til den innlogga
+      // permalenka (#/post/<id>) så mottakaren ser sjølve innlegget + kven som
+      // delte det, og blir bedt om å logge inn viss dei ikkje alt er det.
+      const sharer = (typeof Auth !== 'undefined') ? Auth.current() : null;
+      url = `${SITE}/#/post/${encodeURIComponent(rec.id || '')}` + (sharer ? `?by=${encodeURIComponent(sharer.username)}` : '');
     }
 
     // Del til Community er kun meiningsfullt for media som ikkje alt ligg i feeden;

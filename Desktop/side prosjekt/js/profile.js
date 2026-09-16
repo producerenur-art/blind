@@ -695,10 +695,9 @@ const Profile = (() => {
             <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();Profile.deleteBanner('${username}')" title="Delete cover photo">${Icon('trash')} Delete background</button>`
               : `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();document.getElementById('profile-banner-input').click()" title="Upload cover photo">${Icon('camera')} Upload banner</button>`}
           </div>` : ''}
-          ${current ? `<div class="profile-hero-actions">
-            ${isOwner ? `<button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('edit')} Edit profile</button>
-            <span style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(0,0,0,0.4);color:#fff;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.15)">${profileVisibility === 'private' ? '🔒 Private' : '🌐 Public'}</span>` : ''}
-            <button class="btn btn-ghost btn-sm" onclick="App.logout()" title="Log out">${Icon('log-out')} Log out</button>
+          ${(current && isOwner) ? `<div class="profile-hero-actions">
+            <button class="btn btn-ghost btn-sm" onclick="Router.go('/edit')">${Icon('edit')} Edit profile</button>
+            <span style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(0,0,0,0.4);color:#fff;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.15)">${profileVisibility === 'private' ? '🔒 Private' : '🌐 Public'}</span>
           </div>` : ''}
         </div>
 

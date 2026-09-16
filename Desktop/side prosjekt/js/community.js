@@ -620,9 +620,21 @@ const Community = (() => {
       const fr = (Auth.getFriends(me.username) || []).map(f => f.username);
       p.allow = JSON.stringify([me.username, ...fr]);
     }
+    // @tagging — trekk ut ekte, registrerte brukarnamn nemnde i teksten (sjå
+    // LinkPreview.extractMentions) og varsle kvar av dei (unnateke avsendaren sjølv).
+    const mentions = (window.LinkPreview && LinkPreview.extractMentions) ? LinkPreview.extractMentions(text) : [];
+    if (mentions.length) p.mentions = mentions;
     try { SC.gun().get(SC.NS.posts).get('posts').set(p); }
     catch (e) { console.warn('[Community] post feilet', e); }
     if (window.CommunitySync) CommunitySync.push(p);   // varig + synlig for ALLE enheter
+    if (window.Notify) mentions.forEach(uname => {
+      if (uname !== me.username) Notify.emit(uname, {
+        id: 'mention_' + p.id + '_' + uname,
+        type: 'mention',
+        text: 'mentioned you in a post',
+        link: '#/community',
+      });
+    });
     _posts[p.id] = { ...p };                 // vis umiddelbart lokalt
     if (inp) inp.value = '';
     clearImage(inp);

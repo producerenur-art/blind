@@ -551,6 +551,108 @@ const App = (() => {
     drop.classList.remove('hidden');
   }
 
+  // ── @-tagging: delegert autofullføring for ALLE post-/kommentarfelt ────────
+  // Delegert på document (fangst-fase) i staden for per-felt init, så nye
+  // komponerar montert seinare (Community/Group/kommentar — ofte duplikate
+  // instansar per side) fungerer utan ekstra wiring. Sjølve @mention-utrekkinga
+  // og varslinga skjer uavhengig av dette i Community.post()/Social.postComment()/
+  // Groups.postToGroup() (LinkPreview.extractMentions) — denne modulen er berre
+  // skrivehjelp.
+  const MENTION_SEL = '#sc-home-post, #sc-post-input, .community-input, .community-edit-input, #gpost-input, .sc-cmt-input, .sc-cmt-edit-input';
+  let _mentionDrop = null;
+  let _mentionTarget = null;   // { el, start, end } — @ordet som blir erstatta ved val
+
+  function _mentionDropEl() {
+    if (_mentionDrop) return _mentionDrop;
+    _mentionDrop = document.createElement('div');
+    _mentionDrop.className = 'search-dropdown mention-dropdown hidden';
+    document.body.appendChild(_mentionDrop);
+    return _mentionDrop;
+  }
+  function _closeMentionDrop() {
+    if (_mentionDrop) { _mentionDrop.classList.add('hidden'); _mentionDrop.innerHTML = ''; }
+    _mentionTarget = null;
+  }
+  function _currentMentionWord(el) {
+    const val = el.value || '';
+    const pos = el.selectionStart || 0;
+    const before = val.slice(0, pos);
+    const m = /(?:^|\s)@([a-zA-Z0-9_]{0,32})$/.exec(before);
+    if (!m) return null;
+    return { query: m[1], start: pos - m[1].length - 1, end: pos };
+  }
+  function _positionMentionDrop(el) {
+    const r = el.getBoundingClientRect();
+    const drop = _mentionDropEl();
+    drop.style.position = 'fixed';
+    drop.style.left = Math.max(8, r.left) + 'px';
+    drop.style.top = Math.min(r.bottom + 4, window.innerHeight - 60) + 'px';
+    drop.style.width = Math.min(Math.max(r.width, 220), 320) + 'px';
+  }
+  function _mentionInsert(el, uname) {
+    if (!_mentionTarget || _mentionTarget.el !== el) return;
+    const val = el.value;
+    const before = val.slice(0, _mentionTarget.start);
+    const after = val.slice(_mentionTarget.end);
+    const insert = '@' + uname + ' ';
+    el.value = before + insert + after;
+    const caret = before.length + insert.length;
+    el.setSelectionRange(caret, caret);
+    el.focus();
+    _closeMentionDrop();
+  }
+  function _mentionInput(e) {
+    const el = e.target;
+    if (!el.matches || !el.matches(MENTION_SEL)) return;
+    const hit = _currentMentionWord(el);
+    if (!hit) { _closeMentionDrop(); return; }
+    let users = [];
+    try { users = Auth.getAllPublicUsers() || []; } catch (e2) {}
+    const me = Auth.current();
+    const q = _searchNorm(hit.query);
+    const matches = users.filter(u => (!me || u.username !== me.username) &&
+      (_searchNorm(u.username).includes(q) || _searchNorm(u.displayName).includes(q))).slice(0, 6);
+    if (!matches.length) { _closeMentionDrop(); return; }
+    _mentionTarget = { el, start: hit.start, end: hit.end };
+    const drop = _mentionDropEl();
+    drop.innerHTML = '';
+    matches.forEach(u => {
+      const row = document.createElement('div');
+      row.className = 'search-item';
+      row.dataset.username = u.username;
+      const av = document.createElement('div');
+      av.className = 'search-item-avatar';
+      av.textContent = (u.displayName || u.username || '?').charAt(0).toUpperCase();
+      const body = document.createElement('div');
+      body.style.minWidth = '0';
+      const t = document.createElement('div'); t.className = 'search-item-title'; t.textContent = u.displayName || u.username;
+      const sub = document.createElement('div'); sub.className = 'search-item-sub'; sub.textContent = '@' + u.username;
+      body.appendChild(t); body.appendChild(sub);
+      row.appendChild(av); row.appendChild(body);
+      row.addEventListener('mousedown', ev => { ev.preventDefault(); _mentionInsert(el, u.username); });
+      drop.appendChild(row);
+    });
+    _positionMentionDrop(el);
+    drop.classList.remove('hidden');
+  }
+  function _mentionKeydown(e) {
+    if (!_mentionTarget || !_mentionDrop || _mentionDrop.classList.contains('hidden')) return;
+    if (e.key === 'Escape') { _closeMentionDrop(); e.stopPropagation(); return; }
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      const first = _mentionDrop.querySelector('.search-item');
+      if (first) { e.preventDefault(); e.stopPropagation(); _mentionInsert(_mentionTarget.el, first.dataset.username); }
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.stopPropagation();
+    }
+  }
+  function initMentionAutocomplete() {
+    document.addEventListener('input', _mentionInput, true);
+    document.addEventListener('keydown', _mentionKeydown, true);
+    document.addEventListener('click', e => {
+      if (_mentionDrop && !_mentionDrop.contains(e.target) && e.target !== (_mentionTarget && _mentionTarget.el)) _closeMentionDrop();
+    });
+  }
+
   function initSearch() {
     const input = document.getElementById('nav-search');
     const drop  = document.getElementById('search-results');
@@ -580,6 +682,50 @@ const App = (() => {
   // ── Forside-feed: hjelparar ───────────────────────────────────────────────
   function _esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  // Same presence-sjekk som Friends «Online no» (SC sanntid + Auth-heartbeat-fallback).
+  function _isOnlineUser(username) {
+    return (window.SC && SC.isOnline && SC.isOnline(username)) || (typeof Auth !== 'undefined' && Auth.isOnline(username));
+  }
+
+  function _onlineNowHtml(users, me) {
+    const list = users.filter(u => (!me || u.username !== me.username) && _isOnlineUser(u.username));
+    return `
+      <div class="sc-online-wrap" id="sc-online-strip">
+        <div class="sc-online-head"><span class="online-dot"></span> Online now <span class="sc-online-count">${list.length}</span></div>
+        <div class="sc-online-row">${_onlineRowItemsHtml(list)}</div>
+      </div>`;
+  }
+
+  function _onlineRowItemsHtml(list) {
+    if (!list.length) return `<div class="sc-online-empty">No one online right now</div>`;
+    return list.map(u => `
+      <a class="sc-online-item" href="#/u/${_esc(u.username)}" title="${_esc(u.displayName || u.username)}">
+        <span class="sc-online-av" data-av-user="${_esc(u.username)}">${_esc((u.displayName || '?').charAt(0).toUpperCase())}</span>
+        <span class="sc-online-name">${_esc(u.displayName || u.username)}</span>
+      </a>`).join('');
+  }
+
+  let _onlineStripTimer = null;
+  function _refreshOnlineStrip() {
+    const el = document.getElementById('sc-online-strip');
+    if (!el) { if (_onlineStripTimer) { clearInterval(_onlineStripTimer); _onlineStripTimer = null; } return; }
+    let users = [];
+    try { users = Auth.getAllPublicUsers() || []; } catch (e) {}
+    const me = Auth.current();
+    const list = users.filter(u => (!me || u.username !== me.username) && _isOnlineUser(u.username));
+    const count = el.querySelector('.sc-online-count');
+    const row = el.querySelector('.sc-online-row');
+    if (count) count.textContent = list.length;
+    if (row) {
+      row.innerHTML = _onlineRowItemsHtml(list);
+      if (window.Profile && Profile.hydrateAvatars) Profile.hydrateAvatars(row);
+    }
+  }
+  function _startOnlineStripLive() {
+    if (_onlineStripTimer) clearInterval(_onlineStripTimer);
+    _onlineStripTimer = setInterval(_refreshOnlineStrip, 15000);
   }
 
   function dismissOnboard() {
@@ -765,6 +911,9 @@ const App = (() => {
     // ── Onboarding-velkomst fjernet ────────────────────────────────────────
     const onboardHtml = '';
 
+    // ── Online now — synleg for ALLE (også gjester), heile brukarbasen ──────
+    const onlineHtml = _onlineNowHtml(users, user);
+
     // ── Komponer-boks — del et innlegg rett fra forsiden ───────────────────
     const composerHtml = user ? `
       <div class="sc-composer">
@@ -876,7 +1025,7 @@ const App = (() => {
       </div>`;
 
     const app = document.getElementById('app');
-    app.innerHTML = pendingBanner + onboardHtml + heroHtml + composerHtml + liveStripHtml + feedHtml + homeRadioHtml + publicMixesSection + `
+    app.innerHTML = pendingBanner + onboardHtml + heroHtml + onlineHtml + composerHtml + liveStripHtml + feedHtml + homeRadioHtml + publicMixesSection + `
       ${user ? `
       <div class="section">
         <div class="section-header">
@@ -903,7 +1052,9 @@ const App = (() => {
     if (window.FooterWidget) FooterWidget.init();
 
     // Vis ekte profilbilde i komponer-boksen (og andre initial-plassholdere).
-    if (user && window.Profile && Profile.hydrateAvatars) Profile.hydrateAvatars(document.getElementById('app'));
+    // Online-stripa er synleg for gjester også, så hydrer uavhengig av innlogging.
+    if (window.Profile && Profile.hydrateAvatars) Profile.hydrateAvatars(document.getElementById('app'));
+    _startOnlineStripLive();
 
     // Samla feed: start Gun-abonnement på innlegg + fyll feeden (asynkront).
     // Kun for innloggede — gjester ser ikke fellesskaps-feeden.
@@ -1265,10 +1416,7 @@ const App = (() => {
       <div class="settings-page-v2">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
           <h1>${Icon('home')} My page</h1>
-          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-            <a href="#/login" class="btn btn-ghost btn-sm" title="Log in / switch account">${Icon('log-in')} Log in</a>
-            <button class="btn btn-danger btn-sm" onclick="App.logout()">${Icon('log-out')} Log out</button>
-          </div>
+          <a href="#/edit" class="btn btn-ghost btn-sm">${Icon('edit')} Edit profile</a>
         </div>
         <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
           <div class="ms-stat-card">
@@ -1791,6 +1939,44 @@ const App = (() => {
     closeModal();
     toast('Saved', 'success');
     renderMinSide();
+  }
+
+  // ── Delt innlegg (permalenke, «#/post/<id>[?by=<brukarnamn>]») ─────────────
+  // Krev innlogging (same mønster som Community/Social sine vakter) og viser
+  // ein «X delte dette med deg»-banner når lenka vart delt av eit ekte medlem.
+  async function renderPostPermalink(rawId) {
+    if (!Auth.current()) { Router.go('/login'); return; }
+    const hash = window.location.hash || '';
+    const qIdx = hash.indexOf('?');
+    let sharedBy = '';
+    if (qIdx >= 0) { try { sharedBy = new URLSearchParams(hash.slice(qIdx + 1)).get('by') || ''; } catch (e) {} }
+    const id = String(rawId).split('?')[0];
+    const app = document.getElementById('app');
+    app.innerHTML = `<div class="page-loading" style="padding:6rem"><div class="spinner"></div></div>`;
+    if (window.Community && Community.hydrateRemote) { try { await Community.hydrateRemote(); } catch (e) {} }
+    const p = (window.Community && Community.getPost) ? Community.getPost(id) : null;
+    if (!p) {
+      app.innerHTML = `<div class="empty-state" style="padding:6rem">
+        <div class="empty-icon">${Icon('search')}</div>
+        <p style="font-size:1.1rem;font-weight:600;margin-bottom:0.5rem">Post not found</p>
+        <p>It may have been removed, or hasn't reached this device yet.</p>
+        <a href="#/community" class="btn btn-primary" style="margin-top:1.5rem;display:inline-flex">${Icon('arrow-left')} Go to Community</a>
+      </div>`;
+      return;
+    }
+    const sharer = sharedBy ? Auth.getUser(sharedBy) : null;
+    const sharedBanner = (sharer && sharer.username !== p.author) ? `
+      <div class="friend-req-banner" style="cursor:default">
+        <span>${Icon('send')}</span>
+        <span><a href="#/u/${_esc(sharer.username)}" style="color:inherit;font-weight:700">${_esc(sharer.displayName || sharer.username)}</a> shared this with you</span>
+      </div>` : '';
+    app.innerHTML = `
+      <div class="section" style="max-width:640px;margin:2rem auto;padding:0 1rem">
+        ${sharedBanner}
+        ${Community.postCardHtml(p)}
+      </div>`;
+    if (window.Profile && Profile.hydrateAvatars) Profile.hydrateAvatars(app);
+    try { if (window.LinkPreview) LinkPreview.hydrate(app); } catch (e) {}
   }
 
   function renderLogin() {
@@ -3216,11 +3402,15 @@ const App = (() => {
 
     // Init search
     initSearch();
+    initMentionAutocomplete();
 
     // Modal close on backdrop
     document.getElementById('modal-overlay')?.addEventListener('click', e => {
       if (e.target === document.getElementById('modal-overlay')) closeModal();
     });
+
+    // ── Delt innlegg (permalenke) — krev innlogging, viser kven som delte ────
+    Router.define('/post/:id', ({ id }) => renderPostPermalink(id));
 
     // Define routes
     Router.define('/',                   () => renderHome());

@@ -452,6 +452,8 @@ const Social = (() => {
     };
     if (pend) { c.media = pend.url; c.mediaKind = pend.kind; }
     c.previewUrl = firstCommentLink(text, c.media);   // forankre forhåndsvisning til kommentaren
+    const mentions = (window.LinkPreview && LinkPreview.extractMentions) ? LinkPreview.extractMentions(text) : [];
+    if (mentions.length) c.mentions = mentions;
     try { SC.gun().get(SC.NS.comments).get(targetKey).set(c); }
     catch (e) { console.warn('[Social] kommentar feila', e); }
     // Vis kommentaren med ein gang lokalt (Gun-ekko kan drya) …
@@ -472,6 +474,14 @@ const Social = (() => {
         link: pm ? `#/u/${notifyUser}` : '#/community',
       });
     }
+    if (window.Notify) mentions.forEach(uname => {
+      if (uname !== u.username && uname !== notifyUser) Notify.emit(uname, {
+        id: 'mention_' + c.id + '_' + uname,
+        type: 'mention',
+        text: 'mentioned you in a comment',
+        link: pm ? `#/u/${pm[1]}` : '#/community',
+      });
+    });
   }
 
   function deleteComment(targetKey, id) {

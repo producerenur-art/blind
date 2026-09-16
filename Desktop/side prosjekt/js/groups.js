@@ -436,10 +436,20 @@ const Groups = (() => {
       groupId: id, author: me.username, authorDisplay: me.displayName || me.username,
       text, ts: Date.now(),
     };
+    const mentions = (window.LinkPreview && LinkPreview.extractMentions) ? LinkPreview.extractMentions(text) : [];
+    if (mentions.length) p.mentions = mentions;
     try { SC.gun().get(SC.NS.gposts).get('gposts').set(p); } catch (e) { console.warn('[Groups] post', e); }
     if (typeof GroupSync !== 'undefined') GroupSync.createPost(p).catch(() => {});
     _gposts[p.id] = { ...p };
     _notifyGroup(g, me);
+    if (window.Notify) mentions.forEach(uname => {
+      if (uname !== me.username) Notify.emit(uname, {
+        id: 'mention_' + p.id + '_' + uname,
+        type: 'mention',
+        text: 'mentioned you in a group post',
+        link: '#/grupper',
+      });
+    });
     if (inp) inp.value = '';
     App.toast('Post shared in the group!', 'success'); paint();
   }

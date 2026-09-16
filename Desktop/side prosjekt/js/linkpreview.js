@@ -28,14 +28,32 @@
     return m ? m[1] : '';
   }
 
-  // ── Linkify: escape teksten og gjør URL-er om til klikkbare lenker ─────────
-  // Returnerer { html, urls } der urls er rekkefølgen lenker dukket opp i.
+  // Finst ein registrert brukar med dette brukarnamnet? (berre i nettlesar — i
+  // Node-testar utan Auth linkifiserer me @ord uvalidert, sjå kommentar under.)
+  function _realUser(uname) {
+    return (typeof Auth !== 'undefined' && Auth.getUser) ? !!Auth.getUser(uname) : true;
+  }
+
+  // ── Linkify: escape teksten og gjør URL-er og @tagging om til klikkbare lenker ─
+  // Returnerer { html, urls, mentions } der urls/mentions er rekkefølgen dei
+  // dukka opp i. Eitt samla regex-pass (URL | @brukarnamn) held escaping trygg —
+  // eit @ordv som ikkje matchar ein ekte brukar blir verande vanleg (escapa) tekst.
   function linkify(raw) {
     const text = String(raw == null ? '' : raw);
     const urls = [];
-    const re = /\bhttps?:\/\/[^\s<]+/gi;
+    const mentions = [];
+    const re = /\bhttps?:\/\/[^\s<]+|@([a-zA-Z0-9_]{3,32})\b/g;
     let out = '', last = 0, m;
     while ((m = re.exec(text))) {
+      if (m[1]) {
+        const uname = m[1];
+        if (!_realUser(uname)) continue;   // ikkje ein registrert brukar — la stå som vanleg tekst
+        out += esc(text.slice(last, m.index));
+        mentions.push(uname);
+        out += '<a class="cp-mention" href="#/u/' + esc(uname) + '">@' + esc(uname) + '</a>';
+        last = m.index + m[0].length;
+        continue;
+      }
       out += esc(text.slice(last, m.index));
       let url = m[0];
       // Skill ut etterfølgende tegnsetting så «(https://x)» eller «x.» blir ren.
@@ -48,7 +66,25 @@
       last = m.index + m[0].length;
     }
     out += esc(text.slice(last));
-    return { html: out, urls: urls };
+    return { html: out, urls: urls, mentions: mentions };
+  }
+
+  // ── Rein uttrekking av @mentions (ingen HTML) — brukt av post/kommentar-lagring
+  // for å byggje mentions-lista og trigge varsel, uavhengig av rendering. ─────
+  function extractMentions(raw) {
+    const text = String(raw == null ? '' : raw);
+    const found = [];
+    const seen = Object.create(null);
+    const re = /@([a-zA-Z0-9_]{3,32})\b/g;
+    let m;
+    while ((m = re.exec(text))) {
+      const uname = m[1];
+      if (seen[uname]) continue;
+      if (!_realUser(uname)) continue;
+      seen[uname] = 1;
+      found.push(uname);
+    }
+    return found;
   }
 
   // ── Forhåndsvisnings-kort (tomt skall som hydreres etterpå) ───────────────
@@ -141,7 +177,7 @@
     el.classList.add('cp-playing');
   }
 
-  const LinkPreview = { linkify: linkify, cardHtml: cardHtml, hydrate: hydrate, play: play, safeUrl: safeUrl };
+  const LinkPreview = { linkify: linkify, extractMentions: extractMentions, cardHtml: cardHtml, hydrate: hydrate, play: play, safeUrl: safeUrl };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = LinkPreview;
   if (typeof window !== 'undefined') window.LinkPreview = LinkPreview;
