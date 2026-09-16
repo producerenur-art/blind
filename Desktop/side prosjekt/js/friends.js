@@ -11,6 +11,15 @@ const Friends = (() => {
   let _keepTimer = null;        // held test-admin «online» for demo
   let _liveTimer = null;        // re-render online-fana medan sida er open
 
+  // Test-admin-panelet er kun for lokal utvikling — ekte brukarar skal ALDRI
+  // sjå eller kunne oppretta ein «fake» konto som ser ut som ein ekte bruker
+  // i «Online no» / «Mine vener». Fjerna ein alt-seeda test-admin automatisk
+  // utanfor dev, slik at ingen tidlegare-seeda konto forblir synlig for
+  // eigaren sjølv etter at ekte brukarar har begynt å logge inn.
+  function isDevEnv() {
+    return /^(localhost|127\.0\.0\.1|0\.0\.0\.0|)$/.test(location.hostname);
+  }
+
   const esc  = (s) => (window.SC ? SC.esc(s) : String(s == null ? '' : s));
   const me   = () => (typeof Auth !== 'undefined' ? Auth.current() : null);
   const icon = (n) => (typeof Icon === 'function' ? Icon(n) : '');
@@ -27,7 +36,7 @@ const Friends = (() => {
   }
   function onlineUsers(myUser) {
     return Auth.getAllPublicUsers()
-      .filter(u => u.username !== myUser.username && isOnline(u.username))
+      .filter(u => u.username !== myUser.username && (isDevEnv() || u.username !== TEST_ADMIN) && isOnline(u.username))
       .sort((a, b) => (isFriend(myUser, b.username) - isFriend(myUser, a.username))
                    || String(a.displayName || a.username || '').localeCompare(String(b.displayName || b.username || '')));
   }
@@ -42,6 +51,7 @@ const Friends = (() => {
     return !!(typeof Auth !== 'undefined' && Auth.getUser(TEST_ADMIN));
   }
   function keepTestAdminAlive() {
+    if (!isDevEnv()) { if (testAdminExists()) removeTestAdmin(); return; }
     if (!testAdminExists()) return;
     Auth.setOnline(TEST_ADMIN);
     try { if (window.SC && SC.gun()) SC.gun().get(SC.NS.presence).get(TEST_ADMIN).put({ ts: Date.now() }); } catch {}
@@ -147,6 +157,7 @@ const Friends = (() => {
   function renderTestPanel() {
     const panel = document.getElementById('fr-test-panel');
     if (!panel) return;
+    if (!isDevEnv()) { panel.innerHTML = ''; return; }
     const exists = testAdminExists();
     panel.innerHTML = `
       <div class="fr-test-inner">

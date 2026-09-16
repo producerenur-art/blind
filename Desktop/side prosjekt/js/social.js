@@ -217,8 +217,25 @@ const Social = (() => {
   // varige, delte kommentar-lista frå Supabase og fletter den inn i _comments,
   // så ALLE som kjem inn ser dei — same additive mønster som CommunitySync gjer
   // for innlegg. Slettingar gjort lokalt hugsast i _deleted så polling ikkje
-  // legg dei inn att.
-  const _deleted = new Set();        // kommentar-id-ar sletta lokalt → aldri re-hydrer
+  // legg dei inn att. Persistert i localStorage (same mønster som community.js
+  // sitt DELETED_KEY for innlegg) — utan dette reset settet ved neste reload,
+  // og ei sletting som feila i skyen (nettverksblipp / ANNA eining) kom tilbake
+  // så snart CommentSync.list() henta den framleis-eksisterande Supabase-rada.
+  const DELETED_KEY = 'sc_deleted_comments';
+  const DELETED_MAX = 1000;
+  function _deletedSet() {
+    try { return new Set(JSON.parse(localStorage.getItem(DELETED_KEY) || '[]')); }
+    catch { return new Set(); }
+  }
+  function _markDeleted(id) {
+    if (!id) return;
+    const set = _deletedSet();
+    if (set.has(id)) return;
+    let arr = [...set, id];
+    if (arr.length > DELETED_MAX) arr = arr.slice(arr.length - DELETED_MAX);
+    try { localStorage.setItem(DELETED_KEY, JSON.stringify(arr)); } catch {}
+  }
+  const _deleted = { has: (id) => _deletedSet().has(id), add: _markDeleted };
   let _remoteHydrating = false;
   let _pollTimer = null;
   const POLL_MS = 12000;

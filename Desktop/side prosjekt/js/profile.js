@@ -1059,6 +1059,7 @@ const Profile = (() => {
           ${isOwner ? `<button class="btn-icon" title="Share further on Facebook etc." onclick="event.stopPropagation();Share.open('music','${esc(r.id)}')">🔗</button>` : ''}
           ${isOwner ? `<button class="btn-icon music-credits-btn" title="Credits & buy links" onclick="event.stopPropagation();Profile.openSongCreditsModal('${esc(r.id)}')">${Icon('edit')}</button>` : ''}
           ${isOwner ? `<label class="music-cover-upload" title="Change cover" onclick="event.stopPropagation()">${Icon('camera')}<input type="file" accept="image/*" style="display:none" onchange="Profile.uploadMusicCover('${esc(r.id)}',this.files[0])"></label>` : ''}
+          ${isOwner ? `<label class="music-cover-upload" title="Replace audio file" onclick="event.stopPropagation()">${Icon('upload')}<input type="file" accept="audio/*" style="display:none" onchange="Profile.replaceMusicAudio('${esc(r.id)}',this.files[0])"></label>` : ''}
           ${isOwner ? `<button class="btn-icon btn-danger music-delete-btn" title="Delete this song" onclick="event.stopPropagation();Profile.deleteTrack('${esc(r.id)}','${esc(username)}')">${Icon('trash')}</button>` : ''}
           ${isOwner && cat ? `
           <div class="music-demo-wrap">
@@ -1107,16 +1108,15 @@ const Profile = (() => {
     const el = document.getElementById('tab-music-player');
     if (!el) return;
     const ids = user.musicIds || [];
-    if (!ids.length) {
-      if (isOwner) el.innerHTML = `<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">${Icon('music')}</div><p>Upload music in the profile editor</p><button class="btn btn-primary btn-sm mt-2" onclick="Profile.openEditorAt('innhold','music')">${Icon('arrow-up')} Upload</button></div>`;
-      return;
-    }
+    const emptyHtml = `<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">${Icon('music')}</div><p>${isOwner ? 'Upload music in the profile editor' : 'No music uploaded yet'}</p>${isOwner ? `<button class="btn btn-primary btn-sm mt-2" onclick="Profile.openEditorAt('innhold','music')">${Icon('arrow-up')} Upload</button>` : ''}</div>`;
+    if (!ids.length) { el.innerHTML = emptyHtml; return; }
     const recs = await DB.getAllByIds('music', ids);
     // index stays aligned with user.musicIds (playTrack uses that array + index);
     // private tracks are simply not rendered for non-owners.
     const itemsHtml = recs.map((r, i) =>
       (!isOwner && r.visibility === 'private') ? '' : musicItem(r, i, user.username, isOwner)
     ).join('');
+    if (!itemsHtml) { el.innerHTML = emptyHtml; return; }
     el.innerHTML = `
       <div class="profile-music-section">
         <div class="profile-music-title">${Icon('music')} Music</div>
@@ -2083,6 +2083,13 @@ const Profile = (() => {
           </div>
         </div>
 
+        <div class="mix-edit-section-title">Audio file</div>
+        <div style="margin-bottom:0.5rem">
+          <input type="file" id="mxed-audio-input" accept="audio/*" style="display:none" onchange="Profile.replaceMixAudio('${mixId}', this.files[0])">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('mxed-audio-input').click()">${Icon('upload')} Replace audio</button>
+          <div style="font-size:0.72rem;opacity:0.45;margin-top:0.3rem">Keeps the same share link, plays and comments.</div>
+        </div>
+
         <div class="mix-edit-section-title">Description</div>
         <textarea class="form-input" id="mxed-desc" rows="2" placeholder="Describe the mix…" style="width:100%;resize:vertical">${rec.description || ''}</textarea>
 
@@ -2140,6 +2147,47 @@ const Profile = (() => {
       if (prev) prev.innerHTML = `<img src="${previewUrl}" class="mix-cover-img" alt="Cover">`;
     }
     App.toast('Cover uploaded! 🖼️', 'success');
+  }
+
+  // Byt ut lydfila på ein alt opplasta mix UTAN å lage ny id — deleenker,
+  // avspillingar og kommentarar knytt til mixId held seg.
+  async function replaceMixAudio(mixId, file) {
+    if (!file) return;
+    const current = Auth.current();
+    if (!current) return;
+    const rec = await DB.get('mixes', mixId);
+    if (!rec) return;
+
+    let duration = rec.duration || 0;
+    try {
+      const url = URL.createObjectURL(file);
+      const a   = new Audio(url);
+      duration  = await new Promise(r => { a.onloadedmetadata = () => r(a.duration); a.onerror = () => r(rec.duration || 0); });
+      URL.revokeObjectURL(url);
+    } catch {}
+
+    DB.invalidateBlobCache('mixes', mixId);
+    const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
+    let shared = false;
+    if (useCloud) {
+      try {
+        const res = await SC_Storage.upload(file, { prefix: 'mix' });
+        delete rec.data;
+        rec.audioUrl = res.url; rec.storagePath = res.path;
+        rec.mime = file.type; rec.duration = duration;
+        await DB.put('mixes', rec);
+        shared = true;
+      } catch (e) {
+        if (e && e.message !== 'not-configured') console.warn('Skylagring feilet, lagrer lokalt:', e.message);
+      }
+    }
+    if (!shared) {
+      const { data, ...meta } = rec;
+      meta.audioUrl = null; meta.storagePath = null;
+      meta.mime = file.type; meta.duration = duration;
+      await DB.storeFile('mixes', mixId, file, meta);
+    }
+    App.toast('Mix audio replaced! 🎛️ Links, plays and comments are kept.', 'success');
   }
 
   function searchTrackOnGoogle() {
@@ -3415,6 +3463,48 @@ const Profile = (() => {
       el.classList.add('has-cover');
     }
     App.toast('Cover updated! 🖼️', 'success');
+  }
+
+  // Byt ut lydfila på eit alt opplasta spor UTAN å lage ny id — så eksisterande
+  // delelenker (/s/…), avspillingar og kommentarar knytt til trackId held seg.
+  async function replaceMusicAudio(trackId, file) {
+    if (!file) return;
+    const current = Auth.current();
+    if (!current) return;
+    const rec = await DB.get('music', trackId);
+    if (!rec) return;
+
+    let duration = rec.duration || 0;
+    try {
+      const url = URL.createObjectURL(file);
+      const a   = new Audio(url);
+      duration  = await new Promise(r => { a.onloadedmetadata = () => r(a.duration); a.onerror = () => r(rec.duration || 0); });
+      URL.revokeObjectURL(url);
+    } catch {}
+
+    DB.invalidateBlobCache('music', trackId);
+    const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
+    let shared = false;
+    if (useCloud) {
+      try {
+        const res = await SC_Storage.upload(file, { prefix: 'audio' });
+        delete rec.data;   // rydd bort ev. gammal lokal blob — lyden ligg no i skyen
+        rec.audioUrl = res.url; rec.storagePath = res.path;
+        rec.mime = file.type; rec.fileSize = file.size; rec.duration = duration;
+        await DB.put('music', rec);
+        shared = true;
+      } catch (e) {
+        if (e && e.message !== 'not-configured') console.warn('Skylagring feilet, lagrer lokalt:', e.message);
+      }
+    }
+    if (!shared) {
+      const { data, ...meta } = rec;
+      meta.audioUrl = null; meta.storagePath = null;
+      meta.mime = file.type; meta.fileSize = file.size; meta.duration = duration;
+      await DB.storeFile('music', trackId, file, meta);
+    }
+    App.toast('Audio file replaced! 🎵 Links, plays and comments are kept.', 'success');
+    loadMusicCoverArts([await DB.get('music', trackId)]);
   }
 
   // Omslagsbilde for en sang lagt ut i butikken. Lagres som delbar URL (skylagring
@@ -4884,7 +4974,7 @@ const Profile = (() => {
     toggleProfileVisibility, setProfileVisibility,
     toggleNotifySound,
     saveProfile, livePreview, collectTheme,
-    uploadMedia, uploadMusic, uploadMusicCover, uploadSaleCover, uploadAvatar, uploadBanner,
+    uploadMedia, uploadMusic, uploadMusicCover, replaceMusicAudio, uploadSaleCover, uploadAvatar, uploadBanner,
     setAvatarFromProfile, deleteAvatar, migrateLocalMediaToCloud,
     setBannerFromProfile, deleteBanner,
     openBannerReposForFile, repositionBanner, nudgeBannerRepos, resetBannerRepos,
@@ -4914,7 +5004,7 @@ const Profile = (() => {
     // Samlet opplastingsmodal (fil / URL)
     openUploadModal, umMode, umFilePicked, umCoverPicked,
     submitMixFile, umFetchPreview, submitMixUrl,
-    openMixEditModal, saveMixEdits, uploadMixCover,
+    openMixEditModal, saveMixEdits, uploadMixCover, replaceMixAudio,
     addTrackToModal, removeTrackFromModal, searchTrackOnGoogle,
     upgradeToPro, startStripeCheckout, confirmUpgrade,
     openMixPaywall, payMixHours,

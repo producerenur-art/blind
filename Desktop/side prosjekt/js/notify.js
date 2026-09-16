@@ -70,7 +70,10 @@ const Notify = (() => {
     _nsPolling = true;
     const pull = async () => {
       const rows = await NotifySync.list(MAX_ITEMS);
-      for (const n of rows) onIncoming(n, n.id);
+      // Rader frå api/notify.js er snake_case (DB-kolonner) — onIncoming ventar
+      // camelCase from/fromDisplay, elles blir venneforespørsler aldri
+      // registrert og avsendaren vises som «undefined».
+      for (const n of rows) onIncoming({ ...n, from: n.from ?? n.from_user, fromDisplay: n.fromDisplay ?? n.from_display }, n.id);
     };
     pull();
     setInterval(pull, 8000);

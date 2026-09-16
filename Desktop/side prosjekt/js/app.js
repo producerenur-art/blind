@@ -2248,6 +2248,11 @@ const App = (() => {
       // Auto-activated in dev mode — log the user in immediately
       localStorage.setItem('pv_session', JSON.stringify({ username, ts: Date.now() }));
       renderNav();
+      if (window.Notify) Notify.pushLocal({
+        id: 'welcome_' + username, from: 'soundcore', fromDisplay: 'SoundCore',
+        type: 'welcome', text: `Welcome to SoundCore, ${displayName || username}! Add friends, upload your first track, and explore Discover to get started.`,
+        link: '#/discover',
+      });
       toast(`Account created! Welcome, ${displayName || username}! ${Icon('party')}`, 'success');
       Router.go(`/u/${username}`);
     } else if (emailRes.error) {
@@ -2390,6 +2395,11 @@ const App = (() => {
     // automatisk inn og send brukeren til forsiden på www.siriusfm.no.
     localStorage.setItem('pv_session', JSON.stringify({ username: result.user.username, ts: Date.now() }));
     renderNav();
+    if (window.Notify) Notify.pushLocal({
+      id: 'welcome_' + result.user.username, from: 'soundcore', fromDisplay: 'SoundCore',
+      type: 'welcome', text: `Welcome to SoundCore, ${result.user.displayName}! Add friends, upload your first track, and explore Discover to get started.`,
+      link: '#/discover',
+    });
     toast(`Account activated! Logging you in … ${Icon('party')}`, 'success');
     document.getElementById('app').innerHTML = `
       <div class="auth-page"><div class="auth-card" style="text-align:center">
@@ -2625,6 +2635,7 @@ const App = (() => {
     const u = Auth.current();
     if (!u) return;
     Auth.acceptFriendRequest(u.username, fromUsername);
+    if (window.Notify) Notify.emit(fromUsername, { type: 'friend_accept', from: u.username, fromDisplay: u.displayName, text: 'accepted your friend request', link: `#/u/${u.username}` });
     renderNav();
     toast(`You're now friends with @${fromUsername}! ${Icon('party')}`, 'success');
     renderInbox('forsporsler');
