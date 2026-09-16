@@ -26,7 +26,7 @@ const MODEL = 'claude-haiku-4-5-20251001';
 // så miksen aldri kollapser til bare romfilm eller bare fraktaler.
 // Søkeord på engelsk gir best YouTube-treff. Året settes inn dynamisk.
 //
-// ANTALL SØK ER BEVISST LAVT (13 til sammen): YouTube-prosjektet har ~100 søk
+// ANTALL SØK ER BEVISST LAVT (18 til sammen): YouTube-prosjektet har ~100 søk
 // per DAG (dagskvoten «Search Queries per day»), delt med /api/radio-fresh og
 // søket i appen. Hvert søk henter 15 treff, så én spørring per gruppe gir nok
 // å velge blant.
@@ -92,6 +92,18 @@ const GROUPS = [
     key: 'natureworld', want: 3, hint: '"Beautiful World 4K Film Music" channel — real cinematic 4K nature/landscape footage',
     channelId: 'UCfdyhdY_-5AA4hRI8cW3zOg',
     queries: ['4k cinematic nature landscape'],
+  },
+  // Brukarønske 16.09.2026: utvid det automatiske søket med to nye sjangre som
+  // ikkje var dekte frå før — held seg innanfor same lydlause, dekorative
+  // visual-idé som resten av poolen. Nøkkelord-baserte (ikkje channelId), sidan
+  // me ikkje har stadfesta konkrete kanal-id-ar for desse temaa enno.
+  {
+    key: 'cyberpunk', want: 2, hint: 'cyberpunk / neon city visuals',
+    queries: ['cyberpunk city 4k loop no text'],
+  },
+  {
+    key: 'underwater', want: 2, hint: 'underwater / bioluminescent ocean visuals',
+    queries: ['bioluminescent deep ocean 4k loop'],
   },
 ];
 
