@@ -44,7 +44,7 @@ function authorised(req) {
   return given === secret;
 }
 
-async function checkOne(station) {
+async function _checkOnce(station) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
   try {
@@ -55,12 +55,29 @@ async function checkOne(station) {
       redirect: 'follow',
     });
     clearTimeout(timer);
-    const ok = r.ok || r.status === 206;
-    return { id: station.id, name: station.name, cat: station.cat, url: station.url, ok, status: r.status };
+    return { ok: r.ok || r.status === 206, status: r.status };
   } catch (e) {
     clearTimeout(timer);
-    return { id: station.id, name: station.name, cat: station.cat, url: station.url, ok: false, error: e.message };
+    return { ok: false, error: e.message };
   }
+}
+
+const _sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// Éin einsleg nettverks-hikke (DNS/TLS/tilkobling) mot ein EKTE, levande
+// strøym skal ikkje sende ein falsk «stasjon nede»-varsel-e-post til eigaren —
+// stadfesta 16.09.2026: «Ambient Abyss Broadcasting» fekk «fetch failed» på
+// den daglege sjekken kl. 07:00, men svarte heilt normalt (200, ekte lyddata)
+// ved manuell test rett etterpå. Same retry-mønster som YouTube-søka i
+// api/visuals-fresh.js — prøv éin gong til (kort pause) før vi konkluderer
+// «nede» og bryr eigaren med ein e-post.
+async function checkOne(station) {
+  let result = await _checkOnce(station);
+  if (!result.ok) {
+    await _sleep(1500);
+    result = await _checkOnce(station);
+  }
+  return { id: station.id, name: station.name, cat: station.cat, url: station.url, ...result };
 }
 
 module.exports = async (req, res) => {

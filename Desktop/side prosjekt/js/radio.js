@@ -1217,6 +1217,96 @@ const Radio = (() => {
     updateSidebarActiveState(id);
   }
 
+  // ── Vaktbikkje for AKTIV avspeling (brukarønske 16.09.2026) ────────────
+  // StreamFix.watch() (js/streamfix.js) ser BERRE på sjølve oppkoblinga dei
+  // første sekunda — han følger ikkje med etterpå. Rapportert: hakking midt i
+  // ei sending (laptop) og full stopp på mobil ved ein automatisk overgang
+  // (24-Hour Cycle-jingelen), som aldri kom seg sjølv igjen. Denne pollar
+  // currentTime kvart 5. sekund SÅ LENGE isPlaying er sann — ingen framgang
+  // på 10 sekund (og ikkje jingel/live-overtaking, som styrer det delte
+  // <audio>-elementet sjølv) betyr straumen har stoppa stille, og vi koblar
+  // til på nytt automatisk. Eit lite reconnect-budsjett (maks 4 per
+  // 10-minuttarsvindauge) hindrar at ein reelt daud straum blir hamra på i det uendelege.
+  const WATCHDOG_INTERVAL_MS = 5000;
+  const STALL_AFTER_MS = 10000;
+  const RECONNECT_MAX = 4;
+  const RECONNECT_WINDOW_MS = 10 * 60 * 1000;
+  let _lastCurrentTime = -1;
+  let _lastProgressTime = 0;
+  let _reconnectCount = 0;
+  let _reconnectWindowStart = 0;
+
+  function _resetWatchdogProgress() {
+    _lastCurrentTime = -1;
+    _lastProgressTime = Date.now();
+  }
+
+  function _tryAutoReconnect() {
+    if (!window._radioMode || !isPlaying || _jingleBusy || _liveTakeover || !currentStation) return;
+    const now = Date.now();
+    if (now - _reconnectWindowStart > RECONNECT_WINDOW_MS) { _reconnectCount = 0; _reconnectWindowStart = now; }
+    if (_reconnectCount >= RECONNECT_MAX) return;   // truleg eit ekte, vedvarande nettverksproblem
+    _reconnectCount++;
+    console.warn('Radio: avspeling stoppa uventa — koblar til på nytt', currentStation.url);
+    _playUrl(currentStation.url, currentStation);
+  }
+
+  function _watchdogTick() {
+    if (!window._radioMode || !isPlaying || _jingleBusy || _liveTakeover || !currentStation) {
+      _lastCurrentTime = -1;
+      return;
+    }
+    const audio = getAudio();
+    if (!audio) return;
+    if (audio.currentTime !== _lastCurrentTime) {
+      _lastCurrentTime = audio.currentTime;
+      _lastProgressTime = Date.now();
+      return;
+    }
+    if (_lastProgressTime && Date.now() - _lastProgressTime >= STALL_AFTER_MS) {
+      _lastProgressTime = Date.now();   // unngå å hamre på nytt kvart tick før reconnect har rukke verke
+      _tryAutoReconnect();
+    }
+  }
+  if (typeof document !== 'undefined') setInterval(_watchdogTick, WATCHDOG_INTERVAL_MS);
+
+  // Mobilnettlesarar kan suspendere <audio>-avspeling stille når fana/skjermen
+  // har vore i bakgrunnen/låst ei stund (rapportert: radioen stoppa heilt i
+  // natt ved ein automatisk overgang på mobil). Når fana blir synleg igjen —
+  // typisk fordi brukaren nettopp låste opp mobilen, som gir litt meir albogerom
+  // enn eit heilt gestus-fritt kall — prøver vi å kobla til på nytt med ein gong
+  // i staden for å vente på neste vakthund-tikk.
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!window._radioMode || !isPlaying || _jingleBusy || _liveTakeover || !currentStation) return;
+      const audio = getAudio();
+      if (audio && audio.paused) _playUrl(currentStation.url, currentStation);
+    });
+  }
+
+  // Media Session API: gir mobilen/OS-et ein ordentleg "no spelast"-økt
+  // (låseskjerm-kontrollar + rett tittel) i staden for ein anonym bakgrunns-
+  // fane. Nettlesarar gir gjerne meir albogerom til bakgrunnsavspeling når
+  // det finst ein aktiv, registrert Media Session — reduserer sjansen for at
+  // mobilen suspenderer straumen heilt over natta. Reint tillegg: gjer
+  // ingenting i nettlesarar utan støtte.
+  function _updateMediaSession(info) {
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: info.shortName || info.name || 'SiriusFM Radio',
+        artist: 'SiriusFM',
+        album: info.desc || 'Live stream',
+        artwork: [{ src: '/assets/icon-512.png', sizes: '512x512', type: 'image/png' }],
+      });
+      navigator.mediaSession.playbackState = 'playing';
+      navigator.mediaSession.setActionHandler('play',  () => { if (!isPlaying) togglePlay(); });
+      navigator.mediaSession.setActionHandler('pause', () => { if (isPlaying) togglePlay(); });
+      navigator.mediaSession.setActionHandler('stop',  () => stopRadio());
+    } catch (_) { /* eldre nettlesarar / manglar støtte — ufarleg å ignorere */ }
+  }
+
   function _playUrl(url, info) {
     const audio = getAudio();
     // Viss ein partnar-embed (t.d. Dice Radio-iframen) står open frå før, lukk
@@ -1272,6 +1362,7 @@ const Radio = (() => {
     // onStarted under) — unngår at ein ny stasjon smell inn i full styrke
     // rett etter ein jingel eller eit anna bytte (brukarønske 15.09.2026).
     audio.volume = 0;
+    _resetWatchdogProgress();   // ny tilkobling → gi den ei frisk sjanse før vakthunden dømmer han stillestående
 
     // Vaktbikkje: eit avvist play()-løfte er ikkje nok. Ein blokkert eller daud
     // strøym kan «lukkast» og så berre vere stille, så vi ventar på ei verkeleg
@@ -1283,6 +1374,7 @@ const Radio = (() => {
       if (settled) return;
       settled = true;
       isPlaying = true;
+      _reconnectCount = 0;   // ekte avspeling i gang att → nullstill auto-reconnect-budsjettet
       _fadeVolume(audio, volume, FADE_MS);
       updatePlayBtn(true);
       document.getElementById('radio-idle')?.classList.add('hidden');
@@ -1292,6 +1384,7 @@ const Radio = (() => {
       updateNowPlayingStatus(true);
       updateSidebarActiveState(currentStation?.id);
       window.RadioDock?.sync();
+      _updateMediaSession(info);
       if (info.npApi) startNowPlayingPoll(info);   // live track/show updates
       info.onPlay?.();
     };
@@ -1336,6 +1429,9 @@ const Radio = (() => {
       updateNowPlayingStatus(false);
       updateSidebarActiveState(currentStation.id);
       window.RadioDock?.sync();
+      if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+        try { navigator.mediaSession.playbackState = 'paused'; } catch (_) {}
+      }
       // Keep _radioMode = true so ctrl-play in player bar resumes radio correctly
     } else {
       // Always reconnect the stream (live streams can't reliably resume from pause)
@@ -1391,6 +1487,9 @@ const Radio = (() => {
     stopNowPlayingPoll();
     updateNowPlayingStatus(false);
     updatePlayBtn(false);
+    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+      try { navigator.mediaSession.playbackState = 'none'; } catch (_) {}
+    }
     // Spelaren blir verande nede på alle ruter — vi nullstiller han i staden for å skjule.
     const pbar = document.getElementById('player-bar');
     pbar?.classList.remove('radio-mode', 'playing', 'hidden');
