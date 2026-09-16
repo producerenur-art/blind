@@ -1116,6 +1116,14 @@ const Radio = (() => {
     if (currentStation && isPlaying) startVisualizer();
     else if (isVideoMode(visMode)) showVisVideo(visMode);   // video spiller uavhengig av radioen
     loadAiVisuals();             // hent + bygg «AI-fersk»-knappene (ikke-blokkerende)
+    // #np-name/#np-desc over er statisk plassholdertekst i malen over — utan
+    // dette blir eit tidlegare updateNowPlaying()-kall (t.d. frå playStation(),
+    // rett før Radio247 sin _rerenderHost() bygger heile sida på nytt) overskrive
+    // tilbake til plassholderen. Ved å alltid synkronisere på nytt her, uansett
+    // KVA som utløyste denne render()-en, unngår me at rekkefølgja mellom eit
+    // playStation-kall og eit påfølgande render()-kall avgjer om hero-boksen
+    // viser rett stasjon eller ikkje.
+    if (currentStation) updateNowPlaying(currentStation);
   }
 
   function resizeCanvas() {
@@ -1167,11 +1175,18 @@ const Radio = (() => {
     const station = STATIONS.find(s => s.id === id);
     if (!station) return;
     if (currentStation?.id === id) { togglePlay(); return; }
+    // Må køyrast FØR updateSidebarActiveState/updateNowPlaying under: dei
+    // spør Radio247.isActive() for å avgjere om SiriusFM 24/7 skal eige
+    // "spelar no"-visinga. Eit ekte brukarklikk skal slå av 24/7-modus med
+    // det same, elles ville rendera under framleis trudd 24/7 styrte dette
+    // klikket og undertrykt/feilmerka den nyvalde stasjonen. (Radio247 sine
+    // EIGE kall er flagga med _selfCall og blir ignorert av notifyManualPlay,
+    // så dette rører ikkje 24/7 sin eigen avspeling.)
+    if (typeof Radio247 !== 'undefined' && Radio247.notifyManualPlay) Radio247.notifyManualPlay();
     currentStation = { ...station };
     _playUrl(station.url, station);
     updateSidebarActiveState(id);
     updateNowPlaying(station);
-    if (typeof Radio247 !== 'undefined' && Radio247.notifyManualPlay) Radio247.notifyManualPlay();
   }
 
   // Scroll til ein sjanger-bolk og blink overskrifta. Blir kalla frå andre sider rett
@@ -1611,7 +1626,13 @@ const Radio = (() => {
     const desc = document.getElementById('np-desc');
     const art  = document.getElementById('np-art');
     const emoji= document.getElementById('np-emoji');
-    if (name)  name.textContent  = station.shortName || station.name;
+    // Når SiriusFM 24/7 styrer avspelinga, spelar han av ein av dei
+    // roterande ekte stasjonane (t.d. DMT FM) under panseret — men hero-
+    // boksen skal alltid vise «SiriusFM 24/7 Cycle» som namn, uansett kva
+    // som faktisk roterer inn. Skildringa (sjanger/land-linja) er framleis
+    // den ekte stasjonen sin, berre namnet blir bytt ut.
+    const r247Active = typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive();
+    if (name)  name.textContent  = r247Active ? 'SiriusFM 24/7 Cycle' : (station.shortName || station.name);
     if (desc)  desc.textContent  = station.desc;
     if (emoji) emoji.innerHTML = iconForEmoji(station.emoji);
     if (art)   art.style.background = `linear-gradient(135deg,${station.color},${station.color}88)`;
