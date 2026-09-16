@@ -249,8 +249,13 @@ const Radio247 = (() => {
     opts = opts || {};
     const b = currentBlock();
     const active = _active;
-    const stationName = _stationName(_pickStationId(b));
-    const nowText = stationName ? `${_escHtml(b.label)} — ${_escHtml(stationName)}` : _escHtml(b.label);
+    // Brukarønske 16.09.2026: «Now:»-linja skal IKKJE avsløre kva ekte
+    // stasjon som roterer inn (t.d. «DMT FM») — berre sjangeren. Same
+    // prinsipp som hero-boksen på /radio (js/radio.js updateNowPlaying):
+    // brukaren skal berre sjå SiriusFM-brandinga her, ikkje den ekte
+    // stasjonen. «Recent rotation»-arkivet under (archiveHtml) er eit
+    // MEDVITE unntak og held fram med å vise ekte stasjonsnamn.
+    const nowText = _escHtml(b.label);
     // Brukarønske 15.09.2026: «Next up» på EIGA linje rett under «Now:»,
     // ikkje slengt inn på same linje som før.
     const desc = opts.showUntilNext
