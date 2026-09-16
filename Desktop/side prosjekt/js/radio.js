@@ -975,6 +975,7 @@ const Radio = (() => {
               <div class="radio-np-badge"><span class="dot"></span> <span id="np-status">Stopped</span></div>
               <div class="radio-np-name" id="np-name">Choose a station on the left</div>
               <div class="radio-np-desc" id="np-desc">Electronic music from psychedelic trance to chill out</div>
+              <div class="radio-np-next r247-next-up" id="np-next" hidden></div>
               <button class="radio-set-fav-btn" id="radio-set-fav-btn" onclick="Radio.setAsFavorite()" style="display:none">
                 ${Icon('star')} Set as my favorite
               </button>
@@ -1646,6 +1647,7 @@ const Radio = (() => {
   function updateNowPlaying(station) {
     const name = document.getElementById('np-name');
     const desc = document.getElementById('np-desc');
+    const next = document.getElementById('np-next');
     const art  = document.getElementById('np-art');
     const emoji= document.getElementById('np-emoji');
     // Når SiriusFM 24/7 styrer avspelinga, spelar han av ein av dei
@@ -1656,6 +1658,17 @@ const Radio = (() => {
     const r247Active = typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive();
     if (name)  name.textContent  = r247Active ? 'SiriusFM 24/7 Cycle' : (station.shortName || station.name);
     if (desc)  desc.textContent  = station.desc;
+    // «Next up» gjeld berre SiriusFM 24/7 Cycle sin eigen døgnplan — ikkje
+    // relevant for enkeltstasjonar, so skjul han elles (brukarønske 16.09.2026).
+    if (next) {
+      if (r247Active && typeof Radio247 !== 'undefined') {
+        const b = Radio247.currentBlock();
+        next.textContent = `Next up: ${Radio247.nextBlock().label} at ${b.untilLabel}`;
+        next.hidden = false;
+      } else {
+        next.hidden = true;
+      }
+    }
     if (emoji) emoji.innerHTML = r247Active ? SFM_247_LOGO_HTML : iconForEmoji(station.emoji);
     if (art)   art.style.background = SFM_ART_GRADIENT;
 
