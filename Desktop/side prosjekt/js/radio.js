@@ -5,6 +5,12 @@ const Radio = (() => {
   // sin emoji-ikon (som ofte berre fell tilbake til eit generisk ✦-ikon via
   // iconForEmoji) kvar gong SiriusFM 24/7 Cycle er det som eig avspelinga.
   const SFM_247_LOGO_HTML = '<img src="assets/logo-mark.svg?v=20260916-sfm" alt="SiriusFM" style="width:1.15em;height:1.15em;object-fit:contain">';
+  // Same blå/indigo-fargane som .player-artwork sin faste CSS-bakgrunn
+  // (styles.css). Brukarønske 16.09.2026: hero-boksen sin bakgrunn skal
+  // alltid vere denne blåfargen for ALLE stasjonar (ikkje berre SiriusFM
+  // 24/7), ikkje den einskilde stasjonen sin eigen fargekode (t.d. grøn
+  // for Babaganousha) — same blå kontrast overalt.
+  const SFM_ART_GRADIENT = 'linear-gradient(135deg,#38bdf8,#6366f1)';
 
   // ── External player embeds (iframe) ──────────────────────────────────
   const EXTERNAL_PLAYERS = [
@@ -1651,7 +1657,7 @@ const Radio = (() => {
     if (name)  name.textContent  = r247Active ? 'SiriusFM 24/7 Cycle' : (station.shortName || station.name);
     if (desc)  desc.textContent  = station.desc;
     if (emoji) emoji.innerHTML = r247Active ? SFM_247_LOGO_HTML : iconForEmoji(station.emoji);
-    if (art)   art.style.background = `linear-gradient(135deg,${station.color},${station.color}88)`;
+    if (art)   art.style.background = SFM_ART_GRADIENT;
 
     // Show "set as favorite" button if logged in
     const favBtn = document.getElementById('radio-set-fav-btn');
