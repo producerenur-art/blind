@@ -1,6 +1,11 @@
 // Radio — Electronic music streams + Web Audio API visualizer
 const Radio = (() => {
 
+  // SiriusFM sitt eige merke — vist i staden for den ekte roterande stasjonen
+  // sin emoji-ikon (som ofte berre fell tilbake til eit generisk ✦-ikon via
+  // iconForEmoji) kvar gong SiriusFM 24/7 Cycle er det som eig avspelinga.
+  const SFM_247_LOGO_HTML = '<img src="assets/logo-mark.svg?v=20260916-sfm" alt="SiriusFM" style="width:1.15em;height:1.15em;object-fit:contain">';
+
   // ── External player embeds (iframe) ──────────────────────────────────
   const EXTERNAL_PLAYERS = [
     {
@@ -1123,7 +1128,14 @@ const Radio = (() => {
     // KVA som utløyste denne render()-en, unngår me at rekkefølgja mellom eit
     // playStation-kall og eit påfølgande render()-kall avgjer om hero-boksen
     // viser rett stasjon eller ikkje.
-    if (currentStation) updateNowPlaying(currentStation);
+    if (currentStation) {
+      updateNowPlaying(currentStation);
+      // Same plassholder-problem som over: #np-status er hardkoda til
+      // «Stopped» i malen, og ingenting synkroniserte han på nytt her —
+      // ei anna side/render() midt i avspeling viste feilaktig «Stopped»
+      // sjølv om lyden framleis spelte.
+      updateNowPlayingStatus(isPlaying);
+    }
   }
 
   function resizeCanvas() {
@@ -1327,13 +1339,17 @@ const Radio = (() => {
       return;
     }
 
-    // Update player bar for radio
+    // Update player bar for radio — denne linja held fram synleg på ALLE
+    // sider (flytande spelarlinje nedst), så same «vis SiriusFM 24/7 Cycle
+    // i staden for den ekte roterande stasjonen»-regel som i hero-boksen på
+    // /radio gjeld her òg.
+    const r247Active = typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive();
     const title = document.getElementById('player-title');
     const artist = document.getElementById('player-artist');
     const art    = document.getElementById('player-artwork');
-    if (title)  title.textContent  = info.shortName || info.name || 'Radio';
+    if (title)  title.textContent  = r247Active ? 'SiriusFM 24/7 Cycle' : (info.shortName || info.name || 'Radio');
     if (artist) artist.innerHTML   = `<span class="radio-live-badge"><span class="live-dot-sm"></span> LIVE</span> ${escHtml(info.desc || 'Live stream')}`;
-    if (art)    { art.style.backgroundImage = ''; art.querySelector('.artwork-note').innerHTML = iconForEmoji(info.emoji, 'radio'); art.querySelector('.artwork-note').style.display = ''; }
+    if (art)    { art.style.backgroundImage = ''; art.querySelector('.artwork-note').innerHTML = r247Active ? SFM_247_LOGO_HTML : iconForEmoji(info.emoji, 'radio'); art.querySelector('.artwork-note').style.display = ''; }
 
     const bar = document.getElementById('player-bar');
     if (bar) bar.classList.add('radio-mode');
@@ -1634,7 +1650,7 @@ const Radio = (() => {
     const r247Active = typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive();
     if (name)  name.textContent  = r247Active ? 'SiriusFM 24/7 Cycle' : (station.shortName || station.name);
     if (desc)  desc.textContent  = station.desc;
-    if (emoji) emoji.innerHTML = iconForEmoji(station.emoji);
+    if (emoji) emoji.innerHTML = r247Active ? SFM_247_LOGO_HTML : iconForEmoji(station.emoji);
     if (art)   art.style.background = `linear-gradient(135deg,${station.color},${station.color}88)`;
 
     // Show "set as favorite" button if logged in
