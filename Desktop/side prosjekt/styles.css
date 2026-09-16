@@ -15,7 +15,8 @@
 }
 .shop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
 .shop-card {
-  position: relative; background: var(--surface, #161622);
+  position: relative; background: rgba(10,10,15,0.82);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255,255,255,.08); border-radius: 16px;
   padding: 1.4rem; display: flex; flex-direction: column;
 }
@@ -76,7 +77,8 @@
 
 .shop-pro-feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .55rem .9rem; margin: 0 0 1.5rem; }
 .shop-pro-feat { display: flex; align-items: center; gap: .55rem; font-size: .85rem; color: var(--text, #e5e7eb);
-  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 10px; padding: .55rem .75rem; }
+  background: rgba(10,10,15,0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.09); border-radius: 10px; padding: .55rem .75rem; }
 .shop-pro-feat svg { color: #9fd8fd; flex: 0 0 auto; width: 18px; height: 18px; }
 .shop-link-sm { display: inline-block; margin-top: .6rem; font-size: .78rem; color: #9fd8fd; text-decoration: none; }
 .shop-link-sm:hover { text-decoration: underline; }
