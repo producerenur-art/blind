@@ -99,7 +99,7 @@ const WANT = GROUPS.reduce((n, g) => n + g.want, 0); // 29 plasser i poolen
 
 // Titler som nesten alltid betyr «ikke en rein visual-loop» (prat, tutorials,
 // lyric-videoer, musikk-mikser med statisk cover, tekst-tunge videoer).
-const BAD_TITLE = /(tutorial|how to|reaction|podcast|interview|lyric|lyrics|top \d|review|unboxing|episode|explained|documentary|full album|meditation guide|guided|asmr voice|premiere pro|after effects|davinci|blender tutorial|free download|copyright|no copyright music|subscribe)/i;
+const BAD_TITLE = /(tutorial|how to|reaction|podcast|interview|lyric|lyrics|top \d|review|unboxing|episode|explained|documentary|full album|meditation guide|guided|asmr voice|premiere pro|after effects|davinci|blender tutorial|free download|copyright|no copyright music|subscribe|compilation|slideshow|screen recording|handheld|shaky|phone footage|found footage|trailer|teaser|watermark|low quality|360p|480p)/i;
 // Bonusord som signaliserer kvalitet (brukes til sortering, ikke filtrering).
 // «no sound / no music» = rein bakgrunnsvisual uten pålagt tekst/plate-cover.
 const GOOD_TITLE = /(4k|8k|uhd|hdr|60fps|loop|screensaver|no text|no sound|no music|seamless)/i;
@@ -199,6 +199,14 @@ async function collectCandidates(year, apiKey) {
     })));
   }
 
+  // Kanal-avgrensa grupper (channelId) er alt håndplukket til pålitelige
+  // kanaler — der stoler vi på kanalen. Frie søkeord-grupper kan derimot
+  // hente inn hva som helst av faktisk billedkvalitet, selv med
+  // videoDefinition:'high' (som bare betyr «≥720p tilgjengelig», ikke ekte
+  // 4K). Der gjør vi GOOD_TITLE til et HARDT krav, ikke bare sortering —
+  // videoen dekker hele den brede visualizer-flaten, så en tittel som ikke
+  // engang hevder 4k/8k/uhd/loop er for usikker til å vise i full skala.
+  const curatedGroups = new Set(GROUPS.filter(g => g.channelId).map(g => g.key));
   const seen = new Set();
   const byGroup = {};
   GROUPS.forEach(g => { byGroup[g.key] = []; });
@@ -206,6 +214,7 @@ async function collectCandidates(year, apiKey) {
     for (const c of list) {
       if (seen.has(c.id)) continue;
       if (BAD_TITLE.test(c.title)) continue;      // prat/tutorial/lyric → ut
+      if (!curatedGroups.has(key) && !GOOD_TITLE.test(c.title)) continue;
       seen.add(c.id);
       byGroup[key].push({ ...c, group: key });
     }

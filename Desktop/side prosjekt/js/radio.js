@@ -2530,8 +2530,33 @@ const Radio = (() => {
   function visVideoSrc(id) {
     return `https://www.youtube-nocookie.com/embed/${id}`
       + `?autoplay=1&mute=1&loop=1&playlist=${id}`
-      + `&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3`;
+      + `&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3`
+      + `&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
   }
+  // YouTubes "auto"-kvalitet starter ofte forsiktig (rundt 480p) og ruller
+  // sakte oppover — ser uskarpt ut siden videoen dekker HELE den brede
+  // visualizer-flaten (sizeVisVideo). Vi ber spilleren om høyeste kvalitet
+  // med det samme via postMessage-API-et (ingen ekstra script å laste).
+  // Best-effort: YouTube kan velge å ignorere ønsket ved dårlig bånnbredde.
+  function postYtCommand(frame, func, args) {
+    if (!frame || !frame.contentWindow) return;
+    try {
+      frame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: args || [] }), '*');
+    } catch (_) { /* ignorer — best-effort */ }
+  }
+  function forceHighestQuality(frame) {
+    postYtCommand(frame, 'setPlaybackQuality', ['highres']);
+  }
+  // Spilleren svarer med onReady/infoDelivery-meldinger når den faktisk er
+  // klar til å ta imot kommandoer — da ber vi om høy kvalitet med en gang.
+  window.addEventListener('message', (e) => {
+    if (!/(^|\.)youtube(-nocookie)?\.com$/.test(new URL(e.origin).hostname)) return;
+    let data;
+    try { data = JSON.parse(e.data); } catch (_) { return; }
+    if (!data || (data.event !== 'onReady' && data.event !== 'infoDelivery')) return;
+    const frame = document.getElementById('radio-vis-video');
+    if (frame && frame.contentWindow === e.source) forceHighestQuality(frame);
+  });
   // Hvilken video-ID iframen viser nå (for å unngå unødig reload ved re-vis).
   let visVideoLoaded = null;
   function showVisVideo(mode) {
@@ -2539,7 +2564,13 @@ const Radio = (() => {
     if (!frame) return;
     const id = VIS_VIDEOS[mode] || AI_VIDEOS[mode]
       || VIS_VIDEOS[isVideoMode(visMode) ? visMode : 'video'] || AI_VIDEOS[visMode];
-    if (visVideoLoaded !== id) { frame.src = visVideoSrc(id); visVideoLoaded = id; }
+    if (visVideoLoaded !== id) {
+      frame.src = visVideoSrc(id);
+      visVideoLoaded = id;
+      // Reserve i tilfelle onReady-meldingen kommer før/uten at vi rekker å
+      // koble lytteren — spilleren ignorerer kommandoer den ikke er klar for.
+      [500, 1200, 2500].forEach(ms => setTimeout(() => forceHighestQuality(frame), ms));
+    }
     frame.classList.add('active');
     sizeVisVideo();
     forceVisRepaint(frame);   // mal den nye videoen med en gang (ikke først ved muse-hover)
