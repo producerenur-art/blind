@@ -1026,7 +1026,7 @@ const Radio = (() => {
                  teleskop), blandet sammen i én rad. Bygges av js/radio.js →
                  loadAiVisuals ← /api/visuals-fresh. Alltid mute=1. -->
             <div class="vis-style-row vis-ai-row" id="vis-ai-row">
-              <span class="vis-ai-label" title="AI picks fresh muted 4K visuals from YouTube — psychedelic, fractal, AI art and real space footage. New selection every hour." style="display:inline-flex;align-items:center;padding:0.32rem 0.55rem;font-size:0.72rem;font-weight:700;letter-spacing:0.02em;color:#c4a6ff;opacity:0.9;white-space:nowrap">✨ AI visuals</span>
+              <span class="vis-ai-label" title="AI picks fresh muted 4K visuals from YouTube — psychedelic, fractal, AI art and real space footage. New selection every hour." style="display:inline-flex;align-items:center;padding:0.32rem 0.55rem;font-size:0.72rem;font-weight:700;letter-spacing:0.02em;color:#c4a6ff;opacity:0.9;white-space:nowrap">✨ Visuals</span>
             </div>
             </div><!-- /.vis-mode-stack -->
             <div class="vis-size-row">
