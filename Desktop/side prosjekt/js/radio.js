@@ -1149,6 +1149,9 @@ const Radio = (() => {
     if (!canvas) return;
     const wrap = document.getElementById('radio-vis-wrap');
     if (!wrap) return;
+    // Krymp/nullstill ramma FØR vi måler henne (sjå applyVisFrameFit), elles
+    // les vi den gamle storleiken og canvas-oppløysinga hamnar eit steg bak.
+    applyVisFrameFit();
     // Tegn i enhets-piksler (Retina-skarpt), maks 2× for ytelse. Alle tegne-
     // funksjonene bruker canvas.width/height, så de skalerer skarpt automatisk.
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -2769,23 +2772,64 @@ const Radio = (() => {
     if (credit) credit.hidden = true;
     // Vis idle-teksten igjen om ingenting spiller
     if (!(currentStation && isPlaying)) document.getElementById('radio-idle')?.classList.remove('hidden');
+    applyVisFrameFit();   // ingen video lenger → gi ramma attende full bredde (sjå under)
   }
-  // Skalér iframen så HELE 16:9-videoen vises inni visualizeren (contain,
-  // sentrert), uten å beskjære bildet — når ramma sjølv ikkje er 16:9 vert
-  // det mørke tomrom over/under eller på sidene i staden (bakgrunnen på
-  // .radio-visualizer-wrap, ikkje reine svarte kantar). Brukarønske
-  // 17.09.2026: viktigare å sjå HEILE biletet enn å fylle heile ramma —
-  // IKKJE byt attende til cover utan eksplisitt beskjed frå brukaren.
+  // 17.09.2026: prøvde først contain (heile biletet synleg, men tomt mørkt rom
+  // att inni ei ramme som framleis er full bredde) — brukaren meinte det vart
+  // dårlegare enn den opphavlege cover-beskjeringa. RIKTIG fiks (same dag,
+  // brukarønske): ikkje strekk/beskjer BILETET til å passe ei feilforma ramme
+  // — krymp RAMMA (radio-vis-wrap) sjølv til nøyaktig 16:9, sentrert i raden.
+  // Då er HEILE biletet synleg OG ingen daud tomrom att, fordi ramma no har
+  // same format som videoen. Gjeld KUN Liten/Middels/Stor. Fullskjerm skal
+  // framleis berre VERE fullskjerm (fyller 100vw/100vh, cover, kan skjere
+  // kantar — det er heile poenget med fullskjerm, brukaren var eksplisitt på
+  // at den IKKJE skal endrast). «Fri» (drag-resize) er brukaren sitt eige
+  // valde format, rørast heller ikkje. IKKJE gå attende til å strekkje/skjere
+  // VIDEOEN inni ei fast ramme (verken cover eller contain) for
+  // Liten/Middels/Stor utan eksplisitt ny beskjed.
+  function applyVisFrameFit() {
+    const wrap  = document.getElementById('radio-vis-wrap');
+    const frame = document.getElementById('radio-vis-video');
+    if (!wrap) return;
+    const isFull  = wrap.classList.contains('vis-size-full');
+    const isFree  = wrap.classList.contains('vis-size-free');
+    const hasVideo = !!(frame && frame.classList.contains('active'));
+    if (isFull || isFree || !hasVideo) {
+      wrap.style.width = '';
+      wrap.style.height = '';
+      wrap.style.alignSelf = '';
+      return;
+    }
+    const parent = wrap.parentElement;
+    wrap.style.width = '';
+    wrap.style.height = '';   // nullstill FØR måling → les ekte CSS-preset-høgda (150/260/460px)
+    const presetH = wrap.clientHeight;
+    const maxW = parent ? parent.clientWidth : wrap.clientWidth;
+    const ar = 16 / 9;
+    let w = presetH * ar, h = presetH;
+    if (w > maxW) { w = maxW; h = maxW / ar; }   // for smalt vindauge til ideell breidd → krymp høgda òg
+    wrap.style.width  = Math.floor(w) + 'px';
+    wrap.style.height = Math.floor(h) + 'px';
+    wrap.style.alignSelf = 'center';
+  }
   function sizeVisVideo() {
     const wrap  = document.getElementById('radio-vis-wrap');
     const frame = document.getElementById('radio-vis-video');
     if (!wrap || !frame || !frame.classList.contains('active')) return;
-    const cw = wrap.clientWidth, ch = wrap.clientHeight, ar = 16 / 9;
-    let w, h;
-    if (cw / ch > ar) { h = ch; w = ch * ar; }   // ramma breiare enn 16:9 → avgrensa av høgda, tomrom på sidene
-    else              { w = cw; h = cw / ar; }   // ramma smalare enn 16:9 → avgrensa av breidda, tomrom over/under
-    frame.style.width  = Math.ceil(w) + 'px';
-    frame.style.height = Math.ceil(h) + 'px';
+    applyVisFrameFit();
+    if (wrap.classList.contains('vis-size-full') || wrap.classList.contains('vis-size-free')) {
+      // Ramma sitt eige format er ikkje 16:9 her (fullskjerm/fri) → dekk henne heilt (cover).
+      const cw = wrap.clientWidth, ch = wrap.clientHeight, ar = 16 / 9;
+      let w, h;
+      if (cw / ch > ar) { w = cw; h = cw / ar; }
+      else              { h = ch; w = ch * ar; }
+      frame.style.width  = Math.ceil(w) + 'px';
+      frame.style.height = Math.ceil(h) + 'px';
+    } else {
+      // applyVisFrameFit har alt gjort ramma nøyaktig 16:9 → videoen fyller henne heilt.
+      frame.style.width  = '100%';
+      frame.style.height = '100%';
+    }
   }
 
   // ── AI-roterte visuals (lydløse 4K-looper AI henter fra YouTube) ─────────
