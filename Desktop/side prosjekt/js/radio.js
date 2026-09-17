@@ -2774,19 +2774,28 @@ const Radio = (() => {
     if (!(currentStation && isPlaying)) document.getElementById('radio-idle')?.classList.remove('hidden');
     applyVisFrameFit();   // ingen video lenger → gi ramma attende full bredde (sjå under)
   }
-  // 17.09.2026: prøvde først contain (heile biletet synleg, men tomt mørkt rom
-  // att inni ei ramme som framleis er full bredde) — brukaren meinte det vart
-  // dårlegare enn den opphavlege cover-beskjeringa. RIKTIG fiks (same dag,
-  // brukarønske): ikkje strekk/beskjer BILETET til å passe ei feilforma ramme
-  // — krymp RAMMA (radio-vis-wrap) sjølv til nøyaktig 16:9, sentrert i raden.
-  // Då er HEILE biletet synleg OG ingen daud tomrom att, fordi ramma no har
-  // same format som videoen. Gjeld KUN Liten/Middels/Stor. Fullskjerm skal
-  // framleis berre VERE fullskjerm (fyller 100vw/100vh, cover, kan skjere
-  // kantar — det er heile poenget med fullskjerm, brukaren var eksplisitt på
-  // at den IKKJE skal endrast). «Fri» (drag-resize) er brukaren sitt eige
-  // valde format, rørast heller ikkje. IKKJE gå attende til å strekkje/skjere
-  // VIDEOEN inni ei fast ramme (verken cover eller contain) for
-  // Liten/Middels/Stor utan eksplisitt ny beskjed.
+  // 17.09.2026, tredje runde (brukarønske): dei to første forsøka feila —
+  // (1) contain (video inni ei framleis full-bred ramme, tomt mørkt rom att)
+  // «for dårleg»; (2) krympe ramma til FAST høgd × 16:9-breidd (150/260/460px
+  // → 267/462/818px brei) gjorde ramma alt for smal på store skjermar OG
+  // øydela layouten til kontrollradene oppå (Liten/Middels/Stor/Fullskjerm-
+  // knappane og video-vel-rutenettet treng full radbreidd for å ikkje
+  // overlappe kvarandre — det var difor knappane forsvann). RIKTIG fiks:
+  // BREIDDA er den styrande dimensjonen (prosent av tilgjengeleg radbreidd
+  // per storleik — Liten/Middels skal framleis vera synleg breiare enn før,
+  // «wider helt ut» er poenget), HØGDA vert utleia frå breidda (breidd×9/16)
+  // i staden for omvendt. Ingen skjering (heile 16:9-biletet får plassen det
+  // treng), ingen daud tomrom (ramma HAR alltid nett 16:9-forma), og
+  // kontrollradene får att nok breidd til å ikkje kollidere. Gjeld KUN
+  // Liten/Middels/Stor. Fullskjerm skal framleis berre VERE fullskjerm
+  // (fyller 100vw/100vh, cover, kan skjere kantar — det er heile poenget,
+  // brukaren var eksplisitt på at han IKKJE skal endrast). «Fri» (hjørne-
+  // /kant-drag) er brukaren sitt eige valde format, rørast heller ikkje —
+  // drag-handtaka (.vrr) ligg alltid i DOM-en og fungerer uavhengig av denne
+  // funksjonen. IKKJE gå attende til fast-høgd-krymping eller til å
+  // strekkje/skjere VIDEOEN inni ei fast ramme (verken cover eller contain)
+  // for Liten/Middels/Stor utan eksplisitt ny beskjed.
+  const VIS_SIZE_WIDTH_PCT = { small: 0.5, medium: 0.75, large: 1 };
   function applyVisFrameFit() {
     const wrap  = document.getElementById('radio-vis-wrap');
     const frame = document.getElementById('radio-vis-video');
@@ -2801,13 +2810,10 @@ const Radio = (() => {
       return;
     }
     const parent = wrap.parentElement;
-    wrap.style.width = '';
-    wrap.style.height = '';   // nullstill FØR måling → les ekte CSS-preset-høgda (150/260/460px)
-    const presetH = wrap.clientHeight;
     const maxW = parent ? parent.clientWidth : wrap.clientWidth;
-    const ar = 16 / 9;
-    let w = presetH * ar, h = presetH;
-    if (w > maxW) { w = maxW; h = maxW / ar; }   // for smalt vindauge til ideell breidd → krymp høgda òg
+    const pct = VIS_SIZE_WIDTH_PCT[visSize] ?? 1;
+    const w = maxW * pct;
+    const h = w * 9 / 16;
     wrap.style.width  = Math.floor(w) + 'px';
     wrap.style.height = Math.floor(h) + 'px';
     wrap.style.alignSelf = 'center';
