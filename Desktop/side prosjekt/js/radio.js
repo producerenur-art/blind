@@ -1149,9 +1149,6 @@ const Radio = (() => {
     if (!canvas) return;
     const wrap = document.getElementById('radio-vis-wrap');
     if (!wrap) return;
-    // Krymp/nullstill ramma FØR vi måler henne (sjå applyVisFrameFit), elles
-    // les vi den gamle storleiken og canvas-oppløysinga hamnar eit steg bak.
-    applyVisFrameFit();
     // Tegn i enhets-piksler (Retina-skarpt), maks 2× for ytelse. Alle tegne-
     // funksjonene bruker canvas.width/height, så de skalerer skarpt automatisk.
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -2772,70 +2769,26 @@ const Radio = (() => {
     if (credit) credit.hidden = true;
     // Vis idle-teksten igjen om ingenting spiller
     if (!(currentStation && isPlaying)) document.getElementById('radio-idle')?.classList.remove('hidden');
-    applyVisFrameFit();   // ingen video lenger → gi ramma attende full bredde (sjå under)
   }
-  // 17.09.2026, tredje runde (brukarønske): dei to første forsøka feila —
-  // (1) contain (video inni ei framleis full-bred ramme, tomt mørkt rom att)
-  // «for dårleg»; (2) krympe ramma til FAST høgd × 16:9-breidd (150/260/460px
-  // → 267/462/818px brei) gjorde ramma alt for smal på store skjermar OG
-  // øydela layouten til kontrollradene oppå (Liten/Middels/Stor/Fullskjerm-
-  // knappane og video-vel-rutenettet treng full radbreidd for å ikkje
-  // overlappe kvarandre — det var difor knappane forsvann). RIKTIG fiks:
-  // BREIDDA er den styrande dimensjonen (prosent av tilgjengeleg radbreidd
-  // per storleik — Liten/Middels skal framleis vera synleg breiare enn før,
-  // «wider helt ut» er poenget), HØGDA vert utleia frå breidda (breidd×9/16)
-  // i staden for omvendt. Ingen skjering (heile 16:9-biletet får plassen det
-  // treng), ingen daud tomrom (ramma HAR alltid nett 16:9-forma), og
-  // kontrollradene får att nok breidd til å ikkje kollidere. Gjeld KUN
-  // Liten/Middels/Stor. Fullskjerm skal framleis berre VERE fullskjerm
-  // (fyller 100vw/100vh, cover, kan skjere kantar — det er heile poenget,
-  // brukaren var eksplisitt på at han IKKJE skal endrast). «Fri» (hjørne-
-  // /kant-drag) er brukaren sitt eige valde format, rørast heller ikkje —
-  // drag-handtaka (.vrr) ligg alltid i DOM-en og fungerer uavhengig av denne
-  // funksjonen. IKKJE gå attende til fast-høgd-krymping eller til å
-  // strekkje/skjere VIDEOEN inni ei fast ramme (verken cover eller contain)
-  // for Liten/Middels/Stor utan eksplisitt ny beskjed.
-  const VIS_SIZE_WIDTH_PCT = { small: 0.5, medium: 0.75, large: 1 };
-  function applyVisFrameFit() {
-    const wrap  = document.getElementById('radio-vis-wrap');
-    const frame = document.getElementById('radio-vis-video');
-    if (!wrap) return;
-    const isFull  = wrap.classList.contains('vis-size-full');
-    const isFree  = wrap.classList.contains('vis-size-free');
-    const hasVideo = !!(frame && frame.classList.contains('active'));
-    if (isFull || isFree || !hasVideo) {
-      wrap.style.width = '';
-      wrap.style.height = '';
-      wrap.style.alignSelf = '';
-      return;
-    }
-    const parent = wrap.parentElement;
-    const maxW = parent ? parent.clientWidth : wrap.clientWidth;
-    const pct = VIS_SIZE_WIDTH_PCT[visSize] ?? 1;
-    const w = maxW * pct;
-    const h = w * 9 / 16;
-    wrap.style.width  = Math.floor(w) + 'px';
-    wrap.style.height = Math.floor(h) + 'px';
-    wrap.style.alignSelf = 'center';
-  }
+  // 17.09.2026: tre forsøk på å endre korleis videoen fyller ramma (contain,
+  // fast-høgd-krymping, breidd-styrt krymping) blei alle reverterte same
+  // dag — anten «for dårleg» (synleg tomrom) eller braut kontroll-layouten
+  // og gjorde hjørne-drag mindre presis. TILBAKE til den opphavlege, enkle
+  // cover-oppførselen: skalér iframen så 16:9-videoen dekker heile
+  // visualizeren, sentrert, uten svarte kanter og uten å forvrenge bildet.
+  // Ramma sjølv (`radio-vis-wrap`) vert ALDRI rørt av denne funksjonen — det
+  // var nettopp det som øydela hjørne-drag. IKKJE endre denne (cover, contain,
+  // eller ramme-krymping) utan eksplisitt ny beskjed frå brukaren.
   function sizeVisVideo() {
     const wrap  = document.getElementById('radio-vis-wrap');
     const frame = document.getElementById('radio-vis-video');
     if (!wrap || !frame || !frame.classList.contains('active')) return;
-    applyVisFrameFit();
-    if (wrap.classList.contains('vis-size-full') || wrap.classList.contains('vis-size-free')) {
-      // Ramma sitt eige format er ikkje 16:9 her (fullskjerm/fri) → dekk henne heilt (cover).
-      const cw = wrap.clientWidth, ch = wrap.clientHeight, ar = 16 / 9;
-      let w, h;
-      if (cw / ch > ar) { w = cw; h = cw / ar; }
-      else              { h = ch; w = ch * ar; }
-      frame.style.width  = Math.ceil(w) + 'px';
-      frame.style.height = Math.ceil(h) + 'px';
-    } else {
-      // applyVisFrameFit har alt gjort ramma nøyaktig 16:9 → videoen fyller henne heilt.
-      frame.style.width  = '100%';
-      frame.style.height = '100%';
-    }
+    const cw = wrap.clientWidth, ch = wrap.clientHeight, ar = 16 / 9;
+    let w, h;
+    if (cw / ch > ar) { w = cw; h = cw / ar; }   // beholder bredde → overflow i høyden
+    else              { h = ch; w = ch * ar; }   // beholder høyde → overflow i bredden
+    frame.style.width  = Math.ceil(w) + 'px';
+    frame.style.height = Math.ceil(h) + 'px';
   }
 
   // ── AI-roterte visuals (lydløse 4K-looper AI henter fra YouTube) ─────────
