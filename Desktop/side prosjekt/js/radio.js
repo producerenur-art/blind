@@ -2770,16 +2770,20 @@ const Radio = (() => {
     // Vis idle-teksten igjen om ingenting spiller
     if (!(currentStation && isPlaying)) document.getElementById('radio-idle')?.classList.remove('hidden');
   }
-  // Skalér iframen så 16:9-videoen dekker hele visualizeren (cover, sentrert),
-  // uten svarte kanter og uten å forvrenge bildet.
+  // Skalér iframen så HELE 16:9-videoen vises inni visualizeren (contain,
+  // sentrert), uten å beskjære bildet — når ramma sjølv ikkje er 16:9 vert
+  // det mørke tomrom over/under eller på sidene i staden (bakgrunnen på
+  // .radio-visualizer-wrap, ikkje reine svarte kantar). Brukarønske
+  // 17.09.2026: viktigare å sjå HEILE biletet enn å fylle heile ramma —
+  // IKKJE byt attende til cover utan eksplisitt beskjed frå brukaren.
   function sizeVisVideo() {
     const wrap  = document.getElementById('radio-vis-wrap');
     const frame = document.getElementById('radio-vis-video');
     if (!wrap || !frame || !frame.classList.contains('active')) return;
     const cw = wrap.clientWidth, ch = wrap.clientHeight, ar = 16 / 9;
     let w, h;
-    if (cw / ch > ar) { w = cw; h = cw / ar; }   // beholder bredde → overflow i høyden
-    else              { h = ch; w = ch * ar; }   // beholder høyde → overflow i bredden
+    if (cw / ch > ar) { h = ch; w = ch * ar; }   // ramma breiare enn 16:9 → avgrensa av høgda, tomrom på sidene
+    else              { w = cw; h = cw / ar; }   // ramma smalare enn 16:9 → avgrensa av breidda, tomrom over/under
     frame.style.width  = Math.ceil(w) + 'px';
     frame.style.height = Math.ceil(h) + 'px';
   }
