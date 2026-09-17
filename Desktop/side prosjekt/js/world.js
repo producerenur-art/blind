@@ -897,6 +897,18 @@ const World = (() => {
       ],
     },
     {
+      // Lagt til 17.09.2026 (brukar-forespurt, "Azura" = stavefeil for Asura,
+      // verifisert via ultimae.com + asura-music.bandcamp.com begge lastar).
+      emoji: '🌀', name: 'Asura', loc: 'France 🇫🇷 · Ambient / Psychill (Ultimae founding act)',
+      theme: 'Charles Farewell’s solo project since 2005, originally formed as a duo in 1996 — one of Ultimae Records’ founding acts, with the label itself growing out of Asura’s 1999 debut Code Eternity. A personal universe between psychedelic trance, ambient and world music, blending electronic machines with acoustic instruments.',
+      tags: ['Ambient', 'Psychill', 'Ultimae Records'],
+      grad: 'linear-gradient(135deg,#04191f,#0a3a44)',
+      links: [
+        { label: 'ultimae.com', kind: 'web', url: 'https://ultimae.com/artists/asura/' },
+        { label: 'Bandcamp', kind: 'bandcamp', url: 'https://asura-music.bandcamp.com/' },
+      ],
+    },
+    {
       emoji: '🌊', name: 'Miktek', loc: 'Greece 🇬🇷 · Ambient / IDM / Downtempo (Ultimae)',
       theme: 'Mihalis Aikaterinis, from Mytilene (Lesvos) — meticulously crafted ambient/IDM with unique percussion and subtle melodies. Debuted in 2011 on Abstrakt Reflections, joined Ultimae Records in 2013 for Elsewhere and several label compilations, plus collaborations with Aes Dana.',
       tags: ['Ambient', 'IDM', 'Ultimae Records'],
