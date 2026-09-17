@@ -496,6 +496,18 @@ function upcomingShows(clock, limit) {
     .slice(0, limit || 4);
 }
 
+// ALLE programma som går på éin gitt vekedag (0=søndag..6=laurdag), sortert
+// etter starttime. Brukt i staden for upcomingShows() når mottakaren har vald
+// KVA dag (js/newsletter.js sin dagveljar, migrasjon 0027) dei vil ha det
+// ukentlige nyhetsbrevet på — då gir "resten av programmet den dagen" meir
+// meining enn "berre dei neste 4 på tvers av heile veka".
+function showsForDay(day) {
+  return RADIO_SHOWS
+    .filter(s => s.day === day)
+    .sort((a, b) => a.start - b.start)
+    .map(s => ({ ...s, when: DAY_NAMES[day] }));
+}
+
 // Berre arrangement som ikkje har vore enno, det som startar først øvst. Vi
 // filtrerer på sluttdato (ein festival som er i gang er framleis aktuell), men
 // sorterer på startdato — det er den lesaren ser i «når»-kolonna. Tom liste er
@@ -678,6 +690,85 @@ function liveNowHtml(name, siteUrl, unsubscribeUrl, data) {
 </html>`;
 }
 
+// Kort, øyeblikkelig varsel: eigaren gjekk nettopp live. Sendt frå
+// api/live-start-notify.js, kalla frå js/livemix.js sin bcGo() — IKKJE den
+// ukentlige oppsummeringa (liveNowHtml), berre "det skjer NO, kom inn".
+function liveStartedHtml(name, siteUrl, unsubscribeUrl, data) {
+  const base       = (siteUrl || '').replace(/\/$/, '');
+  const displayUrl = base.replace(/^https?:\/\//, '') || 'SiriusFM';
+  const logoUrl    = `${base}/assets/icon-192.png`;
+  const unsubUrl   = unsubscribeUrl || `${base}/#/unsubscribe`;
+  const presenter  = String(data.presenterName || '').trim();
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:'Inter',Arial,sans-serif">
+  <div style="max-width:560px;margin:2rem auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(74,222,128,0.35)">
+    <div style="background:linear-gradient(135deg,#166534,#15803d);padding:2rem;text-align:center">
+      <img src="${logoUrl}" width="64" height="64" alt="SiriusFM"
+           style="display:block;margin:0 auto 0.75rem;border-radius:16px;border:0;outline:none;text-decoration:none">
+      <p style="color:#bbf7d0;font-weight:800;font-size:0.85rem;letter-spacing:0.08em;margin:0 0 0.35rem">● LIVE NOW</p>
+      <h1 style="color:#fff;margin:0;font-size:1.5rem;font-weight:800;letter-spacing:-0.3px">SiriusFM is live${presenter ? ` — ${escHtml(presenter)}` : ''}</h1>
+    </div>
+    <div style="padding:2rem;color:#e2e8f0;text-align:center">
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1.5rem">Hi ${escHtml(name)} — the broadcast just started. Every visitor to ${displayUrl} gets switched over to it automatically, tune in now.</p>
+      <a href="${base}" style="display:inline-block;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;text-decoration:none;padding:0.95rem 2.25rem;border-radius:8px;font-weight:800;font-size:1.05rem">▶ Listen now</a>
+    </div>
+    <div style="padding:1.25rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
+      <a href="${unsubUrl}" style="color:#64748b;font-size:0.78rem">Unsubscribe from these updates</a>
+      <p style="color:#475569;font-size:0.75rem;margin:0.6rem 0 0">© ${new Date().getFullYear()} SiriusFM</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+// Kort varsel om at (minst) éin NY festival dukka opp i #/world sidan sist
+// (jf. festival_notify_state, migrasjon 0027). Sendt frå api/live-reminder.js
+// sin daglige diff mot FESTIVALS i js/world.js.
+function festivalAddedHtml(name, siteUrl, unsubscribeUrl, data) {
+  const base       = (siteUrl || '').replace(/\/$/, '');
+  const worldUrl   = `${base}/#/world`;
+  const unsubUrl   = unsubscribeUrl || `${base}/#/unsubscribe`;
+  const festivals  = Array.isArray(data.festivals) ? data.festivals : [];
+  const rows = festivals.map(f => `
+    <tr>
+      <td style="padding:0.55rem 0.75rem;vertical-align:top;width:30px;font-size:1.15rem;border-top:1px solid rgba(255,255,255,0.06)">${f.emoji || '🎪'}</td>
+      <td style="padding:0.55rem 0.75rem;vertical-align:top;border-top:1px solid rgba(255,255,255,0.06)">
+        <a href="${escHtml(f.url || worldUrl)}" style="color:#fff;font-weight:700;font-size:0.92rem;text-decoration:none">${escHtml(f.name || '')}</a><br>
+        <span style="color:#94a3b8;font-size:0.82rem">${escHtml(f.loc || '')}</span>
+      </td>
+      <td style="padding:0.55rem 0.75rem;vertical-align:top;text-align:right;white-space:nowrap;border-top:1px solid rgba(255,255,255,0.06)">
+        <span style="color:#f59e0b;font-weight:700;font-size:0.82rem">${escHtml(f.dates || '')}</span>
+      </td>
+    </tr>`).join('');
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:'Inter',Arial,sans-serif">
+  <div style="max-width:560px;margin:2rem auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(245,158,11,0.3)">
+    <div style="background:linear-gradient(135deg,#b45309,#f59e0b);padding:2rem;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:1.5rem;font-weight:800;letter-spacing:-0.3px">🎪 New on All Over The World</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:0.4rem 0 0;font-size:0.85rem">${festivals.length} new festival${festivals.length === 1 ? '' : 's'} just added</p>
+    </div>
+    <div style="padding:2rem;color:#e2e8f0">
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1.25rem">Hi ${escHtml(name)}! ${festivals.length === 1 ? 'A festival was' : 'Festivals were'} just added to the SiriusFM global directory:</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden">
+        ${rows}
+      </table>
+      <div style="text-align:center;margin:1.5rem 0 0">
+        <a href="${worldUrl}" style="display:inline-block;background:linear-gradient(135deg,#b45309,#f59e0b);color:#fff;text-decoration:none;padding:0.85rem 2rem;border-radius:8px;font-weight:700;font-size:0.95rem">Open All Over The World →</a>
+      </div>
+    </div>
+    <div style="padding:1.25rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
+      <a href="${unsubUrl}" style="color:#64748b;font-size:0.78rem">Unsubscribe from these updates</a>
+      <p style="color:#475569;font-size:0.75rem;margin:0.6rem 0 0">© ${new Date().getFullYear()} SiriusFM</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 function bugReportHtml(info) {
   const row = (label, value) =>
     `<tr>
@@ -744,7 +835,7 @@ function copyrightReportHtml(info) {
         ${row('Uploaded by', info.profileUsername ? '@' + info.profileUsername : '—')}
         ${row('Reason', info.reason)}
         <tr>
-          <td style="padding:0.45rem 0.75rem;color:#94a3b8;font-size:0.85rem;vertical-align:top;white-space:nowrap;border-top:1px solid rgba(255,255,255,0.06)">Original / lenke</td>
+          <td style="padding:0.45rem 0.75rem;color:#94a3b8;font-size:0.85rem;vertical-align:top;white-space:nowrap;border-top:1px solid rgba(255,255,255,0.06)">Original / link</td>
           <td style="padding:0.45rem 0.75rem;font-size:0.85rem;vertical-align:top;border-top:1px solid rgba(255,255,255,0.06);word-break:break-word">${urlCell}</td>
         </tr>
         ${row('Reported by', info.reporter ? '@' + info.reporter : 'anonymous / not logged in')}
@@ -944,7 +1035,13 @@ module.exports = async (req, res) => {
       : allArts.filter(a => !shownTitles.has(String(a.tittel || a.title || ''))).slice(0, 3);
     const festivals  = Array.isArray(b.festivals) ? cleanArticles(b.festivals) : await readMagazine('festivals', 3);
     const releases   = Array.isArray(b.releases) ? cleanArticles(b.releases) : await readMagazine('labels', 4);
-    const shows      = Array.isArray(b.shows)  ? b.shows  : upcomingShows(osloClock(now), 4);
+    // Dagvald abonnent (migrasjon 0027): vis HEILE den dagens program i staden
+    // for berre dei neste 4 på tvers av veka. `b.day` blir sett av
+    // api/live-reminder.js ut frå digest_day (gjestar) / dagens Oslo-vekedag
+    // (kontoar, som framleis berre får denne på fredagar).
+    const shows      = Array.isArray(b.shows)  ? b.shows
+                      : Number.isInteger(b.day) ? showsForDay(b.day)
+                      : upcomingShows(osloClock(now), 4);
     const events     = Array.isArray(b.events) ? b.events : upcomingEvents(now, 4);
     subject = "What's coming up on SiriusFM — shows, magazine stories & new releases 🎧";
     const unsubUrl = b.unsubscribeUrl || `${siteUrl}/#/unsubscribe/${encodeURIComponent(toEmail)}`;
@@ -958,6 +1055,30 @@ module.exports = async (req, res) => {
     subject = "🌘 Today's 24-Hour Cycle schedule — SiriusFM";
     const unsubUrl = req.body?.unsubscribeUrl || `${siteUrl}/api/radio247-unsubscribe?email=${encodeURIComponent(toEmail)}`;
     html = radio247Html(toName, siteUrl, unsubUrl, RADIO247_SCHEDULE);
+  } else if (type === 'live_started') {
+    // Øyeblikkelig "vi er live no"-varsel — api/live-start-notify.js. Same
+    // avmeldingsregel som resten av nyhetsbrevet.
+    if (await isUnsubscribed(toEmail)) {
+      return res.status(200).json({ success: true, skipped: 'unsubscribed' });
+    }
+    const b = req.body || {};
+    subject = `🔴 SiriusFM is live now${b.presenterName ? ' — ' + String(b.presenterName).slice(0, 60) : ''}`;
+    const unsubUrl = b.unsubscribeUrl || `${siteUrl}/#/unsubscribe/${encodeURIComponent(toEmail)}`;
+    html = liveStartedHtml(toName, siteUrl, unsubUrl, { presenterName: b.presenterName });
+  } else if (type === 'festival_added') {
+    // Ny(e) festival(ar) oppdaga i FESTIVALS (js/world.js) — api/live-reminder.js
+    // sin daglige diff mot festival_notify_state.
+    if (await isUnsubscribed(toEmail)) {
+      return res.status(200).json({ success: true, skipped: 'unsubscribed' });
+    }
+    const b = req.body || {};
+    const festivals = Array.isArray(b.festivals) ? b.festivals : [];
+    if (!festivals.length) return res.status(200).json({ success: true, skipped: 'no festivals' });
+    subject = festivals.length === 1
+      ? `🎪 New festival added: ${String(festivals[0].name || '').slice(0, 60)} — SiriusFM`
+      : `🎪 ${festivals.length} new festivals added — SiriusFM`;
+    const unsubUrl = b.unsubscribeUrl || `${siteUrl}/#/unsubscribe/${encodeURIComponent(toEmail)}`;
+    html = festivalAddedHtml(toName, siteUrl, unsubUrl, { festivals });
   } else {
     return res.status(400).json({ error: 'Unknown email type' });
   }
@@ -970,12 +1091,12 @@ module.exports = async (req, res) => {
     const { data, error } = await resend.emails.send({ from: fromEmail, to, subject, html });
     if (error) {
       console.error('Resend avviste e-post:', error);
-      return res.status(502).json({ error: error.message || 'Resend kunne ikke sende e-posten' });
+      return res.status(502).json({ error: error.message || 'Resend could not send the email' });
     }
     return res.status(200).json({ success: true, id: data?.id });
   } catch (e) {
     console.error('Resend feil:', e);
-    return res.status(500).json({ error: e?.message || 'Kunne ikke sende e-post' });
+    return res.status(500).json({ error: e?.message || 'Could not send email' });
   }
 };
 
@@ -989,4 +1110,5 @@ module.exports.isUnsubscribed = isUnsubscribed;
 module.exports.pickInterviews = pickInterviews;
 module.exports.upcomingShows = upcomingShows;
 module.exports.upcomingEvents = upcomingEvents;
+module.exports.showsForDay = showsForDay;
 module.exports.osloClock = osloClock;

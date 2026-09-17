@@ -25,6 +25,17 @@ const CONFIG = {
   // Legg til flere brukernavn ved behov — sammenligning er ikke-følsom for store/små.
   ADMIN_USERS: ['ADMIN'],
 
+  // Samlet admin-e-postliste (2026-09-17): éi liste som gir ALT på éin gong —
+  // eigar-broadcast utan booking (js/livemix.js/liveGuestAdmin.js/broadcastschedule.js),
+  // gratis Pro-tilgang (js/auth.js Auth.current()), moderering (js/community.js/
+  // livePresence.js _isAdmin) OG rediger-rett i Live-arkivet (js/liveArchive.js).
+  // Legg til ein e-post → personen får alt samtidig. Samanlikning er små bokstavar/trimma.
+  ADMIN_EMAILS: ['producerenur@gmail.com'],
+  isAdminEmail(user) {
+    try { return !!user && this.ADMIN_EMAILS.includes(String(user.email || '').toLowerCase().trim()); }
+    catch (_) { return false; }
+  },
+
   // Supabase Storage — deler store filer (60-min lyd, video) på tvers av ALLE brukere.
   // URL + anon-nøkkel er offentlige og trygge i frontend (beskyttes av bucket-regler).
   // service_role-nøkkelen ligger KUN i .env (brukes av api/upload-url.js), aldri her.

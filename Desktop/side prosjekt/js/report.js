@@ -75,7 +75,7 @@ const Report = (() => {
 
   async function submit() {
     if (!_ctx) return;
-    const reason  = (document.getElementById('rep-reason')  || {}).value || 'Ikke oppgitt';
+    const reason  = (document.getElementById('rep-reason')  || {}).value || 'Not specified';
     const url     = ((document.getElementById('rep-url')     || {}).value || '').trim();
     const details = ((document.getElementById('rep-details') || {}).value || '').trim();
     const btn = document.getElementById('rep-send-btn');

@@ -34,11 +34,9 @@ const Community = (() => {
   }
   function _isDeleted(id) { return !!id && _deletedSet().has(id); }
 
-  // Moderator? Brukernavn i CONFIG.ADMIN_USERS kan slette hvilket som helst innlegg.
+  // Moderator? Samlet admin-e-postliste, CONFIG.ADMIN_EMAILS (js/config.js) — kan slette hvilket som helst innlegg.
   function _isAdmin(me) {
-    if (!me || !me.username) return false;
-    const admins = (window.CONFIG && Array.isArray(CONFIG.ADMIN_USERS)) ? CONFIG.ADMIN_USERS : [];
-    return admins.some(u => String(u).toLowerCase() === String(me.username).toLowerCase());
+    return typeof CONFIG !== 'undefined' && CONFIG.isAdminEmail(me);
   }
   function _markDeleted(id) {
     if (!id) return;

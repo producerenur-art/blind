@@ -26,16 +26,16 @@ const Assistant = (() => {
 
   // ── Language ─────────────────────────────────────────────────────────
   function currentLangCode() {
-    return localStorage.getItem(LANG_KEY) || localStorage.getItem('stellar-lang') || 'no';
+    return localStorage.getItem(LANG_KEY) || localStorage.getItem('stellar-lang') || 'en';
   }
   function langNameFor(code) {
     const list = (typeof LANGUAGES !== 'undefined') ? LANGUAGES : [];
     const l = list.find(x => x.code === code);
-    if (!l) return 'Norwegian';
+    if (!l) return 'English';
     return l.name.split(' — ')[0].trim(); // English label part
   }
   function langOptions() {
-    const list = (typeof LANGUAGES !== 'undefined') ? LANGUAGES : [{ code: 'no', name: 'Norwegian — Norsk', flag: '🇳🇴' }];
+    const list = (typeof LANGUAGES !== 'undefined') ? LANGUAGES : [{ code: 'en', name: 'English', flag: '🇬🇧' }];
     const sel = currentLangCode();
     return list.map(l =>
       `<option value="${l.code}" ${l.code === sel ? 'selected' : ''}>${l.flag} ${l.name}</option>`
@@ -55,15 +55,15 @@ const Assistant = (() => {
           <span>Core</span>
         </div>
         <div class="ai-asst-hdr-right">
-          <select class="ai-asst-lang" id="ai-asst-lang" title="Språk / Language">${langOptions()}</select>
-          <button class="ai-asst-hbtn" id="ai-asst-min" title="Minimer">${Icon('chevron-down')}</button>
-          <button class="ai-asst-hbtn" id="ai-asst-close" title="Lukk">${Icon('x')}</button>
+          <select class="ai-asst-lang" id="ai-asst-lang" title="Language">${langOptions()}</select>
+          <button class="ai-asst-hbtn" id="ai-asst-min" title="Minimize">${Icon('chevron-down')}</button>
+          <button class="ai-asst-hbtn" id="ai-asst-close" title="Close">${Icon('x')}</button>
         </div>
       </div>
       <div class="ai-asst-body">
         <div class="ai-asst-msgs" id="ai-asst-msgs"></div>
         <form class="ai-asst-input-row" id="ai-asst-form">
-          <input type="text" id="ai-asst-input" class="ai-asst-input" placeholder="Spør Core om hva som helst…" autocomplete="off">
+          <input type="text" id="ai-asst-input" class="ai-asst-input" placeholder="Ask Core anything…" autocomplete="off">
           <button type="submit" class="ai-asst-send" title="Send">${Icon('send')}</button>
         </form>
       </div>`;

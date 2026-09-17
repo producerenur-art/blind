@@ -343,8 +343,17 @@
       <div id="dock-updates-panel">
         <div class="dock-panel-title">Updates</div>
         <div class="dock-updates-body">
-          <p class="dock-updates-lead">Get the weekly email — upcoming shows, festivals &amp; new releases.</p>
+          <p class="dock-updates-lead">Get the weekly email — upcoming shows, festivals &amp; new releases. Plus an instant heads-up whenever SiriusFM goes live.</p>
           <input class="form-input" id="dock-updates-email" type="email" placeholder="you@email.com" autocomplete="email">
+          <select class="form-input" id="dock-updates-day" title="Which day should the weekly email arrive?">
+            <option value="1">Weekly email on Monday</option>
+            <option value="2">Weekly email on Tuesday</option>
+            <option value="3">Weekly email on Wednesday</option>
+            <option value="4">Weekly email on Thursday</option>
+            <option value="5" selected>Weekly email on Friday</option>
+            <option value="6">Weekly email on Saturday</option>
+            <option value="0">Weekly email on Sunday</option>
+          </select>
           <button class="btn btn-primary stellar-cta w-full" id="dock-updates-go" type="button">Subscribe</button>
           <p class="dock-updates-note">Unsubscribe anytime.</p>
         </div>
@@ -411,7 +420,7 @@
   <script src="js/marketplace.js?v=20260716-en"></script>
   <script src="js/profileshop.js?v=20260819-blue-text"></script>
   <script src="js/streamfix.js?v=20260817-streamfix"></script>
-  <script src="js/radio.js?v=20260917-visrevert-cover"></script>
+  <script src="js/radio.js?v=20260918-ozorapartner"></script>
   <script src="js/radio247.js?v=20260915-nextup"></script>
   <script src="js/radioSearch.js?v=20260910-q37-removed"></script>
   <!-- Eiers manuelle "Gå live"-sending (WebRTC via Supabase Realtime-signaling) —

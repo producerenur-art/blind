@@ -12,19 +12,19 @@ const LiveGuest = (() => {
   function _byId(id) { return document.getElementById(id); }
 
   function _fmtDateTime(iso) {
-    if (!iso) return 'Avtales nærmere';
+    if (!iso) return 'To be agreed';
     const d = new Date(iso);
     if (isNaN(d.getTime())) return String(iso);
-    return d.toLocaleString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleString('en-US', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
   }
 
   const STATUS_LABEL = {
-    pending:   { text: 'Venter på godkjenning', bg: 'rgba(245,158,11,0.14)', fg: '#f59e0b' },
-    approved:  { text: 'Godkjent',              bg: 'rgba(34,197,94,0.14)',  fg: '#22c55e' },
-    rejected:  { text: 'Avslått',                bg: 'rgba(239,68,68,0.14)', fg: '#ef4444' },
-    live:      { text: '🔴 LIVE nå',             bg: 'rgba(239,68,68,0.18)', fg: '#ef4444' },
-    completed: { text: 'Fullført',               bg: 'rgba(255,255,255,0.08)', fg: 'var(--text2)' },
-    cancelled: { text: 'Kansellert',             bg: 'rgba(255,255,255,0.06)', fg: 'var(--text3)' },
+    pending:   { text: 'Pending approval', bg: 'rgba(245,158,11,0.14)', fg: '#f59e0b' },
+    approved:  { text: 'Approved',         bg: 'rgba(34,197,94,0.14)',  fg: '#22c55e' },
+    rejected:  { text: 'Rejected',         bg: 'rgba(239,68,68,0.14)', fg: '#ef4444' },
+    live:      { text: '🔴 LIVE now',      bg: 'rgba(239,68,68,0.18)', fg: '#ef4444' },
+    completed: { text: 'Completed',        bg: 'rgba(255,255,255,0.08)', fg: 'var(--text2)' },
+    cancelled: { text: 'Cancelled',        bg: 'rgba(255,255,255,0.06)', fg: 'var(--text3)' },
   };
   // Fast lenke til oppsett-guiden (delbar Artifact-side, EN/NO) — vist til artisten
   // så snart forespørselen er godkjent, siden det er da de faktisk trenger den.
@@ -89,7 +89,7 @@ const LiveGuest = (() => {
   function openApply() {
     const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
     if (!cur) {
-      if (typeof App !== 'undefined') App.toast('Logg inn eller lag en gratis profil for å søke om å gå live.', 'info', 4000);
+      if (typeof App !== 'undefined') App.toast('Log in or create a free profile to apply to go live.', 'info', 4000);
       location.hash = '#/login';
       return;
     }
@@ -106,34 +106,34 @@ const LiveGuest = (() => {
     const inp = 'width:100%;box-sizing:border-box;padding:0.65rem 0.75rem;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:var(--text);font-size:0.95rem;font:inherit';
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${_I('radio')} Søk om å gå live</h2>
-        <button class="btn-icon" onclick="App.closeModal()" aria-label="Lukk">${_I('x')}</button>
+        <h2>${_I('radio')} Apply to go live</h2>
+        <button class="btn-icon" onclick="App.closeModal()" aria-label="Close">${_I('x')}</button>
       </div>
       <div style="padding:0.5rem 0 0.25rem">
         <p style="color:var(--text2);font-size:0.9rem;line-height:1.5;margin:0 0 1rem">
-          Send en forespørsel om å sende live på SiriusFM. Eieren godkjenner eller avslår før du kan gå live —
-          du får ikke tilgang før forespørselen er godkjent.
+          Send a request to broadcast live on SiriusFM. The owner approves or rejects before you can go live —
+          you won't get access until the request is approved.
         </p>
-        <label for="lg-name" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Artist-/stasjonsnavn</label>
-        <input id="lg-name" value="${_esc(cur.displayName || cur.username)}" placeholder="Vises til lytterne" style="${inp};margin:0 0 1rem">
-        <label for="lg-slot" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Ønsket sendetidspunkt</label>
+        <label for="lg-name" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Artist/station name</label>
+        <input id="lg-name" value="${_esc(cur.displayName || cur.username)}" placeholder="Shown to listeners" style="${inp};margin:0 0 1rem">
+        <label for="lg-slot" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Preferred broadcast time</label>
         <input id="lg-slot" type="datetime-local" value="${localISO}" style="${inp};margin:0 0 1rem">
-        <label style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Hvor mange timer?</label>
+        <label style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">How many hours?</label>
         <div style="display:flex;align-items:center;gap:0.75rem;margin:0 0 1rem">
-          <button class="btn btn-ghost" onclick="LiveGuest.step(-1)" aria-label="Færre timer" style="width:44px;height:44px;font-size:1.4rem;padding:0;line-height:1">−</button>
-          <div id="lg-hours" style="font-size:1.4rem;font-weight:800;min-width:3.5rem;text-align:center">1 t</div>
-          <button class="btn btn-ghost" onclick="LiveGuest.step(1)" aria-label="Flere timer" style="width:44px;height:44px;font-size:1.4rem;padding:0;line-height:1">+</button>
+          <button class="btn btn-ghost" onclick="LiveGuest.step(-1)" aria-label="Fewer hours" style="width:44px;height:44px;font-size:1.4rem;padding:0;line-height:1">−</button>
+          <div id="lg-hours" style="font-size:1.4rem;font-weight:800;min-width:3.5rem;text-align:center">1 h</div>
+          <button class="btn btn-ghost" onclick="LiveGuest.step(1)" aria-label="More hours" style="width:44px;height:44px;font-size:1.4rem;padding:0;line-height:1">+</button>
         </div>
-        <label for="lg-msg" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Melding til eieren (valgfritt)</label>
-        <textarea id="lg-msg" rows="3" placeholder="F.eks. hvilken sjanger, hvor du sender fra …" style="${inp};resize:vertical;margin:0 0 1.1rem"></textarea>
-        <button class="btn btn-primary w-full" onclick="LiveGuest.submitApply()">${_I('send')} Send forespørsel</button>
+        <label for="lg-msg" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Message to the owner (optional)</label>
+        <textarea id="lg-msg" rows="3" placeholder="E.g. genre, where you're broadcasting from …" style="${inp};resize:vertical;margin:0 0 1.1rem"></textarea>
+        <button class="btn btn-primary w-full" onclick="LiveGuest.submitApply()">${_I('send')} Send request</button>
       </div>`;
     App.openModal();
   }
 
   function step(delta) {
     _hours = Math.max(1, Math.min(12, _hours + (parseInt(delta, 10) || 0)));
-    const h = _byId('lg-hours'); if (h) h.textContent = _hours + ' t';
+    const h = _byId('lg-hours'); if (h) h.textContent = _hours + ' h';
   }
 
   async function submitApply() {
@@ -144,15 +144,15 @@ const LiveGuest = (() => {
     const slot = slotEl && slotEl.value ? new Date(slotEl.value).toISOString() : null;
     const msg = (_byId('lg-msg')?.value || '').trim();
     if (!LiveBroadcastSync._enabled()) {
-      if (typeof App !== 'undefined') App.toast('Denne funksjonen krever at skylagring er satt opp (Supabase).', 'error', 5000);
+      if (typeof App !== 'undefined') App.toast('This feature requires cloud storage to be set up (Supabase).', 'error', 5000);
       return;
     }
     const id = await LiveBroadcastSync.submitRequest({
       username: cur.username, email: cur.email || '', displayName: name, message: msg,
       requestedStart: slot, requestedHours: _hours,
     });
-    if (!id) { if (typeof App !== 'undefined') App.toast('Kunne ikke sende forespørselen. Prøv igjen.', 'error'); return; }
-    if (typeof App !== 'undefined') { App.closeModal(); App.toast('Forespørsel sendt! Du får beskjed når eieren har svart.', 'success', 5000); }
+    if (!id) { if (typeof App !== 'undefined') App.toast('Could not send the request. Please try again.', 'error'); return; }
+    if (typeof App !== 'undefined') { App.closeModal(); App.toast('Request sent! You\'ll be notified once the owner responds.', 'success', 5000); }
     location.hash = '#/go-live/mine';
   }
 
@@ -162,17 +162,17 @@ const LiveGuest = (() => {
     if (!app) return;
     const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
     if (!cur) {
-      if (typeof App !== 'undefined') App.toast('Logg inn for å se dine forespørsler.', 'info', 4000);
+      if (typeof App !== 'undefined') App.toast('Log in to see your requests.', 'info', 4000);
       location.hash = '#/login';
       return;
     }
     app.innerHTML = `
       <div style="max-width:720px;margin:0 auto;padding:1.5rem 1rem 4rem">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:0 0 1.25rem;flex-wrap:wrap">
-          <h1 style="margin:0;font-size:1.6rem;font-weight:800">${_I('radio')} Mine live-forespørsler</h1>
-          <button class="btn btn-primary" onclick="LiveGuest.openApply()">${_I('sparkles')} Ny forespørsel</button>
+          <h1 style="margin:0;font-size:1.6rem;font-weight:800">${_I('radio')} My live requests</h1>
+          <button class="btn btn-primary" onclick="LiveGuest.openApply()">${_I('sparkles')} New request</button>
         </div>
-        <div id="lg-mine-list" style="display:grid;gap:0.9rem">Laster…</div>
+        <div id="lg-mine-list" style="display:grid;gap:0.9rem">Loading…</div>
       </div>`;
     window.scrollTo(0, 0);
     await _loadMine(cur);
@@ -182,9 +182,9 @@ const LiveGuest = (() => {
   async function _loadMine(cur) {
     const list = _byId('lg-mine-list');
     if (!list) return;
-    if (!LiveBroadcastSync._enabled()) { list.innerHTML = `<div style="color:var(--text2);font-size:0.9rem">Denne funksjonen krever at skylagring er satt opp (Supabase).</div>`; return; }
+    if (!LiveBroadcastSync._enabled()) { list.innerHTML = `<div style="color:var(--text2);font-size:0.9rem">This feature requires cloud storage to be set up (Supabase).</div>`; return; }
     _mineCache = await LiveBroadcastSync.listMine(cur.username);
-    if (!_mineCache.length) { list.innerHTML = `<div style="color:var(--text2);font-size:0.9rem">Ingen forespørsler ennå. Trykk «Ny forespørsel» for å søke om å gå live.</div>`; return; }
+    if (!_mineCache.length) { list.innerHTML = `<div style="color:var(--text2);font-size:0.9rem">No requests yet. Click "New request" to apply to go live.</div>`; return; }
     list.innerHTML = _mineCache.map(_row).join('');
   }
 
@@ -198,22 +198,22 @@ const LiveGuest = (() => {
           <div style="font-weight:800;font-size:1.02rem">${_esc(r.display_name)}</div>
           ${_badge(r.status)}
         </div>
-        <div style="font-size:0.85rem;color:var(--text2);margin:0 0 0.3rem">${_fmtDateTime(r.requested_start)} · ${r.requested_hours} ${r.requested_hours > 1 ? 'timer' : 'time'}</div>
+        <div style="font-size:0.85rem;color:var(--text2);margin:0 0 0.3rem">${_fmtDateTime(r.requested_start)} · ${r.requested_hours} ${r.requested_hours > 1 ? 'hours' : 'hour'}</div>
         ${['approved', 'live', 'completed'].includes(r.status) ? `
-        <a href="${GUIDE_URL}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.83rem;font-weight:700;color:#22c55e;text-decoration:none;margin:0.15rem 0 0.6rem">${_I('book')} Se oppsett-guiden — hvordan du går live →</a>` : ''}
+        <a href="${GUIDE_URL}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.83rem;font-weight:700;color:#22c55e;text-decoration:none;margin:0.15rem 0 0.6rem">${_I('book')} See the setup guide — how to go live →</a>` : ''}
         ${r.message ? `<div style="font-size:0.85rem;color:var(--text3);margin:0 0 0.5rem">${_esc(r.message)}</div>` : ''}
-        ${r.status === 'rejected' && r.reject_reason ? `<div style="font-size:0.82rem;color:#ef4444;margin:0 0 0.5rem">Begrunnelse: ${_esc(r.reject_reason)}</div>` : ''}
+        ${r.status === 'rejected' && r.reject_reason ? `<div style="font-size:0.82rem;color:#ef4444;margin:0 0 0.5rem">Reason: ${_esc(r.reject_reason)}</div>` : ''}
         ${showThumb ? `
         <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin:0.5rem 0">
           ${r.thumbnail_url ? `<img src="${_esc(r.thumbnail_url)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:10px">` : ''}
-          <button class="btn btn-ghost" onclick="document.getElementById('lg-thumb-${_esc(r.id)}').click()">${_I('camera')} ${r.thumbnail_url ? 'Bytt bilde' : 'Velg forhåndsbilde'}</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('lg-thumb-${_esc(r.id)}').click()">${_I('camera')} ${r.thumbnail_url ? 'Change image' : 'Choose preview image'}</button>
           <input type="file" id="lg-thumb-${_esc(r.id)}" accept="image/*" style="display:none" onchange="LiveGuest.pickThumbnail('${_esc(r.id)}', this)">
         </div>` : ''}
         <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:0.6rem">
-          ${canGoLive && !isLive ? `<button class="btn btn-primary" onclick="LiveGuest.goLive('${_esc(r.id)}')">📡 Gå live</button>` : ''}
-          ${isLive ? `<button class="btn" style="background:#ef4444;color:#fff" onclick="LiveGuest.goLive('${_esc(r.id)}')">🔴 Åpne DJ-konsoll</button>` : ''}
-          ${r.status === 'approved' && !_isWindowActive(r) && !isLive ? `<span style="font-size:0.8rem;color:var(--text3);align-self:center">Godkjent — du kan gå live fra ~10 min før ${_fmtDateTime(r.requested_start)}</span>` : ''}
-          ${['pending', 'approved'].includes(r.status) ? `<button class="btn btn-ghost" onclick="LiveGuest.cancelRequest('${_esc(r.id)}')">Kanseller</button>` : ''}
+          ${canGoLive && !isLive ? `<button class="btn btn-primary" onclick="LiveGuest.goLive('${_esc(r.id)}')">📡 Go live</button>` : ''}
+          ${isLive ? `<button class="btn" style="background:#ef4444;color:#fff" onclick="LiveGuest.goLive('${_esc(r.id)}')">🔴 Open DJ console</button>` : ''}
+          ${r.status === 'approved' && !_isWindowActive(r) && !isLive ? `<span style="font-size:0.8rem;color:var(--text3);align-self:center">Approved — you can go live from ~10 min before ${_fmtDateTime(r.requested_start)}</span>` : ''}
+          ${['pending', 'approved'].includes(r.status) ? `<button class="btn btn-ghost" onclick="LiveGuest.cancelRequest('${_esc(r.id)}')">Cancel</button>` : ''}
         </div>
       </div>`;
   }
@@ -221,14 +221,14 @@ const LiveGuest = (() => {
   async function pickThumbnail(id, input) {
     const f = input && input.files && input.files[0]; if (!f) return;
     const cur = Auth.current(); if (!cur) return;
-    if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured()) { if (typeof App !== 'undefined') App.toast('Skylagring er ikke satt opp.', 'error'); return; }
-    if (typeof App !== 'undefined') App.toast('Laster opp bilde…', 'info', 2500);
+    if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured()) { if (typeof App !== 'undefined') App.toast('Cloud storage is not set up.', 'error'); return; }
+    if (typeof App !== 'undefined') App.toast('Uploading image…', 'info', 2500);
     try {
       const res = await SC_Storage.upload(f, { prefix: 'live-broadcasts' });
       await LiveBroadcastSync.setThumbnailOwned(id, cur.username, res.url);
-      if (typeof App !== 'undefined') App.toast('Forhåndsbilde lagret!', 'success');
+      if (typeof App !== 'undefined') App.toast('Preview image saved!', 'success');
       await _loadMine(cur);
-    } catch (e) { if (typeof App !== 'undefined') App.toast('Opplasting feilet: ' + e.message, 'error'); }
+    } catch (e) { if (typeof App !== 'undefined') App.toast('Upload failed: ' + e.message, 'error'); }
   }
 
   async function cancelRequest(id) {
@@ -242,12 +242,12 @@ const LiveGuest = (() => {
 
   function goLive(id) {
     if (typeof App === 'undefined') return;
-    if (!window.LiveBroadcast) { App.toast('Kringkasting kunne ikke lastes (livebroadcast.js mangler).', 'error'); return; }
+    if (!window.LiveBroadcast) { App.toast('Broadcasting could not be loaded (livebroadcast.js missing).', 'error'); return; }
     const req = _mineCache.find(r => r.id === id);
     if (!req) return;
     if (!_g.dj) {
       if (req.status !== 'live' && (req.status !== 'approved' || !_isWindowActive(req))) {
-        App.toast('Denne forespørselen er ikke godkjent/aktiv akkurat nå.', 'error');
+        App.toast('This request is not approved/active right now.', 'error');
         return;
       }
       _g.req = req;
@@ -265,39 +265,39 @@ const LiveGuest = (() => {
     const fill = 'position:absolute;inset:0 auto 0 0;width:0%;background:linear-gradient(90deg,#22c55e,#22c55e 60%,#f59e0b 80%,#ef4444);transition:width .05s';
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${_I('radio')} Gå live — ${_esc((_g.req && _g.req.display_name) || '')}</h2>
-        <button class="btn-icon" onclick="App.closeModal()" aria-label="Lukk">${_I('x')}</button>
+        <h2>${_I('radio')} Go live — ${_esc((_g.req && _g.req.display_name) || '')}</h2>
+        <button class="btn-icon" onclick="App.closeModal()" aria-label="Close">${_I('x')}</button>
       </div>
       <div style="padding:0.25rem 0">
         <p style="color:var(--text2);font-size:0.85rem;line-height:1.5;margin:0 0 1rem">
-          Rut DJ-programmets master til en virtuell lydkabel (f.eks. BlackHole) og velg den under.
-          Dette sender KUN til de som trykker «Hør live» på deg — avbryter ikke hovedstrømmen for andre lyttere.
+          Route your DJ software's master output to a virtual audio cable (e.g. BlackHole) and select it below.
+          This only broadcasts to people who click "Listen live" on you — it does not interrupt the main stream for other listeners.
         </p>
-        <label style="${lbl}">Lyd-inngang</label>
+        <label style="${lbl}">Audio input</label>
         <div style="display:flex;gap:0.6rem;margin:0 0 1rem">
-          <select id="lg-dev" ${live ? 'disabled' : ''} style="${inp};flex:1">${live ? '' : '<option>Trykk «Gi tilgang» først…</option>'}</select>
-          <button class="btn btn-ghost" id="lg-perm" onclick="LiveGuest.bcPerm()" ${live ? 'disabled' : ''}>Gi tilgang</button>
+          <select id="lg-dev" ${live ? 'disabled' : ''} style="${inp};flex:1">${live ? '' : '<option>Click "Grant access" first…</option>'}</select>
+          <button class="btn btn-ghost" id="lg-perm" onclick="LiveGuest.bcPerm()" ${live ? 'disabled' : ''}>Grant access</button>
         </div>
         <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin:0 0 1.1rem">
-          <button class="btn btn-primary" id="lg-go" onclick="LiveGuest.bcGo()" ${live ? 'disabled' : ''}>📡 Gå live</button>
-          <button class="btn" id="lg-stop" onclick="LiveGuest.bcStop()" ${live ? '' : 'disabled'} style="background:#ef4444;color:#fff">■ Stopp</button>
+          <button class="btn btn-primary" id="lg-go" onclick="LiveGuest.bcGo()" ${live ? 'disabled' : ''}>📡 Go live</button>
+          <button class="btn" id="lg-stop" onclick="LiveGuest.bcStop()" ${live ? '' : 'disabled'} style="background:#ef4444;color:#fff">■ Stop</button>
           <span style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.8rem;font-weight:700;padding:0.25rem 0.7rem;border-radius:999px;background:rgba(255,255,255,0.06)">
             <span id="lg-dot" style="width:9px;height:9px;border-radius:50%;background:${live ? '#ef4444' : '#9aa3b2'}"></span>
-            <span id="lg-status">${live ? 'LIVE — sender' : 'Inaktiv'}</span>
+            <span id="lg-status">${live ? 'LIVE — broadcasting' : 'Inactive'}</span>
           </span>
         </div>
-        <div style="font-size:1.5rem;font-weight:800;margin:0 0 0.75rem"><span id="lg-count">${live ? _g.dj.listeners : 0}</span> <span style="font-size:0.85rem;font-weight:400;color:var(--text2)">lyttere koblet til</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text2);margin:0 0 0.2rem"><span>Sendt (L)</span><span id="lg-ldb">−∞ dB</span></div>
+        <div style="font-size:1.5rem;font-weight:800;margin:0 0 0.75rem"><span id="lg-count">${live ? _g.dj.listeners : 0}</span> <span style="font-size:0.85rem;font-weight:400;color:var(--text2)">listeners connected</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text2);margin:0 0 0.2rem"><span>Sent (L)</span><span id="lg-ldb">−∞ dB</span></div>
         <div style="${meter}"><i id="lg-lmeter" style="${fill}"></i></div>
-        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text2);margin:0.5rem 0 0.2rem"><span>Sendt (R)</span><span id="lg-rdb">−∞ dB</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text2);margin:0.5rem 0 0.2rem"><span>Sent (R)</span><span id="lg-rdb">−∞ dB</span></div>
         <div style="${meter}"><i id="lg-rmeter" style="${fill}"></i></div>
-        <div id="lg-log" style="font:12px/1.5 ui-monospace,monospace;background:rgba(0,0,0,0.3);border-radius:10px;padding:0.6rem 0.7rem;max-height:120px;overflow:auto;color:var(--text2);white-space:pre-wrap;margin-top:0.9rem">Klar.</div>
+        <div id="lg-log" style="font:12px/1.5 ui-monospace,monospace;background:rgba(0,0,0,0.3);border-radius:10px;padding:0.6rem 0.7rem;max-height:120px;overflow:auto;color:var(--text2);white-space:pre-wrap;margin-top:0.9rem">Ready.</div>
       </div>`;
     App.openModal();
     if (live && _g.analL) _bcStartMeter();
   }
 
-  function _log(m) { const l = _byId('lg-log'); if (!l) return; l.textContent += '\n' + new Date().toLocaleTimeString('nb-NO') + '  ' + m; l.scrollTop = l.scrollHeight; }
+  function _log(m) { const l = _byId('lg-log'); if (!l) return; l.textContent += '\n' + new Date().toLocaleTimeString('en-US') + '  ' + m; l.scrollTop = l.scrollHeight; }
 
   async function bcPerm() {
     try {
@@ -306,12 +306,12 @@ const LiveGuest = (() => {
       const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
       const sel = _byId('lg-dev'); if (!sel) return;
       sel.innerHTML = '';
-      devs.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || ('Inngang ' + (sel.length + 1)); sel.appendChild(o); });
+      devs.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || ('Input ' + (sel.length + 1)); sel.appendChild(o); });
       const pref = devs.find(d => /blackhole|loopback|soundflower|air 192|aggregate/i.test(d.label));
       if (pref) sel.value = pref.deviceId;
       const go = _byId('lg-go'); if (go) go.disabled = false;
-      _log(devs.length + ' inngang(er).' + (pref ? '  Foreslår: ' + pref.label : ''));
-    } catch (e) { _log('FEIL tilgang: ' + e.message); }
+      _log(devs.length + ' input(s).' + (pref ? '  Suggested: ' + pref.label : ''));
+    } catch (e) { _log('ERROR access: ' + e.message); }
   }
 
   async function bcGo() {
@@ -331,10 +331,10 @@ const LiveGuest = (() => {
         onLog: _log,
       });
       _bcSetLive(true);
-      _log('Du er LIVE i rom «' + _g.room + '». Spill i DJ-programmet.');
+      _log('You are LIVE in room "' + _g.room + '". Play in your DJ software.');
       await LiveBroadcastSync.markStarted(_g.req.id, cur.username);
       const r = _mineCache.find(x => x.id === _g.req.id); if (r) r.status = 'live';
-    } catch (e) { _log('FEIL gå live: ' + e.message); if (typeof App !== 'undefined') App.toast('Kunne ikke gå live: ' + e.message, 'error'); }
+    } catch (e) { _log('ERROR going live: ' + e.message); if (typeof App !== 'undefined') App.toast('Could not go live: ' + e.message, 'error'); }
   }
 
   async function bcStop() {
@@ -346,11 +346,11 @@ const LiveGuest = (() => {
     _g.analL = _g.analR = null;
     _bcSetLive(false);
     const c = _byId('lg-count'); if (c) c.textContent = '0';
-    _log('Stoppet.');
+    _log('Stopped.');
     if (cur && _g.req) {
       await LiveBroadcastSync.markEnded(_g.req.id, cur.username);
       const r = _mineCache.find(x => x.id === _g.req.id); if (r) r.status = 'completed';
-      if (!(_g.req.thumbnail_url) && typeof App !== 'undefined') App.toast('Sending avsluttet! Husk å velge et forhåndsbilde på siden din, så vises den i arkivet.', 'info', 6000);
+      if (!(_g.req.thumbnail_url) && typeof App !== 'undefined') App.toast('Broadcast ended! Remember to choose a preview image on your page so it shows up in the archive.', 'info', 6000);
     }
     _g.req = null;
   }
@@ -359,7 +359,7 @@ const LiveGuest = (() => {
     const go = _byId('lg-go'), stop = _byId('lg-stop'), perm = _byId('lg-perm'), dev = _byId('lg-dev'), dot = _byId('lg-dot'), st = _byId('lg-status');
     if (go) go.disabled = live; if (stop) stop.disabled = !live; if (perm) perm.disabled = live; if (dev) dev.disabled = live;
     if (dot) dot.style.background = live ? '#ef4444' : '#9aa3b2';
-    if (st) st.textContent = live ? 'LIVE — sender' : 'Inaktiv';
+    if (st) st.textContent = live ? 'LIVE — broadcasting' : 'Inactive';
   }
 
   function _bcStartMeter() {
@@ -383,7 +383,7 @@ const LiveGuest = (() => {
   // ── Lytter: hør en spesifikk ekstern sending (eget rom, rører ALDRI #audio-engine) ──
   function tuneIn(room, name) {
     if (typeof App === 'undefined') return;
-    if (!window.LiveBroadcast) { App.toast('Kringkasting kunne ikke lastes.', 'error'); return; }
+    if (!window.LiveBroadcast) { App.toast('Broadcasting could not be loaded.', 'error'); return; }
     _g.room = room;
     _renderListener(name || '');
   }
@@ -392,24 +392,24 @@ const LiveGuest = (() => {
     const box = _byId('modal-box'); if (!box) return;
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${_I('headphones')} Hør live${name ? ' — ' + _esc(name) : ''}</h2>
-        <button class="btn-icon" onclick="LiveGuest.tuneOut()" aria-label="Lukk">${_I('x')}</button>
+        <h2>${_I('headphones')} Listen live${name ? ' — ' + _esc(name) : ''}</h2>
+        <button class="btn-icon" onclick="LiveGuest.tuneOut()" aria-label="Close">${_I('x')}</button>
       </div>
       <div style="padding:0.5rem 0;text-align:center">
         <span style="display:inline-flex;align-items:center;gap:0.45rem;font-size:0.82rem;font-weight:700;padding:0.3rem 0.8rem;border-radius:999px;background:rgba(255,255,255,0.06);margin-bottom:0.9rem">
           <span id="lg-ln-dot" style="width:10px;height:10px;border-radius:50%;background:#9aa3b2"></span>
-          <span id="lg-ln-status">Kobler til…</span>
+          <span id="lg-ln-status">Connecting…</span>
         </span>
         <audio id="lg-ln-audio" autoplay playsinline></audio>
         <div id="lg-ln-info" style="font-size:0.78rem;color:var(--text3);margin-top:0.9rem"></div>
       </div>`;
     App.openModal();
-    _lnStatus('Kobler til…', false);
+    _lnStatus('Connecting…', false);
     _g.ln = LiveBroadcast.listener(_g.room, {
       onState: s => {
-        if (s === 'connected') _lnStatus('LIVE — hører settet', true);
-        else if (s === 'dj-offline') _lnStatus('Sending avsluttet', false);
-        else if (['failed', 'disconnected', 'closed'].includes(s)) _lnStatus('Frakoblet', false);
+        if (s === 'connected') _lnStatus('LIVE — listening to the set', true);
+        else if (s === 'dj-offline') _lnStatus('Broadcast ended', false);
+        else if (['failed', 'disconnected', 'closed'].includes(s)) _lnStatus('Disconnected', false);
       },
       onTrack: stream => {
         const attach = () => { const a = _byId('lg-ln-audio'); if (a) { a.srcObject = stream; a.play().catch(() => {}); } };
@@ -455,7 +455,7 @@ const LiveGuest = (() => {
     if (!_pill) return;
     if (_liveNow.length) {
       _pill.style.display = 'inline-flex';
-      _pill.innerHTML = '🔴 Live nå' + (_liveNow.length > 1 ? ' (' + _liveNow.length + ')' : '');
+      _pill.innerHTML = '🔴 Live now' + (_liveNow.length > 1 ? ' (' + _liveNow.length + ')' : '');
     } else {
       _pill.style.display = 'none';
     }
@@ -466,8 +466,8 @@ const LiveGuest = (() => {
     const box = _byId('modal-box'); if (!box) return;
     box.innerHTML = `
       <div class="modal-header">
-        <h2>🔴 Live nå</h2>
-        <button class="btn-icon" onclick="App.closeModal()" aria-label="Lukk">${_I('x')}</button>
+        <h2>🔴 Live now</h2>
+        <button class="btn-icon" onclick="App.closeModal()" aria-label="Close">${_I('x')}</button>
       </div>
       <div style="padding:0.5rem 0;display:grid;gap:0.7rem">
         ${_liveNow.map(b => `
@@ -475,9 +475,9 @@ const LiveGuest = (() => {
             ${b.thumbnail_url ? `<img src="${_esc(b.thumbnail_url)}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:10px;flex-shrink:0">` : ''}
             <div style="flex:1;min-width:0">
               <div style="font-weight:800">${_esc(b.display_name)}</div>
-              <div style="font-size:0.78rem;color:var(--text2)">Live nå</div>
+              <div style="font-size:0.78rem;color:var(--text2)">Live now</div>
             </div>
-            <button class="btn btn-primary" onclick="LiveGuest.tuneIn('${_esc(b.room)}','${_esc(b.display_name).replace(/'/g, "\\'")}')">▶︎ Hør</button>
+            <button class="btn btn-primary" onclick="LiveGuest.tuneIn('${_esc(b.room)}','${_esc(b.display_name).replace(/'/g, "\\'")}')">▶︎ Listen</button>
           </div>`).join('')}
       </div>`;
     App.openModal();

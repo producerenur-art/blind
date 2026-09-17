@@ -71,7 +71,7 @@ module.exports = async (req, res) => {
 
   const p = decodePayload(d) || {};
   const kind = p.k === 'video' ? 'video' : (p.k === 'image' ? 'image' : (p.k === 'link' ? 'link' : 'audio'));
-  const title = (p.t && String(p.t).trim()) || 'Delt på SiriusFM';
+  const title = (p.t && String(p.t).trim()) || 'Shared on SiriusFM';
   const artist = (p.a && String(p.a).trim()) || '';
   const username = (p.u && String(p.u).replace(/[^a-zA-Z0-9_\-.]/g, '')) || '';
   const image = safeUrl(p.i, hosts) || FALLBACK_IMG;
@@ -85,10 +85,10 @@ module.exports = async (req, res) => {
   }
 
   const desc = kind === 'image'
-    ? (artist ? `Laget av ${artist} · SiriusFM` : 'Laget i Blend Studio på SiriusFM.')
+    ? (artist ? `Made by ${artist} · SiriusFM` : 'Made in Blend Studio on SiriusFM.')
     : (kind === 'link'
-        ? (artist ? `${artist} · Delt via SiriusFM` : 'Delt via SiriusFM — sosial plattform for elektronisk musikk.')
-        : (artist ? `${artist} · Hør på SiriusFM` : 'Hør på SiriusFM — sosial plattform for elektronisk musikk.'));
+        ? (artist ? `${artist} · Shared via SiriusFM` : 'Shared via SiriusFM — social platform for electronic music.')
+        : (artist ? `${artist} · Listen on SiriusFM` : 'Listen on SiriusFM — social platform for electronic music.'));
   const fullTitle = artist ? `${title} — ${artist}` : title;
   const profileUrl = username ? `${SITE}/#/u/${encodeURIComponent(username)}` : SITE + '/';
   const canonical = `${SITE}/s/${encodeURIComponent(d || '')}`;
@@ -139,7 +139,7 @@ module.exports = async (req, res) => {
         : `<img class="media" src="${esc(image)}" alt="${esc(fullTitle)}">${media ? `<audio class="audio" controls preload="metadata"><source src="${esc(media)}" type="${esc(mime)}"></audio>` : ''}`);
 
   const html = `<!doctype html>
-<html lang="no">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -177,10 +177,10 @@ ${tags.join('\n')}
     <h1>${esc(title)}</h1>
     ${artist ? `<p class="artist">${esc(artist)}</p>` : '<div style="height:.6rem"></div>'}
     ${(kind === 'link' && extLink)
-      ? `<a class="cta" href="${esc(extLink)}" target="_blank" rel="noopener">▶ Åpne lenke</a>
-    <div class="foot"><a class="plain" href="${esc(profileUrl)}">Se profilen på SiriusFM</a></div>`
-      : `<a class="cta" href="${esc(profileUrl)}">▶ Åpne i SiriusFM</a>
-    <div class="foot">Delt via <a class="plain" href="${SITE}/">siriusfm.no</a></div>`}
+      ? `<a class="cta" href="${esc(extLink)}" target="_blank" rel="noopener">▶ Open link</a>
+    <div class="foot"><a class="plain" href="${esc(profileUrl)}">See profile on SiriusFM</a></div>`
+      : `<a class="cta" href="${esc(profileUrl)}">▶ Open in SiriusFM</a>
+    <div class="foot">Shared via <a class="plain" href="${SITE}/">siriusfm.no</a></div>`}
   </div>
 </body>
 </html>`;

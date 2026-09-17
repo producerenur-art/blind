@@ -7,6 +7,7 @@
 (function () {
   function init() {
     const input = document.getElementById('dock-updates-email');
+    const dayEl = document.getElementById('dock-updates-day');
     const go    = document.getElementById('dock-updates-go');
     if (!input || !go) return;
 
@@ -33,12 +34,13 @@
         notify('Enter a valid email address.', 'error');
         return;
       }
+      const digestDay = dayEl ? parseInt(dayEl.value, 10) : 5;
       go.disabled = true;
       try {
         const res = await fetch('/api/auth?action=subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, digestDay }),
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && data.success) {

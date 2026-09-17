@@ -60,7 +60,13 @@ const Auth = (() => {
       const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
       if (!s) return null;
       const users = getUsers();
-      return users[s.username] || null;
+      const u = users[s.username] || null;
+      // Samlet admin-e-postliste, CONFIG.ADMIN_EMAILS (js/config.js): gratis Pro-tilgang
+      // for admin-kontoer. Klonet, ikke lagret — rører aldri den ekte abonnement-lagringen.
+      if (u && typeof CONFIG !== 'undefined' && CONFIG.isAdminEmail(u) && u.subscription !== 'pro') {
+        return { ...u, subscription: 'pro' };
+      }
+      return u;
     },
 
     register(username, password, displayName, email) {

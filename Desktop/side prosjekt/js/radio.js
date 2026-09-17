@@ -42,6 +42,7 @@ const Radio = (() => {
       emoji: '🔥', color: '#f97316',
       desc: 'OZORA Festival radio — psytrance 24/7 · Budapest 🇭🇺',
       featured: true,
+      partner: true,
     },
     {
       // Verifisert 07.09.2026: chill.out.airtime.pro/chill_a svarer 200, og
@@ -53,6 +54,7 @@ const Radio = (() => {
       npApi: 'https://chill.airtime.pro/api/live-info-v2',
       emoji: '🌿', color: '#22c55e',
       desc: 'OZORA Festival radio — chill & downtempo 24/7 · Budapest 🇭🇺',
+      partner: true,
     },
 
     // ════════════════════════════════════════════
@@ -1269,6 +1271,12 @@ const Radio = (() => {
       _lastCurrentTime = -1;
       return;
     }
+    // Same suspended-AudioContext-fella som visibilitychange-handteraren over:
+    // <audio>-elementet sitt currentTime kan tikke vidare (framleis "spelar")
+    // medan output er stille fordi konteksten vart suspendert av mobilen —
+    // dette tikket er difor det einaste som fangar det MEDAN fana framleis
+    // reknast som synleg (t.d. skjermen dimma, men ikkje låst).
+    if (audioCtx?.state === 'suspended') audioCtx.resume();
     const audio = getAudio();
     if (!audio) return;
     if (audio.currentTime !== _lastCurrentTime) {
@@ -1293,6 +1301,12 @@ const Radio = (() => {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState !== 'visible') return;
       if (!window._radioMode || !isPlaying || _jingleBusy || _liveTakeover || !currentStation) return;
+      // Mobilnettlesarar kan suspendere AudioContext-en (stille lyd, sjølv om
+      // <audio>-elementet framleis "spelar" og currentTime tikkar — vakthunden
+      // over fangar difor ALDRI dette, berre eit ekte currentTime-stopp).
+      // Resume FØR paused-sjekken, elles kan lyden framleis vera stille etter
+      // at denne handteraren har konkludert med at alt er i orden.
+      if (audioCtx?.state === 'suspended') audioCtx.resume();
       const audio = getAudio();
       if (audio && audio.paused) _playUrl(currentStation.url, currentStation);
     });
@@ -1307,10 +1321,14 @@ const Radio = (() => {
   function _updateMediaSession(info) {
     if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
     try {
+      // Same regel som Now Playing-boksen (linje ~1357/1659): når SiriusFM
+      // 24/7 Cycle eig avspelinga skal låseskjerm-kontrollane vise DET namnet,
+      // ikkje den undervliggande sjangeren/stasjonen som roterer inn og ut.
+      const r247Active = typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive();
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: info.shortName || info.name || 'SiriusFM Radio',
-        artist: 'SiriusFM',
-        album: info.desc || 'Live stream',
+        title: r247Active ? 'SiriusFM 24/7 Cycle' : (info.shortName || info.name || 'Radio'),
+        artist: r247Active ? '' : 'SiriusFM',
+        album: r247Active ? '' : (info.desc || 'Live stream'),
         artwork: [{ src: '/assets/icon-512.png', sizes: '512x512', type: 'image/png' }],
       });
       navigator.mediaSession.playbackState = 'playing';
@@ -3133,7 +3151,7 @@ const Radio = (() => {
       '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;font-weight:700;letter-spacing:0.06em;color:#a78bfa;background:rgba(167,139,250,0.14);border:1px solid rgba(167,139,250,0.35);border-radius:99px;padding:0.15rem 0.45rem;">' +
       '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#a78bfa;animation:livePulseA 1.2s ease-in-out infinite;"></span>LIVE</span>';
     if (title)  title.innerHTML  = badge + ' SiriusFM Live Stream';
-    if (artist) artist.textContent = 'med ' + (presenterName || 'SiriusFM');
+    if (artist) artist.textContent = 'with ' + (presenterName || 'SiriusFM');
   }
 
   function isLiveTakeoverActive() { return _liveTakeover; }

@@ -357,7 +357,7 @@ const DJ = (() => {
       <div class="dj-pm-msg ${isMine ? 'dj-pm-msg--mine' : ''}">
         ${!isMine ? `<div class="dj-pm-nick">${_esc(m.displayName)}</div>` : ''}
         <div class="dj-pm-bubble">${body}${editedTag}</div>
-        <div class="dj-pm-time">${new Date(m.ts).toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'})}${actions}</div>
+        <div class="dj-pm-time">${new Date(m.ts).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}${actions}</div>
       </div>`;
   }
 

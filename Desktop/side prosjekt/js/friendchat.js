@@ -245,7 +245,7 @@ const FriendChat = (() => {
     const cont = document.getElementById('fc-messages'); if (!cont) return;
     const me = Auth.current();
     const isMine = me && msg.from === me.username;
-    const time = new Date(msg.ts || Date.now()).toLocaleTimeString('no', { hour: '2-digit', minute: '2-digit' });
+    const time = new Date(msg.ts || Date.now()).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     const body = msg.kind === 'gif'
       ? `<img class="fc-msg-gif" src="${esc(msg.text)}" alt="GIF" loading="lazy">`
       : `<span class="fc-msg-text">${esc(msg.text)}</span>`;

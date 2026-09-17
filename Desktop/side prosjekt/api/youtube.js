@@ -41,7 +41,7 @@ module.exports = async (req, res) => {
       if (reason === 'quotaExceeded')
         return res.status(429).json({ error: 'The YouTube search quota is used up for today' });
       console.error('YouTube API feil:', r.status, data?.error?.message);
-      return res.status(502).json({ error: data?.error?.message || 'YouTube-søk feilet' });
+      return res.status(502).json({ error: data?.error?.message || 'YouTube search failed' });
     }
 
     const items = (data.items || [])
@@ -59,6 +59,6 @@ module.exports = async (req, res) => {
     return res.status(200).json({ items });
   } catch (e) {
     console.error('YouTube-søk feil:', e);
-    return res.status(500).json({ error: e?.message || 'Kunne ikkje søkje på YouTube' });
+    return res.status(500).json({ error: e?.message || 'Could not search YouTube' });
   }
 };

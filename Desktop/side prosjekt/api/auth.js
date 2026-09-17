@@ -106,19 +106,19 @@ async function sendAccountEmail(type, toEmail, toName, token) {
 
   let subject, html;
   if (type === 'activation') {
-    subject = `Aktiver SiriusFM-kontoen din, ${toName}!`;
+    subject = `Activate your SiriusFM account, ${toName}!`;
     html    = activationHtml(toName, `${siteUrl}/#/activate/${token}`, siteUrl);
   } else {
-    subject = 'Tilbakestill passordet ditt på SiriusFM';
+    subject = 'Reset your SiriusFM password';
     html    = resetHtml(toName, `${siteUrl}/#/reset/${token}`);
   }
   try {
     // Resend v6 kaster ikke ved API-feil — returnerer { data, error }.
     const { data, error } = await resend.emails.send({ from: fromEmail, to: toEmail, subject, html });
-    if (error) return { error: error.message || 'Resend kunne ikke sende e-posten' };
+    if (error) return { error: error.message || 'Resend could not send the email' };
     return { success: true, id: data?.id };
   } catch (e) {
-    return { error: e?.message || 'Kunne ikke sende e-post' };
+    return { error: e?.message || 'Could not send email' };
   }
 }
 
@@ -326,7 +326,7 @@ async function setMarketingOptOut(db, body, value) {
     // Kolonnen mangler (migrasjon 0004 ikke kjørt) → myk suksess; klienten beholder
     // sin lokale opt-out i localStorage, så avmeldingen fungerer uansett per enhet.
     if (columnMissing(error)) return { status: 200, body: { success: true, notProvisioned: true } };
-    return { status: 500, body: { error: value ? 'Kunne ikke lagre avmelding' : 'Kunne ikke lagre påmelding' } };
+    return { status: 500, body: { error: value ? 'Could not save unsubscribe' : 'Could not save subscribe' } };
   }
   return { status: 200, body: { success: true } };
 }
@@ -359,8 +359,20 @@ async function resubscribe(db, body) {
 async function subscribe(db, body) {
   const email = String(body.email || '').toLowerCase().trim();
   if (!email || !email.includes('@')) return { status: 400, body: { error: 'Invalid email address' } };
-  const { error } = await db.from('newsletter_subscribers')
-    .upsert({ email, unsubscribed_at: null }, { onConflict: 'email' });
+  // digest_day: 0=søndag..6=lørdag (samme indeksering som osloClock() i
+  // api/send-email.js) — hvilken ukedag DENNE abonnenten vil ha det ukentlige
+  // nyhetsbrevet på. Ugyldig/manglende verdi faller tilbake til 5 (fredag),
+  // som er den samme dagen alle fikk før dagvelgeren fantes.
+  let digestDay = parseInt(body.digestDay, 10);
+  if (!Number.isFinite(digestDay) || digestDay < 0 || digestDay > 6) digestDay = 5;
+  let { error } = await db.from('newsletter_subscribers')
+    .upsert({ email, unsubscribed_at: null, digest_day: digestDay }, { onConflict: 'email' });
+  // Migrasjon 0027 (digest_day) ikke kjørt ennå — degrader pent, samme mønster
+  // som marketing_opt_out over: meld på uten dagvalget i stedet for å feile.
+  if (error && columnMissing(error)) {
+    console.warn('newsletter_subscribers.digest_day finnes ikke ennå — kjør supabase/migrations/0027_notify_preferences.sql.');
+    ({ error } = await db.from('newsletter_subscribers').upsert({ email, unsubscribed_at: null }, { onConflict: 'email' }));
+  }
   if (error) {
     if (tableMissing(error)) {
       console.warn('newsletter_subscribers-tabellen finnes ikke ennå — kjør supabase/migrations/0021_newsletter_subscribers.sql.');

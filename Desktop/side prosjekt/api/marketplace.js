@@ -252,7 +252,7 @@ async function myPurchases(req, res, db) {
     .order('created_at', { ascending: false });
   if (error) throw error;
   const purchases = (data || []).map(p => ({
-    productId: p.product_id, title: p.products?.title || 'Ukjent',
+    productId: p.product_id, title: p.products?.title || 'Unknown',
     artist: p.products?.artist || '', seller: p.products?.seller_username || '',
     amount_nok: (p.amount_ore || 0) / 100, created_at: p.created_at,
   }));

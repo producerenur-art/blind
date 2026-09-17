@@ -367,10 +367,10 @@ const App = (() => {
         ${item('#/shows','calendar','Shows')}
         ${item('#/world','globe','World')}
         ${item('#/magazine','book','Magazine')}
-        ${item('#/live-archive','radio','Live-arkiv')}
-        ${btn("if(window.LiveGuest)LiveGuest.openApply()",'radio','Søk om å gå live')}
-        ${item('#/go-live/mine','clock','Mine live-forespørsler')}
-        ${(window.LiveGuestAdmin && LiveGuestAdmin._isOwner(user)) ? item('#/go-live/admin','lock','Sendeforespørsler') : ''}
+        ${item('#/live-archive','radio','Live Archive')}
+        ${btn("if(window.LiveGuest)LiveGuest.openApply()",'radio','Apply to go live')}
+        ${item('#/go-live/mine','clock','My live requests')}
+        ${(window.LiveGuestAdmin && LiveGuestAdmin._isOwner(user)) ? item('#/go-live/admin','lock','Broadcast requests') : ''}
         ${item('#/a1','sparkles','A1')}
         ${item('#/studio','image','Studio')}
         <div class="nav-more-sep"></div>
@@ -386,8 +386,8 @@ const App = (() => {
       ${item('#/underground','moon','Underground')}
       ${item('#/shows','calendar','Shows')}
       ${item('#/world','globe','World')}
-      ${item('#/magazine','book','Magasin')}
-      ${item('#/live-archive','radio','Live-arkiv')}
+      ${item('#/magazine','book','Magazine')}
+      ${item('#/live-archive','radio','Live Archive')}
       ${item('#/a1','sparkles','A1')}
     `;
   }
@@ -1397,7 +1397,7 @@ const App = (() => {
       ? user.events.map(ev => `
           <div class="ms-item">
             <span class="ms-item-icon">${Icon('calendar')}</span>
-            <span class="ms-item-label">${ev.title || 'Event'} — ${ev.date ? new Date(ev.date).toLocaleDateString('no-NO') : ''}</span>
+            <span class="ms-item-label">${ev.title || 'Event'} — ${ev.date ? new Date(ev.date).toLocaleDateString('en-US') : ''}</span>
             ${ev.isLive ? '<span class="event-live-dot" style="width:8px;height:8px;margin-left:0.5rem"></span>' : ''}
           </div>`).join('')
       : '<p class="ms-empty">No events yet. <a href="#/edit">Add to profile</a></p>';
@@ -2460,7 +2460,7 @@ const App = (() => {
         if (d < 60000)    return 'Just now';
         if (d < 3600000)  return `${Math.floor(d/60000)} min ago`;
         if (d < 86400000) return `${Math.floor(d/3600000)} h ago`;
-        return new Date(c.last.ts).toLocaleDateString('no-NO');
+        return new Date(c.last.ts).toLocaleDateString('en-US');
       })();
       const label = c.chatName || c.displayName;
       return `
@@ -2702,7 +2702,7 @@ const App = (() => {
                 ? `<button class="btn btn-primary w-full" onclick="Payment.startCheckout('${user.username}')">Upgrade to Pro</button>
                    <a href="#/shop" class="shop-link-sm" style="text-align:center;width:100%;margin-top:0.6rem">See 1, 3, 6 and 12 months in Shop →</a>`
                 : user.proCancelPending
-                  ? `<div style="text-align:center;color:var(--text2);font-weight:600;margin-top:0.5rem">${Icon('clock')} Ends ${user.proPeriodEnd ? new Date(user.proPeriodEnd).toLocaleDateString('nb-NO') : 'at period end'}</div>
+                  ? `<div style="text-align:center;color:var(--text2);font-weight:600;margin-top:0.5rem">${Icon('clock')} Ends ${user.proPeriodEnd ? new Date(user.proPeriodEnd).toLocaleDateString('en-US') : 'at period end'}</div>
                      <button class="btn btn-ghost btn-sm w-full" style="margin-top:0.6rem" onclick="Payment.reactivateSubscription()">${Icon('repeat')} Undo – keep Pro</button>`
                   : `<div style="text-align:center;color:#7dd3fc;font-weight:700;margin-top:0.5rem">${Icon('check')} Active subscription</div>
                      <button class="btn btn-ghost btn-sm w-full" style="margin-top:0.75rem;color:var(--red)" onclick="Payment.cancelSubscription()">${Icon('x')} Cancel subscription</button>`}

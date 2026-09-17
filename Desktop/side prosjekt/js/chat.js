@@ -133,7 +133,7 @@ const Chat = (() => {
         <span class="chat-float-grip" aria-hidden="true">${Icon('grip')}</span>
         <span class="chat-float-title">${Icon('radio')} SiriusFM — Live Chat</span>
         <button class="chat-float-btn" id="chat-minimize-btn" onclick="Chat.toggleMinimize()" title="Minimize">—</button>
-        <button class="chat-float-btn chat-float-close" id="chat-close-btn" onclick="Chat.closeFloat()" title="Lukk chat" aria-label="Lukk chat">×</button>
+        <button class="chat-float-btn chat-float-close" id="chat-close-btn" onclick="Chat.closeFloat()" title="Close chat" aria-label="Close chat">×</button>
       </div>
       <div class="chat-page">
         <div class="chat-panel">
@@ -224,8 +224,8 @@ const Chat = (() => {
         <div id="chat-float-drag-bar" class="chat-float-drag-bar">
           <span class="chat-float-grip" aria-hidden="true">${Icon('grip')}</span>
           <span class="chat-float-title">${Icon('radio')} SiriusFM — Live Chat</span>
-          <button class="chat-float-btn" id="chat-minimize-btn" onclick="Chat.toggleMinimize()" title="Minimer">—</button>
-          <button class="chat-float-btn chat-float-close" id="chat-close-btn" onclick="Chat.closeFloat()" title="Lukk chat" aria-label="Lukk chat">×</button>
+          <button class="chat-float-btn" id="chat-minimize-btn" onclick="Chat.toggleMinimize()" title="Minimize">—</button>
+          <button class="chat-float-btn chat-float-close" id="chat-close-btn" onclick="Chat.closeFloat()" title="Close chat" aria-label="Close chat">×</button>
         </div>
 
         <div class="chat-page">
@@ -463,7 +463,7 @@ const Chat = (() => {
     if (!container) return;
     const isSystem = msg.type === 'system';
     const isSelf   = msg.nick === myNick;
-    const time     = new Date(msg.ts || Date.now()).toLocaleTimeString('no', { hour:'2-digit', minute:'2-digit' });
+    const time     = new Date(msg.ts || Date.now()).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
 
     if (isSystem) {
       const el = document.createElement('div');

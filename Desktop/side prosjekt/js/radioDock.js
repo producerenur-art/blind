@@ -87,7 +87,7 @@ const RadioDock = (() => {
     dock.classList.toggle('collapsed', !isOpen);
     if (toggleBtn) {
       toggleBtn.innerHTML = _icon(isOpen ? 'chevron-down' : 'chevron-up', isOpen ? '▾' : '▴');
-      toggleBtn.title = isOpen ? 'Lukk' : 'Åpne';
+      toggleBtn.title = isOpen ? 'Close' : 'Open';
     }
   }
 

@@ -97,8 +97,8 @@ const Player = (() => {
     const url = await getBlobUrl(id);
     audio.src = url;
 
-    $('player-title').textContent  = rec.name  || 'Ukjent sang';
-    $('player-artist').textContent = rec.artist || 'Ukjent artist';
+    $('player-title').textContent  = rec.name  || 'Unknown song';
+    $('player-artist').textContent = rec.artist || 'Unknown artist';
 
     const artEl = $('player-artwork');
     const coverUrl = await resolveCoverUrl(rec);

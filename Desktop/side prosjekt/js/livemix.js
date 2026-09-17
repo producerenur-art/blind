@@ -18,10 +18,10 @@ const LiveMix = (() => {
   }
 
   function _fmtDateTime(iso) {
-    if (!iso) return 'Avtales senere';
+    if (!iso) return 'To be scheduled';
     const d = new Date(iso);
     if (isNaN(d.getTime())) return String(iso);
-    return d.toLocaleString('nb-NO', {
+    return d.toLocaleString('en-US', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
     });
   }
@@ -62,7 +62,7 @@ const LiveMix = (() => {
   function openBooking() {
     const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
     if (!cur) {
-      if (typeof App !== 'undefined') App.toast('Logg inn eller lag en gratis profil for å booke et mikse-slot.', 'info', 4000);
+      if (typeof App !== 'undefined') App.toast('Log in or create a free profile to book a mix slot.', 'info', 4000);
       location.hash = '#/login';
       return;
     }
@@ -81,38 +81,38 @@ const LiveMix = (() => {
 
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${_I('clock')} Book Live Mix-tid</h2>
-        <button class="btn-icon" onclick="App.closeModal()" aria-label="Lukk">${_I('x')}</button>
+        <h2>${_I('clock')} Book Live Mix Time</h2>
+        <button class="btn-icon" onclick="App.closeModal()" aria-label="Close">${_I('x')}</button>
       </div>
       <div style="padding:0.5rem 0 0.25rem">
         <p style="color:var(--text2);font-size:0.9rem;line-height:1.5;margin:0 0 1rem">
-          Reserver et direktesendt mikse-slot der du mikser live for lytterne på Sound Core.
-          Opptaket lagres automatisk på profilen din etterpå, så settet ditt lever videre.
-          Du betaler kun for timene du booker — ingen abonnement, ingen binding.
+          Reserve a live-streamed mix slot where you mix live for Sound Core's listeners.
+          The recording is automatically saved to your profile afterward, so your set lives on.
+          You only pay for the hours you book — no subscription, no commitment.
         </p>
 
-        <label for="lm-slot" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Når vil du sende?</label>
+        <label for="lm-slot" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">When do you want to broadcast?</label>
         <input id="lm-slot" type="datetime-local" value="${localISO}"
           style="width:100%;box-sizing:border-box;padding:0.65rem 0.75rem;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:var(--text);font-size:0.95rem;margin:0 0 1rem">
 
-        <label style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Hvor mange timer?</label>
+        <label style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">How many hours?</label>
         <div style="display:flex;align-items:center;gap:0.75rem;margin:0 0 0.6rem">
-          <button class="btn btn-ghost" onclick="LiveMix.step(-1)" aria-label="Færre timer" style="width:44px;height:44px;font-size:1.4rem;padding:0;line-height:1">−</button>
-          <div id="lm-hours" style="font-size:1.4rem;font-weight:800;min-width:3.5rem;text-align:center">1 t</div>
-          <button class="btn btn-ghost" onclick="LiveMix.step(1)" aria-label="Flere timer" style="width:44px;height:44px;font-size:1.4rem;padding:0;line-height:1">+</button>
+          <button class="btn btn-ghost" onclick="LiveMix.step(-1)" aria-label="Fewer hours" style="width:44px;height:44px;font-size:1.4rem;padding:0;line-height:1">−</button>
+          <div id="lm-hours" style="font-size:1.4rem;font-weight:800;min-width:3.5rem;text-align:center">1 hr</div>
+          <button class="btn btn-ghost" onclick="LiveMix.step(1)" aria-label="More hours" style="width:44px;height:44px;font-size:1.4rem;padding:0;line-height:1">+</button>
           <div style="margin-left:auto;text-align:right">
-            <div style="font-size:0.72rem;color:var(--text3)">Totalt</div>
+            <div style="font-size:0.72rem;color:var(--text3)">Total</div>
             <div id="lm-total" style="font-size:1.4rem;font-weight:800">${RATE_KR} kr</div>
           </div>
         </div>
         <div style="font-size:0.78rem;color:var(--text3);margin:0 0 1.25rem">
-          ${RATE_KR} kr per time · 1 t ${RATE_KR} kr · 2 t ${2 * RATE_KR} kr · +${RATE_KR} kr/t videre
+          ${RATE_KR} kr per hour · 1 hr ${RATE_KR} kr · 2 hr ${2 * RATE_KR} kr · +${RATE_KR} kr/hr after
         </div>
 
-        <button class="btn btn-primary w-full" onclick="LiveMix.startCheckout()" style="margin-bottom:0.6rem">${_I('credit-card')} Betal med kort</button>
-        <button class="btn btn-ghost w-full" onclick="LiveMix.testPurchase()">${_I('sparkles')} Test-kjøp (uten betaling)</button>
+        <button class="btn btn-primary w-full" onclick="LiveMix.startCheckout()" style="margin-bottom:0.6rem">${_I('credit-card')} Pay by card</button>
+        <button class="btn btn-ghost w-full" onclick="LiveMix.testPurchase()">${_I('sparkles')} Test purchase (no payment)</button>
         <p style="font-size:0.72rem;color:var(--text3);margin:0.75rem 0 0;text-align:center">
-          Sikker betaling via Stripe. «Test-kjøp» lager en testbooking med testkvittering — ingen ekte betaling trekkes.
+          Secure payment via Stripe. "Test purchase" creates a test booking with a test receipt — no real payment is charged.
         </p>
       </div>`;
     App.openModal();
@@ -128,7 +128,7 @@ const LiveMix = (() => {
     const p = priceFor(_hours);
     const h = document.getElementById('lm-hours');
     const t = document.getElementById('lm-total');
-    if (h) h.textContent = p.hours + ' t';
+    if (h) h.textContent = p.hours + ' hr';
     if (t) t.textContent = p.kr + ' kr';
   }
 
@@ -140,28 +140,28 @@ const LiveMix = (() => {
   // ── Ekte betaling (Stripe engangsbetaling) ──────────────────────────
   async function startCheckout() {
     const cur = Auth.current();
-    if (!cur) { App.toast('Logg inn for å booke.', 'error'); return; }
+    if (!cur) { App.toast('Log in to book.', 'error'); return; }
     const slot = _slotValue();
     const p = priceFor(_hours);
     try {
-      App.toast('Sender deg til betaling…', 'info', 4000);
+      App.toast('Sending you to checkout…', 'info', 4000);
       const res = await fetch('/api/create-checkout', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ username: cur.username, product: 'livemix', hours: p.hours, slot }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Kunne ikke opprette betaling');
+      if (!res.ok) throw new Error(data.error || 'Could not create payment');
       window.location.href = data.url;
     } catch (err) {
-      App.toast('Betalingsfeil: ' + err.message, 'error');
+      App.toast('Payment error: ' + err.message, 'error');
     }
   }
 
   // ── Test-kjøp (ingen ekte betaling) ─────────────────────────────────
   function testPurchase() {
     const cur = Auth.current();
-    if (!cur) { App.toast('Logg inn for å booke.', 'error'); return; }
+    if (!cur) { App.toast('Log in to book.', 'error'); return; }
     const booking = _makeBooking(cur, { hours: _hours, slotISO: _slotValue(), test: true });
     _persist(booking);
     showReceipt(booking, cur.displayName || cur.username);
@@ -185,41 +185,41 @@ const LiveMix = (() => {
     const box = document.getElementById('modal-box');
     if (!box || typeof App === 'undefined') return;
 
-    const fmtDate = d => new Date(d).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' });
+    const fmtDate = d => new Date(d).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
     const row = (l, v, strong) => `
       <div style="display:flex;justify-content:space-between;gap:1rem;padding:0.5rem 0;font-size:0.9rem">
         <span style="color:var(--text2)">${l}</span>
         <span style="font-weight:${strong ? '800' : '600'};text-align:right">${v}</span>
       </div>`;
     const testBadge = booking.test
-      ? `<div style="display:inline-block;background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;font-size:0.68rem;letter-spacing:0.05em;padding:0.25rem 0.7rem;border-radius:999px;margin-top:0.6rem">TESTKJØP · INGEN EKTE BETALING</div>`
+      ? `<div style="display:inline-block;background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;font-size:0.68rem;letter-spacing:0.05em;padding:0.25rem 0.7rem;border-radius:999px;margin-top:0.6rem">TEST PURCHASE · NO REAL PAYMENT</div>`
       : '';
 
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${_I('check-circle')} Kvittering</h2>
+        <h2>${_I('check-circle')} Receipt</h2>
         <button class="btn-icon" onclick="App.closeModal()">${_I('x')}</button>
       </div>
       <div style="padding:1.25rem 0">
         <div style="text-align:center;margin-bottom:1rem">
           <div style="width:60px;height:60px;margin:0 auto;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#f472b6);display:flex;align-items:center;justify-content:center;font-size:1.8rem">🎚️</div>
-          <div style="font-weight:800;font-size:1.1rem;margin-top:0.5rem">Live Mix-tid booket!</div>
-          <div style="color:var(--text2);font-size:0.85rem">Takk, ${name}. Opptaket lagres på profilen din etter sending.</div>
+          <div style="font-weight:800;font-size:1.1rem;margin-top:0.5rem">Live Mix time booked!</div>
+          <div style="color:var(--text2);font-size:0.85rem">Thanks, ${name}. The recording will be saved to your profile after the broadcast.</div>
           ${testBadge}
         </div>
         <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:0.35rem 1.1rem">
-          ${row('Produkt', 'Live Mix-tid')}
-          ${row('Varighet', booking.hours + (booking.hours > 1 ? ' timer' : ' time'))}
-          ${row('Sendetidspunkt', _fmtDateTime(booking.slot))}
-          ${row('Kjøpsdato', fmtDate(booking.createdAt))}
-          ${row('Ordre-ref', booking.ref)}
+          ${row('Product', 'Live Mix time')}
+          ${row('Duration', booking.hours + (booking.hours > 1 ? ' hours' : ' hour'))}
+          ${row('Broadcast time', _fmtDateTime(booking.slot))}
+          ${row('Purchase date', fmtDate(booking.createdAt))}
+          ${row('Order ref', booking.ref)}
           <div style="border-top:1px solid rgba(255,255,255,0.1);margin:0.4rem 0"></div>
-          ${row('Betalt', booking.kr + ' kr', true)}
+          ${row('Paid', booking.kr + ' kr', true)}
         </div>
-        <button class="btn btn-primary w-full" style="margin-top:1.25rem" onclick="App.closeModal()">${_I('check')} Ferdig</button>
+        <button class="btn btn-primary w-full" style="margin-top:1.25rem" onclick="App.closeModal()">${_I('check')} Done</button>
         ${booking.test
-          ? `<p style="font-size:0.72rem;color:var(--text3);margin-top:0.75rem;text-align:center">Dette var et testkjøp. Bookingen ligger nå på profilen din.</p>`
-          : `<p style="font-size:0.72rem;color:var(--text3);margin-top:0.75rem;text-align:center">En kopi av kvitteringen er sendt til e-posten din.</p>`}
+          ? `<p style="font-size:0.72rem;color:var(--text3);margin-top:0.75rem;text-align:center">This was a test purchase. The booking is now on your profile.</p>`
+          : `<p style="font-size:0.72rem;color:var(--text3);margin-top:0.75rem;text-align:center">A copy of the receipt has been sent to your email.</p>`}
       </div>`;
     App.openModal();
   }
@@ -254,8 +254,22 @@ const LiveMix = (() => {
         p_presenter_name: isLive ? (_bc.presenterName || '') : '',
         p_room:           isLive ? (_bc.room || '') : '',
       });
-      if (error) _bcLog('Global «gå live»-status ikke publisert: ' + error.message);
-    } catch (e) { _bcLog('Global «gå live»-status feilet: ' + (e.message || e)); }
+      if (error) _bcLog('Global "go live" status not published: ' + error.message);
+    } catch (e) { _bcLog('Global "go live" status failed: ' + (e.message || e)); }
+  }
+
+  // Fire-and-forget: øyeblikkelig e-postvarsel til abonnentar (api/live-start-notify.js,
+  // migrasjon 0027) om at sendinga akkurat starta. Same eigar-hemmelegheit som
+  // _publishLiveStatus() over — server-sida har ein cooldown (20 min) mot fleire
+  // varsel på rad om DJ-en stoppar/startar igjen. Kalla KUN ved oppstart, aldri ved stopp.
+  async function _notifyLiveStart() {
+    try {
+      await fetch('/api/live-start-notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: _liveSecret(), presenterName: _bc.presenterName || '' }),
+      });
+    } catch (e) { _bcLog('Live-start notify failed: ' + (e.message || e)); }
   }
 
   // Finn en booking hvis tidsvindu dekker nå (10 min slingringsmonn før start).
@@ -303,11 +317,10 @@ const LiveMix = (() => {
   }
 
   // Stasjons-eier/admin kan alltid gå live — uavhengig av booking. Identifiseres
-  // på e-post, så det følger kontoen uansett nettleser når man er logget inn.
-  const OWNER_EMAILS = ['producerenur@gmail.com'];
+  // på e-post via den samlede CONFIG.ADMIN_EMAILS-lista (js/config.js), så det
+  // følger kontoen uansett nettleser når man er logget inn.
   function _isOwner(cur) {
-    try { return !!cur && OWNER_EMAILS.includes(String(cur.email || '').toLowerCase().trim()); }
-    catch (e) { return false; }
+    return typeof CONFIG !== 'undefined' && CONFIG.isAdminEmail(cur);
   }
 
   function canGoLive() {
@@ -327,7 +340,7 @@ const LiveMix = (() => {
   // en planlagt sendetid (BroadcastSchedule) så DJ og lyttere havner i samme rom.
   function goLive(room) {
     if (typeof App === 'undefined') return;
-    if (!window.LiveBroadcast) { App.toast('Kringkasting kunne ikke lastes (livebroadcast.js mangler).', 'error'); return; }
+    if (!window.LiveBroadcast) { App.toast('Broadcasting could not be loaded (livebroadcast.js missing).', 'error'); return; }
     if (room && !_bc.dj) _bc.room = String(room);
     // Gate: live-sending er låst til en aktiv Live Mix-tid (forbigått på localhost
     // for testing). Hvis allerede live, hopp over gaten ved re-åpning av konsollen.
@@ -335,7 +348,7 @@ const LiveMix = (() => {
       const gate = canGoLive();
       if (!gate.ok) {
         if (!gate.user) {
-          App.toast('Logg inn eller lag en gratis profil for å sende live.', 'info', 4000);
+          App.toast('Log in or create a free profile to broadcast live.', 'info', 4000);
           location.hash = '#/login';
         } else {
           _renderNoBooking(gate.user);
@@ -353,19 +366,19 @@ const LiveMix = (() => {
     const box = _byId('modal-box'); if (!box) return;
     const next = _nextBooking(cur);
     const note = next
-      ? `Din neste bookede tid: <strong>${_fmtDateTime(next.slot)}</strong> (${next.hours} ${next.hours > 1 ? 'timer' : 'time'}). Du kan gå live fra ~10 min før start.`
-      : `Du har ingen kommende Live Mix-tid. Book et slot for å sende live.`;
+      ? `Your next booked time: <strong>${_fmtDateTime(next.slot)}</strong> (${next.hours} ${next.hours > 1 ? 'hours' : 'hour'}). You can go live from ~10 min before start.`
+      : `You have no upcoming Live Mix time. Book a slot to broadcast live.`;
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${_I('radio')} Gå live</h2>
-        <button class="btn-icon" onclick="App.closeModal()" aria-label="Lukk">${_I('x')}</button>
+        <h2>${_I('radio')} Go live</h2>
+        <button class="btn-icon" onclick="App.closeModal()" aria-label="Close">${_I('x')}</button>
       </div>
       <div style="padding:0.5rem 0">
         <p style="color:var(--text2);font-size:0.9rem;line-height:1.5;margin:0 0 0.75rem">
-          Live-sending er låst til en <strong>aktiv Live Mix-tid</strong> — du sender i tidsrommet du har booket.
+          Live broadcasting is locked to an <strong>active Live Mix time</strong> — you broadcast during the time slot you've booked.
         </p>
         <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:0.8rem 1rem;font-size:0.88rem;color:var(--text);margin:0 0 1rem">${note}</div>
-        <button class="btn btn-primary w-full" onclick="LiveMix.openBooking()">${_I('clock')} Book mikse-slot</button>
+        <button class="btn btn-primary w-full" onclick="LiveMix.openBooking()">${_I('clock')} Book mix slot</button>
       </div>`;
     App.openModal();
   }
@@ -379,53 +392,53 @@ const LiveMix = (() => {
     const fill = 'position:absolute;inset:0 auto 0 0;width:0%;background:linear-gradient(90deg,#22c55e,#22c55e 60%,#f59e0b 80%,#ef4444);transition:width .05s';
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${_I('radio')} Gå live — send settet ditt</h2>
-        <button class="btn-icon" onclick="App.closeModal()" aria-label="Lukk">${_I('x')}</button>
+        <h2>${_I('radio')} Go live — broadcast your set</h2>
+        <button class="btn-icon" onclick="App.closeModal()" aria-label="Close">${_I('x')}</button>
       </div>
       <div style="padding:0.25rem 0">
         <p style="color:var(--text2);font-size:0.85rem;line-height:1.5;margin:0 0 1rem">
-          Rut DJ-programmets master til en virtuell lydkabel (f.eks. BlackHole) og velg den under.
-          Lytterne åpner «Hør live» med samme rom-navn. Signaling går over Supabase — funker over internett.
+          Route your DJ software's master output to a virtual audio cable (e.g. BlackHole) and select it below.
+          Listeners open "Listen live" with the same room name. Signaling goes over Supabase — works over the internet.
         </p>
         ${_bc.activeBooking
-          ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(34,197,94,0.12);color:#22c55e;margin:0 0 1rem">${_I('clock')} Aktiv tid: ${_bc.activeBooking.slot ? _fmtDateTime(_bc.activeBooking.slot) : 'avtales senere'}${_bc.activeBooking.test ? ' · TEST' : ''}</div>`
-          : (_bc.devBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">🧪 Lokal test — booking-gate forbigått</div>`
-              : (_bc.ownerBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">${_I('radio')} Eier — sender uten booking</div>` : ''))}
-        <label style="${lbl}">Ditt artist-/presentatørnavn</label>
-        <input id="bc-presenter" value="${_esc(_bc.presenterName || '')}" placeholder="Ditt artistnavn" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
-        <p style="font-size:0.74rem;color:var(--text3);margin:-0.55rem 0 0.9rem">Vises til ALLE besøkende på siden som «med {navnet ditt}» mens du er live — de blir automatisk byttet over fra stasjonen sin til sendingen din.</p>
-        <label style="${lbl}">Rom-navn</label>
+          ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(34,197,94,0.12);color:#22c55e;margin:0 0 1rem">${_I('clock')} Active time: ${_bc.activeBooking.slot ? _fmtDateTime(_bc.activeBooking.slot) : 'to be scheduled'}${_bc.activeBooking.test ? ' · TEST' : ''}</div>`
+          : (_bc.devBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">🧪 Local test — booking gate bypassed</div>`
+              : (_bc.ownerBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">${_I('radio')} Owner — broadcasting without booking</div>` : ''))}
+        <label style="${lbl}">Your artist/presenter name</label>
+        <input id="bc-presenter" value="${_esc(_bc.presenterName || '')}" placeholder="Your artist name" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
+        <p style="font-size:0.74rem;color:var(--text3);margin:-0.55rem 0 0.9rem">Shown to ALL visitors on the site as "with {your name}" while you're live — they get automatically switched over from their station to your broadcast.</p>
+        <label style="${lbl}">Room name</label>
         <input id="bc-room" value="${_esc(_bc.room || 'test')}" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
-        <label style="${lbl}">Lyd-inngang (DJ-ruting)</label>
+        <label style="${lbl}">Audio input (DJ routing)</label>
         <div style="display:flex;gap:0.6rem;margin:0 0 1rem">
-          <select id="bc-dev" ${live ? 'disabled' : ''} style="${inp};flex:1">${live ? '' : '<option>Trykk «Gi tilgang» først…</option>'}</select>
-          <button class="btn btn-ghost" id="bc-perm" onclick="LiveMix.bcPerm()" ${live ? 'disabled' : ''}>Gi tilgang</button>
+          <select id="bc-dev" ${live ? 'disabled' : ''} style="${inp};flex:1">${live ? '' : '<option>Click "Grant access" first…</option>'}</select>
+          <button class="btn btn-ghost" id="bc-perm" onclick="LiveMix.bcPerm()" ${live ? 'disabled' : ''}>Grant access</button>
         </div>
-        <label style="${lbl}">Visning under sending</label>
+        <label style="${lbl}">Display while broadcasting</label>
         <div style="display:flex;gap:0.5rem;margin:0 0 0.6rem">
-          <button type="button" class="btn ${_bc.visual === 'image' ? 'btn-primary' : 'btn-ghost'}" id="bc-vis-image" onclick="LiveMix.bcSetVisual('image')" ${live ? 'disabled' : ''} style="flex:1">🖼️ Bilde (kun lyd)</button>
-          <button type="button" class="btn ${_bc.visual === 'camera' ? 'btn-primary' : 'btn-ghost'}" id="bc-vis-camera" onclick="LiveMix.bcSetVisual('camera')" ${live ? 'disabled' : ''} style="flex:1">🎥 Laptop-kamera</button>
+          <button type="button" class="btn ${_bc.visual === 'image' ? 'btn-primary' : 'btn-ghost'}" id="bc-vis-image" onclick="LiveMix.bcSetVisual('image')" ${live ? 'disabled' : ''} style="flex:1">🖼️ Image (audio only)</button>
+          <button type="button" class="btn ${_bc.visual === 'camera' ? 'btn-primary' : 'btn-ghost'}" id="bc-vis-camera" onclick="LiveMix.bcSetVisual('camera')" ${live ? 'disabled' : ''} style="flex:1">🎥 Laptop camera</button>
         </div>
         <div id="bc-image-row" style="display:${_bc.visual === 'image' ? 'flex' : 'none'};gap:0.6rem;align-items:center;flex-wrap:wrap;margin:0 0 1rem">
-          <button class="btn btn-ghost" id="bc-image-btn" onclick="document.getElementById('bc-image-input').click()" ${live ? 'disabled' : ''}>${_I('camera')} Last opp bilde</button>
+          <button class="btn btn-ghost" id="bc-image-btn" onclick="document.getElementById('bc-image-input').click()" ${live ? 'disabled' : ''}>${_I('camera')} Upload image</button>
           <input type="file" id="bc-image-input" accept="image/*" style="display:none" onchange="LiveMix.bcSetImage(this)">
           <img id="bc-image-prev" src="${_esc(_bc.coverUrl || '')}" alt="" style="height:42px;border-radius:8px;${_bc.coverUrl ? '' : 'display:none'}">
-          <span style="font-size:0.74rem;color:var(--text3)">Kamera er av — bildet vises mens musikken spilles.</span>
+          <span style="font-size:0.74rem;color:var(--text3)">Camera is off — the image is shown while the music plays.</span>
         </div>
         <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin:0 0 1.1rem">
-          <button class="btn btn-primary" id="bc-go" onclick="LiveMix.bcGo()" ${live ? 'disabled' : ''}>📡 Gå live</button>
-          <button class="btn" id="bc-stop" onclick="LiveMix.bcStop()" ${live ? '' : 'disabled'} style="background:#ef4444;color:#fff">■ Stopp</button>
+          <button class="btn btn-primary" id="bc-go" onclick="LiveMix.bcGo()" ${live ? 'disabled' : ''}>📡 Go live</button>
+          <button class="btn" id="bc-stop" onclick="LiveMix.bcStop()" ${live ? '' : 'disabled'} style="background:#ef4444;color:#fff">■ Stop</button>
           <span style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.8rem;font-weight:700;padding:0.25rem 0.7rem;border-radius:999px;background:rgba(255,255,255,0.06)">
             <span id="bc-dot" style="width:9px;height:9px;border-radius:50%;background:${live ? '#ef4444' : '#9aa3b2'}"></span>
-            <span id="bc-status">${live ? 'LIVE — sender' : 'Inaktiv'}</span>
+            <span id="bc-status">${live ? 'LIVE — broadcasting' : 'Inactive'}</span>
           </span>
         </div>
-        <div style="font-size:1.5rem;font-weight:800;margin:0 0 0.75rem"><span id="bc-count">${live ? _bc.dj.listeners : 0}</span> <span style="font-size:0.85rem;font-weight:400;color:var(--text2)">lyttere koblet til</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text2);margin:0 0 0.2rem"><span>Sendt (L)</span><span id="bc-ldb">−∞ dB</span></div>
+        <div style="font-size:1.5rem;font-weight:800;margin:0 0 0.75rem"><span id="bc-count">${live ? _bc.dj.listeners : 0}</span> <span style="font-size:0.85rem;font-weight:400;color:var(--text2)">listeners connected</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text2);margin:0 0 0.2rem"><span>Sent (L)</span><span id="bc-ldb">−∞ dB</span></div>
         <div style="${meter}"><i id="bc-lmeter" style="${fill}"></i></div>
-        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text2);margin:0.5rem 0 0.2rem"><span>Sendt (R)</span><span id="bc-rdb">−∞ dB</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text2);margin:0.5rem 0 0.2rem"><span>Sent (R)</span><span id="bc-rdb">−∞ dB</span></div>
         <div style="${meter}"><i id="bc-rmeter" style="${fill}"></i></div>
-        <div id="bc-log" style="font:12px/1.5 ui-monospace,monospace;background:rgba(0,0,0,0.3);border-radius:10px;padding:0.6rem 0.7rem;max-height:120px;overflow:auto;color:var(--text2);white-space:pre-wrap;margin-top:0.9rem">Klar.</div>
+        <div id="bc-log" style="font:12px/1.5 ui-monospace,monospace;background:rgba(0,0,0,0.3);border-radius:10px;padding:0.6rem 0.7rem;max-height:120px;overflow:auto;color:var(--text2);white-space:pre-wrap;margin-top:0.9rem">Ready.</div>
       </div>`;
     App.openModal();
     if (live && _bc.analL) _bcStartMeter();   // gjenoppta målere når konsollen åpnes på nytt
@@ -438,12 +451,12 @@ const LiveMix = (() => {
       const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
       const sel = _byId('bc-dev'); if (!sel) return;
       sel.innerHTML = '';
-      devs.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || ('Inngang ' + (sel.length + 1)); sel.appendChild(o); });
+      devs.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || ('Input ' + (sel.length + 1)); sel.appendChild(o); });
       const pref = devs.find(d => /blackhole|loopback|soundflower|air 192|aggregate/i.test(d.label));
       if (pref) sel.value = pref.deviceId;
       const go = _byId('bc-go'); if (go) go.disabled = false;
-      _bcLog(devs.length + ' inngang(er).' + (pref ? '  Foreslår: ' + pref.label : ''));
-    } catch (e) { _bcLog('FEIL tilgang: ' + e.message); }
+      _bcLog(devs.length + ' input(s).' + (pref ? '  Suggested: ' + pref.label : ''));
+    } catch (e) { _bcLog('Access error: ' + e.message); }
   }
 
   // Velg visning: stillbilde (kun lyd, kamera av) eller laptop-kamera.
@@ -485,7 +498,7 @@ const LiveMix = (() => {
         ctx.fillStyle = '#7c3aed'; ctx.font = 'bold 72px Inter, sans-serif';
         ctx.fillText('🔴 LIVE', 640, 330);
         ctx.fillStyle = '#fff'; ctx.font = '600 36px Inter, sans-serif';
-        ctx.fillText('rom: ' + room, 640, 400);
+        ctx.fillText('room: ' + room, 640, 400);
       }
     };
     draw();
@@ -511,7 +524,7 @@ const LiveMix = (() => {
       // Utgående strøm: lyd + valgt video (stillbilde eller laptop-kamera).
       const outTracks = [..._bc.stream.getAudioTracks()];
       let vTrack = null;
-      try { vTrack = await _bcVisualTrack(room); } catch (e) { _bcLog('Video av (' + e.message + ') — sender kun lyd.'); }
+      try { vTrack = await _bcVisualTrack(room); } catch (e) { _bcLog('Video off (' + e.message + ') — sending audio only.'); }
       if (vTrack) outTracks.push(vTrack);
       _bc.outStream = new MediaStream(outTracks);
       _bc.dj = LiveBroadcast.broadcaster(room, _bc.outStream, {
@@ -519,11 +532,12 @@ const LiveMix = (() => {
         onLog: _bcLog,
       });
       _bcSetLive(true);
-      _bcLog('Du er LIVE i rom «' + room + '» (' + (vTrack ? (_bc.visual === 'camera' ? 'kamera' : 'bilde') : 'kun lyd') + '). Spill i DJ-programmet.');
+      _bcLog('You are LIVE in room "' + room + '" (' + (vTrack ? (_bc.visual === 'camera' ? 'camera' : 'image') : 'audio only') + '). Play in your DJ software.');
       // Publiser til den globale statusen SIST, etter at sendingen faktisk er i gang
       // — så ingen besøkende byttes over til et rom som ennå ikke sender noe.
       _publishLiveStatus(true);
-    } catch (e) { _bcLog('FEIL gå live: ' + e.message); if (typeof App !== 'undefined') App.toast('Kunne ikke gå live: ' + e.message, 'error'); }
+      _notifyLiveStart();
+    } catch (e) { _bcLog('ERROR going live: ' + e.message); if (typeof App !== 'undefined') App.toast('Could not go live: ' + e.message, 'error'); }
   }
 
   function bcStop() {
@@ -540,7 +554,7 @@ const LiveMix = (() => {
     _bc.analL = _bc.analR = null; _bc.canvas = null;
     _bcSetLive(false);
     const c = _byId('bc-count'); if (c) c.textContent = '0';
-    _bcLog('Stoppet.');
+    _bcLog('Stopped.');
   }
 
   function _bcSetLive(live) {
@@ -548,7 +562,7 @@ const LiveMix = (() => {
     if (go) go.disabled = live; if (stop) stop.disabled = !live; if (perm) perm.disabled = live;
     if (dev) dev.disabled = live; if (room) room.disabled = live;
     if (dot) dot.style.background = live ? '#ef4444' : '#9aa3b2';
-    if (st) st.textContent = live ? 'LIVE — sender' : 'Inaktiv';
+    if (st) st.textContent = live ? 'LIVE — broadcasting' : 'Inactive';
     _refreshOwnerButton();
   }
 
@@ -568,7 +582,7 @@ const LiveMix = (() => {
       _ownerBtn = document.createElement('button');
       _ownerBtn.id = 'owner-golive-btn';
       _ownerBtn.type = 'button';
-      _ownerBtn.setAttribute('aria-label', 'Gå live');
+      _ownerBtn.setAttribute('aria-label', 'Go live');
       _ownerBtn.style.cssText = 'display:inline-flex;align-items:center;gap:0.35rem;font-size:0.75rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;border:1px solid rgba(239,68,68,0.35);background:rgba(239,68,68,0.12);color:#ef4444;cursor:pointer;margin-right:0.5rem;white-space:nowrap';
       const nav = document.getElementById('main-nav');
       const links = document.getElementById('nav-links');
@@ -581,8 +595,8 @@ const LiveMix = (() => {
   function _refreshOwnerButton() {
     if (!_ownerBtn) return;
     const live = !!_bc.dj;
-    _ownerBtn.title = live ? 'Du er live — trykk for å stoppe' : 'Gå live — send direkte til alle besøkende på siden';
-    _ownerBtn.innerHTML = live ? '🔴 LIVE — Stopp' : ('📡 ' + 'Gå live');
+    _ownerBtn.title = live ? 'You are live — click to stop' : 'Go live — broadcast directly to everyone on the site';
+    _ownerBtn.innerHTML = live ? '🔴 LIVE — Stop' : ('📡 ' + 'Go live');
     _ownerBtn.onclick = live ? bcStop : () => goLive();
   }
   function _removeOwnerButton() { if (_ownerBtn) { _ownerBtn.remove(); _ownerBtn = null; } }
@@ -610,7 +624,7 @@ const LiveMix = (() => {
   // planlagt sendetid (BroadcastSchedule).
   function tuneIn(room) {
     if (typeof App === 'undefined') return;
-    if (!window.LiveBroadcast) { App.toast('Kringkasting kunne ikke lastes (livebroadcast.js mangler).', 'error'); return; }
+    if (!window.LiveBroadcast) { App.toast('Broadcasting could not be loaded (livebroadcast.js missing).', 'error'); return; }
     if (room) _bc.room = String(room);
     _renderListener();
   }
@@ -621,21 +635,21 @@ const LiveMix = (() => {
     const inp = 'width:100%;box-sizing:border-box;padding:0.7rem;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:var(--text);font:inherit;text-align:center';
     box.innerHTML = `
       <div class="modal-header">
-        <h2>${_I('headphones')} Hør live</h2>
-        <button class="btn-icon" onclick="App.closeModal()" aria-label="Lukk">${_I('x')}</button>
+        <h2>${_I('headphones')} Listen live</h2>
+        <button class="btn-icon" onclick="App.closeModal()" aria-label="Close">${_I('x')}</button>
       </div>
       <div style="padding:0.5rem 0;text-align:center">
         <span style="display:inline-flex;align-items:center;gap:0.45rem;font-size:0.82rem;font-weight:700;padding:0.3rem 0.8rem;border-radius:999px;background:rgba(255,255,255,0.06);margin-bottom:0.5rem">
           <span id="ln-dot" style="width:10px;height:10px;border-radius:50%;background:#9aa3b2"></span>
-          <span id="ln-status">${joined ? 'Kobler til…' : 'Ikke tilkoblet'}</span>
+          <span id="ln-status">${joined ? 'Connecting…' : 'Not connected'}</span>
         </span>
-        <p style="color:var(--text2);font-size:0.9rem;margin:0.4rem 0 1rem">Skriv samme rom-navn som DJ-en og trykk for å høre settet live.</p>
-        <input id="ln-room" value="${_esc(_bc.room || 'test')}" ${joined ? 'disabled' : ''} aria-label="Rom-navn" style="${inp};margin:0 0 0.8rem">
-        <button class="btn btn-primary w-full" id="ln-join" onclick="LiveMix.tuneInJoin()" ${joined ? 'disabled' : ''}>▶︎ Hør live</button>
+        <p style="color:var(--text2);font-size:0.9rem;margin:0.4rem 0 1rem">Enter the same room name as the DJ and click to listen to the set live.</p>
+        <input id="ln-room" value="${_esc(_bc.room || 'test')}" ${joined ? 'disabled' : ''} aria-label="Room name" style="${inp};margin:0 0 0.8rem">
+        <button class="btn btn-primary w-full" id="ln-join" onclick="LiveMix.tuneInJoin()" ${joined ? 'disabled' : ''}>▶︎ Listen live</button>
         <audio id="ln-audio" autoplay playsinline></audio>
         <video id="ln-video" autoplay playsinline muted style="display:none;width:100%;border-radius:12px;margin-top:0.7rem;background:#000"></video>
         <div id="ln-info" style="font-size:0.78rem;color:var(--text3);margin-top:0.9rem"></div>
-        ${joined ? `<button class="btn btn-ghost w-full" onclick="LiveMix.tuneOut()" style="margin-top:0.8rem">Koble fra</button>` : ''}
+        ${joined ? `<button class="btn btn-ghost w-full" onclick="LiveMix.tuneOut()" style="margin-top:0.8rem">Disconnect</button>` : ''}
       </div>`;
     App.openModal();
   }
@@ -649,19 +663,19 @@ const LiveMix = (() => {
     const roomEl = _byId('ln-room');
     const room = (roomEl && roomEl.value.trim()) || 'test'; _bc.room = room;
     const join = _byId('ln-join'); if (join) join.disabled = true;
-    _lnStatus('Kobler til…', false);
+    _lnStatus('Connecting…', false);
     _bc.ln = LiveBroadcast.listener(room, {
       onState: s => {
-        if (s === 'connected') _lnStatus('LIVE — hører settet', true);
-        else if (s === 'dj-offline') _lnStatus('DJ-en avsluttet', false);
-        else if (['failed', 'disconnected', 'closed'].includes(s)) _lnStatus('Frakoblet', false);
+        if (s === 'connected') _lnStatus('LIVE — listening to the set', true);
+        else if (s === 'dj-offline') _lnStatus('DJ ended the broadcast', false);
+        else if (['failed', 'disconnected', 'closed'].includes(s)) _lnStatus('Disconnected', false);
       },
       onTrack: stream => {
         const a = _byId('ln-audio'); if (a) { a.srcObject = stream; a.play().catch(() => {}); }
         const hasVideo = stream.getVideoTracks().length > 0;
         const v = _byId('ln-video');
         if (v && hasVideo) { v.srcObject = stream; v.muted = true; v.style.display = ''; v.play().catch(() => {}); }
-        const i = _byId('ln-info'); if (i) i.textContent = hasVideo ? 'Live 🎬🎶' : 'Lyd mottatt 🎶';
+        const i = _byId('ln-info'); if (i) i.textContent = hasVideo ? 'Live 🎬🎶' : 'Audio received 🎶';
       },
       onLog: m => { const i = _byId('ln-info'); if (i) i.textContent = m; },
     });
@@ -671,7 +685,7 @@ const LiveMix = (() => {
     if (_bc.ln) { _bc.ln.leave(); _bc.ln = null; }
     const a = _byId('ln-audio'); if (a) { try { a.pause(); } catch (e) {} a.srcObject = null; }
     const v = _byId('ln-video'); if (v) { try { v.pause(); } catch (e) {} v.srcObject = null; v.style.display = 'none'; }
-    _lnStatus('Frakoblet', false);
+    _lnStatus('Disconnected', false);
     if (typeof App !== 'undefined') App.closeModal();
   }
 

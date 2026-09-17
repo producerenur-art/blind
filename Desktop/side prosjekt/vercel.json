@@ -20,7 +20,7 @@
     },
     {
       "path": "/api/live-reminder",
-      "schedule": "0 16 * * 5"
+      "schedule": "0 16 * * *"
     },
     {
       "path": "/api/radio247-digest",
@@ -40,6 +40,9 @@
     },
     "api/live-reminder.js": {
       "maxDuration": 300
+    },
+    "api/live-start-notify.js": {
+      "maxDuration": 120
     },
     "api/radio247-digest.js": {
       "maxDuration": 300

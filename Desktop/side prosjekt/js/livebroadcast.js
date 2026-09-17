@@ -40,9 +40,9 @@ const LiveBroadcast = (() => {
   function supaClient() {
     const c = window.CONFIG || {};
     if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-      throw new Error('supabase-js er ikke lastet (sjekk CDN-script i index.html)');
+      throw new Error('supabase-js is not loaded (check the CDN script in index.html)');
     }
-    if (!c.SUPABASE_URL || !c.SUPABASE_ANON_KEY) throw new Error('SUPABASE_URL/ANON_KEY mangler i CONFIG');
+    if (!c.SUPABASE_URL || !c.SUPABASE_ANON_KEY) throw new Error('SUPABASE_URL/ANON_KEY missing in CONFIG');
     return window.supabase.createClient(c.SUPABASE_URL, c.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
   }
 
@@ -68,14 +68,14 @@ const LiveBroadcast = (() => {
       stream.getTracks().forEach(t => pc.addTrack(t, stream));
       pc.onicecandidate = e => { if (e.candidate) sigTo(listenerId, { type: 'ice', candidate: e.candidate }); };
       pc.onconnectionstatechange = () => {
-        log('Lytter ' + listenerId + ': ' + pc.connectionState);
+        log('Listener ' + listenerId + ': ' + pc.connectionState);
         if (['failed', 'closed', 'disconnected'].includes(pc.connectionState)) { pc.close(); peers.delete(listenerId); }
         count();
       };
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       sigTo(listenerId, { type: 'offer', sdp: pc.localDescription });
-      log('Sendte tilbud til ' + listenerId);
+      log('Sent offer to ' + listenerId);
     }
 
     ch.on('broadcast', { event: 'hello' }, ({ payload }) => { if (payload.room === room) addListener(payload.from); })
@@ -84,7 +84,7 @@ const LiveBroadcast = (() => {
         if (payload.to !== id) return;
         const pc = peers.get(payload.from); if (!pc) return;
         const d = payload.data;
-        if (d.type === 'answer') { try { await pc.setRemoteDescription(d.sdp); } catch (e) { log('answer-feil: ' + e.message); } }
+        if (d.type === 'answer') { try { await pc.setRemoteDescription(d.sdp); } catch (e) { log('answer error: ' + e.message); } }
         else if (d.type === 'ice') { try { await pc.addIceCandidate(d.candidate); } catch (e) {} }
       })
       .subscribe(status => {
@@ -115,7 +115,7 @@ const LiveBroadcast = (() => {
 
     ch.on('broadcast', { event: 'dj-online' }, ({ payload }) => {
         if (payload.room !== room) return;
-        djId = payload.from; sig('hello', { room, from: id }); log('DJ online — ber om strøm');
+        djId = payload.from; sig('hello', { room, from: id }); log('DJ online — requesting stream');
       })
       .on('broadcast', { event: 'dj-offline' }, () => { onState && onState('dj-offline'); })
       .on('broadcast', { event: 'signal' }, async ({ payload }) => {
@@ -132,7 +132,7 @@ const LiveBroadcast = (() => {
             const ans = await pc.createAnswer();
             await pc.setLocalDescription(ans);
             sigTo(djId, { type: 'answer', sdp: pc.localDescription });
-          } catch (e) { log('svar-feil: ' + e.message); }
+          } catch (e) { log('answer error: ' + e.message); }
         } else if (d.type === 'ice' && pc) { try { await pc.addIceCandidate(d.candidate); } catch (e) {} }
       })
       .subscribe(status => {

@@ -86,18 +86,34 @@ const ProfileSync = (() => {
   async function pull(username) {
     const data = await fetch(username);
     if (!data) return null;
+    // Same vern som pullAll(): aldri la ein henta sky-kopi overskrive DIN EIGEN
+    // ferskare lokale profil.
+    const me = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
+    if (me && me.username === username) return data;
     if (typeof Auth !== 'undefined' && Auth.cacheRemoteProfile) Auth.cacheRemoteProfile(username, data);
     return data;
   }
 
   // Hent ALLE offentlige profiler (for Discover/utforsk) og flett dem inn lokalt.
+  // VIKTIG: hoppar ALLTID over den innlogga brukaren sin EIGEN rad. Push (over)
+  // er fire-and-forget og reiser samstundes som denne kalla frå App.renderNav —
+  // utan denne sperra kunne ei forsinka/uteblitt sky-skriving la pullAll flette
+  // inn ein ELDRE sky-kopi av di eiga avatar/banner/bio OVER den ferske, korrekte
+  // lokale endringa du nettopp gjorde (t.d. rett etter opplasting → hard refresh),
+  // og det ville sjå ut som innhaldet vart nullstilt. Andre sin profil er derimot
+  // trygt å hente — lokalt har vi uansett ingenting nyare for dei.
   async function pullAll() {
     if (!_enabled()) return [];
     try {
       const { data, error } = await _client().rpc('list_profiles');
       if (error || !Array.isArray(data)) return [];
+      const me = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
       if (typeof Auth !== 'undefined' && Auth.cacheRemoteProfile) {
-        for (const p of data) if (p && p.username) Auth.cacheRemoteProfile(p.username, p);
+        for (const p of data) {
+          if (!p || !p.username) continue;
+          if (me && p.username === me.username) continue;
+          Auth.cacheRemoteProfile(p.username, p);
+        }
       }
       return data;
     } catch (e) { return []; }

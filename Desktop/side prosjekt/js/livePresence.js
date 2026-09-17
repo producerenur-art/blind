@@ -89,11 +89,10 @@ const LivePresence = (() => {
   }
 
   // ── Admin-visning ───────────────────────────────────────────────────────
+  // Samlet admin-e-postliste, CONFIG.ADMIN_EMAILS (js/config.js).
   function _isAdmin() {
     const me = (window.Auth && Auth.current && Auth.current()) ? Auth.current() : null;
-    if (!me) return false;
-    const admins = (window.CONFIG && Array.isArray(CONFIG.ADMIN_USERS)) ? CONFIG.ADMIN_USERS : [];
-    return admins.some(u => String(u).toLowerCase() === String(me.username).toLowerCase());
+    return typeof CONFIG !== 'undefined' && CONFIG.isAdminEmail(me);
   }
 
   function _mountPill() {
@@ -102,8 +101,8 @@ const LivePresence = (() => {
     _pill.id = 'visitors-pill';
     _pill.className = 'online-pill visitors-pill';
     _pill.type = 'button';
-    _pill.title = 'Besøkende på siden akkurat nå, inkl. gjester — kun synlig for admin';
-    _pill.setAttribute('aria-label', 'Besøkende på siden akkurat nå');
+    _pill.title = 'Visitors on the site right now, incl. guests — only visible to admin';
+    _pill.setAttribute('aria-label', 'Visitors on the site right now');
     _pill.innerHTML =
       '<span class="visitors-eye" aria-hidden="true">👁</span>' +
       '<span class="online-pill-num visitors-num">–</span>' +

@@ -141,9 +141,25 @@ const LiveBroadcastSync = (() => {
     } catch (e) { console.warn('[LiveBroadcastSync] review:', e.message || e); return false; }
   }
 
+  // ── Admin: rediger ein arkivpost (namn/bilete/melding) ────────────────────────
+  // Same p_secret-grense som listPending/review — klientsida gater «Rediger»-
+  // knappen bak CONFIG.ADMIN_EMAILS (js/liveArchive.js), men det er DENNE
+  // hemmelegheita som faktisk handhevast server-side (0026_admin_edit_broadcast_archive.sql).
+  async function adminUpdateArchiveItem(id, { displayName, thumbnailUrl, message } = {}) {
+    if (!_enabled() || !id) return false;
+    try {
+      const { error } = await _client().rpc('admin_update_broadcast_archive', {
+        p_id: id, p_secret: _ownerSecret(),
+        p_display_name: displayName ?? null, p_thumbnail_url: thumbnailUrl ?? null, p_message: message ?? null,
+      });
+      if (error) { console.warn('[LiveBroadcastSync] adminUpdateArchiveItem:', error.message); return false; }
+      return true;
+    } catch (e) { console.warn('[LiveBroadcastSync] adminUpdateArchiveItem:', e.message || e); return false; }
+  }
+
   return {
     submitRequest, updateMyRequest, cancelMyRequest, setThumbnailOwned, markStarted, markEnded,
-    listMine, listLiveNow, listArchive, getArchiveItem, listPending, review, _enabled,
+    listMine, listLiveNow, listArchive, getArchiveItem, listPending, review, adminUpdateArchiveItem, _enabled,
   };
 })();
 
