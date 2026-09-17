@@ -2506,13 +2506,22 @@ const Radio = (() => {
   const VIS_VIDEOS = {};
   VIS_CLASSICS.forEach(v => { VIS_VIDEOS[v.mode] = v.id; });
 
-  // Brukaren sitt eige spesial-ynskje (13.09.2026): dukk IKKJE opp i den vanlege
-  // rotasjonen som klassikarane — for annleis/valdeleg stil til å rotere like
-  // ofte. Vis han berre éin fast dag av sju (alltid same vekedag, uavhengig av
-  // når koden vart deploya — dagar-sidan-epoch % 7 driv aldri). Lydlaus som alt
-  // anna i AI visuals-raden (mute=1 er felles for alle video-modus, sjå
-  // visVideoSrc). IKKJE rør denne utan eksplisitt beskjed frå brukaren.
-  const WEEKLY_SPECIAL = { mode: 'video_htf', id: 'PgWYZctea40', emoji: '🐿️', label: 'Happy Tree Friends', group: 'special' };
+  // Brukaren sitt eige spesial-ynskje (13.09.2026, utvida 17.09.2026): dukk
+  // IKKJE opp i den vanlege rotasjonen som klassikarane — for annleis/valdeleg
+  // stil til å rotere like ofte. Vis han berre éin fast dag av sju (alltid
+  // same vekedag, uavhengig av når koden vart deploya — dagar-sidan-epoch % 7
+  // driv aldri). 17.09.2026: brukaren ville IKKJE ha same 3-4 min-episode låst
+  // gjennom heile timen — knappen peikar framleis på éin mode/id
+  // (video_htf/PgWYZctea40), men visVideoSrc byggjer no ei ekte YouTube-
+  // avspelingsliste av fleire HTF-klipp (WEEKLY_SPECIAL_IDS under) som
+  // YouTube sjølv spelar gjennom og loopar — gir variasjon gjennom timen i
+  // staden for éin episode på repeat. Alle klipp henta frå offisiell kanal
+  // youtube.com/@MondoMedia (+ éin frå @happytreefriends_hd), verifisert via
+  // oEmbed. Lydlaus som alt anna i AI visuals-raden (mute=1 er felles for alle
+  // video-modus, sjå visVideoSrc). IKKJE rør denne utan eksplisitt beskjed frå
+  // brukaren.
+  const WEEKLY_SPECIAL_IDS = ['PgWYZctea40', 'cN7XXLyb1Fo', 'dfTPlsIq7d0', 'OyvYuSPIJrY'];
+  const WEEKLY_SPECIAL = { mode: 'video_htf', id: WEEKLY_SPECIAL_IDS[0], emoji: '🐿️', label: 'Happy Tree Friends', group: 'special' };
   VIS_VIDEOS[WEEKLY_SPECIAL.mode] = WEEKLY_SPECIAL.id;
   function isWeeklySpecialDay() {
     return Math.floor(Date.now() / 86400000) % 7 === 0;
@@ -2667,8 +2676,16 @@ const Radio = (() => {
     Object.prototype.hasOwnProperty.call(VIS_VIDEOS, m) ||
     Object.prototype.hasOwnProperty.call(AI_VIDEOS, m);
   function visVideoSrc(id) {
+    // HTF-spesialen (sjå WEEKLY_SPECIAL over): heile klippsettet som ekte
+    // YouTube-avspelingsliste i staden for éin video på loop, sidan kvar
+    // episode berre er 3-4 min — elles ville same episode gjenteke seg heile
+    // timen. playlist-param held resten av settet, id sjølv er allereie
+    // først via embed-stien.
+    const playlist = (id === WEEKLY_SPECIAL.id)
+      ? WEEKLY_SPECIAL_IDS.slice(1).join(',')
+      : id;
     return `https://www.youtube-nocookie.com/embed/${id}`
-      + `?autoplay=1&mute=1&loop=1&playlist=${id}`
+      + `?autoplay=1&mute=1&loop=1&playlist=${playlist}`
       + `&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3`
       + `&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
   }
