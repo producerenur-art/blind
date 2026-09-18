@@ -911,8 +911,8 @@ const App = (() => {
     // ── Onboarding-velkomst fjernet ────────────────────────────────────────
     const onboardHtml = '';
 
-    // ── Online now — synleg for ALLE (også gjester), heile brukarbasen ──────
-    const onlineHtml = _onlineNowHtml(users, user);
+    // ── Online now — kun synleg for innlogga brukarar, ikkje gjester ────────
+    const onlineHtml = user ? _onlineNowHtml(users, user) : '';
 
     // ── Komponer-boks — del et innlegg rett fra forsiden ───────────────────
     const composerHtml = user ? `
