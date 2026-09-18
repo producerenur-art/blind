@@ -267,7 +267,7 @@ const Radio247 = (() => {
         <div class="stellar-featured-inner">
           <div class="stellar-featured-emoji">${iconForEmoji('🌘')}</div>
           <div class="stellar-featured-info">
-            <div class="stellar-featured-label">${Icon('star')} 24-Hour Cycle — non-stop web radio</div>
+            <div class="stellar-featured-label">${Icon('star')} 24-Hour Cycle — non-stop web 𓂋𓄿𓂧𓇋𓅱 radio</div>
             <div class="stellar-featured-name">SiriusFM</div>
             <div class="stellar-featured-desc">${desc}</div>
           </div>
