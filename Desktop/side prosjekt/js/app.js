@@ -387,7 +387,6 @@ const App = (() => {
       ${item('#/shows','calendar','Shows')}
       ${item('#/world','globe','World')}
       ${item('#/magazine','book','Magazine')}
-      ${item('#/live-archive','radio','Live Archive')}
       ${item('#/a1','sparkles','A1')}
     `;
   }
@@ -3452,8 +3451,14 @@ const App = (() => {
     // Se js/liveGuest.js, js/liveGuestAdmin.js, js/liveArchive.js.
     Router.define('/go-live/mine',       () => { if (window.LiveGuest) LiveGuest.renderMine(); });
     Router.define('/go-live/admin',      () => { if (window.LiveGuestAdmin) LiveGuestAdmin.render(); });
-    Router.define('/live-archive',       () => { if (window.LiveArchive) LiveArchive.render(); });
-    Router.define('/live-archive/:id',   ({ id }) => { if (window.LiveArchive) LiveArchive.render(id); });
+    Router.define('/live-archive',       () => {
+      if (!Auth.current()) { toast('Log in to view the live archive', 'error'); Router.go('/login'); return; }
+      if (window.LiveArchive) LiveArchive.render();
+    });
+    Router.define('/live-archive/:id',   ({ id }) => {
+      if (!Auth.current()) { toast('Log in to view the live archive', 'error'); Router.go('/login'); return; }
+      if (window.LiveArchive) LiveArchive.render(id);
+    });
     Router.define('/a1',                 () => A1.render());
     Router.define('/community',          () => { if (window.Community) Community.render(); });
     Router.define('/grupper',            () => { if (window.Groups) Groups.render(); });
