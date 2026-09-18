@@ -276,6 +276,10 @@ const App = (() => {
     const logoLink = document.getElementById('nav-logo-link');
     if (logoLink) logoLink.href = user ? `#/u/${user.username}` : '#/';
 
+    // Søkefelt kun for innloggede — skjult som standard i index.html, vist her.
+    const searchBox = document.getElementById('nav-search-box');
+    if (searchBox) searchBox.classList.toggle('hidden', !user);
+
     if (user) {
       const pending    = Auth.getPendingRequestsCount(user.username);
       const unreadPMs  = getUnreadPMTotal(user.username);
