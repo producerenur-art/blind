@@ -387,6 +387,7 @@ const App = (() => {
       ${item('#/shows','calendar','Shows')}
       ${item('#/world','globe','World')}
       ${item('#/magazine','book','Magazine')}
+      ${window.Radio?.isLiveTakeoverActive?.() ? item('#/live-archive','radio','Live Archive') : ''}
       ${item('#/a1','sparkles','A1')}
     `;
   }
@@ -3452,11 +3453,11 @@ const App = (() => {
     Router.define('/go-live/mine',       () => { if (window.LiveGuest) LiveGuest.renderMine(); });
     Router.define('/go-live/admin',      () => { if (window.LiveGuestAdmin) LiveGuestAdmin.render(); });
     Router.define('/live-archive',       () => {
-      if (!Auth.current()) { toast('Log in to view the live archive', 'error'); Router.go('/login'); return; }
+      if (!Auth.current() && !window.Radio?.isLiveTakeoverActive?.()) { toast('Log in to view the live archive', 'error'); Router.go('/login'); return; }
       if (window.LiveArchive) LiveArchive.render();
     });
     Router.define('/live-archive/:id',   ({ id }) => {
-      if (!Auth.current()) { toast('Log in to view the live archive', 'error'); Router.go('/login'); return; }
+      if (!Auth.current() && !window.Radio?.isLiveTakeoverActive?.()) { toast('Log in to view the live archive', 'error'); Router.go('/login'); return; }
       if (window.LiveArchive) LiveArchive.render(id);
     });
     Router.define('/a1',                 () => A1.render());
