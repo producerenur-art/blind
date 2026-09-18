@@ -1296,6 +1296,7 @@ const Discover = (() => {
             </div>
 
             <div class="disc-sidebar">
+              ${isAuthed ? `
               <div class="disc-sidebar-card">
                 <div class="disc-sidebar-title">
                   <span class="disc-live-dot"></span> Live activity
@@ -1303,7 +1304,7 @@ const Discover = (() => {
                 <div class="disc-activity-feed" id="disc-activity-feed">
                   ${renderActivity(allTracks)}
                 </div>
-              </div>
+              </div>` : ''}
 
               <div class="disc-sidebar-card" id="disc-genre-radio-wrap">
                 ${renderGenreRadioWidget()}
