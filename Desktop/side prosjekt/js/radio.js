@@ -2767,7 +2767,7 @@ const Radio = (() => {
   // Spilleren svarer med onReady/infoDelivery-meldinger når den faktisk er
   // klar til å ta imot kommandoer — da ber vi om høy kvalitet med en gang.
   window.addEventListener('message', (e) => {
-    if (!/(^|\.)youtube(-nocookie)?\.com$/.test(new URL(e.origin).hostname)) return;
+    if (!/^https:\/\/([a-z0-9-]+\.)*youtube(-nocookie)?\.com$/.test(e.origin || '')) return;
     let data;
     try { data = JSON.parse(e.data); } catch (_) { return; }
     if (!data || (data.event !== 'onReady' && data.event !== 'infoDelivery')) return;
