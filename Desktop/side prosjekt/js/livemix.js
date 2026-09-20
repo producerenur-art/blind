@@ -523,8 +523,19 @@ const LiveMix = (() => {
       _bc.analL = _bc.ctx.createAnalyser(); _bc.analR = _bc.ctx.createAnalyser(); _bc.analL.fftSize = _bc.analR.fftSize = 1024;
       src.connect(sp); sp.connect(_bc.analL, 0); sp.connect(_bc.analR, 1);
       _bcStartMeter();
-      // Utgående strøm: lyd + valgt video (stillbilde eller laptop-kamera).
-      const outTracks = [..._bc.stream.getAudioTracks()];
+      // Peak-limiter FØR sendingen går ut — reint klippevern (høg terskel,
+      // raskt slag), IKKJE musikk-komprimering; DSP-en over
+      // (echoCancellation/noiseSuppression/autoGainControl:false) er
+      // framleis av for sjølve opptaket. Gjer nivået meir likt resten av
+      // 24/7-rotasjonen ved overgangen etter LIVE_OUTRO, og hindrar eit for
+      // vermt Traktor-signal frå å klippe (brukarønske 2026-09-20).
+      const limiter = _bc.ctx.createDynamicsCompressor();
+      limiter.threshold.value = -1; limiter.knee.value = 0; limiter.ratio.value = 20;
+      limiter.attack.value = 0.003; limiter.release.value = 0.1;
+      const dest = _bc.ctx.createMediaStreamAudioDestinationNode();
+      src.connect(limiter); limiter.connect(dest);
+      // Utgående strøm: limitert lyd + valgt video (stillbilde eller laptop-kamera).
+      const outTracks = [...dest.stream.getAudioTracks()];
       let vTrack = null;
       try { vTrack = await _bcVisualTrack(room); } catch (e) { _bcLog('Video off (' + e.message + ') — sending audio only.'); }
       if (vTrack) outTracks.push(vTrack);
@@ -565,7 +576,11 @@ const LiveMix = (() => {
     if (_bc.canvasRaf) { clearInterval(_bc.canvasRaf); _bc.canvasRaf = null; }
     if (_bc.dj) { _bc.dj.stop(); _bc.dj = null; }
     if (_bc.camStream) { _bc.camStream.getTracks().forEach(t => t.stop()); _bc.camStream = null; }
-    if (_bc.outStream) { _bc.outStream.getVideoTracks().forEach(t => t.stop()); _bc.outStream = null; }
+    // Video-sporet ER rå (canvas/kamera-capture), men audio-sporet i outStream
+    // er no eit MediaStreamAudioDestinationNode-spor (frå limiteren over),
+    // IKKJE same objekt som _bc.stream sine rå enhets-spor — begge må derfor
+    // stoppast eksplisitt her, ikkje berre video.
+    if (_bc.outStream) { _bc.outStream.getTracks().forEach(t => t.stop()); _bc.outStream = null; }
     if (_bc.stream) { _bc.stream.getTracks().forEach(t => t.stop()); _bc.stream = null; }
     if (_bc.ctx) { try { _bc.ctx.close(); } catch (e) {} _bc.ctx = null; }
     _bc.analL = _bc.analR = null; _bc.canvas = null;
