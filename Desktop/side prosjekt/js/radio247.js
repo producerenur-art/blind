@@ -129,6 +129,14 @@ const Radio247 = (() => {
   // ei bru mellom sjangrar ved AUTOMATISKE bytte, så overgangen aldri blir
   // stille dødtid mens den nye strøymen koblar til.
   const TRANSITION_JINGLE = 'assets/jingles/jingle-a.mp3';
+  // Brukarønske 2026-09-19: gjer overgangen til/frå jingelen mjukare — mange
+  // av sporene i rotasjonen ligg i 4/4-takt, men me har ingen tilgang til
+  // taktrutenettet til dei eksterne strøymane (tredjeparts-radio, ikkje vårt
+  // eige lydmateriale), så ekte beat-matching er ikkje mogleg. Det me KAN
+  // gjere: ei lengre, mjukare inn/ut-toning i staden for standard 350ms
+  // (laga for UI-ting som volumslideren) — kjennest meir som ein DJ-overgang
+  // enn eit hardt kutt.
+  const TRANSITION_FADE_MS = 1400;
 
   // `opts.transition = true` = automatisk bytte (frå _tick(), midt i
   // avspeling) → bru med jingelen over. Utan flagget (frå play(), første
@@ -154,7 +162,7 @@ const Radio247 = (() => {
       Radio.playLocalClip(TRANSITION_JINGLE, () => {
         if (Radio.endJingle) Radio.endJingle();
         doSwitch();
-      });
+      }, TRANSITION_FADE_MS);
     } else {
       doSwitch();
     }
@@ -255,10 +263,25 @@ const Radio247 = (() => {
     // brukaren skal berre sjå SiriusFM-brandinga her, ikkje den ekte
     // stasjonen. «Recent rotation»-arkivet under (archiveHtml) er eit
     // MEDVITE unntak og held fram med å vise ekte stasjonsnamn.
-    const nowText = _escHtml(b.label);
+    // Brukarønske 18.09.2026: er nokon faktisk live akkurat no (eigaren sitt
+    // "Gå live"-panel, js/liveGlobal.js), skal «Now:»-linja vise KVEM som
+    // spelar live i staden for berre sjangeren — same unntak som
+    // «Recent rotation»-arkivet under, som alt viser ekte namn.
+    // To kjelder: vanleg lyttar (Radio sin live-overtaking) ELLER broadcasteren
+    // sjølv (LiveMix — som med vilje ALDRI koblar til lyden på eigen fane, jf.
+    // sjølv-ekko-vernet i js/liveGlobal.js, men skal likevel VISE at han er
+    // live der òg).
+    const livePresenter =
+      (typeof Radio !== 'undefined' && Radio.isLiveTakeoverActive && Radio.isLiveTakeoverActive()
+        && Radio.getLivePresenterName && Radio.getLivePresenterName()) ||
+      (typeof LiveMix !== 'undefined' && LiveMix.isBroadcastingHere && LiveMix.isBroadcastingHere()
+        && LiveMix.getBroadcastPresenterName && LiveMix.getBroadcastPresenterName()) ||
+      '';
+    const nowText = livePresenter ? `🔴 LIVE — ${_escHtml(livePresenter)}` : _escHtml(b.label);
     // Brukarønske 15.09.2026: «Next up» på EIGA linje rett under «Now:»,
-    // ikkje slengt inn på same linje som før.
-    const desc = opts.showUntilNext
+    // ikkje slengt inn på same linje som før. Ingen "Next up" mens nokon er
+    // live — det er ikkje relevant akkurat då.
+    const desc = (opts.showUntilNext && !livePresenter)
       ? `Now: ${nowText}<br><span class="r247-next-up">Next up: ${_escHtml(nextBlock().label)} at ${b.untilLabel}</span>`
       : `Now: ${nowText}`;
     return `
@@ -272,7 +295,7 @@ const Radio247 = (() => {
             <div class="stellar-featured-desc">${desc}</div>
           </div>
           <div class="r247-controls" onclick="event.stopPropagation()">
-            <button class="r247-play-btn" title="Play" ${active ? 'disabled' : ''} onclick="Radio247.play()">${Icon('play')} Play</button>
+            <button class="r247-play-btn" title="${livePresenter ? 'A live broadcast is playing right now' : 'Play'}" ${(active || livePresenter) ? 'disabled' : ''} onclick="Radio247.play()">${Icon('play')} Play</button>
             <button class="r247-stop-btn" title="Stop" ${!active ? 'disabled' : ''} onclick="Radio247.stop()">${Icon('square')} Stop</button>
           </div>
         </div>
@@ -287,14 +310,21 @@ const Radio247 = (() => {
       </div>`;
   }
 
-  // Sjekk kvart minutt om me har krysset ei blokkgrense — bytt kjelde stille
-  // (ingen avbrot dersom brukaren framleis lyttar til nett den same stasjonen).
+  // Sjekk kvart minutt om me har krysset ei blokkgrense.
+  // Er 24/7 faktisk i gang: bytt kjelde stille (ingen avbrot om brukaren
+  // framleis lyttar til nett den same stasjonen).
+  // Er 24/7 IKKJE i gang: ikkje bytt nokon lyd (ingenting spelar), men
+  // ompteikn likevel «Now:»/«Next up:»-teksten på kortet ved KVAR
+  // blokkgrense, så ho ikkje står att og viser gårsdagens/førre timens
+  // sjanger for besøkende som berre har sida ståande open utan å spele
+  // (rapportert 2026-09-19: viste "Next up ... at 12:00" kl 12:01).
   function _tick() {
-    if (!_active) return;
     const block = currentBlock();
     if (block.index === _lastBlockIndex) return;
     _lastBlockIndex = block.index;
-    _applyBlock(block, { transition: true });
+    if (_active) {
+      _applyBlock(block, { transition: true });
+    }
     _rerenderHost();
   }
 
@@ -344,6 +374,10 @@ const Radio247 = (() => {
   return {
     play, stop, toggle, isActive, currentBlock, nextBlock, cardHtml,
     notifyManualPlay, subscribeFromInput, init,
+    // Kalla av js/liveGlobal.js idet nokon går live/slutter å vere live, så
+    // "24-Hour Cycle"-kortet oppdaterer «Now:»-linja med det same i staden
+    // for å vente til neste naturlege ompteikning (minutt-tick/sidebytte).
+    refresh: _rerenderHost,
     get schedule() { return SCHEDULE; },
   };
 })();
