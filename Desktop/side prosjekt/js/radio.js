@@ -442,7 +442,8 @@ const Radio = (() => {
   const LIVE_STANDALONE = {
     gagaringproject: JINGLE_BASE + 'live-gagaringproject.mp3',
   };
-  const JINGLE_VOLUME_SCALE = 0.85; // litt dempa ift. vanleg avspelingsvolum — skal ikkje skremme nokon
+  const JINGLE_VOLUME_SCALE = 1; // brukarønske 2026-09-20: jinglar/live-annonsar skal vere like høge
+                                  // som lyden før/etter — ikkje dempa lenger (var 0.85)
   let _jingleBusy = false;          // hindrar A/C/D i å overlappe kvarandre (eller ei live-sending)
   let _liveAnnouncementPlaying = false;
   let _pendingLiveStream = null;    // MediaStream som venter til annonsen (B) er ferdig
@@ -1365,6 +1366,24 @@ const Radio = (() => {
       navigator.mediaSession.setActionHandler('play',  () => { if (!isPlaying) togglePlay(); });
       navigator.mediaSession.setActionHandler('pause', () => { if (isPlaying) togglePlay(); });
       navigator.mediaSession.setActionHandler('stop',  () => stopRadio());
+    } catch (_) { /* eldre nettlesarar / manglar støtte — ufarleg å ignorere */ }
+  }
+
+  // Live-only låseskjerm-metadata (brukarønske 2026-09-20: mobil/nettbrett si
+  // låseskjerm skal vise "Live now" + presentatørnamn, men KUN mens ei
+  // sending faktisk pågår). Kalla frå _renderLiveBadge kvar gong live-merket
+  // vert (opp)datert; nullstilt i exitLiveTakeover slik at låseskjermen ikkje
+  // blir ståande fast på "Live now" etter at sendinga er slutt.
+  function _updateLiveMediaSession(presenterName) {
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: 'Live now',
+        artist: presenterName || 'SiriusFM',
+        album: 'SiriusFM Live Stream',
+        artwork: [{ src: '/assets/icon-512.png', sizes: '512x512', type: 'image/png' }],
+      });
+      navigator.mediaSession.playbackState = 'playing';
     } catch (_) { /* eldre nettlesarar / manglar støtte — ufarleg å ignorere */ }
   }
 
@@ -3196,6 +3215,7 @@ const Radio = (() => {
       '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#a78bfa;animation:livePulseA 1.2s ease-in-out infinite;"></span>LIVE</span>';
     if (title)  title.innerHTML  = badge + ' SiriusFM Live Stream';
     if (artist) artist.textContent = 'with ' + (presenterName || 'SiriusFM');
+    _updateLiveMediaSession(presenterName);
   }
 
   function isLiveTakeoverActive() { return _liveTakeover; }
@@ -3313,6 +3333,13 @@ const Radio = (() => {
     _liveTakeover = false;
     _liveAnnouncementPlaying = false;
     _pendingLiveStream = null; // sending stoppa midt i annonsen (B) eller like etter — kast ev. ventande straum
+    // Nullstill "Live now"-låseskjermteksten med det same — resumePrevious()
+    // under kallar _playUrl() (→ _updateMediaSession) for dei fleste vegar og
+    // overskriv denne uansett, men musikkspor-vegen (prev.src) gjer ikkje det,
+    // så utan denne ville låseskjermen bli ståande fast på "Live now".
+    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+      try { navigator.mediaSession.metadata = null; } catch (_) {}
+    }
     const prev = _preLive; _preLive = null;
     const title  = document.getElementById('player-title');
     const artist = document.getElementById('player-artist');

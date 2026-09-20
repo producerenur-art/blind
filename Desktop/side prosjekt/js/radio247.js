@@ -28,6 +28,28 @@ const Radio247 = (() => {
   const CHILLOUT_IDS    = ['1fm-chillout', 'brokenbeats', 'cafedelmar'];
   const TECHNO_IDS      = ['uzic-techno', 'remember-vip-techno'];
 
+  // Visningsnamn for stasjonane over — same namn som STATIONS i js/radio.js
+  // (shortName der han finst, elles name, «.FM»-endinga kutta), men ein
+  // bevisst snapshot HER: radio.js kan ikkje krevjast inn server-side (han
+  // brukar localStorage/document ved modul-last), så digest-e-posten
+  // (api/send-email.js) har ingen annan veg til desse namna. Oppdater begge
+  // stader viss ein stasjon sitt namn endrar seg i js/radio.js.
+  const NAME_BY_ID = {
+    dmtfm: 'DMT FM — Psytrance 24/7', psyndora: 'Psyndora Psytrance',
+    babaganousha: 'Babaganousha Radio', 'jointil-beattrance': '#joint radio Beat Trance',
+    'record-goa-psy': 'Record Goa Psy', goanight: 'Goanight',
+    trancearound: 'TranceAround', atr: 'Amsterdam Trance Radio',
+    'rr-progressive': 'Radio Record — Progressive House',
+    'record-trancemission': 'Record Trancemission', 'dfm-avb': 'Armin van Buuren',
+    'ambient-abyss': 'Ambient Abyss Broadcasting', 'dark-city-signal': 'Dark City Signal',
+    'systrum-ssr1': 'Systrum Sistum SSR1', 'indiebeat-ambient': 'The Indie Beat — Ambient',
+    'modular-station': 'Modular-Station', 'alswin-ambient': 'Alswin Ambient Music',
+    'ambientpsy-1fm': 'Ambient Psychill (1.FM)', multihuman: 'MultiHuman EntheoMusic',
+    'diceradio-psybient': 'DiceRadio', 'paradisehunter-chillout': 'Paradisehunter Chillout',
+    '1fm-chillout': '1.FM Chillout Lounge', brokenbeats: 'Brokenbeats', cafedelmar: 'Café del Mar',
+    'uzic-techno': 'UZIC Techno Minimal', 'remember-vip-techno': 'Remember VIP Techno',
+  };
+
   const SCHEDULE = [
     { start: 0,  end: 1,  genre: 'goa',         label: 'Psytrance / Goa',      stationIds: GOA_IDS },
     { start: 1,  end: 3,  genre: 'progressive', label: 'Progressive',          stationIds: PROGRESSIVE_IDS },
@@ -121,7 +143,9 @@ const Radio247 = (() => {
   // (`\.FM$`), ikkje midt i namnet — «1.FM Chillout Lounge» og
   // «Ambient Psychill (1.FM)» har ikkje ".FM" sist, så dei påverkast ikkje.
   function _stationName(sid) {
-    if (!sid || typeof Radio === 'undefined') return null;
+    if (!sid) return null;
+    if (NAME_BY_ID[sid]) return NAME_BY_ID[sid];
+    if (typeof Radio === 'undefined') return null;
     const s = (Radio.stations || []).find(x => x.id === sid);
     if (!s) return null;
     const name = s.shortName || s.name;
@@ -382,9 +406,18 @@ const Radio247 = (() => {
     // for å vente til neste naturlege ompteikning (minutt-tick/sidebytte).
     refresh: _rerenderHost,
     get schedule() { return SCHEDULE; },
+    // Eksponert for server-side gjenbruk (sjå module.exports under) — ikkje
+    // meint for UI-kode, som allereie har currentBlock()/archiveHtml().
+    pickStationId: _pickStationId,
+    stationName: _stationName,
   };
 })();
 if (typeof document !== 'undefined') Radio247.init();
 // Server-side gjenbruk (api/radio247-digest.js) — same mønster som js/shows.js
 // og js/world.js: éin kjelde til sannhet for tidsplanen, ikkje ein handoppdatert kopi.
-if (typeof module !== 'undefined' && module.exports) module.exports = { SCHEDULE: Radio247.schedule };
+// pickStationId/stationName er med her slik at digest-e-posten (api/send-email.js)
+// kan vise den ekte stasjonen bak kvar blokk — same reknestykke/namn som
+// arkiv-visninga på /radio, ikkje ein separat kopi av utrekninga.
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { SCHEDULE: Radio247.schedule, pickStationId: Radio247.pickStationId, stationName: Radio247.stationName };
+}
