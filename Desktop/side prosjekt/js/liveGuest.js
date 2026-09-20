@@ -238,7 +238,9 @@ const LiveGuest = (() => {
   }
 
   // ── DJ-konsoll (kun lyd — sender direkte til lyttere i sitt eget rom) ─────────
-  const _g = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: '', req: null };
+  const _g = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: '', req: null,
+    listening: false, ended: false, jingled: false };
+  let _lnReconnecting = false;
 
   function goLive(id) {
     if (typeof App === 'undefined') return;
@@ -405,14 +407,38 @@ const LiveGuest = (() => {
       </div>`;
     App.openModal();
     _lnStatus('Connecting…', false);
+    _g.listening = true;
+    _g.ended = false;
+    _g.jingled = false;
+    _spawnGuestListener(name);
+  }
+
+  function _spawnGuestListener(name) {
     _g.ln = LiveBroadcast.listener(_g.room, {
       onState: s => {
         if (s === 'connected') _lnStatus('LIVE — listening to the set', true);
-        else if (s === 'dj-offline') _lnStatus('Broadcast ended', false);
-        else if (['failed', 'disconnected', 'closed'].includes(s)) _lnStatus('Disconnected', false);
+        else if (s === 'dj-offline') { _g.ended = true; _lnStatus('Broadcast ended', false); }
+        else if (['failed', 'disconnected', 'closed'].includes(s)) {
+          _lnStatus('Disconnected', false);
+          // Kort nettverksglipp på DENNE eininga (ikkje at artisten faktisk
+          // slutta — det melder 'dj-offline' eksplisitt over) → DJ-sida
+          // (js/livebroadcast.js) lukker peeren for godt, kjem aldri av seg
+          // sjølv attende. Byggjer stille ein ny lytter-tilkobling så lenge
+          // modalen framleis er open og sendinga ikkje er meldt avslutta (same
+          // feilmønster/fiks som js/liveGlobal.js, rapportert 2026-09-20).
+          if (_lnReconnecting || _g.ended || !_g.listening) return;
+          _lnReconnecting = true;
+          if (_g.ln) { try { _g.ln.leave(); } catch (e) {} _g.ln = null; }
+          setTimeout(() => {
+            _lnReconnecting = false;
+            if (_g.listening && !_g.ended) _spawnGuestListener(name);
+          }, 1500);
+        }
       },
       onTrack: stream => {
         const attach = () => { const a = _byId('lg-ln-audio'); if (a) { a.srcObject = stream; a.play().catch(() => {}); } };
+        if (_g.jingled) { attach(); return; }   // gjenoppkobling — ikkje spel intro-jingelen om att
+        _g.jingled = true;
         _playLiveJingle(name, attach);
       },
       onLog: m => { const i = _byId('lg-ln-info'); if (i) i.textContent = m; },
@@ -425,6 +451,7 @@ const LiveGuest = (() => {
   }
 
   function tuneOut() {
+    _g.listening = false;   // stopp ev. ventande gjenoppkoblingsforsøk (sjå _spawnGuestListener)
     if (_g.ln) { _g.ln.leave(); _g.ln = null; }
     if (typeof App !== 'undefined') App.closeModal();
   }

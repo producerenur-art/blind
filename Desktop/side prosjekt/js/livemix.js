@@ -229,7 +229,9 @@ const LiveMix = (() => {
   // som signaling). State er modul-scopet så sendingen/lyden overlever at
   // modalen lukkes (App.closeModal() skjuler bare overlayet, tømmer ikke DOM).
   const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null, devBypass: false, ownerBypass: false,
-    visual: 'image', coverUrl: '', coverImg: null, canvas: null, canvasRaf: null, camStream: null, outStream: null, presenterName: '' };
+    visual: 'image', coverUrl: '', coverImg: null, canvas: null, canvasRaf: null, camStream: null, outStream: null, presenterName: '', heartbeatTimer: null,
+    listening: false, ended: false };
+  let _lnReconnecting = false;
 
   // ── Global "gå live"-status (auto-switchover for ALLE besøkende) ──────
   // Skriving er RPC-gata bak ein FAST eigar-hemmelegheit, sett i
@@ -537,6 +539,20 @@ const LiveMix = (() => {
       // — så ingen besøkende byttes over til et rom som ennå ikke sender noe.
       _publishLiveStatus(true);
       _notifyLiveStart();
+      // Hjarteslag: re-publiser med jamne mellomrom mens sendinga pågår, så
+      // updated_at-kolonna held seg fersk. Krasjar/lukkast fana (eller
+      // internett fell heilt ut) UTAN at bcStop() rekk å køyre, sluttar
+      // hjarteslaget stille — og js/liveGlobal.js sin ferskleik-sjekk
+      // (RECONNECT_COOLDOWN_MS-området) reknar statusen som forelda etter
+      // kort tid i staden for at is_live sit fast «true» for alltid
+      // (rapportert 2026-09-19: ei sending frå kvelden før blokkerte normal
+      // radio for ALLE i 13+ timar).
+      if (_bc.heartbeatTimer) clearInterval(_bc.heartbeatTimer);
+      _bc.heartbeatTimer = setInterval(() => { if (_bc.dj) _publishLiveStatus(true); }, 45000);
+      // Oppdater "24-Hour Cycle"-kortet på DENNE fana med det same — den
+      // globale liveGlobal.js-vegen hopper med vilje over broadcasterens
+      // eigen fane (sjølv-ekko-vernet), så det må trigges herfrå i staden.
+      try { window.Radio247?.refresh?.(); } catch (e) {}
     } catch (e) { _bcLog('ERROR going live: ' + e.message); if (typeof App !== 'undefined') App.toast('Could not go live: ' + e.message, 'error'); }
   }
 
@@ -544,6 +560,7 @@ const LiveMix = (() => {
     // Fire-and-forget: fjern den globale live-statusen FØRST, slik at besøkende
     // byttes tilbake til stasjonen sin selv om resten av oppryddingen under feiler.
     _publishLiveStatus(false);
+    if (_bc.heartbeatTimer) { clearInterval(_bc.heartbeatTimer); _bc.heartbeatTimer = null; }
     if (_bc.raf) cancelAnimationFrame(_bc.raf); _bc.raf = null;
     if (_bc.canvasRaf) { clearInterval(_bc.canvasRaf); _bc.canvasRaf = null; }
     if (_bc.dj) { _bc.dj.stop(); _bc.dj = null; }
@@ -555,6 +572,7 @@ const LiveMix = (() => {
     _bcSetLive(false);
     const c = _byId('bc-count'); if (c) c.textContent = '0';
     _bcLog('Stopped.');
+    try { window.Radio247?.refresh?.(); } catch (e) {}
   }
 
   function _bcSetLive(live) {
@@ -633,6 +651,29 @@ const LiveMix = (() => {
     const box = _byId('modal-box'); if (!box) return;
     const joined = !!_bc.ln;
     const inp = 'width:100%;box-sizing:border-box;padding:0.7rem;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:var(--text);font:inherit;text-align:center';
+    // Alle besøkende blir automatisk kobla til når nokon går live (js/liveGlobal.js,
+    // via DET DELTE #audio-engine-elementet). Denne manuelle knappen kobla FØR til
+    // ein EIGEN separat WebRTC-lytter + eige <audio id="ln-audio">-element — spelte
+    // altså av same lyd EIN GONG TIL oppå den automatiske overtakinga → hørbar
+    // dobbel-lyd/ekko (kjend feil, sjå kommentar i liveGlobal.js). Er automatisk
+    // overtaking alt aktiv her, kobler vi ALDRI til ein gong til — vis berre status.
+    const autoActive = !!(window.Radio && typeof Radio.isLiveTakeoverActive === 'function' && Radio.isLiveTakeoverActive());
+    if (autoActive) {
+      box.innerHTML = `
+        <div class="modal-header">
+          <h2>${_I('headphones')} Listen live</h2>
+          <button class="btn-icon" onclick="App.closeModal()" aria-label="Close">${_I('x')}</button>
+        </div>
+        <div style="padding:0.5rem 0;text-align:center">
+          <span style="display:inline-flex;align-items:center;gap:0.45rem;font-size:0.82rem;font-weight:700;padding:0.3rem 0.8rem;border-radius:999px;background:rgba(34,197,94,0.14);color:#22c55e;margin-bottom:0.5rem">
+            <span style="width:10px;height:10px;border-radius:50%;background:#22c55e"></span>
+            <span>LIVE — already playing automatically</span>
+          </span>
+          <p style="color:var(--text2);font-size:0.9rem;margin:0.4rem 0 0">You're already hearing this broadcast — every visitor is switched over automatically, no extra step needed.</p>
+        </div>`;
+      App.openModal();
+      return;
+    }
     box.innerHTML = `
       <div class="modal-header">
         <h2>${_I('headphones')} Listen live</h2>
@@ -660,15 +701,42 @@ const LiveMix = (() => {
   }
 
   function tuneInJoin() {
+    // Dobbel-lyd-vern: aldri opprett ein ny lytter-tilkobling oppå den automatiske
+    // globale overtakinga (js/liveGlobal.js) — sjå forklaring i _renderListener().
+    if (window.Radio && typeof Radio.isLiveTakeoverActive === 'function' && Radio.isLiveTakeoverActive()) {
+      _renderListener();
+      return;
+    }
     const roomEl = _byId('ln-room');
     const room = (roomEl && roomEl.value.trim()) || 'test'; _bc.room = room;
     const join = _byId('ln-join'); if (join) join.disabled = true;
     _lnStatus('Connecting…', false);
+    _bc.listening = true;
+    _bc.ended = false;
+    _spawnListener(room);
+  }
+
+  function _spawnListener(room) {
     _bc.ln = LiveBroadcast.listener(room, {
       onState: s => {
         if (s === 'connected') _lnStatus('LIVE — listening to the set', true);
-        else if (s === 'dj-offline') _lnStatus('DJ ended the broadcast', false);
-        else if (['failed', 'disconnected', 'closed'].includes(s)) _lnStatus('Disconnected', false);
+        else if (s === 'dj-offline') { _bc.ended = true; _lnStatus('DJ ended the broadcast', false); }
+        else if (['failed', 'disconnected', 'closed'].includes(s)) {
+          _lnStatus('Disconnected', false);
+          // Kort nettverksglipp på DENNE eininga (ikkje at DJ-en faktisk
+          // stoppa — det melder 'dj-offline' eksplisitt over) → DJ-sida
+          // lukker peeren for godt, kjem aldri av seg sjølv attende. Byggjer
+          // stille ein ny lytter-tilkobling så lenge modalen framleis er open
+          // og sendinga ikkje er meldt avslutta (same feilmønster/fiks som
+          // js/liveGlobal.js og js/liveGuest.js, rapportert 2026-09-20).
+          if (_lnReconnecting || _bc.ended || !_bc.listening) return;
+          _lnReconnecting = true;
+          if (_bc.ln) { try { _bc.ln.leave(); } catch (e) {} _bc.ln = null; }
+          setTimeout(() => {
+            _lnReconnecting = false;
+            if (_bc.listening && !_bc.ended) _spawnListener(room);
+          }, 1500);
+        }
       },
       onTrack: stream => {
         const a = _byId('ln-audio'); if (a) { a.srcObject = stream; a.play().catch(() => {}); }
@@ -682,6 +750,7 @@ const LiveMix = (() => {
   }
 
   function tuneOut() {
+    _bc.listening = false;   // stopp ev. ventande gjenoppkoblingsforsøk (sjå _spawnListener)
     if (_bc.ln) { _bc.ln.leave(); _bc.ln = null; }
     const a = _byId('ln-audio'); if (a) { try { a.pause(); } catch (e) {} a.srcObject = null; }
     const v = _byId('ln-video'); if (v) { try { v.pause(); } catch (e) {} v.srcObject = null; v.style.display = 'none'; }
@@ -706,6 +775,11 @@ const LiveMix = (() => {
     goLive, bcPerm, bcGo, bcStop, bcSetVisual, bcSetImage, tuneIn, tuneInJoin, tuneOut,
     canGoLive,
     isBroadcastingHere: () => !!_bc.dj,
+    // Brukt av js/radio247.js sitt "24-Hour Cycle"-kort for å vise «LIVE —
+    // {namn}» på BROADCASTERENS EIGEN fane også — reint visuelt, kobler
+    // ALDRI til lyden der (det er nettopp isBroadcastingHere()-sjekken i
+    // js/liveGlobal.js som hindrar sjølv-ekko).
+    getBroadcastPresenterName: () => (_bc.dj ? (_bc.presenterName || '') : ''),
   };
 })();
 

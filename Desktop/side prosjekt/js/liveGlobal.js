@@ -32,6 +32,34 @@ const LiveGlobal = (() => {
   let _listener = null;   // aktivt LiveBroadcast.listener()-handtak (om vi høyrer på no)
   let _pollTimer = null;
 
+  // Kort nettverksglipp (WebRTC/Realtime-fall) → is_live tikkar false så true
+  // att i løpet av sekund/minutt, same rom. Utan denne vernet spelte
+  // intro-jingelen + namneannonsen av på nytt for ALLE lyttarar kvar gong —
+  // høyrest ut som ei ny, uventa stemme midt i sendinga (rapportert
+  // 2026-09-18). Kjem statusen tilbake INNAN cooldown-vindauget og romnamnet
+  // er uendra, koblar vi berre stille til att, ingen ny annonsering.
+  const RECONNECT_COOLDOWN_MS = 120000; // 2 min — juster her ved behov
+  let _lastRoom = null;
+  let _lastDisconnectAt = 0;
+
+  // Hjarteslag-vern: js/livemix.js sin bcGo() re-publiserer is_live=true kvar
+  // 45. sekund mens ei sending faktisk pågår (oppdaterer updated_at-kolonna).
+  // Krasjar/lukkast avsendarens fane utan at bcStop() rekk å køyre, sluttar
+  // hjarteslaget — og is_live=true ELLES sete fast for alltid i databasen
+  // (ingen server-side utløp). Er updated_at eldre enn dette vindauget,
+  // reknar vi statusen som FORELDA og behandlar det som ikkje-live, same kva
+  // is_live-kolonna faktisk seier. Rapportert 2026-09-19: is_live stod fast
+  // frå kvelden før, blokkerte normal radio for ALLE i 13+ timar (sjå
+  // js/radio.js sitt live-vern i _playUrl). Krev migrasjon 0028 (updated_at
+  // eksponert via get_live_broadcast_status()) — degraderer trygt til
+  // "alltid fersk" viss RPC-en enno ikkje returnerer feltet.
+  const STALE_MS = 150000; // 2,5 min — litt over heartbeat-intervallet i livemix.js
+  function _isStale(status) {
+    if (!status || !status.updated_at) return false; // gammal RPC utan feltet — ikkje bryt noko
+    const age = Date.now() - new Date(status.updated_at).getTime();
+    return age > STALE_MS;
+  }
+
   function _enabled() {
     return (typeof SC_Storage !== 'undefined')
       && SC_Storage.isConfigured()
@@ -59,15 +87,23 @@ const LiveGlobal = (() => {
   }
 
   function _apply(status) {
-    const isLive  = !!(status && status.is_live);
+    const isLive  = !!(status && status.is_live) && !_isStale(status);
     const wasLive = !!(_known && _known.is_live);
     const prevRoom = _known && _known.room;
     _known = status || { is_live: false };
 
     if (_isBroadcastingHere()) return;   // følg med, men ikkje koble oss til vår eigen sending
 
+    // «24-Hour Cycle»-kortet (js/radio247.js) sin «Now:»-linje skal vise
+    // presentatøren mens live pågår, sjangeren elles — oppdater med det same
+    // ved kvar av/på-overgang i staden for å vente på neste naturlege
+    // ompteikning.
+    if (isLive !== wasLive) { try { window.Radio247?.refresh?.(); } catch (e) {} }
+
     if (isLive && !wasLive) {
-      _connect(_known);
+      const quickReconnect = !!_lastRoom && _lastRoom === _known.room
+        && (Date.now() - _lastDisconnectAt) < RECONNECT_COOLDOWN_MS;
+      _connect(_known, quickReconnect);
     } else if (isLive && wasLive && _known.room !== prevRoom) {
       // Romnamnet endra seg midt i ei sending (bør ikkje skje i praksis) — koble om.
       _disconnect();
@@ -79,14 +115,44 @@ const LiveGlobal = (() => {
     }
   }
 
-  function _connect(status) {
+  function _connect(status, skipAnnouncement) {
     if (!window.Radio || !window.LiveBroadcast || !status || !status.room) return;
-    Radio.enterLiveTakeover(status.presenter_name || '');
+    // Rydd opp ei eventuell hengande gammal lytter-tilkobling FØR ei ny
+    // opprettast — elles kunne to WebRTC-lytterar til same rom (og dermed to
+    // parallelle lydspor inn) byggje seg opp stille over fleire hendingar.
+    if (_listener) { try { _listener.leave(); } catch (e) {} _listener = null; }
+    _lastRoom = status.room;
+    Radio.enterLiveTakeover(status.presenter_name || '', !!skipAnnouncement);
+    _spawnListener(status.room);
+  }
+
+  // Vern mot dobbel gjenoppkobling om onState skulle fyre fleire gonger på rad.
+  let _reconnecting = false;
+
+  function _spawnListener(room) {
     try {
-      _listener = LiveBroadcast.listener(status.room, {
+      _listener = LiveBroadcast.listener(room, {
         onTrack: stream => { window.Radio?.attachLiveStream?.(stream); },
-        onState: () => { /* spelaren viser alt LIVE-merket — ingen eigen UI trengst her */ },
-        onLog:   () => {},
+        // Lyttarens EIGEN WebRTC-tilkobling kan døy av eit kort nettverksglipp
+        // på DENNE eininga (ikkje DJ-en sin feil) — DJ-sida (js/livebroadcast.js
+        // sin broadcaster()) lukker og gløymer den peer-tilkoblinga med det
+        // same den ser 'disconnected'/'failed'/'closed', og kjem aldri av seg
+        // sjølv attende. Utan denne gjenoppkoblinga sat lyttaren att med stille
+        // lyd resten av sendinga, sjølv om DJ/artist framleis sender (is_live
+        // framleis true) — opplevd som at sendinga "stoppa uanmeldt" (rapportert
+        // 2026-09-20). Er statusen framleis fersk og live, byggjer vi berre ein
+        // heilt ny lytter (sender 'hello' på nytt) — stille, ingen ny annonsering.
+        onState: s => {
+          if (!['failed', 'disconnected', 'closed'].includes(s)) return;
+          if (_reconnecting || !_known || !_known.is_live || _isStale(_known)) return;
+          _reconnecting = true;
+          if (_listener) { try { _listener.leave(); } catch (e) {} _listener = null; }
+          setTimeout(() => {
+            _reconnecting = false;
+            if (_known && _known.is_live && !_isStale(_known)) _spawnListener(room);
+          }, 1500);
+        },
+        onLog: () => {},
       });
     } catch (e) {
       console.warn('[LiveGlobal] kunne ikke koble til direktesendingen:', e.message || e);
@@ -96,6 +162,7 @@ const LiveGlobal = (() => {
   function _disconnect() {
     if (_listener) { try { _listener.leave(); } catch (e) {} _listener = null; }
     if (window.Radio?.isLiveTakeoverActive?.()) Radio.exitLiveTakeover();
+    _lastDisconnectAt = Date.now();
   }
 
   async function _poll() {
@@ -117,8 +184,14 @@ const LiveGlobal = (() => {
     } catch (e) { /* degraderer stille til polling åleine */ }
   }
 
+  let _initDone = false; // vern mot at init() ved eit uhell køyrer meir enn éin gong
+                          // i same fane (ville gitt DOBLE realtime-abonnement → same
+                          // status-hending trigga _apply() to gongar → jingelen kunne
+                          // startast på nytt oppå seg sjølv, verre for kvar gong).
   async function init() {
+    if (_initDone) return;
     if (!_enabled()) return;
+    _initDone = true;
     await _poll();             // dekk besøkende som opnar sida mens det alt er live
     _subscribeRealtime();
     _pollTimer = setInterval(_poll, POLL_MS);
