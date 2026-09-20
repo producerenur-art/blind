@@ -64,20 +64,10 @@ const Discover = (() => {
       { name: 'Warp Records',          email: 'demo@warp.net' },
       { name: 'Ninja Tune',            email: 'demos@ninjatune.net' },
     ]},
-    { tag: 'hiphop',     label: 'Hip-Hop / R&B',            emoji: '🎤', labels: [
-      { name: 'Stones Throw Records', email: 'demos@stonesthrow.com' },
-      { name: 'Rhymesayers',          email: 'demos@rhymesayers.com' },
-      { name: 'Def Jam (demo)',        email: 'unsigned@defjam.com' },
-    ]},
     { tag: 'pop',        label: 'Pop / Indie',               emoji: '🎶', labels: [
       { name: 'Warner Music Norway', email: 'demos@warnermusic.no' },
       { name: 'Sony Music Norway',   email: 'demos@sonymusic.no' },
       { name: 'Universal Music',     email: 'demos@umusic.no' },
-    ]},
-    { tag: 'rock',       label: 'Rock / Metal',              emoji: '🎸', labels: [
-      { name: 'Nuclear Blast',   email: 'bands@nuclearblast.de' },
-      { name: 'Relapse Records', email: 'demos@relapse.com' },
-      { name: 'Sub Pop Records', email: 'demos@subpop.com' },
     ]},
     { tag: 'jazz',       label: 'Jazz / Blues',              emoji: '🎷', labels: [
       { name: 'ECM Records', email: 'info@ecmrecords.com' },

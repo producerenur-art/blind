@@ -22,7 +22,10 @@ const Radio247 = (() => {
   const PROGRESSIVE_IDS = ['trancearound', 'atr', 'rr-progressive', 'record-trancemission', 'dfm-avb'];
   const DARK_DRONE_IDS  = ['ambient-abyss', 'dark-city-signal', 'systrum-ssr1', 'indiebeat-ambient', 'modular-station', 'alswin-ambient'];
   const PSYCHILL_IDS    = ['ambientpsy-1fm', 'multihuman', 'diceradio-psybient', 'paradisehunter-chillout'];
-  const CHILLOUT_IDS    = ['1fm-chillout', 'smoothchill', 'brokenbeats', 'anon-fm', 'cafedelmar'];
+  // smoothchill (icy-genre: Soul) og anon-fm (icy-genre inkluderer rock) fjerna
+  // 20.09.2026 — live ICY-metadata stadfesta ikkje-elektronisk innhald,
+  // brukarønske: ALDRI rock/metal/hip-hop/R&B i 24/7-hjulet.
+  const CHILLOUT_IDS    = ['1fm-chillout', 'brokenbeats', 'cafedelmar'];
   const TECHNO_IDS      = ['uzic-techno', 'remember-vip-techno'];
 
   const SCHEDULE = [

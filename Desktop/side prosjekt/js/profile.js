@@ -975,20 +975,10 @@ const Profile = (() => {
       { name: 'Warp Records',          email: 'demo@warp.net' },
       { name: 'Ninja Tune',            email: 'demos@ninjatune.net' },
     ]},
-    hiphop: { label: 'Hip-Hop / R&B', emoji: '🎤', labels: [
-      { name: 'Stones Throw Records', email: 'demos@stonesthrow.com' },
-      { name: 'Rhymesayers',          email: 'demos@rhymesayers.com' },
-      { name: 'Def Jam (demo)',        email: 'unsigned@defjam.com' },
-    ]},
     pop: { label: 'Pop / Indie', emoji: '🎶', labels: [
       { name: 'Warner Music Norway', email: 'demos@warnermusic.no' },
       { name: 'Sony Music Norway',   email: 'demos@sonymusic.no' },
       { name: 'Universal Music',     email: 'demos@umusic.no' },
-    ]},
-    rock: { label: 'Rock / Metal', emoji: '🎸', labels: [
-      { name: 'Nuclear Blast',   email: 'bands@nuclearblast.de' },
-      { name: 'Relapse Records', email: 'demos@relapse.com' },
-      { name: 'Sub Pop Records', email: 'demos@subpop.com' },
     ]},
     jazz: { label: 'Jazz / Blues', emoji: '🎷', labels: [
       { name: 'ECM Records', email: 'info@ecmrecords.com' },
