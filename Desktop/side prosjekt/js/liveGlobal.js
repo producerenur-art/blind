@@ -92,7 +92,18 @@ const LiveGlobal = (() => {
     const prevRoom = _known && _known.room;
     _known = status || { is_live: false };
 
-    if (_isBroadcastingHere()) return;   // følg med, men ikkje koble oss til vår eigen sending
+    if (_isBroadcastingHere()) {
+      // Sjølv-ekko-vernet under betyr denne fana ALDRI kallar enterLiveTakeover
+      // (den ville kobla vår eigen innkomande straum attende i høgtalarane) —
+      // men utan noko anna steg pausar aldri fana sin EIGEN radio, og han
+      // spelar vidare gjennom heile sendinga, usynkronisert med det som
+      // faktisk går live (rapportert 2026-09-21). Pausar berre det som alt
+      // spelte i det NØYAKTIGE augeblikket sendinga startar (eller ved
+      // sideoppfriskning midt i ei alt pågåande sending — isLive er då sann
+      // frå fyrste poll, wasLive framleis usann).
+      if (isLive && !wasLive) { try { window.Radio?.pauseForOwnBroadcast?.(); } catch (e) {} }
+      return;   // følg med, men ikkje koble oss til vår eigen sending
+    }
 
     // «24-Hour Cycle»-kortet (js/radio247.js) sin «Now:»-linje skal vise
     // presentatøren mens live pågår, sjangeren elles — oppdater med det same

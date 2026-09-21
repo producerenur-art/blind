@@ -3275,6 +3275,32 @@ const Radio = (() => {
   // nettverksglipp, same rom, innanfor RECONNECT_COOLDOWN_MS) — hoppar over
   // intro-jingel + namneannonse, koblar berre stille til att. Sjå forklaring
   // i liveGlobal.js sin RECONNECT_COOLDOWN_MS-kommentar.
+  // Kalla av js/liveGlobal.js på EIGARENS EIGEN sendande fane idet ho blir
+  // live (aldri på lyttarsida — den går via enterLiveTakeover over). Sjølv-
+  // ekko-vernet i liveGlobal.js (_isBroadcastingHere) hoppar heilt over
+  // enterLiveTakeover for denne fana — med vilje, elles ville ho kobla den
+  // innkomande WebRTC-straumen sin eigen lyd attende i høgtalarane, oppå
+  // DJ-konsollen. Men det verna hadde ein biverknad: fana sin EIGEN radio
+  // (24/7 Cycle eller ein vald stasjon) heldt berre fram å spele gjennom
+  // heile sendinga, usynkronisert med det som faktisk gjekk live (rapportert
+  // 2026-09-21: "radioer fortsetter å spille når vi slår over til live").
+  // Denne pausar berre det som alt spelte — rører ikkje _liveTakeover (aldri
+  // sett her, dette ER ikkje ei takeover), ingen jingel/annonse, held
+  // currentStation slik at eit seinare trykk på play hentar same stasjon.
+  function pauseForOwnBroadcast() {
+    if (_liveTakeover) return;   // burde aldri skje på sendarsida, men ufarleg å hoppe over
+    const audio = getAudio();
+    if (audio && !audio.paused) { try { audio.pause(); } catch (e) {} }
+    if (!isPlaying) return;
+    isPlaying = false;
+    stopVisualizer();
+    stopNowPlayingPoll();
+    updatePlayBtn(false);
+    updateNowPlayingStatus(false);
+    if (currentStation) updateSidebarActiveState(currentStation.id);
+    window.RadioDock?.sync();
+  }
+
   function enterLiveTakeover(presenterName, skipAnnouncement) {
     if (_liveTakeover) { _renderLiveBadge(presenterName); return; }   // alt i gang — berre oppdater namnet
     const audio  = getAudio();
@@ -3490,6 +3516,7 @@ const Radio = (() => {
     toggleAiChat, sendAiMessage, onAiKeydown,
     setAsFavorite, openEmbed, closeEmbed, stopForMusicPlayer,
     enterLiveTakeover, exitLiveTakeover, attachLiveStream, setLivePresenterName, isLiveTakeoverActive, getLivePresenterName,
+    pauseForOwnBroadcast,
     playLocalClip: _playLocalClip,
     // Delt "opptatt"-flagg for Radio247 (js/radio247.js) sin overgangsjingle
     // OG A/C/D-jinglane her — begge deler det same <audio>-elementet, så
