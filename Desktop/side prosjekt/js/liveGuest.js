@@ -248,9 +248,52 @@ const LiveGuest = (() => {
   }
 
   // ── DJ-konsoll (kun lyd — sender direkte til lyttere i sitt eget rom) ─────────
-  const _g = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: '', req: null,
-    listening: false, ended: false, jingled: false };
+  const _g = { dj: null, ln: null, stream: null, outStream: null, ctx: null, analL: null, analR: null, raf: null, room: '', req: null,
+    listening: false, ended: false, jingled: false, heartbeatTimer: null };
   let _lnReconnecting = false;
+
+  // ── Global "gå live"-status (brukarønske 2026-09-21: gjeld no ALLE som går
+  // live, ikkje berre eigaren) ────────────────────────────────────────────
+  // Same delte `live_broadcast_status`-rad + RPC som js/livemix.js sin
+  // eigar-flyt bruker — js/liveGlobal.js les/abonnerer på DENNE rada for å
+  // bytte over ALLE besøkende (innlogga eller ikkje), uansett kva 24/7-
+  // stasjon dei høyrer på. Ved å publisere hit i staden for å halde
+  // gjeste-sendinga i sitt eige, usynkroniserte hjørne, gjenbruker godkjente
+  // gjeste-DJ-ar HEILE den eksisterande takeover-flyten (intro-jingel +
+  // demping/normalisering i js/radio.js sin attachLiveStream) heilt gratis.
+  function _liveSecret() { return (typeof CONFIG !== 'undefined' && CONFIG.LIVE_BROADCAST_SECRET) || ''; }
+
+  async function _publishGlobalLiveStatus(isLive) {
+    try {
+      if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) return;
+      const { error } = await SC_Storage.client().rpc('set_live_broadcast_status', {
+        p_secret:         _liveSecret(),
+        p_is_live:        !!isLive,
+        p_presenter_name: isLive ? ((_g.req && _g.req.display_name) || '') : '',
+        p_room:           isLive ? (_g.room || '') : '',
+      });
+      if (error) _log('Global "go live" status not published: ' + error.message);
+    } catch (e) { _log('Global "go live" status failed: ' + (e.message || e)); }
+  }
+
+  // Hindrar to samtidige globale overtakingar (eigaren og ein gjest, eller to
+  // gjester) frå å kjempe om SAME delte rad — den som kjem sist ville elles
+  // stille overskrive/kasta ut den fyrste midt i sendinga (rapportert
+  // 2026-09-21: «det må aldri hakke eller stoppe under live»). Same
+  // ferskleik-regel (STALE_MS) som js/liveGlobal.js sin _isStale().
+  const LIVE_STALE_MS = 150000;
+  async function _someoneElseAlreadyLive() {
+    try {
+      if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) return false;
+      const { data, error } = await SC_Storage.client().rpc('get_live_broadcast_status');
+      if (error || data == null) return false;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row || !row.is_live) return false;
+      if (row.room === _g.room) return false; // vår eigen (t.d. re-opna konsollen)
+      if (row.updated_at && Date.now() - new Date(row.updated_at).getTime() > LIVE_STALE_MS) return false; // forelda rad
+      return true;
+    } catch (e) { return false; }
+  }
 
   function goLive(id) {
     if (typeof App === 'undefined') return;
@@ -283,7 +326,7 @@ const LiveGuest = (() => {
       <div style="padding:0.25rem 0">
         <p style="color:var(--text2);font-size:0.85rem;line-height:1.5;margin:0 0 1rem">
           Route your DJ software's master output to a virtual audio cable (e.g. BlackHole) and select it below.
-          This only broadcasts to people who click "Listen live" on you — it does not interrupt the main stream for other listeners.
+          Going live automatically switches over EVERYONE currently on SiriusFM — same as the owner's stream — and switches back the moment you stop.
         </p>
         <label style="${lbl}">Audio input</label>
         <div style="display:flex;gap:0.6rem;margin:0 0 1rem">
@@ -329,6 +372,15 @@ const LiveGuest = (() => {
   async function bcGo() {
     try {
       const cur = Auth.current(); if (!cur || !_g.req) return;
+      // Berre ÉIN kan eige den delte overtakinga om gongen — utan denne sjekken
+      // kunne ein andre sending (eigaren eller ein annan gjest) blitt stille
+      // overskrive/kasta ut midt i eiga sending (rapportert 2026-09-21: må
+      // aldri hakke eller stoppe under live).
+      if (await _someoneElseAlreadyLive()) {
+        _log('ERROR: someone else is already live right now.');
+        if (typeof App !== 'undefined') App.toast('Someone else is already live on SiriusFM right now — try again once they finish.', 'error', 5000);
+        return;
+      }
       const sel = _byId('lg-dev');
       _g.stream = await navigator.mediaDevices.getUserMedia({ audio: {
         deviceId: { exact: sel.value }, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2,
@@ -338,7 +390,17 @@ const LiveGuest = (() => {
       _g.analL = _g.ctx.createAnalyser(); _g.analR = _g.ctx.createAnalyser(); _g.analL.fftSize = _g.analR.fftSize = 1024;
       src.connect(sp); sp.connect(_g.analL, 0); sp.connect(_g.analR, 1);
       _bcStartMeter();
-      _g.dj = LiveBroadcast.broadcaster(_g.room, _g.stream, {
+      // Same peak-limiter FØR sendingen går ut som js/livemix.js sin eigar-flyt
+      // (reint klippevern, IKKJE musikk-komprimering — DSP over er framleis av
+      // for sjølve opptaket). Gjeld no ALLE som går live, ikkje berre eigaren
+      // (brukarønske 2026-09-21: «heller ikke peake»).
+      const limiter = _g.ctx.createDynamicsCompressor();
+      limiter.threshold.value = -1; limiter.knee.value = 0; limiter.ratio.value = 20;
+      limiter.attack.value = 0.003; limiter.release.value = 0.1;
+      const dest = _g.ctx.createMediaStreamDestination();
+      src.connect(limiter); limiter.connect(dest);
+      _g.outStream = dest.stream;
+      _g.dj = LiveBroadcast.broadcaster(_g.room, _g.outStream, {
         onPeerCount: n => { const el = _byId('lg-count'); if (el) el.textContent = n; },
         onLog: _log,
       });
@@ -346,14 +408,24 @@ const LiveGuest = (() => {
       _log('You are LIVE in room "' + _g.room + '". Play in your DJ software.');
       await LiveBroadcastSync.markStarted(_g.req.id, cur.username);
       const r = _mineCache.find(x => x.id === _g.req.id); if (r) r.status = 'live';
+      _publishGlobalLiveStatus(true);
+      // Held den delte rada FERSK medan sendinga pågår — utan denne ville
+      // js/liveGlobal.js sin ferskleik-sjekk (STALE_MS) rekna sendinga som
+      // forelda etter 2,5 min og bytt ALLE besøkende stille tilbake til
+      // 24/7-hjulet midt i settet (same heartbeat-mønster som js/livemix.js).
+      if (_g.heartbeatTimer) clearInterval(_g.heartbeatTimer);
+      _g.heartbeatTimer = setInterval(() => { if (_g.dj) _publishGlobalLiveStatus(true); }, 45000);
     } catch (e) { _log('ERROR going live: ' + e.message); if (typeof App !== 'undefined') App.toast('Could not go live: ' + e.message, 'error'); }
   }
 
   async function bcStop() {
     const cur = Auth.current();
+    if (_g.heartbeatTimer) { clearInterval(_g.heartbeatTimer); _g.heartbeatTimer = null; }
+    _publishGlobalLiveStatus(false); // fire-and-forget: gjer alle besøkende tilbake til 24/7-hjulet
     if (_g.raf) cancelAnimationFrame(_g.raf); _g.raf = null;
     if (_g.dj) { _g.dj.stop(); _g.dj = null; }
     if (_g.stream) { _g.stream.getTracks().forEach(t => t.stop()); _g.stream = null; }
+    if (_g.outStream) { _g.outStream.getTracks().forEach(t => t.stop()); _g.outStream = null; }
     if (_g.ctx) { try { _g.ctx.close(); } catch (e) {} _g.ctx = null; }
     _g.analL = _g.analR = null;
     _bcSetLive(false);
@@ -396,6 +468,16 @@ const LiveGuest = (() => {
   function tuneIn(room, name) {
     if (typeof App === 'undefined') return;
     if (!window.LiveBroadcast) { App.toast('Broadcasting could not be loaded.', 'error'); return; }
+    // Sidan gjeste-sendingar no OGSÅ trigger den globale overtakinga
+    // (_publishGlobalLiveStatus i bcGo), høyrer besøkende som alt er på sida
+    // automatisk på denne sendinga gjennom hovudspelaren (js/liveGlobal.js).
+    // Ei ny, parallell WebRTC-tilkobling HER attpå ville gitt dobbel
+    // lyd/ekko — nøyaktig det brukarønsket 2026-09-21 sa aldri skal skje
+    // under live. Alt aktivt der → berre informer, ikkje koble til på nytt.
+    if (typeof Radio !== 'undefined' && Radio.isLiveTakeoverActive && Radio.isLiveTakeoverActive()) {
+      App.toast('You\'re already listening — it\'s playing through the main SiriusFM player.', 'info', 4000);
+      return;
+    }
     _g.room = room;
     _renderListener(name || '');
   }

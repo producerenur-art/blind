@@ -3421,7 +3421,16 @@ const App = (() => {
 
     // Modal close on backdrop
     document.getElementById('modal-overlay')?.addEventListener('click', e => {
-      if (e.target === document.getElementById('modal-overlay')) closeModal();
+      if (e.target !== document.getElementById('modal-overlay')) return;
+      // Ikkje lukk «Gå live»-konsollen (eigar ELLER gjest) ved eit klikk
+      // utanfor — eit uhell midt i utfylling/redigering av namn-/rom-feltet
+      // (t.d. tekstmarkering som glepp utanfor input-boksen) lukka elles
+      // panelet stille og kasta det som var skrive (rapportert 2026-09-21,
+      // rett før deploy av det nye live-oppsettet). Sjølve sendinga/state
+      // overlever uansett (modul-scopa i livemix.js/liveGuest.js) — dette
+      // hindrar berre tap av eit halvferdig skjema.
+      if (document.getElementById('bc-go') || document.getElementById('lg-go')) return;
+      closeModal();
     });
 
     // ── Delt innlegg (permalenke) — krev innlogging, viser kven som delte ────
