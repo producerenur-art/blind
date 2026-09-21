@@ -2661,9 +2661,9 @@ const Radio = (() => {
     else arr.push(pin);                                                    // ellers legg sist
     return arr;
   }
-  // Ny miks hver time — poolen fra serveren byttes bare 1×/døgn, så denne
+  // Ny miks hvert 15. minutt — poolen fra serveren byttes bare 1×/døgn, så denne
   // rotasjonen er det som gjør at knappene skifter oftere (uten API-kostnad).
-  function visSlot() { return Math.floor(Date.now() / 3600000); }
+  function visSlot() { return Math.floor(Date.now() / 900000); }
   // Flett gruppene inn i hverandre (psy, kaleido, space, psy, kaleido, space …)
   // slik at ETHVERT sammenhengende utsnitt får en sjanger-miks — ellers kunne
   // et timesvindu bestå av bare romfilm eller bare fraktaler.
