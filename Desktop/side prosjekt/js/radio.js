@@ -421,11 +421,13 @@ const Radio = (() => {
   const JINGLES = { a: JINGLE_BASE + 'jingle-a.mp3', c: JINGLE_BASE + 'jingle-c.mp3', d: JINGLE_BASE + 'jingle-d.mp3' };
   // Namn → fil for live-annonsen (B). Ukjende/nye presentatørnamn fell tilbake
   // på "generic" heilt til nokon lagar ei dedikert fil for dei (sjå CLAUDE.md-
-  // notat i js/livemix.js om korleis nye stemmer legges til).
+  // notat i js/livemix.js om korleis nye stemmer legges til). Ambient Mann/The
+  // Rolling Stoned/Gagarin Project er GJESTE-DJ-ar (js/liveGuest.js sin eigen,
+  // opt-in flyt) — dei skal ALDRI trigge den globale tvangsovertakinga her, som
+  // er eigar-eksklusiv (js/livemix.js). Berre eigarens eigne namn (Noah) skal
+  // ha eit dedikert klipp i DENNE lista (brukarønske 2026-09-21).
   const LIVE_JINGLES = {
-    ambientmann:      JINGLE_BASE + 'live-ambientmann.mp3',
-    noah:             JINGLE_BASE + 'live-noah.mp3',
-    therollingstoned: JINGLE_BASE + 'live-therollingstoned.mp3',
+    noah: JINGLE_BASE + 'live-noah.mp3',
   };
   const LIVE_JINGLE_GENERIC = JINGLE_BASE + 'live-generic.mp3';
   const LIVE_INTRO = JINGLE_BASE + 'live-intro.mp3'; // "Welcome to SiriusFM Live — now." — spelt FØR namne-annonsen
@@ -438,10 +440,11 @@ const Radio = (() => {
   const LIVE_OUTRO = JINGLE_BASE + 'live-outro.mp3';
   // Nokre namn har eit STANDALONE-klipp som alt seier heile "Welcome... + namn"
   // i éin tale — desse skal IKKJE ha LIVE_INTRO framfor seg (då seier han
-  // "Welcome to SiriusFM Live — now" to gongar på rad).
-  const LIVE_STANDALONE = {
-    gagaringproject: JINGLE_BASE + 'live-gagaringproject.mp3',
-  };
+  // "Welcome to SiriusFM Live — now" to gongar på rad). Gagarin Project er ein
+  // gjeste-DJ (js/liveGuest.js) og høyrer difor ikkje heime i denne
+  // eigar-eksklusive lista (brukarønske 2026-09-21) — tom til eigaren sjølv
+  // treng eit standalone-klipp.
+  const LIVE_STANDALONE = {};
   const JINGLE_VOLUME_SCALE = 1; // brukarønske 2026-09-20: jinglar/live-annonsar skal vere like høge
                                   // som lyden før/etter — ikkje dempa lenger (var 0.85)
   let _jingleBusy = false;          // hindrar A/C/D i å overlappe kvarandre (eller ei live-sending)
