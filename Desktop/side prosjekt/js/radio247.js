@@ -3,10 +3,14 @@
 // eige "SiriusFM Main station"-kort (den røres ikke). Sjangeren den spelar
 // følger ei fast, symmetrisk døgnkurve i norsk tid (Europe/Oslo):
 //   natt-topp (Techno) → Psytrance/Goa → Progressive → Dark Drone (botn,
-//   tidleg) → Psybient/Ambient (dag) → Downtempo/Psychill → Progressive →
-//   Psytrance/Goa → topp igjen.
+//   tidleg) → Ambient Mann (fast 1t, 05-06) → Psybient/Ambient (dag) →
+//   Downtempo/Psychill → Progressive → Psytrance/Goa → topp igjen.
 // Alle blokkene bruker ekte lyd-strøymar frå STATIONS (js/radio.js) — ingen
 // video, rein lytting akkurat som alle andre radiokanalar på sida.
+// 05–06: fast 1-timarsplass for Ambient Mann (eiga 24/7 AzuraCast-sending,
+// radio.ambientmann.com) — krysspromotering, ikkje ein del av sjølve
+// Dark Drone-rotasjonen, sjå AMBIENT_MANN_IDS/NAME_BY_ID under (lagt til
+// 21.09.2026, brukarønske).
 const Radio247 = (() => {
   // [start, end) i norsk lokaltid, 24-timars klokke (desimaltimar). Må
   // dekke heile 0–24 utan hol.
@@ -27,6 +31,8 @@ const Radio247 = (() => {
   // brukarønske: ALDRI rock/metal/hip-hop/R&B i 24/7-hjulet.
   const CHILLOUT_IDS    = ['1fm-chillout', 'brokenbeats', 'cafedelmar'];
   const TECHNO_IDS      = ['uzic-techno', 'remember-vip-techno'];
+  // Eiga fast plass, ikkje ein rotasjonspool (berre éin id) — sjå SCHEDULE 05-06.
+  const AMBIENT_MANN_IDS = ['ambient-mann'];
 
   // Visningsnamn for stasjonane over — same namn som STATIONS i js/radio.js
   // (shortName der han finst, elles name, «.FM»-endinga kutta), men ein
@@ -48,12 +54,14 @@ const Radio247 = (() => {
     'diceradio-psybient': 'DiceRadio', 'paradisehunter-chillout': 'Paradisehunter Chillout',
     '1fm-chillout': '1.FM Chillout Lounge', brokenbeats: 'Brokenbeats', cafedelmar: 'Café del Mar',
     'uzic-techno': 'UZIC Techno Minimal', 'remember-vip-techno': 'Remember VIP Techno',
+    'ambient-mann': 'Ambient Mann',
   };
 
   const SCHEDULE = [
     { start: 0,  end: 1,  genre: 'goa',         label: 'Psytrance / Goa',      stationIds: GOA_IDS },
     { start: 1,  end: 3,  genre: 'progressive', label: 'Progressive',          stationIds: PROGRESSIVE_IDS },
-    { start: 3,  end: 6,  genre: 'dark-drone',  label: 'Dark Drone',           stationIds: DARK_DRONE_IDS },
+    { start: 3,  end: 5,  genre: 'dark-drone',  label: 'Dark Drone',           stationIds: DARK_DRONE_IDS },
+    { start: 5,  end: 6,  genre: 'ambient-mann',label: 'Ambient Mann',         stationIds: AMBIENT_MANN_IDS },
     { start: 6,  end: 12, genre: 'psychill',    label: 'Psybient / Ambient',   stationIds: PSYCHILL_IDS },
     { start: 12, end: 16, genre: 'chillout',    label: 'Downtempo / Psychill', stationIds: CHILLOUT_IDS },
     { start: 16, end: 18, genre: 'progressive', label: 'Progressive',          stationIds: PROGRESSIVE_IDS },
@@ -204,6 +212,27 @@ const Radio247 = (() => {
   }
 
   function isActive() { return _active; }
+
+  // Kalla av js/radio.js (_giveUpOnStation) når reconnect-budsjettet for
+  // gjeldande stasjon er brukt opp — straumen er truleg reelt nede. I staden
+  // for å la 24/7-kanalen bli ståande heilt stille: byt til EIN ANNAN ekte
+  // stasjon i same sjangerblokk (om blokka har fleire alternativ), same
+  // _selfCall-vern som _applyBlock så notifyManualPlay ikkje slår av 24/7-
+  // modus. Returnerer false (ingenting gjort) om 24/7 ikkje er i gang, blokka
+  // berre har éin ekte stasjon, eller det ikkje finst nokon annan å byte til
+  // — då må radio.js sin eigen fallback (stopp + varsel) ta over.
+  function skipDeadStation(deadId) {
+    if (!_active || typeof Radio === 'undefined') return false;
+    const block = currentBlock();
+    if (!block.stationIds || block.stationIds.length < 2) return false;
+    const alt = block.stationIds.find(id => id !== deadId);
+    if (!alt) return false;
+    _lastStationId = alt;
+    _selfCall = true;
+    try { Radio.playStation(alt); } finally { _selfCall = false; }
+    _rerenderHost();
+    return true;
+  }
 
   // Rerender kva side som helst som for tida viser eit 24/7-kort, etter play/
   // stop/blokkbytte — /radio og /shows har kvar sin eigen render(), og berre
@@ -400,7 +429,7 @@ const Radio247 = (() => {
 
   return {
     play, stop, toggle, isActive, currentBlock, nextBlock, cardHtml,
-    notifyManualPlay, subscribeFromInput, init,
+    notifyManualPlay, subscribeFromInput, init, skipDeadStation,
     // Kalla av js/liveGlobal.js idet nokon går live/slutter å vere live, så
     // "24-Hour Cycle"-kortet oppdaterer «Now:»-linja med det same i staden
     // for å vente til neste naturlege ompteikning (minutt-tick/sidebytte).

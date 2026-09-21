@@ -280,6 +280,20 @@ const Radio = (() => {
     },
 
     // ════════════════════════════════════════════
+    // AMBIENT MANN  ▼ eiga 24/7 AzuraCast-sending, ikkje ein del av Dark
+    // Ambient/Drone-rotasjonen over (eiga fast 1-timarsplass i 24-Hour
+    // Cycle, sjå js/radio247.js SCHEDULE) — verifisert live 21.09.2026
+    // (icy-name: Ambient Mann, icy-genre: Psychill/Downtempo).
+    // ════════════════════════════════════════════
+    {
+      id: 'ambient-mann', cat: 'Ambient Mann',
+      name: 'Ambient Mann',
+      url:  'https://radio.ambientmann.com/listen/ambient_mann/radio.mp3',
+      emoji: '🌙', color: '#7c3aed',
+      desc: 'Live DJ + 24/7 rotation — psychill / downtempo · ambientmann.com',
+    },
+
+    // ════════════════════════════════════════════
     // TECHNO UNDERGROUND
     // ════════════════════════════════════════════
     {
@@ -1294,10 +1308,33 @@ const Radio = (() => {
     if (!window._radioMode || !isPlaying || _jingleBusy || _liveTakeover || !currentStation) return;
     const now = Date.now();
     if (now - _reconnectWindowStart > RECONNECT_WINDOW_MS) { _reconnectCount = 0; _reconnectWindowStart = now; }
-    if (_reconnectCount >= RECONNECT_MAX) return;   // truleg eit ekte, vedvarande nettverksproblem
+    if (_reconnectCount >= RECONNECT_MAX) { _giveUpOnStation(); return; }
     _reconnectCount++;
     console.warn('Radio: avspeling stoppa uventa — koblar til på nytt', currentStation.url);
     _playUrl(currentStation.url, currentStation);
+  }
+
+  // Reconnect-budsjettet er brukt opp — straumen er truleg reelt nede, ikkje
+  // berre eit kort hakk. FØR denne fiksen enda vaktbikkja her heilt stille:
+  // isPlaying stod att som "sann", avspel-knappen viste framleis "spelar",
+  // ingen varsel — radioen vart berre stille utan forklaring (rapportert
+  // 2026-09-21: "24/7 stopper plutselig, skal aldri skje"). No: merk
+  // strøymen daud, og er SiriusFM 24/7 i gang, byt til EIN ANNAN ekte
+  // stasjon i same sjangerblokk med det same (Radio247.skipDeadStation) i
+  // staden for å gå stille — same handling som ein automatisk blokk-overgang.
+  // Berre om det ikkje finst noko å falle tilbake på (ikkje 24/7, eller
+  // blokka berre har éin ekte stasjon) ryddar vi opp spelarstatusen og seier
+  // tydeleg frå, så UI aldri lyg om at det framleis spelar.
+  function _giveUpOnStation() {
+    const dead = currentStation;
+    if (!dead) return;
+    StreamFix.markDead(dead.url);
+    const r247Active = typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive();
+    if (r247Active && Radio247.skipDeadStation && Radio247.skipDeadStation(dead.id)) return;
+    isPlaying = false;
+    updatePlayBtn(false);
+    updateNowPlayingStatus(false);
+    App.toast(`${dead.name || 'Stasjonen'} svarer ikkje lenger – trykk play for å prøve på nytt`, 'error');
   }
 
   function _watchdogTick() {
