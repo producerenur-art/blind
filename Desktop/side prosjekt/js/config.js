@@ -36,6 +36,20 @@ const CONFIG = {
     catch (_) { return false; }
   },
 
+  // Klarerte gjeste-DJ-e-postar (js/liveGuest.js «Søk om å gå live»): desse hoppar
+  // over eigarens godkjenning HELT AUTOMATISK, men må likevel oppgi eit konkret
+  // tidspunkt (kan ikke la det stå tomt/«avtales nærmere» slik andre kan).
+  // VIKTIG: dette er berre til UI (vise merke + krevje tidspunkt før innsending).
+  // DEN EKTE handhevinga skjer server-sida i submit_broadcast_request() (sjå
+  // supabase/migrations/0029_live_broadcast_trusted_email.sql) — legg til/fjern
+  // ein e-post BÅDE her OG i den SQL-lista, ellers kjem dei aldri i utakt trygt.
+  // Samanlikning er små bokstavar/trimma, same som ADMIN_EMAILS.
+  TRUSTED_DJ_EMAILS: [],
+  isTrustedDjEmail(user) {
+    try { return !!user && this.TRUSTED_DJ_EMAILS.includes(String(user.email || '').toLowerCase().trim()); }
+    catch (_) { return false; }
+  },
+
   // Supabase Storage — deler store filer (60-min lyd, video) på tvers av ALLE brukere.
   // URL + anon-nøkkel er offentlige og trygge i frontend (beskyttes av bucket-regler).
   // service_role-nøkkelen ligger KUN i .env (brukes av api/upload-url.js), aldri her.

@@ -104,6 +104,7 @@ const LiveGuest = (() => {
     start.setHours(20, 0, 0, 0);
     const localISO = new Date(start.getTime() - start.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     const inp = 'width:100%;box-sizing:border-box;padding:0.65rem 0.75rem;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:var(--text);font-size:0.95rem;font:inherit';
+    const trusted = typeof CONFIG !== 'undefined' && CONFIG.isTrustedDjEmail && CONFIG.isTrustedDjEmail(cur);
     box.innerHTML = `
       <div class="modal-header">
         <h2>${_I('radio')} Apply to go live</h2>
@@ -111,13 +112,14 @@ const LiveGuest = (() => {
       </div>
       <div style="padding:0.5rem 0 0.25rem">
         <p style="color:var(--text2);font-size:0.9rem;line-height:1.5;margin:0 0 1rem">
-          Send a request to broadcast live on SiriusFM. The owner approves or rejects before you can go live —
-          you won't get access until the request is approved.
+          ${trusted
+            ? 'You\'re on the trusted broadcaster list — no owner approval needed. You still have to pick a specific broadcast time below.'
+            : 'Send a request to broadcast live on SiriusFM. The owner approves or rejects before you can go live — you won\'t get access until the request is approved.'}
         </p>
         <label for="lg-name" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Artist/station name</label>
         <input id="lg-name" value="${_esc(cur.displayName || cur.username)}" placeholder="Shown to listeners" style="${inp};margin:0 0 1rem">
-        <label for="lg-slot" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Preferred broadcast time</label>
-        <input id="lg-slot" type="datetime-local" value="${localISO}" style="${inp};margin:0 0 1rem">
+        <label for="lg-slot" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Preferred broadcast time${trusted ? ' (required)' : ''}</label>
+        <input id="lg-slot" type="datetime-local" value="${localISO}" ${trusted ? 'required' : ''} style="${inp};margin:0 0 1rem">
         <label style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">How many hours?</label>
         <div style="display:flex;align-items:center;gap:0.75rem;margin:0 0 1rem">
           <button class="btn btn-ghost" onclick="LiveGuest.step(-1)" aria-label="Fewer hours" style="width:44px;height:44px;font-size:1.4rem;padding:0;line-height:1">−</button>
@@ -143,6 +145,11 @@ const LiveGuest = (() => {
     const slotEl = _byId('lg-slot');
     const slot = slotEl && slotEl.value ? new Date(slotEl.value).toISOString() : null;
     const msg = (_byId('lg-msg')?.value || '').trim();
+    const trusted = typeof CONFIG !== 'undefined' && CONFIG.isTrustedDjEmail && CONFIG.isTrustedDjEmail(cur);
+    if (trusted && !slot) {
+      if (typeof App !== 'undefined') App.toast('Pick a specific broadcast time — trusted broadcasters must schedule one.', 'error', 4500);
+      return;
+    }
     if (!LiveBroadcastSync._enabled()) {
       if (typeof App !== 'undefined') App.toast('This feature requires cloud storage to be set up (Supabase).', 'error', 5000);
       return;
@@ -152,7 +159,10 @@ const LiveGuest = (() => {
       requestedStart: slot, requestedHours: _hours,
     });
     if (!id) { if (typeof App !== 'undefined') App.toast('Could not send the request. Please try again.', 'error'); return; }
-    if (typeof App !== 'undefined') { App.closeModal(); App.toast('Request sent! You\'ll be notified once the owner responds.', 'success', 5000); }
+    if (typeof App !== 'undefined') {
+      App.closeModal();
+      App.toast(trusted ? 'Scheduled! No approval needed — you can go live from ~10 min before your time.' : 'Request sent! You\'ll be notified once the owner responds.', 'success', 5000);
+    }
     location.hash = '#/go-live/mine';
   }
 

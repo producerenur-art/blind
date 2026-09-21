@@ -230,7 +230,7 @@ const LiveMix = (() => {
   // modalen lukkes (App.closeModal() skjuler bare overlayet, tømmer ikke DOM).
   const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null, devBypass: false, ownerBypass: false,
     visual: 'image', coverUrl: '', coverImg: null, canvas: null, canvasRaf: null, camStream: null, outStream: null, presenterName: '', heartbeatTimer: null,
-    listening: false, ended: false };
+    listening: false, ended: false, permGranted: false };
   let _lnReconnecting = false;
 
   // ── Global "gå live"-status (auto-switchover for ALLE besøkende) ──────
@@ -428,7 +428,7 @@ const LiveMix = (() => {
           <span style="font-size:0.74rem;color:var(--text3)">Camera is off — the image is shown while the music plays.</span>
         </div>
         <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin:0 0 1.1rem">
-          <button class="btn btn-primary" id="bc-go" onclick="LiveMix.bcGo()" ${live ? 'disabled' : ''}>📡 Go live</button>
+          <button class="btn btn-primary" id="bc-go" onclick="LiveMix.bcGo()" ${(live || !_bc.permGranted) ? 'disabled' : ''}>📡 Go live</button>
           <button class="btn" id="bc-stop" onclick="LiveMix.bcStop()" ${live ? '' : 'disabled'} style="background:#ef4444;color:#fff">■ Stop</button>
           <span style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.8rem;font-weight:700;padding:0.25rem 0.7rem;border-radius:999px;background:rgba(255,255,255,0.06)">
             <span id="bc-dot" style="width:9px;height:9px;border-radius:50%;background:${live ? '#ef4444' : '#9aa3b2'}"></span>
@@ -456,6 +456,7 @@ const LiveMix = (() => {
       devs.forEach(d => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || ('Input ' + (sel.length + 1)); sel.appendChild(o); });
       const pref = devs.find(d => /blackhole|loopback|soundflower|air 192|aggregate/i.test(d.label));
       if (pref) sel.value = pref.deviceId;
+      _bc.permGranted = true;
       const go = _byId('bc-go'); if (go) go.disabled = false;
       _bcLog(devs.length + ' input(s).' + (pref ? '  Suggested: ' + pref.label : ''));
     } catch (e) { _bcLog('Access error: ' + e.message); }
@@ -532,7 +533,7 @@ const LiveMix = (() => {
       const limiter = _bc.ctx.createDynamicsCompressor();
       limiter.threshold.value = -1; limiter.knee.value = 0; limiter.ratio.value = 20;
       limiter.attack.value = 0.003; limiter.release.value = 0.1;
-      const dest = _bc.ctx.createMediaStreamAudioDestinationNode();
+      const dest = _bc.ctx.createMediaStreamDestination();
       src.connect(limiter); limiter.connect(dest);
       // Utgående strøm: limitert lyd + valgt video (stillbilde eller laptop-kamera).
       const outTracks = [...dest.stream.getAudioTracks()];

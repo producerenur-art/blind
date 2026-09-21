@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Broadcast Setup Guide – SiriusFM</title>
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="icon" href="/assets/icon-192.png">
+  <meta property="og:title" content="SiriusFM">
+  <meta property="og:description" content="Live Broadcast Setup Guide – equipment and routine for going live on SiriusFM">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SiriusFM">
+  <meta property="og:url" content="https://www.siriusfm.no/live-setup-guide.html">
+  <meta property="og:image" content="https://www.siriusfm.no/assets/og-cover.png?v=4">
+  <meta property="og:image:secure_url" content="https://www.siriusfm.no/assets/og-cover.png?v=4">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="SiriusFM — web radio">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SiriusFM">
+  <meta name="twitter:description" content="Live Broadcast Setup Guide – equipment and routine for going live on SiriusFM">
+  <meta name="twitter:image" content="https://www.siriusfm.no/assets/og-cover.png?v=4">
+  <style>
+    :root{
+      --bg:#0a0a0f; --card:#14141c; --border:#26263a;
+      --text:#e8e8f0; --muted:#9a9ab0; --accent:#a78bfa; --accent2:#34d399; --warn:#fbbf24; --bad:#fb7185;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      line-height:1.65; -webkit-font-smoothing:antialiased;
+    }
+    .wrap{max-width:820px; margin:0 auto; padding:48px 22px 96px}
+    header{border-bottom:1px solid var(--border); padding-bottom:22px; margin-bottom:32px}
+    .brand{display:flex; align-items:center; gap:12px; margin-bottom:18px}
+    .brand img{width:40px; height:40px; border-radius:10px}
+    .brand span{font-size:20px; font-weight:700;
+      background:linear-gradient(90deg,var(--accent),#f472b6);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent}
+    h1{font-size:28px; margin:0 0 6px; letter-spacing:-.5px}
+    h2{font-size:19px; margin:36px 0 10px; color:var(--accent2)}
+    h3{font-size:16px; margin:22px 0 8px; color:var(--accent)}
+    .updated{color:var(--muted); font-size:14px}
+    p,li{color:var(--text)}
+    a{color:#38bdf8}
+    ul,ol{padding-left:22px}
+    li{margin:6px 0}
+    .card{background:var(--card); border:1px solid var(--border);
+      border-radius:14px; padding:18px 20px; margin:18px 0}
+    .muted{color:var(--muted)}
+    .badge{display:inline-block; font-size:12px; font-weight:700; padding:3px 9px;
+      border-radius:999px; margin-left:8px; vertical-align:middle}
+    .badge.ok{background:rgba(52,211,153,.15); color:var(--accent2); border:1px solid rgba(52,211,153,.35)}
+    table{width:100%; border-collapse:collapse; margin:14px 0; font-size:14.5px}
+    th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--border)}
+    th{color:var(--muted); font-weight:600}
+    code{background:#1c1c28; border:1px solid var(--border); border-radius:5px;
+      padding:1px 6px; font-size:.92em; color:#f9c449}
+    .warn{border-color:rgba(251,191,36,.35); background:rgba(251,191,36,.08)}
+    .warn h3{color:var(--warn); margin-top:0}
+    .bad{border-color:rgba(251,113,133,.35); background:rgba(251,113,133,.08)}
+    .bad h3{color:var(--bad); margin-top:0}
+    footer{margin-top:48px; padding-top:22px; border-top:1px solid var(--border);
+      color:var(--muted); font-size:14px}
+    a.back{display:inline-block; margin-top:14px; color:var(--accent2); text-decoration:none}
+
+    /* Same rotating background image treatment as personvern.html — this page is a
+       standalone HTML file outside the SPA, so the visual layer is repeated here
+       in lightweight form. Image set is read from the localStorage cache BgManager
+       writes — same images the app shows today, no AI/API calls required. */
+    #lg-bg{position:fixed; inset:-12%; z-index:0; overflow:hidden; background:#050510; pointer-events:none}
+    #lg-bg img{width:100%; height:100%; object-fit:cover; display:block; opacity:0;
+      filter:brightness(.42) saturate(1.6);
+      transition:opacity 1.6s ease-in-out; animation:lgBreathe 32s ease-in-out infinite}
+    #lg-scrim{position:fixed; inset:0; z-index:0; pointer-events:none;
+      background:radial-gradient(120% 90% at 50% 30%, rgba(10,10,15,.55) 0%, rgba(10,10,15,.86) 100%)}
+    @keyframes lgBreathe{0%,100%{transform:scale(1.03) translate(0,0)} 50%{transform:scale(1.07) translate(-1.5%,1%)}}
+    .wrap{position:relative; z-index:1}
+    @media (prefers-reduced-motion:reduce){ #lg-bg img{animation:none} }
+  </style>
+</head>
+<body>
+  <div id="lg-bg"><img id="lg-bg-img" alt="" draggable="false"></div>
+  <div id="lg-scrim"></div>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <img src="/assets/icon-192.png" alt="SiriusFM">
+        <span>SiriusFM</span>
+      </div>
+      <h1>Live Broadcast Setup Guide <span class="badge ok">Verified 20 Sep 2026</span></h1>
+      <div class="updated">How to go live on SiriusFM with a Traktor Kontrol S2 — equipment, one-time setup and the routine to follow every session.</div>
+    </header>
+
+    <p>SiriusFM's live broadcast runs on <strong>WebRTC</strong> straight from your browser —
+      there is no separate broadcasting app or server upload involved. Your DJ mixer's audio
+      output is captured by the browser as a microphone-style input and sent directly to
+      listeners in real time. This guide documents the exact gear and routing that has been
+      tested end-to-end and confirmed working.</p>
+
+    <h2>1. Equipment that works</h2>
+    <div class="card">
+      <table>
+        <tr><th>Role</th><th>Device / software</th><th>Notes</th></tr>
+        <tr><td>DJ controller</td><td>Native Instruments <strong>Traktor Kontrol S2</strong> (MK2)</td><td>Also works with Traktor Pro / Traktor Play running the mix</td></tr>
+        <tr><td>DJ software</td><td><strong>Traktor Pro 4</strong></td><td>Handles the actual mixing; has no built-in Icecast broadcasting, which is why the loopback step below is required</td></tr>
+        <tr><td>Virtual audio loopback</td><td><strong>BlackHole 2ch</strong> (free, 0 kr)</td><td>Lets the browser "hear" what Traktor is playing. Direct download: <code>https://existential.audio/downloads/BlackHole2ch-&lt;version&gt;.pkg</code> (no Homebrew, no account needed)</td></tr>
+        <tr><td>macOS routing</td><td><strong>Multi-Output Device</strong> (Audio MIDI Setup)</td><td>Combines the Traktor Kontrol S2 MK2 output + BlackHole 2ch into one device, both at <strong>44.1&nbsp;kHz</strong></td></tr>
+        <tr><td>Browser</td><td><strong>Chrome</strong> (or any modern Chromium/WebRTC-capable browser)</td><td>Captures BlackHole 2ch via <code>getUserMedia</code> and streams it via WebRTC (Supabase Realtime signaling)</td></tr>
+        <tr><td>Network</td><td>HTTPS + a stable internet connection</td><td>siriusfm.no already serves HTTPS, required for WebRTC's secure-context rule</td></tr>
+      </table>
+    </div>
+
+    <h3>Signal path</h3>
+    <p class="card muted" style="font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13.5px; line-height:1.9">
+      Traktor Pro 4&nbsp;→&nbsp;macOS "Multi-Output Device" (Traktor Kontrol S2 MK2&nbsp;+&nbsp;BlackHole&nbsp;2ch, 44.1&nbsp;kHz)<br>
+      → Chrome captures BlackHole 2ch (<code>echoCancellation/noiseSuppression/autoGainControl: false</code>, stereo)<br>
+      → WebRTC peer connection (Supabase Realtime signaling) → listeners' browsers
+    </p>
+    <p class="muted">This is a different architecture from Ambient Mann's setup (Traktor → BUTT → Icecast/AzuraCast server). SiriusFM needs no separate broadcasting app or streaming server — everything happens in the browser.</p>
+
+    <h2>2. One-time setup (do this once, not every session)</h2>
+    <ol>
+      <li>Install <strong>BlackHole 2ch</strong> (free virtual audio driver) from the link above.</li>
+      <li>Open <strong>Audio MIDI Setup</strong> (macOS) → click <strong>+</strong> → <strong>Create Multi-Output Device</strong>.</li>
+      <li>In the new Multi-Output Device, check both <strong>Traktor Kontrol S2 MK2</strong> and <strong>BlackHole 2ch</strong>.</li>
+      <li>Set the sample rate to <strong>44.1 kHz</strong> for the Multi-Output Device (not 48 kHz — a mismatch here can cause silent or distorted capture).</li>
+    </ol>
+
+    <h2>3. The routine — do this every time you go live</h2>
+    <ol>
+      <li><strong>System Settings → Sound → Output</strong> → select <strong>Multi-Output Device</strong>, and confirm the <strong>mute</strong> checkbox is <em>not</em> ticked. macOS remembers mute state per device separately, and BlackHole 2ch has repeatedly shown up muted again after switching devices — check this every time.</li>
+      <li><strong>Traktor → Preferences → Audio Setup</strong> → Audio Device = <strong>Multi-Output Device</strong> (not BlackHole alone, not the S2 MK2 alone — either one leaves a silent gap somewhere in the chain).</li>
+      <li><strong>Traktor → Preferences → Output Routing</strong> → set <strong>Mixing Mode = Internal</strong> (not External — External never sends a fully mixed signal to Output Master, even when the routing looks correct) → Output Master L/R = <strong>1: Multi-Output Device L / 2: Multi-Output Device R</strong>.</li>
+      <li>Play in Traktor and confirm you can actually <strong>hear</strong> the mix yourself (through the S2's headphone output) before continuing.</li>
+      <li>On SiriusFM, click <strong>"Grant access"</strong> (reload the page first with <code>⌘R</code> if a stale session is stuck) → confirm <strong>BlackHole 2ch (Virtual)</strong> is selected in the "Audio input" dropdown → click <strong>"Go live"</strong>.</li>
+      <li>Check that <strong>Sent (L)/(R)</strong> shows real dB values (e.g. −68 dB), not <code>−∞ dB</code> — that confirms audio is actually being captured and sent.</li>
+    </ol>
+
+    <div class="card warn">
+      <h3>⚠ Known pitfalls</h3>
+      <ul>
+        <li><strong>Never change your macOS audio device while a session is already live.</strong> Switching devices mid-broadcast silently breaks audio capture — no error message, just silence, even though the WebRTC connection still shows "LIVE". Always fully stop the broadcast (or reload with <code>⌘R</code>) before changing any audio device setting, then start again.</li>
+        <li><strong>Reinstalling the BlackHole driver breaks the existing Multi-Output Device.</strong> The new driver gets a new internal reference, so the old Multi-Output Device shows a ghost "disconnected device" row in Audio MIDI Setup. Fix: delete the Multi-Output Device entirely and rebuild it (re-check BlackHole 2ch + S2 MK2) after any BlackHole reinstall.</li>
+        <li><strong>DSP must be off on the capture side.</strong> If the browser applies echo cancellation, noise suppression or auto gain control to the captured signal, it will audibly damage the music. SiriusFM's capture path already disables these — don't override it with different browser flags/extensions.</li>
+        <li>Accidentally enabling <strong>VoiceOver</strong> (<code>⌘F5</code> is easy to hit by mistake) changes how clicks/navigation behave system-wide — check the top-left menu bar for a "VoiceOver" indicator if clicks suddenly stop landing correctly. Turn it off again with <code>⌘F5</code>.</li>
+      </ul>
+    </div>
+
+    <div class="card bad">
+      <h3>✕ Not required / don't do this</h3>
+      <ul>
+        <li>No separate broadcasting app (BUTT, OBS, Icecast client) is needed for SiriusFM — that architecture belongs to a different, unrelated project. SiriusFM streams straight from the browser via WebRTC.</li>
+        <li>Don't route BlackHole alone or the S2 MK2 alone into Traktor's Audio Setup — only the combined Multi-Output Device carries both monitoring and the browser capture correctly.</li>
+        <li>Homebrew is not required (and isn't supported on Intel Macs any more) — use the direct BlackHole <code>.pkg</code> download instead.</li>
+      </ul>
+    </div>
+
+    <h2>4. Quick troubleshooting checklist</h2>
+    <table>
+      <tr><th>Symptom</th><th>Likely cause</th></tr>
+      <tr><td>Sent (L)/(R) shows <code>−∞ dB</code></td><td>BlackHole 2ch muted in System Settings, or wrong input selected in the "Grant access" dialog</td></tr>
+      <tr><td>You hear nothing, but Traktor's meters move</td><td>Audio Device in Traktor isn't set to the Multi-Output Device</td></tr>
+      <tr><td>Audio sounds pumped/gated or artificial</td><td>Browser DSP (echo cancellation / noise suppression / AGC) is active on the captured input</td></tr>
+      <tr><td>Everything looks connected but goes silent mid-session</td><td>The macOS output device was switched while already live — stop and restart the broadcast</td></tr>
+      <tr><td>Clicks stop registering correctly</td><td>VoiceOver was toggled on by accident (<code>⌘F5</code>)</td></tr>
+    </table>
+
+    <footer>
+      Questions about going live on SiriusFM? Contact <a href="mailto:post@siriusfm.no">post@siriusfm.no</a>.
+      <br>
+      <a class="back" href="/">← Back to SiriusFM</a>
+    </footer>
+  </div>
+
+  <script>
+  // Same daily image set and day-seed as personvern.html, so this page shows the
+  // same background images as the rest of the site. If the cache is empty (user
+  // landed here first), two day-picked keywords are fetched directly from
+  // Openverse (keyless, CORS *).
+  (function () {
+    var DAY_MS = 864e5, KEY = 'pv_bg_slides_v2';
+    var day = Math.floor(Date.now() / DAY_MS);
+    var PSY = ['psychedelic art','visionary art painting','fractal art deep zoom','sacred geometry mandala',
+               'trippy mushroom art','blacklight fluorescent art','kaleidoscope pattern','cosmic nebula painting',
+               'surreal dreamscape art','liquid light show','digital fractal flame','psychedelic mandala tapestry',
+               'third eye visionary painting','iridescent abstract swirl','aura light painting','psytrance festival decor',
+               'holographic prism abstract','ayahuasca vision art','op art optical illusion','galaxy watercolor abstract'];
+    var NAT = ['mountain lake reflection','misty forest sunrise','northern lights landscape','alpine valley autumn',
+               'tropical waterfall','desert dunes at dusk','starry night milky way landscape','glacier ice cave',
+               'volcano lava night','rice terraces morning fog','fjord cliffs norway','bioluminescent ocean waves',
+               'redwood forest light rays','lavender field sunset','iceland black sand beach','canyon river aerial',
+               'cherry blossom mountain','thunderstorm over prairie','coral reef underwater','rainforest waterfall moss'];
+    var img = document.getElementById('lg-bg-img'), list = [], i = 0;
+
+    function show(url) { var p = new Image(); p.onload = function () { img.src = url; img.style.opacity = 1; }; p.src = url; }
+    function next() {
+      if (list.length < 2 || document.hidden) return;
+      i = (i + 1) % list.length;
+      var url = list[i], p = new Image();
+      p.onload = function () { img.style.opacity = 0; setTimeout(function () { img.src = url; img.style.opacity = 1; }, 1600); };
+      p.onerror = next;
+      p.src = url;
+    }
+    function start() {
+      if (!list.length) return;
+      i = Math.floor(Math.random() * list.length);
+      show(list[i]);
+      if (list.length > 1) setInterval(next, 14000);
+    }
+    function fetchTerm(q) {
+      return fetch('https://api.openverse.org/v1/images/?q=' + encodeURIComponent(q) +
+                   '&size=large&page_size=20&page=1&mature=false', { headers: { Accept: 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : { results: [] }; })
+        .then(function (d) { return (d.results || []).map(function (x) { return x.url; })
+                               .filter(function (u) { return typeof u === 'string' && /^https:\/\//.test(u); }).slice(0, 6); })
+        .catch(function () { return []; });
+    }
+
+    try {
+      var c = JSON.parse(localStorage.getItem(KEY));
+      if (c && c.day === day && c.list && c.list.length) list = c.list;
+    } catch (e) {}
+
+    if (list.length) start();
+    else Promise.all([fetchTerm(PSY[(day * 5) % PSY.length]), fetchTerm(NAT[(day * 5) % NAT.length])])
+      .then(function (r) {
+        for (var k = 0; k < 6; k++) { if (r[0][k]) list.push(r[0][k]); if (r[1][k]) list.push(r[1][k]); }
+        start();
+      });
+  })();
+  </script>
+</body>
+</html>

@@ -1301,16 +1301,18 @@ const Radio = (() => {
   }
 
   function _watchdogTick() {
+    // Same suspended-AudioContext-fella som visibilitychange-handteraren under:
+    // <audio>-elementet sitt currentTime kan tikke vidare (framleis "spelar")
+    // medan output er stille fordi konteksten vart suspendert av mobilen —
+    // dette tikket er difor det einaste som fangar det MEDAN fana framleis
+    // reknast som synleg (t.d. skjermen dimma, men ikkje låst). Gjeld no også
+    // live-overtaking sidan attachLiveStream() rutar straumen gjennom same
+    // audioCtx (dempekjeda) — difor FØR _liveTakeover-sjekken under, ikkje etter.
+    if (audioCtx?.state === 'suspended') audioCtx.resume();
     if (!window._radioMode || !isPlaying || _jingleBusy || _liveTakeover || !currentStation) {
       _lastCurrentTime = -1;
       return;
     }
-    // Same suspended-AudioContext-fella som visibilitychange-handteraren over:
-    // <audio>-elementet sitt currentTime kan tikke vidare (framleis "spelar")
-    // medan output er stille fordi konteksten vart suspendert av mobilen —
-    // dette tikket er difor det einaste som fangar det MEDAN fana framleis
-    // reknast som synleg (t.d. skjermen dimma, men ikkje låst).
-    if (audioCtx?.state === 'suspended') audioCtx.resume();
     const audio = getAudio();
     if (!audio) return;
     if (audio.currentTime !== _lastCurrentTime) {
@@ -1334,13 +1336,15 @@ const Radio = (() => {
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState !== 'visible') return;
-      if (!window._radioMode || !isPlaying || _jingleBusy || _liveTakeover || !currentStation) return;
       // Mobilnettlesarar kan suspendere AudioContext-en (stille lyd, sjølv om
       // <audio>-elementet framleis "spelar" og currentTime tikkar — vakthunden
       // over fangar difor ALDRI dette, berre eit ekte currentTime-stopp).
-      // Resume FØR paused-sjekken, elles kan lyden framleis vera stille etter
-      // at denne handteraren har konkludert med at alt er i orden.
+      // Resume FØR dei andre sjekkane, elles kan lyden framleis vera stille
+      // etter at denne handteraren har konkludert med at alt er i orden. Gjeld
+      // også live-overtaking (rutar no gjennom same audioCtx, sjå
+      // attachLiveStream) — difor FØR _liveTakeover-sjekken under.
       if (audioCtx?.state === 'suspended') audioCtx.resume();
+      if (!window._radioMode || !isPlaying || _jingleBusy || _liveTakeover || !currentStation) return;
       const audio = getAudio();
       if (audio && audio.paused) _playUrl(currentStation.url, currentStation);
     });
@@ -3296,6 +3300,48 @@ const Radio = (() => {
     _renderLiveBadge(name);
   }
 
+  // DJ-utstyret sender RÅTT — avsendarsida skrur medvite AV autoGainControl
+  // (js/livebroadcast.js) for ikkje å øydelegge musikken — så live-straumen
+  // manglar heilt den normaliseringa dei ferdig-masterte internett-
+  // radiostraumane alt har. Utan mottakarside-normalisering kjem han derfor
+  // inn merkbart høgare enn vanleg avspeling ved SAME volumslider (rapportert
+  // 2026-09-21). Kompressor + fast dempingsledd HER, på mottakarsida, jamnar
+  // ut toppane og senkar heilheitsnivået nærare det brukaren er vand med — rører
+  // aldri sjølve opptaket/DJ-en sin lyd, berre det lyttaren faktisk høyrer.
+  let _liveDuckNodes = null;
+  function _teardownLiveDuck() {
+    if (!_liveDuckNodes) return;
+    try { _liveDuckNodes.source.disconnect(); } catch (e) {}
+    try { _liveDuckNodes.compressor.disconnect(); } catch (e) {}
+    try { _liveDuckNodes.gain.disconnect(); } catch (e) {}
+    _liveDuckNodes = null;
+  }
+  function _duckLiveStream(mediaStream) {
+    _teardownLiveDuck();
+    const ctx = window._radioCtx || audioCtx;
+    if (!ctx) return null; // Web Audio API ikkje tilgjengeleg — behald rå straum
+    try {
+      const source = ctx.createMediaStreamSource(mediaStream);
+      const compressor = ctx.createDynamicsCompressor();
+      compressor.threshold.value = -24;
+      compressor.knee.value = 24;
+      compressor.ratio.value = 8;
+      compressor.attack.value = 0.005;
+      compressor.release.value = 0.3;
+      const gain = ctx.createGain();
+      gain.gain.value = 0.75; // ekstra fast demping oppå kompressoren
+      const dest = ctx.createMediaStreamDestination();
+      source.connect(compressor);
+      compressor.connect(gain);
+      gain.connect(dest);
+      _liveDuckNodes = { source, compressor, gain };
+      return dest.stream;
+    } catch (e) {
+      console.warn('[Radio] kunne ikkje dempe direktesendinga automatisk:', e.message || e);
+      return null;
+    }
+  }
+
   // Kalla av js/liveGlobal.js kvar gong LiveBroadcast.listener sitt onTrack
   // gir ein ny MediaStream — rutar han inn i DET SAME <audio>-elementet som
   // alt anna (aldri eit eige <audio>, jf. kravet om at berre éin ting kan
@@ -3306,7 +3352,9 @@ const Radio = (() => {
     const audio = getAudio();
     if (!audio) return;
     try { audio.removeAttribute('src'); } catch (e) {}
-    try { audio.srcObject = mediaStream; } catch (e) { console.warn('[Radio] kunne ikkje kople til live-straum:', e.message || e); return; }
+    initAudioContext(); // sikrar delt audioCtx finst (same context som visualizeren)
+    const duckedStream = _duckLiveStream(mediaStream);
+    try { audio.srcObject = duckedStream || mediaStream; } catch (e) { console.warn('[Radio] kunne ikkje kople til live-straum:', e.message || e); return; }
     const playPromise = audio.play();
     if (playPromise && typeof playPromise.catch === 'function') {
       playPromise.catch(() => {
@@ -3333,6 +3381,7 @@ const Radio = (() => {
     if (!_liveTakeover) return;
     const audio  = getAudio();
     if (audio) { try { audio.pause(); } catch (e) {} try { audio.srcObject = null; } catch (e) {} }
+    _teardownLiveDuck();
     _liveTakeover = false;
     _liveAnnouncementPlaying = false;
     _pendingLiveStream = null; // sending stoppa midt i annonsen (B) eller like etter — kast ev. ventande straum
