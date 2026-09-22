@@ -29,9 +29,14 @@ const Radio247 = (() => {
   // smoothchill (icy-genre: Soul) og anon-fm (icy-genre inkluderer rock) fjerna
   // 20.09.2026 — live ICY-metadata stadfesta ikkje-elektronisk innhald,
   // brukarønske: ALDRI rock/metal/hip-hop/R&B i 24/7-hjulet.
-  const CHILLOUT_IDS    = ['1fm-chillout', 'brokenbeats', 'cafedelmar'];
+  // Brukarønske 22.09.2026: Ambient Mann er no ÒG med i sjølve rotasjons-
+  // poolen til Chill Out (12-16) — då kan han rotere inn ein av dagane i
+  // den blokka, i tillegg til den faste 05-06-plassen sin under (uendra).
+  const CHILLOUT_IDS    = ['1fm-chillout', 'brokenbeats', 'cafedelmar', 'ambient-mann'];
   const TECHNO_IDS      = ['uzic-techno', 'remember-vip-techno'];
-  // Eiga fast plass, ikkje ein rotasjonspool (berre éin id) — sjå SCHEDULE 05-06.
+  // Eiga fast plass i SCHEDULE 05-06 (utanom denne er han berre éin id, så
+  // ingen rotasjon der) — no ÒG med i CHILLOUT_IDS over, så han kan rotere
+  // inn i sjølve Chill Out-blokka enkelte dagar (sjå _pickStationId).
   const AMBIENT_MANN_IDS = ['ambient-mann'];
 
   // Visningsnamn for stasjonane over — same namn som STATIONS i js/radio.js
@@ -172,6 +177,30 @@ const Radio247 = (() => {
   // (laga for UI-ting som volumslideren) — kjennest meir som ein DJ-overgang
   // enn eit hardt kutt.
   const TRANSITION_FADE_MS = 1400;
+  // Brukarønske 22.09.2026: skipDeadStation (under) brukte eit hardt kutt
+  // utan jingle-bru — no bruker han same jingelen som vanlege blokkbytter,
+  // men med ei kortare inn/ut-toning (320ms, same lengde begge sider). Dette
+  // er ein FEIL-gjenoppretting (straumen er reelt nede), ikkje ein planlagt
+  // sjangerovergang — skal kjennest raskt, ikkje som ein lang DJ-miks.
+  const DEAD_STREAM_FADE_MS = 320;
+
+  // Delt jingle-bru — spel TRANSITION_JINGLE over bytet, med sjølvvalt
+  // fadeMs på begge sider. Ikkje start VÅR overgangsjingle midt i ein A/C/D-
+  // stasjonsjingle eller live-annonse frå radio.js sin eigen jingle-
+  // planleggjar — dei deler det same <audio>-elementet. Fell trygt tilbake
+  // til rett kobling (kort avbrot, ikkje krasj) i det sjeldne tilfellet
+  // begge skulle inntreffe samtidig, eller om ingenting spelar frå før.
+  function _switchWithJingle(doSwitch, fadeMs) {
+    if (Radio.isPlaying && Radio.playLocalClip && !Radio.jingleBusy) {
+      if (Radio.beginJingle) Radio.beginJingle();
+      Radio.playLocalClip(TRANSITION_JINGLE, () => {
+        if (Radio.endJingle) Radio.endJingle();
+        doSwitch();
+      }, fadeMs);
+    } else {
+      doSwitch();
+    }
+  }
 
   // `opts.transition = true` = automatisk bytte (frå _tick(), midt i
   // avspeling) → bru med jingelen over. Utan flagget (frå play(), første
@@ -188,19 +217,8 @@ const Radio247 = (() => {
       _selfCall = true;
       try { Radio.playStation(sid); } finally { _selfCall = false; }
     };
-    // Ikkje start VÅR overgangsjingle midt i ein A/C/D-stasjonsjingle eller
-    // live-annonse frå radio.js sin eigen jingle-planleggjar — dei deler det
-    // same <audio>-elementet. Fell trygt tilbake til rett kobling (kort
-    // avbrot, ikkje krasj) i det sjeldne tilfellet begge skulle inntreffe samtidig.
-    if (opts.transition && Radio.isPlaying && Radio.playLocalClip && !Radio.jingleBusy) {
-      if (Radio.beginJingle) Radio.beginJingle();
-      Radio.playLocalClip(TRANSITION_JINGLE, () => {
-        if (Radio.endJingle) Radio.endJingle();
-        doSwitch();
-      }, TRANSITION_FADE_MS);
-    } else {
-      doSwitch();
-    }
+    if (opts.transition) _switchWithJingle(doSwitch, TRANSITION_FADE_MS);
+    else doSwitch();
   }
 
   // Kalt frå Radio.playStation() (js/radio.js) kvar gong NOKON startar ein
@@ -228,8 +246,11 @@ const Radio247 = (() => {
     const alt = block.stationIds.find(id => id !== deadId);
     if (!alt) return false;
     _lastStationId = alt;
-    _selfCall = true;
-    try { Radio.playStation(alt); } finally { _selfCall = false; }
+    const doSwitch = () => {
+      _selfCall = true;
+      try { Radio.playStation(alt); } finally { _selfCall = false; }
+    };
+    _switchWithJingle(doSwitch, DEAD_STREAM_FADE_MS);
     _rerenderHost();
     return true;
   }
