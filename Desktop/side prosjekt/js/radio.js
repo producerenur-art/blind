@@ -2650,6 +2650,14 @@ const Radio = (() => {
   function isWeeklySpecialDay() {
     return Math.floor(Date.now() / 86400000) % 7 === 0;
   }
+  // Ekstra HTF-vindauge (brukarønske 22.09.2026): i TILLEGG til den faste
+  // vekedagen over, vis han òg kvar laurdag kveld 20:00–20:59 CEST (fast
+  // UTC+2-forskyving — brukaren sa eksplisitt CEST) — eige, kortare
+  // tidsvindauge oppå den vanlege syklusen, ikkje ei erstatning.
+  function isHtfSaturdayEveningCest() {
+    const cest = new Date(Date.now() + 2 * 60 * 60 * 1000); // skift til CEST (UTC+2)
+    return cest.getUTCDay() === 6 && cest.getUTCHours() === 20;
+  }
 
   // Ny sjeldan spesial (brukarønske 13.09.2026): same mekanikk som WEEKLY_SPECIAL
   // over, men på ein 8-dagars syklus i staden for 7. Dukk berre opp den eine
@@ -2694,20 +2702,52 @@ const Radio = (() => {
   const VIS_SHOW = 20;         // antall video-knapper vi viser samtidig
   const VIS_CLASSIC_SLOTS = 5; // hvor mange av plassene klassikerne beholder
   const aiModeOf = id => 'ai_' + id;
-  // Fast «AI visual 5»: en bruker-valgt video som ALLTID ligger på plass 5 (indeks 4),
-  // lydløst som resten. Resten av plassene roterer.
-  const AI_VISUAL_PIN = { index: 4, id: 'OikOgyDeOQw', emoji: '🌀', label: 'AI visual 5' };
+  // «AI visual 5» (plass/indeks 4): roterer nå gjennom en brukervalgt pool
+  // hver 14. dag, i stedet for å stå fast på én video for alltid (brukerønske
+  // 22.09.2026 — ingenting i visuals-raden skal stå helt uendret hele tiden,
+  // heller ikke den "faste" plassen, bare mye saktere enn resten av raden).
+  // Lydløst som resten (mute=1 i visVideoSrc).
+  const AI_VISUAL_PIN_INDEX = 4;
+  // UFO-videoene under (lagt til 22.09.2026) er alle sjekket FØR innlegging:
+  // ikkje YouTube Shorts (isShortsEligible:false), embeddbare
+  // (playableInEmbed:true), ikkje "Ancient Aliens"-merkevare — brukarønske
+  // same dag. Mix av ekte opptak-kompilasjonar og eitt AI-forsterka klipp.
+  const AI_VISUAL_PIN_POOL = [
+    { id: 'gZWC7KgqrqY', emoji: '🦆', label: 'Donald Duck Classics' },
+    { id: '6_h3ASDybnM', emoji: '🛸', label: 'UFO Orbs — Clearest Sightings' },
+    { id: 'EXqhvsP-L_E', emoji: '🐕', label: 'Goofy Classics' },
+    { id: 'AMMIibmI3aQ', emoji: '🔭', label: 'Clear UFO Footage Compilation' },
+    { id: '7b_JnF5CY5w', emoji: '🛸', label: 'UFO Phenomenon' },
+    { id: '2wt5ga4-r6E', emoji: '🍯', label: 'Donald Duck Classics' },
+    { id: 'C9HdiemKFMY', emoji: '🔭', label: 'Clear UFO Footage Compilation' },
+    { id: 'dq_RJrkfu5Y', emoji: '📡', label: 'Pentagon UFO Files' },
+    { id: 'G_u1rtyTr38', emoji: '🌠', label: 'UFO Sightings Compilation' },
+    { id: 'FlVGM6XKgSE', emoji: '🐕', label: 'Goofy Classics' },
+    { id: '1GaGJR6B6XI', emoji: '🤖', label: 'AI-Enhanced UFO Footage' },
+    { id: '5TzZUjcydtE', emoji: '🎃', label: 'Looney Tunes Halloween' },
+    { id: '4Sw4Bu2WCVw', emoji: '🛸', label: 'Real UFO Sightings' },
+    { id: 'K5zXDs-nBh0', emoji: '🎖️', label: 'Donald Duck Classics' },
+  ];
+  function aiVisualPinSlot() { return Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)); }
+  function currentAiVisualPin() {
+    const pool = AI_VISUAL_PIN_POOL;
+    const idx = ((aiVisualPinSlot() % pool.length) + pool.length) % pool.length;
+    return pool[idx];
+  }
   function applyAiVisualPin(list) {
-    const pin = { id: AI_VISUAL_PIN.id, emoji: AI_VISUAL_PIN.emoji, label: AI_VISUAL_PIN.label, group: 'pin' };
+    const p = currentAiVisualPin();
+    const pin = { id: p.id, emoji: p.emoji, label: p.label, group: 'pin' };
     // Ikke la den samme videoen også dukke opp på en av de roterende plassene.
     const arr = (Array.isArray(list) ? list : []).filter(it => it && it.id !== pin.id);
-    if (arr.length > AI_VISUAL_PIN.index) arr[AI_VISUAL_PIN.index] = pin;  // bytt ut plass 5
+    if (arr.length > AI_VISUAL_PIN_INDEX) arr[AI_VISUAL_PIN_INDEX] = pin;  // bytt ut plass 5
     else arr.push(pin);                                                    // ellers legg sist
     return arr;
   }
-  // Ny miks hvert 15. minutt — poolen fra serveren byttes bare 1×/døgn, så denne
-  // rotasjonen er det som gjør at knappene skifter oftere (uten API-kostnad).
-  function visSlot() { return Math.floor(Date.now() / 900000); }
+  // Ny miks hver time (brukarønske 22.09.2026: var 15 min, men eit skittent
+  // glidande vindauge (sjå rotateWindow under) flytta seg berre 1 plass per
+  // tick — nesten heile raden var difor uendra time etter time, sjølv om
+  // slot-tallet endra seg. Poolen frå serveren byttes uansett berre 1×/døgn.
+  function visSlot() { return Math.floor(Date.now() / 3600000); }
   // Flett gruppene inn i hverandre (psy, kaleido, space, psy, kaleido, space …)
   // slik at ETHVERT sammenhengende utsnitt får en sjanger-miks — ellers kunne
   // et timesvindu bestå av bare romfilm eller bare fraktaler.
@@ -2725,12 +2765,21 @@ const Radio = (() => {
       rows.forEach(r => { if (r[i]) out.push(r[i]); });
     return out;
   }
-  // Ta n elementer fra lista, med start som flytter seg per time (sirkulært).
+  // Ta n elementer fra lista — vindauget HOPPAR n plassar per time (ikkje
+  // glid 1 plass), så DENNE timen sitt utvalg aldri deler ein einaste video
+  // med FØRRE time sitt utvalg (brukarønske 22.09.2026: «ingen skal gjentas
+  // time etter time»). Syklar gjennom heile lista før noko kjem att.
   function rotateWindow(list, n, slot) {
     if (n <= 0 || !list.length) return [];
     if (list.length <= n) return list.slice();
-    const off = ((slot % list.length) + list.length) % list.length;
-    return Array.from({ length: n }, (_, i) => list[(off + i) % list.length]);
+    const totalWindows = Math.ceil(list.length / n);
+    const w = ((slot % totalWindows) + totalWindows) % totalWindows;
+    // Klem siste vindauget slik at det sluttar nøyaktig ved listeslutt i
+    // staden for å pakka rundt til start (som elles ville gjeve konstant
+    // overlapp mot vindauge 0 KVAR einaste time når lista ikkje er delelig
+    // med n — sjå testnotat i minnet, IKKJE gå tilbake til modulo-wrap her).
+    const off = Math.min(w * n, list.length - n);
+    return list.slice(off, off + n);
   }
   // Spre `extra` jevnt utover `base` (klassikerne mellom AI-valgene).
   function spreadInto(base, extra) {
@@ -2782,7 +2831,7 @@ const Radio = (() => {
     const pinned = applyAiVisualPin(merged);
     // Sjeldan spesial-slot (sjå WEEKLY_SPECIAL over): kjem KUN til på sin faste
     // dag, som ein ekstra knapp — påverkar ikkje resten av rotasjonen elles.
-    if (isWeeklySpecialDay() && !pinned.some(it => it && it.id === WEEKLY_SPECIAL.id)) {
+    if ((isWeeklySpecialDay() || isHtfSaturdayEveningCest()) && !pinned.some(it => it && it.id === WEEKLY_SPECIAL.id)) {
       pinned.push(WEEKLY_SPECIAL);
     }
     // Same for den 8-dagars spesialen (sjå EIGHT_DAY_SPECIAL over).
