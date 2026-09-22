@@ -410,7 +410,7 @@ const LiveMix = (() => {
         <input id="bc-presenter" value="${_esc(_bc.presenterName || '')}" placeholder="Your artist name" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
         <p style="font-size:0.74rem;color:var(--text3);margin:-0.55rem 0 0.9rem">Shown to ALL visitors on the site as "with {your name}" while you're live — they get automatically switched over from their station to your broadcast.</p>
         <label style="${lbl}">Room name</label>
-        <input id="bc-room" value="${_esc(_bc.room || 'test')}" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
+        <input id="bc-room" value="${_esc(_bc.room || 'live')}" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
         <label style="${lbl}">Audio input (DJ routing)</label>
         <div style="display:flex;gap:0.6rem;margin:0 0 1rem">
           <select id="bc-dev" ${live ? 'disabled' : ''} style="${inp};flex:1">${live ? '' : '<option>Click "Grant access" first…</option>'}</select>
@@ -514,7 +514,7 @@ const LiveMix = (() => {
   async function bcGo() {
     try {
       const sel = _byId('bc-dev'), roomEl = _byId('bc-room'), presEl = _byId('bc-presenter');
-      const room = (roomEl && roomEl.value.trim()) || 'test'; _bc.room = room;
+      const room = (roomEl && roomEl.value.trim()) || 'live'; _bc.room = room;
       _bc.presenterName = (presEl && presEl.value.trim()) || '';
       _bc.stream = await navigator.mediaDevices.getUserMedia({ audio: {
         deviceId: { exact: sel.value }, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2,
@@ -701,7 +701,7 @@ const LiveMix = (() => {
           <span id="ln-status">${joined ? 'Connecting…' : 'Not connected'}</span>
         </span>
         <p style="color:var(--text2);font-size:0.9rem;margin:0.4rem 0 1rem">Enter the same room name as the DJ and click to listen to the set live.</p>
-        <input id="ln-room" value="${_esc(_bc.room || 'test')}" ${joined ? 'disabled' : ''} aria-label="Room name" style="${inp};margin:0 0 0.8rem">
+        <input id="ln-room" value="${_esc(_bc.room || 'live')}" ${joined ? 'disabled' : ''} aria-label="Room name" style="${inp};margin:0 0 0.8rem">
         <button class="btn btn-primary w-full" id="ln-join" onclick="LiveMix.tuneInJoin()" ${joined ? 'disabled' : ''}>▶︎ Listen live</button>
         <audio id="ln-audio" autoplay playsinline></audio>
         <video id="ln-video" autoplay playsinline muted style="display:none;width:100%;border-radius:12px;margin-top:0.7rem;background:#000"></video>
@@ -724,7 +724,7 @@ const LiveMix = (() => {
       return;
     }
     const roomEl = _byId('ln-room');
-    const room = (roomEl && roomEl.value.trim()) || 'test'; _bc.room = room;
+    const room = (roomEl && roomEl.value.trim()) || 'live'; _bc.room = room;
     const join = _byId('ln-join'); if (join) join.disabled = true;
     _lnStatus('Connecting…', false);
     _bc.listening = true;
