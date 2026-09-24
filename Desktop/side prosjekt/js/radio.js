@@ -627,6 +627,37 @@ const Radio = (() => {
   function _initJingleSchedule() { _scheduleJingleSlots(); }
   if (typeof document !== 'undefined') _initJingleSchedule();
 
+  // ── Arcturians-reklame ALENE, hver 7. time (brukarønske 2026-09-24) ──────────────
+  // ~1 min reklame som speler HELT åleine (ikkje oppå musikk): det som spelar tonast ut
+  // (320 ms), reklamen speler, så tonast stasjonen inn att (320 ms) og koplar seg til på
+  // nytt. Slotane følgjer klokka (kvar 7. time frå UTC-epoken, alltid ved :05 så han aldri
+  // kolliderer med :10/:30/:50-jinglane eller timeskiftet i 24/7), så alle lyttarar høyrer
+  // han same augeblikk. Gjeld IKKJE når nokon er live eller ei mix speler (då hoppar han over).
+  const AD_SLOT_MS = 7 * 60 * 60 * 1000;
+  const AD_SLOT_OFFSET_MS = 5 * 60 * 1000;
+  const AD_URL = JINGLE_BASE + 'arcturians-ad.mp3';
+
+  function _playAdAlone() {
+    if (_jingleBusy || _liveTakeover || _special || !window._radioMode || !isPlaying || muted) return;
+    _jingleBusy = true;
+    _playLocalClip(AD_URL, () => {
+      _jingleBusy = false;
+      if (_liveTakeover || _special) return;   // ei sending starta under reklamen — live-overtakinga styrer
+      // Same veg for vanleg stasjon OG 24/7 Cycle: kople til same strøym på nytt direkte (_playUrl,
+      // ikkje Radio247.play() — han hoppar over «same stasjon speler alt» og ville gitt stillhet).
+      // 24/7-modus står på (ingen notifyManualPlay), og :05-slotten ligg langt frå timeskiftet.
+      try { if (currentStation && currentStation.url) _playUrl(currentStation.url, currentStation); }
+      catch (e) { /* stille: brukaren kan trykke play */ }
+    }, LIVE_FADE_MS);
+  }
+
+  function _scheduleAdSlots() {
+    const now = Date.now();
+    const nextAt = Math.ceil((now - AD_SLOT_OFFSET_MS) / AD_SLOT_MS) * AD_SLOT_MS + AD_SLOT_OFFSET_MS;
+    setTimeout(() => { _playAdAlone(); _scheduleAdSlots(); }, Math.max(1000, nextAt - now));
+  }
+  if (typeof document !== 'undefined') _scheduleAdSlots();
+
   // ── Electronic lock ───────────────────────────────────────────────────
   // The whole site is locked to electronic music, so the radio search is too.
   // A web result only passes if it carries one of these genre tags (exact tag
