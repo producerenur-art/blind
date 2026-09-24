@@ -610,6 +610,7 @@ const Radio = (() => {
     { url: JINGLES.d,          fade: LIVE_FADE_MS },
     { url: JINGLES.promo,      fade: LIVE_FADE_MS },              // «Welcome to SiriusFM»-presentasjon (~80s)
     { url: JINGLES.c,          fade: LIVE_FADE_MS },              // «You don't need an account…»
+    { url: JINGLE_BASE + 'jingle-sirius-sarah.mp3', fade: LIVE_FADE_MS }, // Sarah-jingel (23 s), lagt til 2026-09-24
     { url: JINGLE_BASE + 'live-chat-2.mp3', fade: LIVE_FADE_MS }, // live chat (Laura, ~53s)
   ];
 
