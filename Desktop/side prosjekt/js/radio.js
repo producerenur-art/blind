@@ -627,20 +627,26 @@ const Radio = (() => {
   function _initJingleSchedule() { _scheduleJingleSlots(); }
   if (typeof document !== 'undefined') _initJingleSchedule();
 
-  // ── Arcturians-reklame ALENE, hver 7. time (brukarønske 2026-09-24) ──────────────
-  // ~1 min reklame som speler HELT åleine (ikkje oppå musikk): det som spelar tonast ut
+  // ── Reklamer ALENE, kvar 7. time kvar (brukarønske 2026-09-24) ─────────────────────
+  // ~1,5–4 min reklame som speler HELT åleine (ikkje oppå musikk): det som spelar tonast ut
   // (320 ms), reklamen speler, så tonast stasjonen inn att (320 ms) og koplar seg til på
-  // nytt. Slotane følgjer klokka (kvar 7. time frå UTC-epoken, alltid ved :05 så han aldri
-  // kolliderer med :10/:30/:50-jinglane eller timeskiftet i 24/7), så alle lyttarar høyrer
-  // han same augeblikk. Gjeld IKKJE når nokon er live eller ei mix speler (då hoppar han over).
+  // nytt. Slotane følgjer klokka (kvar 7. time frå UTC-epoken + heile timar forskyving, alltid
+  // ved :05 så dei aldri kolliderer med :10/:30/:50-jinglane eller timeskiftet i 24/7), så alle
+  // lyttarar høyrer dei same augeblikk. Tre reklamer, 2 timar frå kvarandre innan kvar 7-timarsrunde.
+  // Gjeld IKKJE når nokon er live eller ei mix speler (då hoppar dei over).
   const AD_SLOT_MS = 7 * 60 * 60 * 1000;
   const AD_SLOT_OFFSET_MS = 5 * 60 * 1000;
-  const AD_URL = JINGLE_BASE + 'arcturians-ad.mp3';
+  const HOUR_MS = 60 * 60 * 1000;
+  const ADS = [
+    { url: JINGLE_BASE + 'arcturians-ad.mp3',   shiftMs: 0 },            // Arcturians (3:41)
+    { url: JINGLE_BASE + 'reklame-sirius.m4a',  shiftMs: 2 * HOUR_MS },  // «reklame sirius» (2:37)
+    { url: JINGLE_BASE + 'reklame-2-sirius.m4a', shiftMs: 4 * HOUR_MS }, // «reklame 2 sirius» (1:36)
+  ];
 
-  function _playAdAlone() {
+  function _playAdAlone(url) {
     if (_jingleBusy || _liveTakeover || _special || !window._radioMode || !isPlaying || muted) return;
     _jingleBusy = true;
-    _playLocalClip(AD_URL, () => {
+    _playLocalClip(url, () => {
       _jingleBusy = false;
       if (_liveTakeover || _special) return;   // ei sending starta under reklamen — live-overtakinga styrer
       // Same veg for vanleg stasjon OG 24/7 Cycle: kople til same strøym på nytt direkte (_playUrl,
@@ -651,12 +657,12 @@ const Radio = (() => {
     }, LIVE_FADE_MS);
   }
 
-  function _scheduleAdSlots() {
+  function _scheduleAd(ad) {
     const now = Date.now();
-    const nextAt = Math.ceil((now - AD_SLOT_OFFSET_MS) / AD_SLOT_MS) * AD_SLOT_MS + AD_SLOT_OFFSET_MS;
-    setTimeout(() => { _playAdAlone(); _scheduleAdSlots(); }, Math.max(1000, nextAt - now));
+    const nextAt = Math.ceil((now - AD_SLOT_OFFSET_MS - ad.shiftMs) / AD_SLOT_MS) * AD_SLOT_MS + AD_SLOT_OFFSET_MS + ad.shiftMs;
+    setTimeout(() => { _playAdAlone(ad.url); _scheduleAd(ad); }, Math.max(1000, nextAt - now));
   }
-  if (typeof document !== 'undefined') _scheduleAdSlots();
+  if (typeof document !== 'undefined') ADS.forEach(_scheduleAd);
 
   // ── Electronic lock ───────────────────────────────────────────────────
   // The whole site is locked to electronic music, so the radio search is too.
