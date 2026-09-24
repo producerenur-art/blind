@@ -503,7 +503,9 @@ const Radio = (() => {
   let _fadeTimer = null;
   function _fadeVolume(audio, to, ms, onDone) {
     if (_fadeTimer) { clearInterval(_fadeTimer); _fadeTimer = null; }
-    if (!audio || !(ms > 0)) { if (audio) audio.volume = to; onDone?.(); return; }
+    // Skjult fane/låst skjerm: nettlesaren struper setInterval, så ei fade kunne stått fast på lågt
+    // volum (stille) i minutt. Sett verdien rett fram i staden (ingen høyrer overgangen likevel).
+    if (!audio || !(ms > 0) || (typeof document !== 'undefined' && document.hidden)) { if (audio) audio.volume = to; onDone?.(); return; }
     const from = audio.volume;
     const steps = 12;
     const stepMs = ms / steps;
@@ -1305,7 +1307,18 @@ const Radio = (() => {
   // ── Audio ─────────────────────────────────────────────────────────────
   function getAudio() { return document.getElementById('audio-engine'); }
 
+  // Mobil/nettbrett (iOS, Android, iPadOS): IKKJE rut lyden gjennom Web Audio. Ein AudioContext blir
+  // suspendert av OS-et når skjermen låsast → lyden stoppar/hakkar med låst skjerm (brukarrapport
+  // 2026-09-24). Utan MediaElementSource speler <audio>-elementet direkte og OS-et held bakgrunns-
+  // avspelinga i live (Media Session finst frå før). Pris: canvas-visualiseringane (bars/circle/…)
+  // får ingen lyddata på mobil; video-visualane og fraktalane er upåverka.
+  const IS_TOUCH_MOBILE = typeof navigator !== 'undefined' &&
+    (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') ||
+     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+  window._sfmNoWebAudio = IS_TOUCH_MOBILE;
+
   function initAudioContext() {
+    if (IS_TOUCH_MOBILE) return;
     // Prefer shared context created by Player
     if (window._radioAnalyser) {
       audioCtx = window._radioCtx;
@@ -3151,7 +3164,7 @@ const Radio = (() => {
   const VIS_AUTO_STEP_MS = 5 * 60 * 1000;
   let _autoList = [], _autoListSlot = -1, _visManualSlot = -1, _visAutoTimer = null;
   function _visAutoTick() {
-    if (!document.getElementById('radio-vis-video')) return;          // ikkje på radiosida
+    if (!document.getElementById('radio-vis-video') || document.hidden) return;   // ikkje på radiosida / ikkje i bakgrunnen
     const slot = visSlot();
     if (slot !== _autoListSlot) {                                     // ny time → ny liste + oppfrisk raden
       visualsShown = buildVisualList(aiPool || []);

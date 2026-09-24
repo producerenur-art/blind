@@ -46,6 +46,7 @@ const Player = (() => {
     // Set up shared Web Audio API chain (used by Radio visualizer too)
     audio.addEventListener('play', () => {
       try {
+        if (window._sfmNoWebAudio) return;   // mobil/nettbrett: direkte <audio>, ikkje Web Audio (sjå radio.js IS_TOUCH_MOBILE)
         if (!_audioCtx) {
           const Ctx = window.AudioContext || window.webkitAudioContext;
           if (!Ctx) return;
