@@ -2688,11 +2688,13 @@ const Radio = (() => {
     visCtx.globalCompositeOperation = 'source-over';
   }
 
-  function setVisMode(mode, btn) {
+  function setVisMode(mode, btn, auto) {
     visMode = mode;
+    // Manuelt valg (klikk) holder seg resten av timen; auto-rotasjonen (_visAutoTick) overstyrer ikke.
+    if (!auto) _visManualSlot = visSlot();
     // Bare visualiser-stil-knappene, ikke størrelse-knappene
     document.querySelectorAll('.vis-style-row .vis-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    if (btn && btn.classList) btn.classList.add('active');
     particles = [];
     if (isVideoMode(mode)) {
       // Video-modus: lydløs, loopet bakgrunn. Uavhengig av om radioen spiller.
@@ -2969,10 +2971,13 @@ const Radio = (() => {
       seen.add(it.id);
       return true;
     });
+    const pinned = applyAiVisualPin(merged);
+    // Lista auto-rotasjonen bruker: same for alle lyttarar denne timen (ingen personlege tillegg enno).
+    _autoList = pinned.slice();
+    _autoListSlot = slot;
     // Videoen som spilles nå skal alltid ha sin egen knapp, først i raden.
     const cur = isVideoMode(visMode) ? visualItemForMode(visMode) : null;
-    if (cur && !seen.has(cur.id)) merged.unshift(cur);
-    const pinned = applyAiVisualPin(merged);
+    if (cur && !pinned.some(it => it && it.id === cur.id)) pinned.unshift(cur);
     // Sjeldan spesial-slot (sjå WEEKLY_SPECIAL over): kjem KUN til på sin faste
     // dag, som ein ekstra knapp — påverkar ikkje resten av rotasjonen elles.
     if ((isWeeklySpecialDay() || isHtfSaturdayEveningCest()) && !pinned.some(it => it && it.id === WEEKLY_SPECIAL.id)) {
@@ -3133,12 +3138,41 @@ const Radio = (() => {
     });
     row.style.display = '';
   }
+  // ── Auto-rotasjon av visuals gjennom heile timen (brukarønske 2026-09-24) ─────────
+  // Den valde visualen skal ikkje stå og loope same video time etter time. Kvart 5. minutt
+  // byttar spelaren til neste video i TIMENS liste (_autoList: same for alle, ingen
+  // gjentak innan timen; 12 ulike per time), og neste time startar ei ny liste
+  // (rotateWindow hoppar, så ingenting går att frå førre time). Eit klikk på ein
+  // knapp held den videoen resten av timen, så tek rotasjonen over att.
+  const VIS_AUTO_STEP_MS = 5 * 60 * 1000;
+  let _autoList = [], _autoListSlot = -1, _visManualSlot = -1, _visAutoTimer = null;
+  function _visAutoTick() {
+    if (!document.getElementById('radio-vis-video')) return;          // ikkje på radiosida
+    const slot = visSlot();
+    if (slot !== _autoListSlot) {                                     // ny time → ny liste + oppfrisk raden
+      visualsShown = buildVisualList(aiPool || []);
+      renderAiVisualButtons();
+    }
+    if (!isVideoMode(visMode) || _visManualSlot === slot || !_autoList.length) return;
+    const step = Math.floor((Date.now() % 3600000) / VIS_AUTO_STEP_MS);
+    const it = _autoList[step % _autoList.length];
+    if (!it) return;
+    const mode = it.mode || aiModeOf(it.id);
+    if (mode === visMode || !isVideoMode(mode)) return;
+    const btn = [...document.querySelectorAll('.vis-style-row .vis-btn')].find(b => (b.getAttribute('onclick') || '').includes("'" + mode + "'"));
+    setVisMode(mode, btn, true);
+  }
+  function _startVisAuto() {
+    if (_visAutoTimer) return;
+    _visAutoTimer = setInterval(_visAutoTick, 15000);
+    _visAutoTick();
+  }
   // Kalles hver gang radio-visningen bygges: vis raden med en gang (klassikere
   // eller poolen vi alt har), og hent poolen fra serveren én gang per økt.
   function loadAiVisuals() {
     visualsShown = buildVisualList(aiPool || []);
     renderAiVisualButtons();
-    if (visualsFetched) return;
+    if (visualsFetched) { _startVisAuto(); return; }
     visualsFetched = true;
     fetch('/api/visuals-fresh')
       .then(r => r.json())
@@ -3151,7 +3185,8 @@ const Radio = (() => {
         visualsShown = buildVisualList(aiPool);
         renderAiVisualButtons();
       })
-      .catch(() => { /* nett/API nede → klassikerne står som de er */ });
+      .catch(() => { /* nett/API nede → klassikerne står som de er */ })
+      .then(_startVisAuto);                     // start rotasjonen ETTER henting (vellukka eller ei)
   }
 
   // ── Egen farge + fart («Stil»-fanen) ───────────────────────────────────
