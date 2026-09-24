@@ -476,6 +476,9 @@ const Radio = (() => {
   // hardare enn ein typisk radiostrøym, så "same skalering" ≠ "same
   // opplevd styrke").
   const JINGLE_VOLUME_SCALE = 0.75;
+  // Musikk-nivå mens ei jingel snakkar over (_playJingleOverMusic): 0.12 ≈ −18 dB (var 0.25 ≈ −12 dB,
+  // for høgt mot dei stille jinglane frå 23.09). Brukarønske 2026-09-24.
+  const JINGLE_DUCK = 0.12;
                                   // som lyden før/etter — ikkje dempa lenger (var 0.85)
   let _jingleBusy = false;          // hindrar A/C/D i å overlappe kvarandre (eller ei live-sending)
   let _liveAnnouncementPlaying = false;
@@ -584,7 +587,7 @@ const Radio = (() => {
     j.addEventListener('ended', restore);
     j.addEventListener('error', restore);
     j.addEventListener('loadedmetadata', () => { setTimeout(restore, (j.duration || 60) * 1000 + 3000); }, { once: true });
-    _fadeVolume(audio, audio.volume * 0.25, ms, () => {
+    _fadeVolume(audio, audio.volume * JINGLE_DUCK, ms, () => {
       const p = j.play();
       if (p && p.catch) p.catch(restore);
     });
@@ -605,7 +608,7 @@ const Radio = (() => {
     { url: JINGLES.arcturians, fade: LIVE_FADE_MS },              // Arcturians-reklame
     { url: JINGLES.chat,       fade: LIVE_FADE_MS },              // live chat (Roger)
     { url: JINGLES.d,          fade: LIVE_FADE_MS },
-    { url: JINGLES.promo,      fade: 1400 },                      // «Welcome to SiriusFM»-presentasjon (~80s)
+    { url: JINGLES.promo,      fade: LIVE_FADE_MS },              // «Welcome to SiriusFM»-presentasjon (~80s)
     { url: JINGLES.c,          fade: LIVE_FADE_MS },              // «You don't need an account…»
     { url: JINGLE_BASE + 'live-chat-2.mp3', fade: LIVE_FADE_MS }, // live chat (Laura, ~53s)
   ];
