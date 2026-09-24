@@ -11360,3 +11360,25 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 
 /* Volummålaren i radio-docken */
 .radio-dock-vol-fill { background: linear-gradient(90deg, #7dd3fc, #a78bfa); }
+
+/* Raud blinkande LIVE-prikk + LIVE-merke når NOKON faktisk sender live (brukarønske 2026-09-24) */
+.live-blink-dot {
+  display: inline-block; width: 0.6em; height: 0.6em; border-radius: 50%;
+  background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.85);
+  margin-right: 0.4em; vertical-align: 0.05em;
+  -webkit-text-fill-color: initial;
+  animation: liveBlinkRed 1s ease-in-out infinite;
+}
+@keyframes liveBlinkRed { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+.radio-np-badge.is-broadcast {
+  background: rgba(239,68,68,0.16) !important;
+  border-color: rgba(239,68,68,0.6) !important;
+  color: #ef4444 !important;
+}
+.radio-np-badge.is-broadcast .dot {
+  background: #ef4444 !important; box-shadow: 0 0 8px rgba(239,68,68,0.85);
+  animation: liveBlinkRed 1s ease-in-out infinite !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-blink-dot, .radio-np-badge.is-broadcast .dot { animation: none; }
+}

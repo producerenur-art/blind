@@ -985,9 +985,9 @@ const Radio = (() => {
             const r247RowLiveLink = _liveTakeover ? _liveLinkUrl
               : (r247RowBroadcastingHere ? (LiveMix.getBroadcastLinkUrl ? LiveMix.getBroadcastLinkUrl() : '') : '');
             const r247RowDesc = (_liveTakeover && _liveSpecialLabel)
-              ? `🔴 ${escHtml(_liveSpecialLabel)}${_special ? ' — ' + escHtml(_special.show.title) : ''}`
+              ? `<span class="live-blink-dot"></span>${escHtml(_liveSpecialLabel)}${_special ? ' — ' + escHtml(_special.show.title) : ''}`
               : r247RowLivePresenter
-              ? `🔴 LIVE — ${escHtml(r247RowLivePresenter)}${r247RowLiveTrackTitle ? ' — ' + escHtml(r247RowLiveTrackTitle) : ''}${/^https?:\/\//i.test(r247RowLiveLink) ? ` · <a href="${escHtml(r247RowLiveLink)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Link</a>` : ''}`
+              ? `<span class="live-blink-dot"></span>LIVE — ${escHtml(r247RowLivePresenter)}${r247RowLiveTrackTitle ? ' — ' + escHtml(r247RowLiveTrackTitle) : ''}${/^https?:\/\//i.test(r247RowLiveLink) ? ` · <a href="${escHtml(r247RowLiveLink)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Link</a>` : ''}`
               : `Non-stop day-arc — ${escHtml(Radio247.currentBlock().label)} now`;
             const r247RowHtml = typeof Radio247 !== 'undefined' ? `
               <div class="radio-category">SIRIUSFM 24/7</div>
@@ -1888,7 +1888,9 @@ const Radio = (() => {
     const desc = document.getElementById('np-desc');
     const next = document.getElementById('np-next');
     const st   = document.getElementById('np-status');
-    if (name) name.textContent = info.label ? ('🔴 ' + info.label) : ('🔴 LIVE — ' + (info.presenter || 'SiriusFM'));
+    // Raud blinkande prikk (ikkje 🔴-emojien: tittelen har gjennomsiktig tekstfyll og emojien vart kvit).
+    if (name) name.innerHTML = '<span class="live-blink-dot"></span>' + escHtml(info.label ? info.label : ('LIVE — ' + (info.presenter || 'SiriusFM')));
+    if (st && st.parentElement) st.parentElement.classList.add('is-broadcast');
     if (desc) {
       const link = /^https?:\/\//i.test(info.link || '')
         ? ` <a href="${escHtml(info.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Link</a>` : '';
@@ -1907,7 +1909,7 @@ const Radio = (() => {
     const name = document.getElementById('np-name'), desc = document.getElementById('np-desc'), st = document.getElementById('np-status');
     if (name) name.textContent = 'Choose a station on the left';
     if (desc) desc.textContent = 'Electronic music from psychedelic trance to chill out';
-    if (st) st.textContent = 'Stopped';
+    if (st) { st.textContent = 'Stopped'; if (st.parentElement) st.parentElement.classList.remove('is-broadcast'); }
   }
 
   function updateNowPlaying(station) {
@@ -2147,6 +2149,7 @@ const Radio = (() => {
   function updateNowPlayingStatus(live) {
     const st = document.getElementById('np-status');
     if (st) st.textContent = (live || _liveHeroInfo()) ? 'LIVE' : 'Stopped';
+    if (st && st.parentElement) st.parentElement.classList.toggle('is-broadcast', !!_liveHeroInfo());   // raud blinkande berre når NOKON faktisk sender live
   }
 
   function updateSidebarActiveState(activeId) {
