@@ -7,6 +7,7 @@ const { cleanArticles } = require('./_strip');
 // `module.exports` (eit no-op i nettlesaren) berre for dette formålet.
 const { SHOWS } = require('../js/shows.js');
 const { FESTIVALS } = require('../js/world.js');
+const SpecialShows = require('../js/specialShows.js');
 const { SCHEDULE: RADIO247_SCHEDULE, pickStationId: r247PickStationId, stationName: r247StationName } = require('../js/radio247.js');
 
 // Kanonisk nettadresse for ALLE e-postlenker (aktivering, tilbakestilling, kjøp).
@@ -462,6 +463,41 @@ function radio247Html(name, siteUrl, unsubscribeUrl, SCHEDULE) {
     <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
       <p style="color:#475569;font-size:0.75rem;margin:0 0 0.4rem">© ${new Date().getFullYear()} SiriusFM</p>
       <a href="${unsubscribeUrl}" style="color:#64748b;font-size:0.72rem">Unsubscribe from this schedule</a>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+// «Lemonchill kjem til SiriusFM»-påminning (planlagt spesialprogram, js/specialShows.js).
+// Innhaldet bygges HER frå showId+kind — aldri frå fritekst i kallet.
+function specialShowHtml(name, siteUrl, unsubscribeUrl, show, kind, total) {
+  const base = (siteUrl || '').replace(/\/$/, '');
+  const first = new Date(show.slots[0]);
+  const when = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hour12: false }).format(first);
+  const hoursLeft = Math.round((first.getTime() - Date.now()) / 3600000);
+  const lead = kind === 0 ? 'Save the date' : (kind === 1 ? 'Tomorrow' : 'Today');
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:'Inter',Arial,sans-serif">
+  <div style="max-width:560px;margin:2rem auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(168,85,247,0.3)">
+    <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:2rem;text-align:center">
+      <p style="color:rgba(255,255,255,0.85);margin:0 0 0.4rem;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase">${escHtml(lead)} · ${kind + 1} of ${total}</p>
+      <h1 style="color:#fff;margin:0;font-size:1.75rem;font-weight:800">${escHtml(show.artist)} live on SiriusFM</h1>
+      <p style="color:rgba(255,255,255,0.9);margin:0.5rem 0 0;font-size:0.95rem">${escHtml(show.title)}</p>
+    </div>
+    <div style="padding:2rem;color:#e2e8f0">
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1rem">Hi ${escHtml(name)}! ${escHtml(show.artist)} takes over the 24-Hour Cycle for one full hour — a deep, slow mix made for SiriusFM.</p>
+      <p style="margin:0 0 1rem;font-size:1.05rem;font-weight:700;color:#fff">${escHtml(when)} · Norwegian time</p>
+      ${kind === 2 && hoursLeft > 0 ? `<p style="color:#94a3b8;margin:0 0 1rem">Starts in about ${hoursLeft} hours.</p>` : ''}
+      <div style="text-align:center;margin:1.5rem 0 0.5rem">
+        <a href="${base}/#/radio" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;padding:0.875rem 2rem;border-radius:8px;font-weight:700;font-size:1rem">Listen on SiriusFM →</a>
+      </div>
+    </div>
+    <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
+      <p style="color:#475569;font-size:0.75rem;margin:0 0 0.4rem">© ${new Date().getFullYear()} SiriusFM</p>
+      <a href="${unsubscribeUrl}" style="color:#64748b;font-size:0.72rem">Unsubscribe from 24-Hour Cycle emails</a>
     </div>
   </div>
 </body>
@@ -1059,6 +1095,18 @@ module.exports = async (req, res) => {
     html = liveNowHtml(toName, siteUrl, unsubUrl, {
       stations: b.stations, shows, magazine, interviews, festivals, releases, events,
     });
+  } else if (type === 'special_show_reminder') {
+    // Berre cron (api/special-reminder.js) — krev CRON_SECRET, aldri open for kven som helst.
+    const secret = process.env.CRON_SECRET;
+    if (!secret || req.headers['authorization'] !== `Bearer ${secret}`) return res.status(401).json({ error: 'Unauthorized' });
+    if (await isRadio247Unsubscribed(toEmail)) return res.status(200).json({ success: true, skipped: 'unsubscribed' });
+    const show = SpecialShows.byId(req.body?.showId);
+    const kind = Number(req.body?.kind);
+    if (!show || !Number.isInteger(kind) || kind < 0 || kind >= show.reminderOffsetsHours.length) return res.status(400).json({ error: 'Unknown show or reminder' });
+    if (Date.now() >= Date.parse(show.slots[0])) return res.status(200).json({ success: true, skipped: 'already-aired' });   // aldri etter fyrste sending
+    subject = kind === 2 ? `🔴 Today: ${show.artist} live on SiriusFM` : `🌘 ${show.artist} is coming to SiriusFM`;
+    const unsubUrl = `${siteUrl}/api/radio247-unsubscribe?email=${encodeURIComponent(toEmail)}`;
+    html = specialShowHtml(toName, siteUrl, unsubUrl, show, kind, show.reminderOffsetsHours.length);
   } else if (type === 'radio247_digest') {
     if (await isRadio247Unsubscribed(toEmail)) {
       return res.status(200).json({ success: true, skipped: 'unsubscribed' });

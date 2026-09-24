@@ -29,6 +29,10 @@
     {
       "path": "/api/radio-healthcheck",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/special-reminder",
+      "schedule": "0 9 * * *"
     }
   ],
   "functions": {
@@ -49,6 +53,9 @@
     },
     "api/radio-healthcheck.js": {
       "maxDuration": 120
+    },
+    "api/special-reminder.js": {
+      "maxDuration": 300
     }
   }
 }

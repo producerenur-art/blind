@@ -136,7 +136,7 @@ module.exports = async (req, res) => {
     ? `<video class="media" controls playsinline poster="${esc(image)}" preload="metadata"><source src="${esc(media)}" type="${esc(mime)}"></video>`
     : (kind === 'image'
         ? `<img class="media media-free" src="${esc(image)}" alt="${esc(fullTitle)}">`
-        : `<img class="media" src="${esc(image)}" alt="${esc(fullTitle)}">${media ? `<audio class="audio" controls preload="metadata"><source src="${esc(media)}" type="${esc(mime)}"></audio>` : ''}`);
+        : `<img class="media${image === FALLBACK_IMG ? ' media-free' : ''}" src="${esc(image)}" alt="${esc(fullTitle)}">${media ? `<audio class="audio" controls preload="metadata"><source src="${esc(media)}" type="${esc(mime)}"></audio>` : ''}`);
 
   const html = `<!doctype html>
 <html lang="en">

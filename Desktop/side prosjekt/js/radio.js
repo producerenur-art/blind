@@ -271,13 +271,14 @@ const Radio = (() => {
       emoji: '🔌', color: '#6366f1',
       desc: 'Ambient · modular synthesis · soundscape',
     },
-    {
-      id: 'alswin-ambient', cat: 'Dark Ambient / Drone',
-      name: 'Alswin Ambient Music',
-      url:  'https://server7.radio-streams.net/proxy/jwoiiktx/stream',
-      emoji: '🕯️', color: '#6366f1',
-      desc: 'Ambient · cinematic · meditation',
-    },
+    // 'alswin-ambient' (Alswin Ambient Music) fjerna 23.09.2026 — stadfesta
+    // live: server7.radio-streams.net sender ingen Access-Control-Allow-
+    // Origin-header, og lydmotoren (index.html <audio id="audio-engine">)
+    // krev crossorigin="anonymous" for visualizeren. Browseren blokkerer då
+    // heile strøymen med det same (readyState 0, ingen lyd) — same feilklasse
+    // som CORS-fjerningane i js/radio247.js (sjå kommentaren der), stadfesta
+    // med reell avspeling i nettlesar, ikkje berre curl (server-til-server
+    // har ikkje CORS-handheving, så ein enkel HTTP-sjekk ser strøymen som frisk).
 
     // ════════════════════════════════════════════
     // AMBIENT MANN  ▼ eiga 24/7 AzuraCast-sending, ikkje ein del av Dark
@@ -291,6 +292,9 @@ const Radio = (() => {
       url:  'https://radio.ambientmann.com/listen/ambient_mann/radio.mp3',
       emoji: '🌙', color: '#7c3aed',
       desc: 'Live DJ + 24/7 rotation — psychill / downtempo · ambientmann.com',
+      // Brukarønske 23.09.2026: opplevast høgare enn resten av katalogen —
+      // trimma ned mot same nivå (sjå gain-bruken i _playUrl/onStarted).
+      gain: 0.65,
     },
 
     // ════════════════════════════════════════════
@@ -422,6 +426,10 @@ const Radio = (() => {
   let _liveTakeover = false;
   let _preLive = null; // snapshot å gå tilbake til når sendinga stoppar
   let _liveTakeoverPresenter = ''; // sist kjende presentatørnamn — les via getLivePresenterName()
+  let _liveTrackTitle = ''; // valfri "nå spelast"-tekst — les via getLiveTrackTitle()
+  let _special = null;        // pågåande spesialprogram (js/specialShows.js): { show, startMs, endMs }
+  let _liveSpecialLabel = ''; // t.d. «Lemonchill live now» — erstattar «LIVE — namn» mens ei mix speler
+  let _liveLinkUrl = '';    // valfri lenke (Facebook/Bandcamp/...) — les via getLiveLinkUrl()
 
   // ── Stasjons-ID-jinglar (A/C/D) + live-annonse (B) ────────────────────────
   // Reint klientside "avbryt → spel lokal mp3 → koble til igjen"-triks (same
@@ -432,7 +440,10 @@ const Radio = (() => {
   // (window._radioMode) — aldri under ei live-sending, og aldri når
   // spelaren står stille eller spelar av eit musikkspor via js/player.js.
   const JINGLE_BASE = 'assets/jingles/';
-  const JINGLES = { a: JINGLE_BASE + 'jingle-a.mp3', c: JINGLE_BASE + 'jingle-c.mp3', d: JINGLE_BASE + 'jingle-d.mp3' };
+  const JINGLES = { a: JINGLE_BASE + 'jingle-a.mp3', c: JINGLE_BASE + 'jingle-c.mp3', d: JINGLE_BASE + 'jingle-d.mp3',
+    chat: JINGLE_BASE + 'live-chat.mp3', // brukarønske 2026-09-23: «open the live chat»-jingel
+    promo: JINGLE_BASE + 'jingle-promo.mp3',
+    arcturians: JINGLE_BASE + 'jingle-arcturians.mp3' }; // brukarønske 2026-09-23: «Arcturians står bak SiriusFM»-reklame // brukarønske 2026-09-23: «Welcome to SiriusFM»-presentasjon (Roger-stemme)
   // Namn → fil for live-annonsen (B). Ukjende/nye presentatørnamn fell tilbake
   // på "generic" heilt til nokon lagar ei dedikert fil for dei (sjå CLAUDE.md-
   // notat i js/livemix.js om korleis nye stemmer legges til). Ambient Mann/The
@@ -459,7 +470,12 @@ const Radio = (() => {
   // eigar-eksklusive lista (brukarønske 2026-09-21) — tom til eigaren sjølv
   // treng eit standalone-klipp.
   const LIVE_STANDALONE = {};
-  const JINGLE_VOLUME_SCALE = 1; // brukarønske 2026-09-20: jinglar/live-annonsar skal vere like høge
+  // brukarønske 2026-09-20: jinglar/live-annonsar skulle vere like høge som
+  // resten (var 1) — reversert 2026-09-23 etter tilbakemelding om at
+  // jinglane no opplevast for høge (dei fleste jingelfilene er mastra
+  // hardare enn ein typisk radiostrøym, så "same skalering" ≠ "same
+  // opplevd styrke").
+  const JINGLE_VOLUME_SCALE = 0.75;
                                   // som lyden før/etter — ikkje dempa lenger (var 0.85)
   let _jingleBusy = false;          // hindrar A/C/D i å overlappe kvarandre (eller ei live-sending)
   let _liveAnnouncementPlaying = false;
@@ -476,6 +492,11 @@ const Radio = (() => {
   // maskerer det harde kuttet så overgangen opplevast mjuk. Avbryt ein
   // eventuell pågåande fade før ein ny startar (t.d. raske bytte).
   const FADE_MS = 350;
+  // Brukarønske 23.09.2026: inn/ut-toninga rundt sjølve live-overgangen
+  // (LIVE_INTRO/namneannonsen når ei sending startar, LIVE_OUTRO når ho
+  // sluttar) skal vere 320ms på begge sider — litt kortare/kjappare enn
+  // standard FADE_MS, spesifikt for desse to overgangane.
+  const LIVE_FADE_MS = 320;
   let _fadeTimer = null;
   function _fadeVolume(audio, to, ms, onDone) {
     if (_fadeTimer) { clearInterval(_fadeTimer); _fadeTimer = null; }
@@ -541,41 +562,66 @@ const Radio = (() => {
     else startClip();
   }
 
-  // A/C/D: avbryt gjeldande stasjon kort, spel jingelen, koble så til stasjonen
-  // igjen (kan ikkje "fortsette" ein live-strøym — same reconnect-veg som
-  // exitLiveTakeover bruker). Ingenting å gjenoppta → gjer ingenting stille.
-  function _playStationJingle(url) {
-    if (_jingleBusy || _liveTakeover || !window._radioMode || !isPlaying || !currentStation) return;
-    _jingleBusy = true;
-    const station = { ...currentStation };
+  // Jingel OVER musikken (brukarønske 2026-09-24: «ikkje stopp musikken»): stasjonen
+  // held fram å spele, blir dempa til ~25 % (fade inn/ut), jingelen speler i eit eige
+  // kortlevd element og stasjonen toner tilbake (same fade) når han er ferdig. Ingen
+  // pause/reconnect. (iOS ignorerer audio.volume — der speler jingelen berre oppå.)
+  function _playJingleOverMusic(url, fadeMs) {
+    if (_jingleBusy || _liveTakeover || !window._radioMode || !isPlaying || muted) return;
     const audio = getAudio();
-    if (audio) { try { audio.pause(); } catch (e) {} }
-    _playLocalClip(url, () => {
+    if (!audio || audio.paused) return;
+    _jingleBusy = true;
+    const ms = typeof fadeMs === 'number' ? fadeMs : LIVE_FADE_MS;
+    const j = new Audio(url);
+    j.volume = Math.max(0, Math.min(1, volume));
+    let done = false;
+    const restore = () => {
+      if (done) return; done = true;
       _jingleBusy = false;
-      if (window._radioMode && !_liveTakeover) _playUrl(station.url, station);
+      if (_liveTakeover || !isPlaying) return;
+      _fadeVolume(audio, volume * (currentStation?.gain ?? 1), ms);   // tilbake til brukaren sitt volum
+    };
+    j.addEventListener('ended', restore);
+    j.addEventListener('error', restore);
+    j.addEventListener('loadedmetadata', () => { setTimeout(restore, (j.duration || 60) * 1000 + 3000); }, { once: true });
+    _fadeVolume(audio, audio.volume * 0.25, ms, () => {
+      const p = j.play();
+      if (p && p.catch) p.catch(restore);
     });
   }
 
-  function _randMs(minHours, maxHours) {
-    const h = minHours + Math.random() * (maxHours - minHours);
-    return h * 60 * 60 * 1000;
+  // ── Jingel-rotasjon på FASTE klokkeslett (brukarønske 2026-09-24) ─────────
+  // Éin felles timeplan for ALLE radioer (24/7 Cycle og alle stasjonar): kvart
+  // 20. minutt (:10, :30, :50 — aldri på heile timen, der 24/7 byter sjanger)
+  // kjem NESTE jingel i sirkelen. Slotten reknast frå klokka (ikkje frå
+  // sideinnlasting), så alle lyttarar høyrer same jingel til same tid, og to
+  // jinglar kolliderer aldri. INGEN jinglar mens nokon er live eller ei mix speler
+  // (brukarønske 2026-09-24) — dei speler berre over vanleg musikk. Vil du ha ein jingel oftare:
+  // legg han inn fleire gonger i JINGLE_CYCLE (jamt fordelt).
+  const JINGLE_SLOT_MS = 20 * 60 * 1000;
+  const JINGLE_SLOT_OFFSET_MS = 10 * 60 * 1000;   // slotar ved :10, :30, :50
+  const JINGLE_CYCLE = [
+    { url: JINGLES.a,          fade: LIVE_FADE_MS },              // «You're listening to SiriusFM… Subscribe»
+    { url: JINGLES.arcturians, fade: LIVE_FADE_MS },              // Arcturians-reklame
+    { url: JINGLES.chat,       fade: LIVE_FADE_MS },              // live chat (Roger)
+    { url: JINGLES.d,          fade: LIVE_FADE_MS },
+    { url: JINGLES.promo,      fade: 1400 },                      // «Welcome to SiriusFM»-presentasjon (~80s)
+    { url: JINGLES.c,          fade: LIVE_FADE_MS },              // «You don't need an account…»
+    { url: JINGLE_BASE + 'live-chat-2.mp3', fade: LIVE_FADE_MS }, // live chat (Laura, ~53s)
+  ];
+
+  function _scheduleJingleSlots() {
+    const now = Date.now();
+    const slotIdx = Math.floor((now - JINGLE_SLOT_OFFSET_MS) / JINGLE_SLOT_MS) + 1;
+    const nextAt = slotIdx * JINGLE_SLOT_MS + JINGLE_SLOT_OFFSET_MS;
+    setTimeout(() => {
+      const j = JINGLE_CYCLE[slotIdx % JINGLE_CYCLE.length];
+      if (!_liveTakeover) _playJingleOverMusic(j.url, j.fade);   // aldri under live/mix
+      _scheduleJingleSlots();
+    }, nextAt - now);
   }
 
-  // Rekursiv setTimeout (ikkje setInterval) — unngår drift og let kvar runde
-  // trekke ein ny tilfeldig ventetid for C/D sine intervall-spenn.
-  function _scheduleJingle(url, minHours, maxHours) {
-    const delay = minHours === maxHours ? minHours * 60 * 60 * 1000 : _randMs(minHours, maxHours);
-    setTimeout(function fire() {
-      _playStationJingle(url);
-      setTimeout(fire, minHours === maxHours ? minHours * 60 * 60 * 1000 : _randMs(minHours, maxHours));
-    }, delay);
-  }
-
-  function _initJingleSchedule() {
-    _scheduleJingle(JINGLES.a, 65 / 60, 65 / 60); // kvart 1t 5min (65 min)
-    _scheduleJingle(JINGLES.c, 3, 4);       // kvar 3.-4. time
-    _scheduleJingle(JINGLES.d, 6, 8);       // kvar 6.-8. time
-  }
+  function _initJingleSchedule() { _scheduleJingleSlots(); }
   if (typeof document !== 'undefined') _initJingleSchedule();
 
   // ── Electronic lock ───────────────────────────────────────────────────
@@ -890,11 +936,17 @@ const Radio = (() => {
             // Same live-presentator-unntak som Radio247.cardHtml() — denne
             // kompakte rada har sin EIGEN separate tekst (bygger ikkje på
             // cardHtml()), så ho trong same fiks separat (rapportert 2026-09-18).
+            const r247RowBroadcastingHere = typeof LiveMix !== 'undefined' && LiveMix.isBroadcastingHere && LiveMix.isBroadcastingHere();
             const r247RowLivePresenter = _liveTakeover ? _liveTakeoverPresenter
-              : ((typeof LiveMix !== 'undefined' && LiveMix.isBroadcastingHere && LiveMix.isBroadcastingHere())
-                  ? (LiveMix.getBroadcastPresenterName ? LiveMix.getBroadcastPresenterName() : '') : '');
-            const r247RowDesc = r247RowLivePresenter
-              ? `🔴 LIVE — ${escHtml(r247RowLivePresenter)}`
+              : (r247RowBroadcastingHere ? (LiveMix.getBroadcastPresenterName ? LiveMix.getBroadcastPresenterName() : '') : '');
+            const r247RowLiveTrackTitle = _liveTakeover ? _liveTrackTitle
+              : (r247RowBroadcastingHere ? (LiveMix.getBroadcastTrackTitle ? LiveMix.getBroadcastTrackTitle() : '') : '');
+            const r247RowLiveLink = _liveTakeover ? _liveLinkUrl
+              : (r247RowBroadcastingHere ? (LiveMix.getBroadcastLinkUrl ? LiveMix.getBroadcastLinkUrl() : '') : '');
+            const r247RowDesc = (_liveTakeover && _liveSpecialLabel)
+              ? `🔴 ${escHtml(_liveSpecialLabel)}${_special ? ' — ' + escHtml(_special.show.title) : ''}`
+              : r247RowLivePresenter
+              ? `🔴 LIVE — ${escHtml(r247RowLivePresenter)}${r247RowLiveTrackTitle ? ' — ' + escHtml(r247RowLiveTrackTitle) : ''}${/^https?:\/\//i.test(r247RowLiveLink) ? ` · <a href="${escHtml(r247RowLiveLink)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Link</a>` : ''}`
               : `Non-stop day-arc — ${escHtml(Radio247.currentBlock().label)} now`;
             const r247RowHtml = typeof Radio247 !== 'undefined' ? `
               <div class="radio-category">SIRIUSFM 24/7</div>
@@ -1185,8 +1237,8 @@ const Radio = (() => {
     // KVA som utløyste denne render()-en, unngår me at rekkefølgja mellom eit
     // playStation-kall og eit påfølgande render()-kall avgjer om hero-boksen
     // viser rett stasjon eller ikkje.
-    if (currentStation) {
-      updateNowPlaying(currentStation);
+    if (currentStation || _liveHeroInfo()) {
+      updateNowPlaying(currentStation || {});
       // Same plassholder-problem som over: #np-status er hardkoda til
       // «Stopped» i malen, og ingenting synkroniserte han på nytt her —
       // ei anna side/render() midt i avspeling viste feilaktig «Stopped»
@@ -1422,7 +1474,7 @@ const Radio = (() => {
     if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
     try {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: 'Live now',
+        title: _special ? 'On air' : 'Live now',
         artist: presenterName || 'SiriusFM',
         album: 'SiriusFM Live Stream',
         artwork: [{ src: '/assets/icon-512.png', sizes: '512x512', type: 'image/png' }],
@@ -1441,7 +1493,10 @@ const Radio = (() => {
     // høyrdest ut som eit hakk/ekko der to kjelder kjempa om same elementet
     // eit augeblink (rapportert 2026-09-18: "kommer når jeg trykker play i
     // et annet vindu"). Live-overtakinga eig elementet til sendinga er over.
-    if (_liveTakeover) {
+    if (_liveTakeover && _special) {
+      // Ei forhåndsinnspelt mix skal ikkje halde lyttaren fanga — vel dei ei anna stasjon, forlèt dei henne roleg.
+      _leaveSpecialQuiet();
+    } else if (_liveTakeover) {
       if (typeof App !== 'undefined' && App.toast) App.toast('A live broadcast is playing right now — station switching is paused until it ends.', 'info');
       return;
     }
@@ -1516,7 +1571,12 @@ const Radio = (() => {
       settled = true;
       isPlaying = true;
       _reconnectCount = 0;   // ekte avspeling i gang att → nullstill auto-reconnect-budsjettet
-      _fadeVolume(audio, volume, FADE_MS);
+      // Brukarønske 23.09.2026: nokre strøymar (t.d. Ambient Mann) er
+      // mastra/streama høgare enn resten av katalogen — station.gain (0-1,
+      // valfri, default 1) trimmar akkurat DEN stasjonen ned mot same
+      // opplevde styrke som resten, utan å røre brukaren sitt eige
+      // volumval. Sjå STATIONS-oppslaget for kvar stasjon som har fått eit.
+      _fadeVolume(audio, volume * (info?.gain ?? 1), FADE_MS);
       updatePlayBtn(true);
       document.getElementById('radio-idle')?.classList.add('hidden');
       initAudioContext();
@@ -1768,7 +1828,50 @@ const Radio = (() => {
     if (npPollTimer) { clearInterval(npPollTimer); npPollTimer = null; }
   }
 
+  // Hvem som er live akkurat no (lyttar-overtaking ELLER denne fana sender
+  // sjølv) — hero-boksen skal vise DET i staden for stasjonen som ikkje spelar.
+  function _liveHeroInfo() {
+    if (_liveTakeover) return { presenter: _liveTakeoverPresenter, title: _liveTrackTitle, link: _liveLinkUrl, label: _liveSpecialLabel };
+    const lm = (typeof LiveMix !== 'undefined' && LiveMix.isBroadcastingHere && LiveMix.isBroadcastingHere()) ? LiveMix
+      : ((typeof LiveGuest !== 'undefined' && LiveGuest.isBroadcastingHere && LiveGuest.isBroadcastingHere()) ? LiveGuest : null);
+    if (!lm) return null;
+    return {
+      presenter: lm.getBroadcastPresenterName ? lm.getBroadcastPresenterName() : '',
+      title: lm.getBroadcastTrackTitle ? lm.getBroadcastTrackTitle() : '',
+      link: lm.getBroadcastLinkUrl ? lm.getBroadcastLinkUrl() : '',
+    };
+  }
+
+  function _applyLiveHero(info) {
+    const name = document.getElementById('np-name');
+    const desc = document.getElementById('np-desc');
+    const next = document.getElementById('np-next');
+    const st   = document.getElementById('np-status');
+    if (name) name.textContent = info.label ? ('🔴 ' + info.label) : ('🔴 LIVE — ' + (info.presenter || 'SiriusFM'));
+    if (desc) {
+      const link = /^https?:\/\//i.test(info.link || '')
+        ? ` <a href="${escHtml(info.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Link</a>` : '';
+      desc.innerHTML = (info.title ? escHtml(info.title) : 'Live broadcast right now') + link;
+    }
+    if (next) next.hidden = true;
+    if (st) st.textContent = 'LIVE';
+  }
+
+  // Kalla når live-info endrar seg (start/tittel/lenke/slutt) — byter hero-boksen
+  // til live-visning, eller attende til stasjonen som gjekk før (stopp/sluttar).
+  function syncLiveHero() {
+    const info = _liveHeroInfo();
+    if (info) { _applyLiveHero(info); return; }
+    if (currentStation) { updateNowPlaying(currentStation); updateNowPlayingStatus(isPlaying); return; }
+    const name = document.getElementById('np-name'), desc = document.getElementById('np-desc'), st = document.getElementById('np-status');
+    if (name) name.textContent = 'Choose a station on the left';
+    if (desc) desc.textContent = 'Electronic music from psychedelic trance to chill out';
+    if (st) st.textContent = 'Stopped';
+  }
+
   function updateNowPlaying(station) {
+    const liveInfo = _liveHeroInfo();
+    if (liveInfo) { _applyLiveHero(liveInfo); return; }
     const name = document.getElementById('np-name');
     const desc = document.getElementById('np-desc');
     const next = document.getElementById('np-next');
@@ -2002,7 +2105,7 @@ const Radio = (() => {
 
   function updateNowPlayingStatus(live) {
     const st = document.getElementById('np-status');
-    if (st) st.textContent = live ? 'LIVE' : 'Stopped';
+    if (st) st.textContent = (live || _liveHeroInfo()) ? 'LIVE' : 'Stopped';
   }
 
   function updateSidebarActiveState(activeId) {
@@ -3306,9 +3409,15 @@ const Radio = (() => {
     const badge =
       '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;font-weight:700;letter-spacing:0.06em;color:#a78bfa;background:rgba(167,139,250,0.14);border:1px solid rgba(167,139,250,0.35);border-radius:99px;padding:0.15rem 0.45rem;">' +
       '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#a78bfa;animation:livePulseA 1.2s ease-in-out infinite;"></span>LIVE</span>';
-    if (title)  title.innerHTML  = badge + ' SiriusFM Live Stream';
-    if (artist) artist.textContent = 'with ' + (presenterName || 'SiriusFM');
+    if (_liveSpecialLabel) {
+      if (title)  title.innerHTML  = badge + ' ' + escHtml(_liveSpecialLabel);
+      if (artist) artist.textContent = _special ? _special.show.title : 'SiriusFM';
+    } else {
+      if (title)  title.innerHTML  = badge + ' SiriusFM Live Stream';
+      if (artist) artist.textContent = 'with ' + (presenterName || 'SiriusFM');
+    }
     _updateLiveMediaSession(presenterName);
+    syncLiveHero();
   }
 
   function isLiveTakeoverActive() { return _liveTakeover; }
@@ -3390,18 +3499,21 @@ const Radio = (() => {
     _liveAnnouncementPlaying = !skipAnnouncement;
     const finishAnnouncement = () => {
       _liveAnnouncementPlaying = false;
+      if (_special) { _attachSpecialAudio(); return; }
       if (_pendingLiveStream) { attachLiveStream(_pendingLiveStream); _pendingLiveStream = null; }
     };
     if (skipAnnouncement) { finishAnnouncement(); return; }
+    // Forhåndsinnspelt mix: same jingel som i slutten («You're listening to SiriusFM…»), ingen namne-annonse.
+    if (_special) { _playLocalClip(JINGLES.a, finishAnnouncement, LIVE_FADE_MS); return; }
     const standalone = LIVE_STANDALONE[_normalizeName(presenterName)];
     if (standalone) {
       // Éin fil seier alt sjølv ("Welcome... + namn") — INGEN LIVE_INTRO framfor.
-      _playLocalClip(standalone, finishAnnouncement);
+      _playLocalClip(standalone, finishAnnouncement, LIVE_FADE_MS);
     } else {
       // Vanleg veg: to klipp etter kvarandre (intro → namn), IKKJE éin
       // kombinert fil — så intro-teksten kan endrast utan å re-lage namna.
       const nameClip = LIVE_JINGLES[_normalizeName(presenterName)] || LIVE_JINGLE_GENERIC;
-      _playLocalClip(LIVE_INTRO, () => { _playLocalClip(nameClip, finishAnnouncement); });
+      _playLocalClip(LIVE_INTRO, () => { _playLocalClip(nameClip, finishAnnouncement, LIVE_FADE_MS); }, LIVE_FADE_MS);
     }
   }
 
@@ -3411,6 +3523,16 @@ const Radio = (() => {
     if (!_liveTakeover) return;
     _renderLiveBadge(name);
   }
+
+  // Kalla av js/liveGlobal.js kvar gong track_title-feltet endrar seg (ved
+  // tilkobling, og på kvar heartbeat mens sendinga held fram) — reint
+  // tekstfelt DJ-en valfritt skriv inn, brukast av js/radio247.js sitt
+  // 24-Hour Cycle-kort til å vise "🔴 LIVE — {namn} — {tittel}".
+  function setLiveTrackTitle(title) { _liveTrackTitle = title || ''; if (_liveTakeover) syncLiveHero(); }
+  function getLiveTrackTitle() { return _liveTakeover ? _liveTrackTitle : ''; }
+  // Berre http(s) — aldri javascript:/data: frå ei delt rad alle kan lese.
+  function setLiveLinkUrl(url) { _liveLinkUrl = /^https?:\/\//i.test(url || '') ? url : ''; if (_liveTakeover) syncLiveHero(); }
+  function getLiveLinkUrl() { return _liveTakeover ? _liveLinkUrl : ''; }
 
   // DJ-utstyret sender RÅTT — avsendarsida skrur medvite AV autoGainControl
   // (js/livebroadcast.js) for ikkje å øydelegge musikken — så live-straumen
@@ -3484,6 +3606,68 @@ const Radio = (() => {
     }
   }
 
+  // ── Spesialprogram: forhåndsinnspelt mix på fast klokkeslett (js/specialShows.js) ──
+  // Brukarønske 2026-09-24. Gjenbruker heile live-overtakinga (jingel-intro, «live now»-
+  // namn, mjuk overgang ut) men spelar ei LYDFIL i staden for ein WebRTC-straum. Alle
+  // lyttarar høyrer same stad i miksen: startposisjon = klokka NÅ minus sendestart.
+  function isSpecialActive() { return !!_special; }
+  function getLiveLabel() { return _liveTakeover ? _liveSpecialLabel : ''; }
+
+  function startSpecialShow(show, startMs) {
+    if (_liveTakeover || _special) return false;            // ei ekte direktesending/anna mix har førsteretten
+    const endMs = startMs + show.durationSec * 1000;
+    if (Date.now() >= endMs) return false;
+    _special = { show, startMs, endMs };
+    _liveSpecialLabel = show.liveLabel || (show.artist + ' mix on air');
+    // Sein innkomar (etter sendestart): hopp over jingel-introen, gå rett inn i miksen.
+    const late = Date.now() > startMs + 4000;
+    enterLiveTakeover(show.artist, late);
+    _liveTrackTitle = show.title; _liveLinkUrl = '';
+    _renderLiveBadge(show.artist);
+    return true;
+  }
+
+  function _attachSpecialAudio() {
+    const sp = _special; const audio = getAudio();
+    if (!sp || !audio) return;
+    const go = () => {
+      if (_special !== sp) return;
+      const offset = (Date.now() - sp.startMs) / 1000;
+      if (offset >= sp.show.durationSec - 1) { exitLiveTakeover(); return; }
+      try { audio.srcObject = null; } catch (e) {}
+      audio.src = sp.show.audioUrl;
+      audio.volume = 0;
+      const seek = () => { try { audio.currentTime = Math.max(0, (Date.now() - sp.startMs) / 1000); } catch (e) {} };
+      audio.addEventListener('loadedmetadata', seek, { once: true });
+      audio.addEventListener('ended', () => { if (_special === sp) exitLiveTakeover(); }, { once: true });
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => {
+        if (typeof App !== 'undefined' && App.toast) App.toast('Tap anywhere to start listening to ' + sp.show.artist + ' live', 'info');
+        const resume = () => { if (_special === sp) audio.play()?.catch(() => {}); };
+        document.addEventListener('click', resume, { once: true });
+        document.addEventListener('touchstart', resume, { once: true });
+      });
+      initAudioContext();
+      _fadeVolume(audio, volume, LIVE_FADE_MS);
+      syncLiveHero();
+    };
+    const wait = sp.startMs - Date.now();
+    if (wait > 0) setTimeout(go, wait); else go();    // forspel-jinglane blei ferdige FØR start → vent til sendestart
+  }
+
+  // Forlat ei mix utan overgangsjingel og utan å gjenoppta (brukaren valde noko anna sjølv).
+  function _leaveSpecialQuiet() {
+    const audio = getAudio();
+    if (audio) { try { audio.pause(); } catch (e) {} try { audio.removeAttribute('src'); audio.load(); } catch (e) {} }
+    _special = null; _liveSpecialLabel = '';
+    _liveTakeover = false; _liveAnnouncementPlaying = false; _pendingLiveStream = null; _preLive = null;
+    _teardownLiveDuck();
+    // Brukaren har valt noko anna → forlèt 24/7-modus òg (elles hoppar miksen inn att ved neste tikk).
+    try { window.Radio247?.notifyManualPlay?.(); } catch (e) {}
+    syncLiveHero();
+    try { window.Radio247?.refresh?.(); } catch (e) {}
+  }
+
   // Kalla av js/liveGlobal.js idet is_live blir false igjen — koblar frå
   // live-straumen og gjenopptek nøyaktig det som spelte før (radiostasjon,
   // eigen straum, ekstern url ELLER eit musikkspor via js/player.js — alle
@@ -3494,8 +3678,11 @@ const Radio = (() => {
     const audio  = getAudio();
     if (audio) { try { audio.pause(); } catch (e) {} try { audio.srcObject = null; } catch (e) {} }
     _teardownLiveDuck();
+    const wasSpecial = !!_special;
+    _special = null; _liveSpecialLabel = '';
     _liveTakeover = false;
     _liveAnnouncementPlaying = false;
+    syncLiveHero();   // hero-boksen tilbake frå live-visning
     _pendingLiveStream = null; // sending stoppa midt i annonsen (B) eller like etter — kast ev. ventande straum
     // Nullstill "Live now"-låseskjermteksten med det same — resumePrevious()
     // under kallar _playUrl() (→ _updateMediaSession) for dei fleste vegar og
@@ -3554,7 +3741,8 @@ const Radio = (() => {
       } catch (e) { /* ignorer — fall vidare til stopRadio() under */ }
       stopRadio();
     };
-    _playLocalClip(LIVE_OUTRO, resumePrevious);
+    // Etter ei mix: mjuk jingel-overgang attende til 24-Hour Cycle (live-outro.mp3 finst ikkje enno for vanleg live).
+    _playLocalClip(wasSpecial ? JINGLES.a : LIVE_OUTRO, resumePrevious, LIVE_FADE_MS);
   }
 
   return {
@@ -3565,13 +3753,15 @@ const Radio = (() => {
     toggleAiChat, sendAiMessage, onAiKeydown,
     setAsFavorite, openEmbed, closeEmbed, stopForMusicPlayer,
     enterLiveTakeover, exitLiveTakeover, attachLiveStream, setLivePresenterName, isLiveTakeoverActive, getLivePresenterName,
+    setLiveTrackTitle, getLiveTrackTitle, setLiveLinkUrl, getLiveLinkUrl, syncLiveHero,
+    startSpecialShow, isSpecialActive, getLiveLabel, leaveSpecial: () => { if (_special) _leaveSpecialQuiet(); },
     pauseForOwnBroadcast,
     playLocalClip: _playLocalClip,
     // Delt "opptatt"-flagg for Radio247 (js/radio247.js) sin overgangsjingle
     // OG A/C/D-jinglane her — begge deler det same <audio>-elementet, så
     // ingen av dei skal starte medan den andre pågår. begin/end er kontrollerte
     // mutatorar (ikkje ein open setter) rundt det same interne flagget som
-    // _playStationJingle alt sjekkar/set.
+    // _playJingleOverMusic alt sjekkar/set.
     get jingleBusy() { return _jingleBusy; },
     beginJingle() { _jingleBusy = true; },
     endJingle() { _jingleBusy = false; },

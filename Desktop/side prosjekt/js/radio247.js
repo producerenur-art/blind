@@ -24,19 +24,20 @@ const Radio247 = (() => {
   // sluttmålet) har CORS, eller at URL-en ikkje omdirigerer i det heile.
   const GOA_IDS         = ['dmtfm', 'psyndora', 'babaganousha', 'jointil-beattrance', 'record-goa-psy', 'goanight'];
   const PROGRESSIVE_IDS = ['trancearound', 'atr', 'rr-progressive', 'record-trancemission', 'dfm-avb'];
-  const DARK_DRONE_IDS  = ['ambient-abyss', 'dark-city-signal', 'systrum-ssr1', 'indiebeat-ambient', 'modular-station', 'alswin-ambient'];
+  // 'alswin-ambient' fjerna 23.09.2026 — stadfesta CORS-blokkert i nettlesar
+  // (ingen Access-Control-Allow-Origin frå server7.radio-streams.net), sjå
+  // kommentaren ved stasjonen sitt tidlegare oppslag i js/radio.js STATIONS.
+  const DARK_DRONE_IDS  = ['ambient-abyss', 'dark-city-signal', 'systrum-ssr1', 'indiebeat-ambient', 'modular-station'];
   const PSYCHILL_IDS    = ['ambientpsy-1fm', 'multihuman', 'diceradio-psybient', 'paradisehunter-chillout'];
   // smoothchill (icy-genre: Soul) og anon-fm (icy-genre inkluderer rock) fjerna
   // 20.09.2026 — live ICY-metadata stadfesta ikkje-elektronisk innhald,
   // brukarønske: ALDRI rock/metal/hip-hop/R&B i 24/7-hjulet.
-  // Brukarønske 22.09.2026: Ambient Mann er no ÒG med i sjølve rotasjons-
-  // poolen til Chill Out (12-16) — då kan han rotere inn ein av dagane i
-  // den blokka, i tillegg til den faste 05-06-plassen sin under (uendra).
-  const CHILLOUT_IDS    = ['1fm-chillout', 'brokenbeats', 'cafedelmar', 'ambient-mann'];
+  // Brukarønske 22.09.2026 (Ambient Mann inn i sjølve Chill Out-rotasjonen,
+  // 12-16) reverte att 23.09.2026 etter brukarønske — Chill Out-blokka er no
+  // attende til dei tre opphavlege stasjonane.
+  const CHILLOUT_IDS    = ['1fm-chillout', 'brokenbeats', 'cafedelmar'];
   const TECHNO_IDS      = ['uzic-techno', 'remember-vip-techno'];
-  // Eiga fast plass i SCHEDULE 05-06 (utanom denne er han berre éin id, så
-  // ingen rotasjon der) — no ÒG med i CHILLOUT_IDS over, så han kan rotere
-  // inn i sjølve Chill Out-blokka enkelte dagar (sjå _pickStationId).
+  // Eiga fast plass i SCHEDULE 05-06 (berre éin id, så ingen rotasjon der).
   const AMBIENT_MANN_IDS = ['ambient-mann'];
 
   // Visningsnamn for stasjonane over — same namn som STATIONS i js/radio.js
@@ -54,7 +55,7 @@ const Radio247 = (() => {
     'record-trancemission': 'Record Trancemission', 'dfm-avb': 'Armin van Buuren',
     'ambient-abyss': 'Ambient Abyss Broadcasting', 'dark-city-signal': 'Dark City Signal',
     'systrum-ssr1': 'Systrum Sistum SSR1', 'indiebeat-ambient': 'The Indie Beat — Ambient',
-    'modular-station': 'Modular-Station', 'alswin-ambient': 'Alswin Ambient Music',
+    'modular-station': 'Modular-Station',
     'ambientpsy-1fm': 'Ambient Psychill (1.FM)', multihuman: 'MultiHuman EntheoMusic',
     'diceradio-psybient': 'DiceRadio', 'paradisehunter-chillout': 'Paradisehunter Chillout',
     '1fm-chillout': '1.FM Chillout Lounge', brokenbeats: 'Brokenbeats', cafedelmar: 'Café del Mar',
@@ -275,6 +276,8 @@ const Radio247 = (() => {
 
   function stop() {
     _active = false;
+    // Stopp midt i ei mix = forlat mixen (ho er ikkje ein vanleg stasjon som kan togglast av).
+    try { if (typeof Radio !== 'undefined' && Radio.isSpecialActive && Radio.isSpecialActive()) Radio.leaveSpecial(); } catch (_) {}
     if (_lastStationId && typeof Radio !== 'undefined' &&
         Radio.currentStation && Radio.currentStation.id === _lastStationId && Radio.isPlaying) {
       Radio.togglePlay();
@@ -348,13 +351,34 @@ const Radio247 = (() => {
     // sjølv (LiveMix — som med vilje ALDRI koblar til lyden på eigen fane, jf.
     // sjølv-ekko-vernet i js/liveGlobal.js, men skal likevel VISE at han er
     // live der òg).
+    const _broadcastingHere = typeof LiveMix !== 'undefined' && LiveMix.isBroadcastingHere && LiveMix.isBroadcastingHere();
     const livePresenter =
       (typeof Radio !== 'undefined' && Radio.isLiveTakeoverActive && Radio.isLiveTakeoverActive()
         && Radio.getLivePresenterName && Radio.getLivePresenterName()) ||
-      (typeof LiveMix !== 'undefined' && LiveMix.isBroadcastingHere && LiveMix.isBroadcastingHere()
-        && LiveMix.getBroadcastPresenterName && LiveMix.getBroadcastPresenterName()) ||
+      (_broadcastingHere && LiveMix.getBroadcastPresenterName && LiveMix.getBroadcastPresenterName()) ||
       '';
-    const nowText = livePresenter ? `🔴 LIVE — ${_escHtml(livePresenter)}` : _escHtml(b.label);
+    // Brukarønske 23.09.2026: valfri "nå spelast"-tekst DJ-en skreiv inn i
+    // Go Live-panelet, vist attmed presentatørnamnet når det finst.
+    const liveTrackTitle =
+      (typeof Radio !== 'undefined' && Radio.isLiveTakeoverActive && Radio.isLiveTakeoverActive()
+        && Radio.getLiveTrackTitle && Radio.getLiveTrackTitle()) ||
+      (_broadcastingHere && LiveMix.getBroadcastTrackTitle && LiveMix.getBroadcastTrackTitle()) ||
+      '';
+    const liveLink =
+      (typeof Radio !== 'undefined' && Radio.isLiveTakeoverActive && Radio.isLiveTakeoverActive()
+        && Radio.getLiveLinkUrl && Radio.getLiveLinkUrl()) ||
+      (_broadcastingHere && LiveMix.getBroadcastLinkUrl && LiveMix.getBroadcastLinkUrl()) ||
+      '';
+    const liveLinkHtml = /^https?:\/\//i.test(liveLink)
+      ? ` · <a href="${_escHtml(liveLink)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Link</a>`
+      : '';
+    // Forhåndsinnspelt spesialprogram: «🔴 Lemonchill mix on air — Mixes for SiriusFM 001 …».
+    const liveLabel = (typeof Radio !== 'undefined' && Radio.getLiveLabel && Radio.getLiveLabel()) || '';
+    const nowText = liveLabel
+      ? `🔴 ${_escHtml(liveLabel)}${liveTrackTitle ? ' — ' + _escHtml(liveTrackTitle) : ''}`
+      : livePresenter
+      ? `🔴 LIVE — ${_escHtml(livePresenter)}${liveTrackTitle ? ' — ' + _escHtml(liveTrackTitle) : ''}${liveLinkHtml}`
+      : _escHtml(b.label);
     // Brukarønske 15.09.2026: «Next up» på EIGA linje rett under «Now:»,
     // ikkje slengt inn på same linje som før. Ingen "Next up" mens nokon er
     // live — det er ikkje relevant akkurat då.
@@ -367,7 +391,7 @@ const Radio247 = (() => {
         <div class="stellar-featured-inner">
           <div class="stellar-featured-emoji">${iconForEmoji('🌘')}</div>
           <div class="stellar-featured-info">
-            <div class="stellar-featured-label">${Icon('star')} 24-Hour Cycle — non-stop web 𓂋𓄿𓂧𓇋𓅱 radio</div>
+            <div class="stellar-featured-label">${Icon('star')} 24-Hour Cycle — non-stop web radio</div>
             <div class="stellar-featured-name">SiriusFM</div>
             <div class="stellar-featured-desc">${desc}</div>
           </div>
@@ -399,15 +423,46 @@ const Radio247 = (() => {
     const block = currentBlock();
     if (block.index === _lastBlockIndex) return;
     _lastBlockIndex = block.index;
-    if (_active) {
+    // Ikkje byt stasjon under ei direktesending/forhåndsinnspelt mix (Radio.isLiveTakeoverActive) —
+    // overtakinga eig lyden, og resumePrevious() → Radio247.play() reknar ut rett blokk når ho sluttar.
+    const takeover = typeof Radio !== 'undefined' && Radio.isLiveTakeoverActive && Radio.isLiveTakeoverActive();
+    if (_active && !takeover) {
       _applyBlock(block, { transition: true });
     }
     _rerenderHost();
   }
 
+  // Spesialprogram (js/specialShows.js, t.d. Lemonchill-miksen): 10 s FØR sendestart
+  // startar jingel-introen, slik at miksen byrjar nøyaktig på klokkeslettet. Berre for
+  // lyttarar som har 24-Hour Cycle i gang og faktisk speler; ei ekte direktesending
+  // har førsteretten (startSpecialShow avviser då).
+  const SPECIAL_PREROLL_MS = 10000;
+  let _specialTimer = null;
+  let _specialTestDone = false;
+  function _specialTestRequested() {
+    try {
+      return /[?&]lemonchilltest=1(&|$)/.test(location.search) && typeof CONFIG !== 'undefined' && CONFIG.isAdminEmail(Auth.current());
+    } catch (_) { return false; }
+  }
+  function _specialTick() {
+    if (!_active || typeof Radio === 'undefined' || !Radio.startSpecialShow || typeof SpecialShows === 'undefined') return;
+    if (!Radio.isPlaying || Radio.isLiveTakeoverActive()) return;
+    // Testmodus (kun admin): siriusfm.no/?lemonchilltest=1#/radio → trykk play på 24-Hour Cycle,
+    // så startar miksen med jingel-intro etter ~11 s (same overgangar som den ekte sendinga).
+    if (!_specialTestDone && _specialTestRequested()) {
+      _specialTestDone = true;
+      Radio.startSpecialShow(SpecialShows.SHOWS[0], Date.now() + 11000);
+      return;
+    }
+    const act = SpecialShows.activeAt(Date.now() + SPECIAL_PREROLL_MS);
+    if (act) Radio.startSpecialShow(act.show, act.startMs);
+  }
+
   function init() {
     if (_tickTimer) clearInterval(_tickTimer);
     _tickTimer = setInterval(_tick, 60 * 1000);
+    if (_specialTimer) clearInterval(_specialTimer);
+    _specialTimer = setInterval(_specialTick, 3000);
   }
 
   // Påmelding til den daglige e-posten med dagens skjema (api/radio247-digest.js)
@@ -454,7 +509,7 @@ const Radio247 = (() => {
     // Kalla av js/liveGlobal.js idet nokon går live/slutter å vere live, så
     // "24-Hour Cycle"-kortet oppdaterer «Now:»-linja med det same i staden
     // for å vente til neste naturlege ompteikning (minutt-tick/sidebytte).
-    refresh: _rerenderHost,
+    refresh: () => { _rerenderHost(); try { if (typeof Radio !== 'undefined' && Radio.syncLiveHero) Radio.syncLiveHero(); } catch (_) {} },
     get schedule() { return SCHEDULE; },
     // Eksponert for server-side gjenbruk (sjå module.exports under) — ikkje
     // meint for UI-kode, som allereie har currentBlock()/archiveHtml().
