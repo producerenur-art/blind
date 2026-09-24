@@ -11367,8 +11367,10 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
   background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.85);
   margin-right: 0.4em; vertical-align: 0.05em;
   -webkit-text-fill-color: initial;
-  animation: liveBlinkRed 1s ease-in-out infinite;
 }
+/* Prikk (raud) + DJ-namn (blått) ligg i same omslag, så dei blinkar i takt. */
+.live-blink { display: inline; animation: liveBlinkRed 1s ease-in-out infinite; }
+.live-blink-name { color: #7dd3fc; -webkit-text-fill-color: #7dd3fc; font-weight: inherit; }
 @keyframes liveBlinkRed { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
 .radio-np-badge.is-broadcast {
   background: rgba(239,68,68,0.16) !important;
@@ -11380,5 +11382,5 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
   animation: liveBlinkRed 1s ease-in-out infinite !important;
 }
 @media (prefers-reduced-motion: reduce) {
-  .live-blink-dot, .radio-np-badge.is-broadcast .dot { animation: none; }
+  .live-blink, .radio-np-badge.is-broadcast .dot { animation: none; }
 }

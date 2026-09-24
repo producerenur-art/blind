@@ -985,9 +985,9 @@ const Radio = (() => {
             const r247RowLiveLink = _liveTakeover ? _liveLinkUrl
               : (r247RowBroadcastingHere ? (LiveMix.getBroadcastLinkUrl ? LiveMix.getBroadcastLinkUrl() : '') : '');
             const r247RowDesc = (_liveTakeover && _liveSpecialLabel)
-              ? `<span class="live-blink-dot"></span>${escHtml(_liveSpecialLabel)}${_special ? ' — ' + escHtml(_special.show.title) : ''}`
+              ? `<span class="live-blink"><span class="live-blink-dot"></span><span class="live-blink-name">${escHtml(_liveSpecialLabel)}</span></span>${_special ? ' — ' + escHtml(_special.show.title) : ''}`
               : r247RowLivePresenter
-              ? `<span class="live-blink-dot"></span>LIVE — ${escHtml(r247RowLivePresenter)}${r247RowLiveTrackTitle ? ' — ' + escHtml(r247RowLiveTrackTitle) : ''}${/^https?:\/\//i.test(r247RowLiveLink) ? ` · <a href="${escHtml(r247RowLiveLink)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Link</a>` : ''}`
+              ? `<span class="live-blink"><span class="live-blink-dot"></span><span class="live-blink-name">LIVE — ${escHtml(r247RowLivePresenter)}</span></span>${r247RowLiveTrackTitle ? ' — ' + escHtml(r247RowLiveTrackTitle) : ''}${/^https?:\/\//i.test(r247RowLiveLink) ? ` · <a href="${escHtml(r247RowLiveLink)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Link</a>` : ''}`
               : `Non-stop day-arc — ${escHtml(Radio247.currentBlock().label)} now`;
             const r247RowHtml = typeof Radio247 !== 'undefined' ? `
               <div class="radio-category">SIRIUSFM 24/7</div>
@@ -1889,7 +1889,8 @@ const Radio = (() => {
     const next = document.getElementById('np-next');
     const st   = document.getElementById('np-status');
     // Raud blinkande prikk (ikkje 🔴-emojien: tittelen har gjennomsiktig tekstfyll og emojien vart kvit).
-    if (name) name.innerHTML = '<span class="live-blink-dot"></span>' + escHtml(info.label ? info.label : ('LIVE — ' + (info.presenter || 'SiriusFM')));
+    // Prikk (raud) + tekst (blå) i éin blinkande omslag, så dei blinkar i takt.
+    if (name) name.innerHTML = '<span class="live-blink"><span class="live-blink-dot"></span><span class="live-blink-name">' + escHtml(info.label ? info.label : ('LIVE — ' + (info.presenter || 'SiriusFM'))) + '</span></span>';
     if (st && st.parentElement) st.parentElement.classList.add('is-broadcast');
     if (desc) {
       const link = /^https?:\/\//i.test(info.link || '')
