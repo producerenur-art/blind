@@ -30,9 +30,18 @@ const CONFIG = {
   // gratis Pro-tilgang (js/auth.js Auth.current()), moderering (js/community.js/
   // livePresence.js _isAdmin) OG rediger-rett i Live-arkivet (js/liveArchive.js).
   // Legg til ein e-post → personen får alt samtidig. Samanlikning er små bokstavar/trimma.
-  ADMIN_EMAILS: ['producerenur@gmail.com'],
+  ADMIN_EMAILS: ['producerenur@gmail.com', 'constant8@gmail.com'],
   isAdminEmail(user) {
     try { return !!user && this.ADMIN_EMAILS.includes(String(user.email || '').toLowerCase().trim()); }
+    catch (_) { return false; }
+  },
+
+  // Gratis Pro-tilgang UTAN admin-rettar (2026-09-24): kontoar her får alt gratis (Pro) — men IKKJE
+  // moderering, gå-live-utan-booking eller rediger-rett (det er ADMIN_EMAILS). Brukast av js/auth.js
+  // Auth.current(). Samanlikning er små bokstavar/trimma, same som ADMIN_EMAILS.
+  FREE_PRO_EMAILS: ['kalifer@hotmail.fr'],
+  isFreeProEmail(user) {
+    try { return !!user && this.FREE_PRO_EMAILS.includes(String(user.email || '').toLowerCase().trim()); }
     catch (_) { return false; }
   },
 

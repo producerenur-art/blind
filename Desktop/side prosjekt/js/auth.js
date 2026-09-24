@@ -63,7 +63,7 @@ const Auth = (() => {
       const u = users[s.username] || null;
       // Samlet admin-e-postliste, CONFIG.ADMIN_EMAILS (js/config.js): gratis Pro-tilgang
       // for admin-kontoer. Klonet, ikke lagret — rører aldri den ekte abonnement-lagringen.
-      if (u && typeof CONFIG !== 'undefined' && CONFIG.isAdminEmail(u) && u.subscription !== 'pro') {
+      if (u && typeof CONFIG !== 'undefined' && (CONFIG.isAdminEmail(u) || (CONFIG.isFreeProEmail && CONFIG.isFreeProEmail(u))) && u.subscription !== 'pro') {
         return { ...u, subscription: 'pro' };
       }
       return u;
