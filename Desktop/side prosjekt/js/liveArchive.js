@@ -52,7 +52,10 @@ const LiveArchive = (() => {
       grid.innerHTML = `<div class="mag-empty">The archive requires cloud storage to be set up.</div>`;
       return;
     }
-    const [live, archive] = await Promise.all([LiveBroadcastSync.listLiveNow(), LiveBroadcastSync.listArchive(60)]);
+    const [live, archive, sets] = await Promise.all([
+      LiveBroadcastSync.listLiveNow(), LiveBroadcastSync.listArchive(60),
+      (typeof LiveSets !== 'undefined') ? LiveSets.list(60) : Promise.resolve([]),
+    ]);
     if (nowBox && live.length) {
       nowBox.innerHTML = `
         <div class="mag-section">
@@ -68,9 +71,11 @@ const LiveArchive = (() => {
             </div>`).join('')}</div>
         </div>`;
     }
-    grid.innerHTML = archive.length
-      ? `<div class="mag-section"><div class="mag-section-head">${_I('disc')} <span>Past broadcasts</span></div><div class="mag-grid">${archive.map(_card).join('')}</div></div>`
-      : `<div class="mag-empty">No completed broadcasts in the archive yet.</div>`;
+    const setsHtml = sets.length
+      ? `<div class="mag-section"><div class="mag-section-head">${_I('disc')} <span>Live sets</span></div><div class="mag-grid">${sets.map(_setCard).join('')}</div></div>` : '';
+    const archHtml = archive.length
+      ? `<div class="mag-section"><div class="mag-section-head">${_I('disc')} <span>Past broadcasts</span></div><div class="mag-grid">${archive.map(_card).join('')}</div></div>` : '';
+    grid.innerHTML = (setsHtml + archHtml) || `<div class="mag-empty">No completed broadcasts in the archive yet.</div>`;
   }
 
   // ── Detaljvisning: #/live-archive/:id ─────────────────────────────────────────
@@ -78,6 +83,7 @@ const LiveArchive = (() => {
   async function _renderDetail(id) {
     const app = document.getElementById('app');
     if (!app) return;
+    if (String(id).startsWith('set_')) return _renderSetDetail(id);
     app.innerHTML = `<div class="mag-page"><a class="mag-back" href="#/live-archive">← Back to the archive</a><div class="mag-empty">Loading…</div></div>`;
     if (typeof LiveBroadcastSync === 'undefined' || !LiveBroadcastSync._enabled()) {
       app.innerHTML = `<div class="mag-page"><a class="mag-back" href="#/live-archive">← Back to the archive</a><div class="mag-empty">The archive requires cloud storage to be set up.</div></div>`;
@@ -172,6 +178,207 @@ const LiveArchive = (() => {
     Share.shareUrl(url, _current.display_name, 'SiriusFM', { image: _current.thumbnail_url || '' });
   }
 
+  // ── Live-sett (opptak): kort, detalj, redigering ──────────────────────────────
+  function _fmtDur(sec) {
+    sec = Math.max(0, parseInt(sec, 10) || 0);
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+    return h ? `${h}h ${m}m` : (sec < 60 ? `${sec} sec` : `${m} min`);
+  }
+  function _safeUrl(u) { return /^https?:\/\//i.test(u || '') ? u : ''; }
+
+  const _setsById = {};
+  function _setCard(b) {
+    _setsById[b.id] = b;
+    const art = b.cover_url
+      ? `<img src="${esc(b.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover">`
+      : `<span class="mag-card-emoji">🎧</span>`;
+    return `
+      <a class="mag-card" href="#/live-archive/${esc(b.id)}">
+        <div class="mag-card-art" style="background:linear-gradient(135deg,#1a0b3d,#3a106e);overflow:hidden">${art}</div>
+        <div class="mag-card-body">
+          <div class="mag-card-title">${esc(b.display_name || 'Live set')}</div>
+          <div class="mag-card-ingress">${b.track_title ? esc(b.track_title) : _fmtDate(b.ended_at)}</div>
+          <div class="mag-card-meta"><span>${b.audio_url ? '▶ Recording' : _fmtDate(b.ended_at)}</span>
+            <span style="display:flex;gap:0.5rem;align-items:center">
+              <button type="button" class="btn btn-ghost btn-sm" title="Share" onclick="event.preventDefault();event.stopPropagation();LiveArchive.shareSetId('${esc(b.id)}')">${_I('share')} Share</button>
+              <span class="mag-card-cta">Open →</span>
+            </span></div>
+        </div>
+      </a>`;
+  }
+
+  // Tracklist under lydspilleren (ei linje per spor). Vist for alle.
+  function _tracklistHtml(txt) {
+    const lines = String(txt || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    if (!lines.length) return '';
+    return `<div style="margin:0.4rem 0 1rem;padding:0.9rem 1.1rem;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+      <div style="font-weight:800;font-size:0.9rem;margin:0 0 0.5rem">${_I('list')} Track list</div>
+      <ol style="margin:0;padding-left:1.4rem;line-height:1.75;font-size:0.92rem;color:var(--text2)">${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ol>
+    </div>`;
+  }
+
+  let _curSet = null;
+  async function _renderSetDetail(id) {
+    const app = document.getElementById('app');
+    const back = `<a class="mag-back" href="#/live-archive">← Back to the archive</a>`;
+    const s = (typeof LiveSets !== 'undefined') ? await LiveSets.get(id) : null;
+    if (!s) { app.innerHTML = `<div class="mag-page">${back}<div class="mag-empty">Could not find this live set.</div></div>`; return; }
+    _curSet = s;
+    // Rediger-knappen: berre for innlogga eigar av settet (og admin) — aldri for besøkande.
+    const canEdit = LiveSets.canEdit(s);
+    const link = _safeUrl(s.link_url);
+    app.innerHTML = `
+      <div class="mag-page">
+        ${back}
+        <div class="mag-article">
+          <div class="mag-article-hero" style="background:linear-gradient(135deg,#1a0b3d,#3a106e);overflow:hidden;display:flex;align-items:center;justify-content:center">
+            ${s.cover_url ? `<img src="${esc(s.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span class="mag-article-emoji">🎧</span>`}
+          </div>
+          <div class="mag-article-cat">Live set · ${esc(_fmtDate(s.ended_at))}${s.duration_sec ? ' · ' + esc(_fmtDur(s.duration_sec)) : ''}</div>
+          <h1 class="mag-article-title">${esc(s.display_name || 'Live set')}</h1>
+          ${s.track_title ? `<p class="mag-article-ingress">${esc(s.track_title)}</p>` : ''}
+          ${s.audio_url ? `<audio controls preload="none" src="${esc(s.audio_url)}" style="width:100%;margin:0.8rem 0"></audio>` : `<p style="color:var(--text3);font-size:0.85rem">No recording available for this set.</p>`}
+          ${_tracklistHtml(s.tracklist)}
+          <div style="margin:1rem 0;display:flex;gap:0.6rem;flex-wrap:wrap">
+            ${link ? `<a class="btn btn-ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">🔗 Visit link</a>` : ''}
+            <button class="btn btn-primary" onclick="LiveArchive.shareSet()">${_I('share')} Share</button>
+            ${canEdit ? `<button class="btn btn-ghost" onclick="LiveArchive.openSetEdit()">${_I('edit')} Edit</button>` : ''}
+          </div>
+          ${_socialRow(s)}
+          <div id="la-edit-box"></div>
+        </div>
+      </div>`;
+    window.scrollTo(0, 0);
+  }
+
+  let _pendingCover = null, _pendingAudio = null;
+  function openSetEdit() {
+    const s = _curSet, box = document.getElementById('la-edit-box');
+    if (!s || !box || !LiveSets.canEdit(s)) return;
+    _pendingCover = null; _pendingAudio = null;
+    const inp = 'width:100%;box-sizing:border-box;padding:0.65rem 0.75rem;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:var(--text);font-size:0.95rem;font:inherit';
+    const lbl = 'display:block;font-size:0.82rem;color:var(--text2);margin:0 0 0.3rem';
+    box.innerHTML = `
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:1rem 1.1rem;margin-top:0.5rem">
+        <label style="${lbl}">Artist / set name</label>
+        <input id="las-name" style="${inp};margin-bottom:0.7rem" value="${esc(s.display_name)}">
+        <label style="${lbl}">Text (e.g. song / set name)</label>
+        <textarea id="las-title" rows="2" style="${inp};resize:vertical;margin-bottom:0.7rem">${esc(s.track_title || '')}</textarea>
+        <label style="${lbl}">URL link (Facebook, Bandcamp, Spotify…)</label>
+        <input id="las-link" style="${inp};margin-bottom:0.7rem" placeholder="https://…" value="${esc(s.link_url || '')}">
+        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.7rem">
+          <span id="las-cover-prev">${s.cover_url ? `<img src="${esc(s.cover_url)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:10px">` : ''}</span>
+          <button class="btn btn-ghost" type="button" onclick="document.getElementById('las-cover').click()">${_I('camera')} Change preview image / logo</button>
+          <input type="file" id="las-cover" accept="image/*" style="display:none" onchange="LiveArchive._pickSetFile(this,'cover')">
+        </div>
+        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.8rem">
+          <button class="btn btn-ghost" type="button" onclick="document.getElementById('las-audio').click()">🎵 Replace audio</button>
+          <span id="las-audio-name" style="font-size:0.8rem;color:var(--text3)"></span>
+          <input type="file" id="las-audio" accept="audio/*" style="display:none" onchange="LiveArchive._pickSetFile(this,'audio')">
+        </div>
+        <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="LiveArchive.saveSetEdit()">Save</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('la-edit-box').innerHTML=''">Cancel</button>
+          <button class="btn btn-ghost" onclick="LiveArchive.shareSet()">${_I('share')} Share</button>
+          <button class="btn" style="background:#ef4444;color:#fff;margin-left:auto" onclick="LiveArchive.deleteSet()">${_I('trash')} Delete</button>
+        </div>
+      </div>`;
+  }
+
+  async function deleteSet() {
+    const s = _curSet;
+    if (!s || !LiveSets.canEdit(s)) return;
+    if (!confirm('Delete this live set permanently? This cannot be undone.')) return;
+    const ok = await LiveSets.remove(s.id);
+    if (ok) { if (typeof App !== 'undefined') App.toast('Live set deleted.', 'success'); location.hash = '#/live-archive'; }
+    else if (typeof App !== 'undefined') App.toast('Could not delete the set.', 'error');
+  }
+
+  async function _pickSetFile(input, kind) {
+    const f = input && input.files && input.files[0]; if (!f) return;
+    if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured()) { if (typeof App !== 'undefined') App.toast('Cloud storage is not set up.', 'error'); return; }
+    if (typeof App !== 'undefined') App.toast('Uploading ' + (kind === 'cover' ? 'image' : 'audio') + '…', 'info', 3000);
+    try {
+      const res = await SC_Storage.upload(f, { prefix: kind === 'cover' ? 'live-sets-covers' : 'live-sets' });
+      if (kind === 'cover') {
+        _pendingCover = res.url;
+        const prev = document.getElementById('las-cover-prev');
+        if (prev) prev.innerHTML = `<img src="${esc(res.url)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:10px">`;
+      } else {
+        _pendingAudio = res.url;
+        const nm = document.getElementById('las-audio-name'); if (nm) nm.textContent = f.name;
+      }
+    } catch (e) { if (typeof App !== 'undefined') App.toast('Upload failed: ' + e.message, 'error'); }
+  }
+
+  async function saveSetEdit() {
+    const s = _curSet; if (!s) return;
+    let link = ((document.getElementById('las-link') || {}).value || '').trim();
+    if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+    const ok = await LiveSets.update(s.id, {
+      displayName: (document.getElementById('las-name') || {}).value || '',
+      trackTitle: (document.getElementById('las-title') || {}).value || '',
+      linkUrl: link, coverUrl: _pendingCover, audioUrl: _pendingAudio,
+    });
+    _pendingCover = null; _pendingAudio = null;
+    if (ok) { if (typeof App !== 'undefined') App.toast('Saved!', 'success'); await _renderSetDetail(s.id); }
+    else if (typeof App !== 'undefined') App.toast('Could not save changes.', 'error');
+  }
+
+  function shareSetId(id) {
+    const s = _setsById[id]; if (!s || typeof Share === 'undefined') return;
+    Share.shareUrl(_setShareUrl(s), s.display_name || 'Live set', 'SiriusFM', { image: s.cover_url || '' });
+  }
+
+  // Delbar lenke med rik forhåndsvisning (og:image/tittel/lyd) via /s/…-sida i
+  // js/share.js + api/share.js; faller tilbake til vanleg arkiv-lenke.
+  function _setShareUrl(s) {
+    try {
+      if (typeof Share !== 'undefined' && Share.buildUrl) {
+        return Share.buildUrl({
+          kind: s.audio_url ? 'audio' : 'image', title: s.display_name || 'Live set', artist: s.track_title || 'SiriusFM',
+          image: s.cover_url || '', media: s.audio_url || '', mime: 'audio/webm',
+          link: _safeUrl(s.link_url) || undefined, username: s.owner_username || '',
+        });
+      }
+    } catch (e) {}
+    return location.origin + '/#/live-archive/' + s.id;
+  }
+
+  function _socialRow(s) {
+    const url = _setShareUrl(s), enc = encodeURIComponent(url);
+    const title = (s.display_name || 'Live set') + (s.track_title ? ' — ' + s.track_title : '');
+    const t = encodeURIComponent(title + ' · SiriusFM'), tt = encodeURIComponent(title);
+    const nets = [
+      ['Facebook', `https://www.facebook.com/sharer/sharer.php?u=${enc}`, '#1877f2'],
+      ['X',        `https://twitter.com/intent/tweet?url=${enc}&text=${t}`, '#111'],
+      ['WhatsApp', `https://wa.me/?text=${t}%20${enc}`, '#25d366'],
+      ['Telegram', `https://t.me/share/url?url=${enc}&text=${t}`, '#229ed9'],
+      ['Reddit',   `https://www.reddit.com/submit?url=${enc}&title=${tt}`, '#ff4500'],
+      ['Threads',  `https://www.threads.net/intent/post?text=${t}%20${enc}`, '#000'],
+      ['LinkedIn', `https://www.linkedin.com/sharing/share-offsite/?url=${enc}`, '#0a66c2'],
+      ['Email',    `mailto:?subject=${tt}&body=${t}%0A%0A${enc}`, '#555'],
+    ];
+    return `<div style="display:flex;gap:0.45rem;flex-wrap:wrap;align-items:center;margin:0.2rem 0 1rem">
+      <span style="font-size:0.8rem;color:var(--text2);margin-right:0.2rem">Share on:</span>
+      ${nets.map(([n, h, bg]) => `<a href="${esc(h)}" target="_blank" rel="noopener noreferrer" style="background:${bg};color:#fff;text-decoration:none;font-size:0.8rem;font-weight:700;padding:0.4rem 0.75rem;border-radius:999px">${n}</a>`).join('')}
+      <button type="button" class="btn btn-ghost btn-sm" onclick="LiveArchive.copySetLink()">📋 Copy link</button>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="LiveArchive.shareSet()">More…</button>
+    </div>`;
+  }
+
+  async function copySetLink() {
+    const s = _curSet; if (!s) return;
+    const url = _setShareUrl(s);
+    try { await navigator.clipboard.writeText(url); if (typeof App !== 'undefined') App.toast('Link copied 📋', 'success'); }
+    catch (e) { window.prompt('Copy this link:', url); }
+  }
+
+  function shareSet() {
+    const s = _curSet; if (!s || typeof Share === 'undefined') return;
+    Share.shareUrl(_setShareUrl(s), s.display_name || 'Live set', 'SiriusFM', { image: s.cover_url || '' });
+  }
+
   // ── Inngang ──────────────────────────────────────────────────────────────────
   function render(id) {
     const app = document.getElementById('app');
@@ -182,7 +389,7 @@ const LiveArchive = (() => {
     _loadList();
   }
 
-  return { render, share, openEdit, saveEdit, _pickEditThumb };
+  return { render, share, openEdit, saveEdit, _pickEditThumb, shareSet, shareSetId, copySetLink, openSetEdit, saveSetEdit, deleteSet, _pickSetFile };
 })();
 
 if (typeof window !== 'undefined') window.LiveArchive = LiveArchive;

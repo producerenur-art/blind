@@ -249,7 +249,7 @@ const LiveGuest = (() => {
 
   // ── DJ-konsoll (kun lyd — sender direkte til lyttere i sitt eget rom) ─────────
   const _g = { dj: null, ln: null, stream: null, outStream: null, ctx: null, analL: null, analR: null, raf: null, room: '', req: null,
-    listening: false, ended: false, jingled: false, heartbeatTimer: null };
+    listening: false, ended: false, jingled: false, heartbeatTimer: null, trackTitle: '', linkUrl: '' };
   let _lnReconnecting = false;
 
   // ── Global "gå live"-status (brukarønske 2026-09-21: gjeld no ALLE som går
@@ -263,6 +263,28 @@ const LiveGuest = (() => {
   // demping/normalisering i js/radio.js sin attachLiveStream) heilt gratis.
   function _liveSecret() { return (typeof CONFIG !== 'undefined' && CONFIG.LIVE_BROADCAST_SECRET) || ''; }
 
+  // Berre http(s)-URL-ar slepp gjennom (hindrar javascript:-lenker o.l.).
+  function _cleanLink(v) {
+    v = (v || '').trim();
+    if (!v) return '';
+    if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+    try { const u = new URL(v); return /^https?:$/.test(u.protocol) ? u.href : ''; } catch (e) { return ''; }
+  }
+
+  function _readNowPlayingFields() {
+    const t = _byId('lg-track'), l = _byId('lg-link');
+    _g.trackTitle = (t && t.value.trim()) || '';
+    _g.linkUrl = _cleanLink(l && l.value);
+  }
+
+  // Lar gjesten oppdatere tittel/lenke midt i settet utan å avbryte sendinga.
+  function bcUpdateNowPlaying() {
+    if (!_g.dj) return;
+    _readNowPlayingFields();
+    _publishGlobalLiveStatus(true);
+    try { window.Radio247?.refresh?.(); } catch (e) {}
+  }
+
   async function _publishGlobalLiveStatus(isLive) {
     try {
       if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) return;
@@ -271,6 +293,8 @@ const LiveGuest = (() => {
         p_is_live:        !!isLive,
         p_presenter_name: isLive ? ((_g.req && _g.req.display_name) || '') : '',
         p_room:           isLive ? (_g.room || '') : '',
+        p_track_title:    isLive ? (_g.trackTitle || '') : '',
+        p_link_url:       isLive ? (_g.linkUrl || '') : '',
       });
       if (error) _log('Global "go live" status not published: ' + error.message);
     } catch (e) { _log('Global "go live" status failed: ' + (e.message || e)); }
@@ -328,6 +352,13 @@ const LiveGuest = (() => {
           Route your DJ software's master output to a virtual audio cable (e.g. BlackHole) and select it below.
           Going live automatically switches over EVERYONE currently on SiriusFM — same as the owner's stream — and switches back the moment you stop.
         </p>
+        <label style="${lbl}">Now playing (optional)</label>
+        <div style="display:flex;gap:0.6rem;margin:0 0 0.9rem">
+          <input id="lg-track" value="${_esc(_g.trackTitle || '')}" placeholder="e.g. Artist — Track / set name" style="${inp};flex:1">
+          ${live ? `<button class="btn btn-ghost" onclick="LiveGuest.bcUpdateNowPlaying()">Update</button>` : ''}
+        </div>
+        <label style="${lbl}">Link (optional)</label>
+        <input id="lg-link" value="${_esc(_g.linkUrl || '')}" placeholder="https://facebook.com/… (Facebook, Bandcamp, Spotify…)" inputmode="url" style="${inp};margin:0 0 0.9rem">
         <label style="${lbl}">Audio input</label>
         <div style="display:flex;gap:0.6rem;margin:0 0 1rem">
           <select id="lg-dev" ${live ? 'disabled' : ''} style="${inp};flex:1">${live ? '' : '<option>Click "Grant access" first…</option>'}</select>
@@ -404,6 +435,8 @@ const LiveGuest = (() => {
         onPeerCount: n => { const el = _byId('lg-count'); if (el) el.textContent = n; },
         onLog: _log,
       });
+      _readNowPlayingFields();
+      try { window.LiveSets?.begin({ stream: _g.outStream, displayName: (_g.req && _g.req.display_name) || '', room: _g.room, isOwner: false, trackTitle: _g.trackTitle, linkUrl: _g.linkUrl }); } catch (e) {}
       _bcSetLive(true);
       _log('You are LIVE in room "' + _g.room + '". Play in your DJ software.');
       await LiveBroadcastSync.markStarted(_g.req.id, cur.username);
@@ -420,6 +453,7 @@ const LiveGuest = (() => {
 
   async function bcStop() {
     const cur = Auth.current();
+    try { window.LiveSets?.end({ trackTitle: _g.trackTitle, linkUrl: _g.linkUrl }); } catch (e) {}
     if (_g.heartbeatTimer) { clearInterval(_g.heartbeatTimer); _g.heartbeatTimer = null; }
     _publishGlobalLiveStatus(false); // fire-and-forget: gjer alle besøkende tilbake til 24/7-hjulet
     if (_g.raf) cancelAnimationFrame(_g.raf); _g.raf = null;
@@ -613,7 +647,11 @@ const LiveGuest = (() => {
 
   return {
     openApply, step, submitApply, renderMine, pickThumbnail, cancelRequest,
-    goLive, bcPerm, bcGo, bcStop, tuneIn, tuneOut,
+    goLive, bcPerm, bcGo, bcStop, bcUpdateNowPlaying, tuneIn, tuneOut,
+    isBroadcastingHere: () => !!_g.dj,
+    getBroadcastTrackTitle: () => (_g.dj ? (_g.trackTitle || '') : ''),
+    getBroadcastLinkUrl: () => (_g.dj ? (_g.linkUrl || '') : ''),
+    getBroadcastPresenterName: () => (_g.dj ? ((_g.req && _g.req.display_name) || '') : ''),
   };
 })();
 

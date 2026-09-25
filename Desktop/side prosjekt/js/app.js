@@ -391,7 +391,7 @@ const App = (() => {
       ${item('#/shows','calendar','Shows')}
       ${item('#/world','globe','World')}
       ${item('#/magazine','book','Magazine')}
-      ${window.Radio?.isLiveTakeoverActive?.() ? item('#/live-archive','radio','Live Archive') : ''}
+      ${item('#/live-archive','radio','Live Archive')}
       ${item('#/a1','sparkles','A1')}
     `;
   }

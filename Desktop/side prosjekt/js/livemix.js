@@ -229,7 +229,7 @@ const LiveMix = (() => {
   // som signaling). State er modul-scopet så sendingen/lyden overlever at
   // modalen lukkes (App.closeModal() skjuler bare overlayet, tømmer ikke DOM).
   const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null, devBypass: false, ownerBypass: false,
-    visual: 'image', coverUrl: '', coverImg: null, canvas: null, canvasRaf: null, camStream: null, outStream: null, presenterName: '', heartbeatTimer: null,
+    visual: 'image', coverUrl: '', coverImg: null, canvas: null, canvasRaf: null, camStream: null, outStream: null, presenterName: '', trackTitle: '', linkUrl: '', heartbeatTimer: null,
     listening: false, ended: false, permGranted: false };
   let _lnReconnecting = false;
 
@@ -255,6 +255,8 @@ const LiveMix = (() => {
         p_is_live:        !!isLive,
         p_presenter_name: isLive ? (_bc.presenterName || '') : '',
         p_room:           isLive ? (_bc.room || '') : '',
+        p_track_title:    isLive ? (_bc.trackTitle || '') : '',
+        p_link_url:       isLive ? (_bc.linkUrl || '') : '',
       });
       if (error) _bcLog('Global "go live" status not published: ' + error.message);
     } catch (e) { _bcLog('Global "go live" status failed: ' + (e.message || e)); }
@@ -411,6 +413,15 @@ const LiveMix = (() => {
         <p style="font-size:0.74rem;color:var(--text3);margin:-0.55rem 0 0.9rem">Shown to ALL visitors on the site as "with {your name}" while you're live — they get automatically switched over from their station to your broadcast.</p>
         <label style="${lbl}">Room name</label>
         <input id="bc-room" value="${_esc(_bc.room || 'live')}" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
+        <label style="${lbl}">Now playing (optional)</label>
+        <div style="display:flex;gap:0.6rem;margin:0 0 0.4rem">
+          <input id="bc-track" value="${_esc(_bc.trackTitle || '')}" placeholder="e.g. Ambient Mann — All The Way From Heaven" style="${inp};flex:1">
+          ${live ? `<button class="btn btn-ghost" onclick="LiveMix.bcUpdateNowPlaying()">Update</button>` : ''}
+        </div>
+        <label style="${lbl}">Link (optional)</label>
+        <input id="bc-link" value="${_esc(_bc.linkUrl || '')}" placeholder="https://facebook.com/… (Facebook, Bandcamp, Spotify…)" inputmode="url" style="${inp};margin:0 0 0.4rem">
+        <p style="font-size:0.74rem;color:var(--text3);margin:0 0 0.9rem">Shown as a clickable link on the 24-Hour Cycle card while you're live. Must start with https://</p>
+        <p style="font-size:0.74rem;color:var(--text3);margin:-0.15rem 0 0.9rem">Shown next to your name on the 24-Hour Cycle card while you're live. Can be changed mid-set — click Update (or it syncs automatically within 45s via the heartbeat).</p>
         <label style="${lbl}">Audio input (DJ routing)</label>
         <div style="display:flex;gap:0.6rem;margin:0 0 1rem">
           <select id="bc-dev" ${live ? 'disabled' : ''} style="${inp};flex:1">${live ? '' : '<option>Click "Grant access" first…</option>'}</select>
@@ -513,9 +524,11 @@ const LiveMix = (() => {
 
   async function bcGo() {
     try {
-      const sel = _byId('bc-dev'), roomEl = _byId('bc-room'), presEl = _byId('bc-presenter');
+      const sel = _byId('bc-dev'), roomEl = _byId('bc-room'), presEl = _byId('bc-presenter'), trackEl = _byId('bc-track'), linkEl = _byId('bc-link');
       const room = (roomEl && roomEl.value.trim()) || 'live'; _bc.room = room;
       _bc.presenterName = (presEl && presEl.value.trim()) || '';
+      _bc.trackTitle = (trackEl && trackEl.value.trim()) || '';
+      _bc.linkUrl = _cleanLink(linkEl && linkEl.value);
       _bc.stream = await navigator.mediaDevices.getUserMedia({ audio: {
         deviceId: { exact: sel.value }, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2,
       } });
@@ -551,6 +564,8 @@ const LiveMix = (() => {
       // — så ingen besøkende byttes over til et rom som ennå ikke sender noe.
       _publishLiveStatus(true);
       _notifyLiveStart();
+      // Opptak + arkivrad (js/liveSets.js) — stoppar aldri sendinga, feil her ignorerast.
+      try { window.LiveSets?.begin({ stream: _bc.outStream, displayName: _bc.presenterName, room, isOwner: true, trackTitle: _bc.trackTitle, linkUrl: _bc.linkUrl }); } catch (e) {}
       // Hjarteslag: re-publiser med jamne mellomrom mens sendinga pågår, så
       // updated_at-kolonna held seg fersk. Krasjar/lukkast fana (eller
       // internett fell heilt ut) UTAN at bcStop() rekk å køyre, sluttar
@@ -569,6 +584,8 @@ const LiveMix = (() => {
   }
 
   function bcStop() {
+    // Stopp opptaket og last det opp FØR lydspora blir stoppa lenger ned (fire-and-forget).
+    try { window.LiveSets?.end({ trackTitle: _bc.trackTitle, linkUrl: _bc.linkUrl }); } catch (e) {}
     // Fire-and-forget: fjern den globale live-statusen FØRST, slik at besøkende
     // byttes tilbake til stasjonen sin selv om resten av oppryddingen under feiler.
     _publishLiveStatus(false);
@@ -588,6 +605,27 @@ const LiveMix = (() => {
     _bcSetLive(false);
     const c = _byId('bc-count'); if (c) c.textContent = '0';
     _bcLog('Stopped.');
+    try { window.Radio247?.refresh?.(); } catch (e) {}
+  }
+
+  // Lar DJ-en oppdatere "Now playing"-teksten midt i settet uten å avbryte
+  // sendingen — leser feltet på nytt og publiserer med det samme (i stedet
+  // for å vente på neste 45s-hjarteslag).
+  // Berre http(s)-URL-ar slepp gjennom (hindrar javascript:-lenker o.l.).
+  function _cleanLink(v) {
+    v = (v || '').trim();
+    if (!v) return '';
+    if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+    try { const u = new URL(v); return /^https?:$/.test(u.protocol) ? u.href : ''; } catch (e) { return ''; }
+  }
+
+  function bcUpdateNowPlaying() {
+    if (!_bc.dj) return;
+    const trackEl = _byId('bc-track');
+    _bc.trackTitle = (trackEl && trackEl.value.trim()) || '';
+    const linkEl = _byId('bc-link');
+    _bc.linkUrl = _cleanLink(linkEl && linkEl.value);
+    _publishLiveStatus(true);
     try { window.Radio247?.refresh?.(); } catch (e) {}
   }
 
@@ -788,7 +826,7 @@ const LiveMix = (() => {
   return {
     openBooking, step, startCheckout, testPurchase, completeFromSession, showReceipt,
     priceFor, _makeBooking, RATE_KR, RATE_ORE,
-    goLive, bcPerm, bcGo, bcStop, bcSetVisual, bcSetImage, tuneIn, tuneInJoin, tuneOut,
+    goLive, bcPerm, bcGo, bcStop, bcSetVisual, bcSetImage, bcUpdateNowPlaying, tuneIn, tuneInJoin, tuneOut,
     canGoLive,
     isBroadcastingHere: () => !!_bc.dj,
     // Brukt av js/radio247.js sitt "24-Hour Cycle"-kort for å vise «LIVE —
@@ -796,6 +834,8 @@ const LiveMix = (() => {
     // ALDRI til lyden der (det er nettopp isBroadcastingHere()-sjekken i
     // js/liveGlobal.js som hindrar sjølv-ekko).
     getBroadcastPresenterName: () => (_bc.dj ? (_bc.presenterName || '') : ''),
+    getBroadcastTrackTitle: () => (_bc.dj ? (_bc.trackTitle || '') : ''),
+    getBroadcastLinkUrl: () => (_bc.dj ? (_bc.linkUrl || '') : ''),
   };
 })();
 

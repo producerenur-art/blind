@@ -121,6 +121,8 @@ const LiveGlobal = (() => {
       _connect(_known);
     } else if (isLive && wasLive) {
       window.Radio?.setLivePresenterName?.(_known.presenter_name);
+      window.Radio?.setLiveTrackTitle?.(_known.track_title || '');
+      window.Radio?.setLiveLinkUrl?.(_known.link_url || '');
     } else if (!isLive && wasLive) {
       _disconnect();
     }
@@ -134,6 +136,8 @@ const LiveGlobal = (() => {
     if (_listener) { try { _listener.leave(); } catch (e) {} _listener = null; }
     _lastRoom = status.room;
     Radio.enterLiveTakeover(status.presenter_name || '', !!skipAnnouncement);
+    Radio.setLiveTrackTitle?.(status.track_title || '');
+    Radio.setLiveLinkUrl?.(status.link_url || '');
     _spawnListener(status.room);
   }
 
