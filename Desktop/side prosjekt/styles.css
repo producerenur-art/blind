@@ -11420,3 +11420,6 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 .wwl-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .wwl-edit:not(:empty) { margin-top: 0.6rem; }
 @media (max-width: 640px) { #disc-wwl { margin: 1rem 16px 0; } .wwl-card { flex-direction: column; } .wwl-art { width: 100%; height: 140px; flex-basis: auto; } }
+
+.wwl-card-public { flex-direction: row; justify-content: center; align-items: center; gap: 0.75rem; }
+@media (max-width: 640px) { .wwl-card.wwl-card-public { flex-direction: row; } }

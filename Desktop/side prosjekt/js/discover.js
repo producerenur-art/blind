@@ -1080,8 +1080,13 @@ const Discover = (() => {
   // «Edit text» og kan endre namn/tekst (LiveSets.update, sjekka òg i databasen).
   // Første Lemonchill-sending blir publisert via tools/publish-special-set.js etter at ho har gått.
   const _wwlSets = {};
+  // KUN innlogga eigar-admin (producerenur@gmail.com) ser alt utanom Play/Stopp (brukarønske 2026-09-25).
+  const WWL_ADMIN_EMAIL = 'producerenur@gmail.com';
   function _wwlIsAdmin() {
-    try { return typeof CONFIG !== 'undefined' && CONFIG.isAdminEmail && CONFIG.isAdminEmail(Auth.current()); } catch (_) { return false; }
+    try {
+      const me = Auth.current();
+      return !!me && String(me.email || '').toLowerCase().trim() === WWL_ADMIN_EMAIL;
+    } catch (_) { return false; }
   }
   function _wwlUrl(st) {
     try {
@@ -1099,7 +1104,16 @@ const Discover = (() => {
   }
   function _wwlCard(st) {
     _wwlSets[st.id] = st;
-    const id = _lcEsc(st.id), fb = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(_wwlUrl(st));
+    const id = _lcEsc(st.id);
+    // Offentleg (gjester og vanlege brukarar): berre Play og Stopp — inga tekst, ingen deling, ingen redigering.
+    if (!_wwlIsAdmin()) {
+      return `
+      <div class="wwl-card wwl-card-public" id="wwl-${id}">
+        <button class="btn btn-primary" onclick="Discover.wwlPlay('${id}')">▶ Play</button>
+        <button class="btn btn-ghost" onclick="Discover.wwlStop('${id}')">■ Stop</button>
+      </div>`;
+    }
+    const fb = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(_wwlUrl(st));
     const art = st.cover_url ? `<img src="${_lcEsc(st.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:2rem">🎧</span>';
     const mins = st.duration_sec ? Math.round(st.duration_sec / 60) + ' min' : '';
     return `
@@ -1110,12 +1124,13 @@ const Discover = (() => {
           <div class="wwl-text">${_lcEsc(st.track_title || '')}</div>
           <div class="wwl-meta">${_lcEsc(_wwlFmtDate(st.ended_at))}${mins ? ' · ' + mins : ''}</div>
           <div class="wwl-actions">
-            <button class="btn btn-primary btn-sm" onclick="Discover.wwlPlay('${id}')">▶ Listen</button>
+            <button class="btn btn-primary btn-sm" onclick="Discover.wwlPlay('${id}')">▶ Play</button>
+            <button class="btn btn-ghost btn-sm" onclick="Discover.wwlStop('${id}')">■ Stop</button>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlShare('${id}')">Share</button>
             <a class="btn btn-ghost btn-sm" href="${_lcEsc(fb)}" target="_blank" rel="noopener noreferrer" style="background:#1877f2;color:#fff;border-color:#1877f2">Facebook</a>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlCopy('${id}')">📋 Copy link</button>
             <a class="btn btn-ghost btn-sm" href="#/live-archive/${id}">Open →</a>
-            ${_wwlIsAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="Discover.wwlEdit('${id}')">✏️ Edit text</button>` : ''}
+            <button class="btn btn-ghost btn-sm" onclick="Discover.wwlEdit('${id}')">✏️ Edit text</button>
           </div>
           <div class="wwl-edit" id="wwl-edit-${id}"></div>
         </div>
@@ -1135,12 +1150,18 @@ const Discover = (() => {
     const st = _wwlSets[id]; if (!st || typeof Player === 'undefined') return;
     Player.playExternal(st.audio_url, st.display_name || 'Live set', st.track_title || 'What went live');
   }
+  function wwlStop(id) {
+    const st = _wwlSets[id]; if (!st) return;
+    const a = document.getElementById('audio-engine');
+    // Stopp berre om det er DENNE opptaket som spelar (ikkje ei anna stasjon/spor).
+    if (a && (a.currentSrc || a.src || '').indexOf(st.audio_url) !== -1) { try { a.pause(); a.currentTime = 0; } catch (_) {} }
+  }
   function wwlShare(id) {
-    const st = _wwlSets[id]; if (!st || typeof Share === 'undefined') return;
+    const st = _wwlSets[id]; if (!st || !_wwlIsAdmin() || typeof Share === 'undefined') return;
     Share.shareUrl(_wwlUrl(st), st.display_name || 'Live set', 'SiriusFM', { image: st.cover_url || '' });
   }
   async function wwlCopy(id) {
-    const st = _wwlSets[id]; if (!st) return;
+    const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
     const url = _wwlUrl(st);
     try { await navigator.clipboard.writeText(url); if (typeof App !== 'undefined') App.toast('Link copied 📋', 'success'); }
     catch (_) { window.prompt('Copy this link:', url); }
@@ -4018,7 +4039,7 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    wwlPlay, wwlShare, wwlCopy, wwlEdit, wwlSave,
+    wwlPlay, wwlStop, wwlShare, wwlCopy, wwlEdit, wwlSave,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,
     onCategoryChange, setDiscGenreRadio, clearGenreRadio,
