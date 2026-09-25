@@ -1091,7 +1091,8 @@ const Discover = (() => {
   }
   function _wwlUrl(st) {
     // Kort delingslenke (ikkje den lange base64-lenka): serveren slår opp opptaket og lagar forhandsvisning med bildet.
-    return 'https://www.siriusfm.no/s/' + encodeURIComponent(st.id);
+    const v = st.updated_at ? Date.parse(st.updated_at) : 0;
+    return 'https://www.siriusfm.no/s/' + encodeURIComponent(st.id) + (v ? '?v=' + v.toString(36) : '');
   }
   // Minutt-peikar/spolelinje i kortet: viser mm:ss / total og lar deg hoppe til ein posisjon medan opptaket speler.
   function _wwlClock(sec) {
@@ -1168,6 +1169,7 @@ const Discover = (() => {
           <div class="wwl-name">${_lcEsc(st.display_name || 'Live set')}</div>
           <div class="wwl-text">${_lcEsc(st.track_title || '')}</div>
           <div class="wwl-meta">${_lcEsc(_wwlFmtDate(st.ended_at))}${mins ? ' · ' + mins : ''}</div>
+          <div class="wwl-url" style="font-size:.75rem;margin:.15rem 0 .4rem;word-break:break-all"><a href="${_lcEsc(_wwlUrl(st))}" target="_blank" rel="noopener noreferrer" style="color:var(--text2)">${_lcEsc(_wwlUrl(st))}</a></div>
           <div class="wwl-seek" id="wwl-seek-${id}">
           <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
           <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st.duration_sec)}</span>
@@ -1252,7 +1254,7 @@ const Discover = (() => {
     try {
       const res = await SC_Storage.upload(f, { prefix: 'live-sets-covers' });
       const ok = await LiveSets.update(id, { coverUrl: res.url });
-      if (ok) { st.cover_url = res.url; const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); if (typeof App !== 'undefined') App.toast('Image saved.', 'success'); }
+      if (ok) { st.cover_url = res.url; st.updated_at = new Date().toISOString(); const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); if (typeof App !== 'undefined') App.toast('Image saved.', 'success'); }
       else if (typeof App !== 'undefined') App.toast('Could not save the image.', 'error');
     } catch (e) { if (typeof App !== 'undefined') App.toast('Upload failed: ' + (e.message || e), 'error'); }
     input.value = '';
@@ -1260,7 +1262,7 @@ const Discover = (() => {
   async function wwlRemoveImage(id) {
     const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
     const ok = await LiveSets.update(id, { coverUrl: '' });
-    if (ok) { st.cover_url = ''; const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); }
+    if (ok) { st.cover_url = ''; st.updated_at = new Date().toISOString(); const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); }
     else if (typeof App !== 'undefined') App.toast('Could not remove the image.', 'error');
   }
   async function wwlReplaceAudio(id, input) {
@@ -1271,7 +1273,7 @@ const Discover = (() => {
     try {
       const res = await SC_Storage.upload(f, { prefix: 'live-sets' });
       const ok = await LiveSets.update(id, { audioUrl: res.url });
-      if (ok) { st.audio_url = res.url; if (typeof App !== 'undefined') App.toast('Audio replaced.', 'success'); }
+      if (ok) { st.audio_url = res.url; st.updated_at = new Date().toISOString(); if (typeof App !== 'undefined') App.toast('Audio replaced.', 'success'); }
       else if (typeof App !== 'undefined') App.toast('Could not save the new audio.', 'error');
     } catch (e) { if (typeof App !== 'undefined') App.toast('Upload failed: ' + (e.message || e), 'error'); }
     input.value = '';
@@ -1288,7 +1290,7 @@ const Discover = (() => {
     const name = (document.getElementById('wwl-n-' + id) || {}).value || '';
     const text = (document.getElementById('wwl-t-' + id) || {}).value || '';
     const ok = await LiveSets.update(id, { displayName: name, trackTitle: text });
-    if (ok) { st.display_name = name; st.track_title = text; const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); if (typeof App !== 'undefined') App.toast('Saved!', 'success'); }
+    if (ok) { st.display_name = name; st.track_title = text; st.updated_at = new Date().toISOString(); const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); if (typeof App !== 'undefined') App.toast('Saved!', 'success'); }
     else if (typeof App !== 'undefined') App.toast('Could not save (are you logged in as admin?)', 'error');
   }
 

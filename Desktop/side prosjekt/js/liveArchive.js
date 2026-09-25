@@ -334,7 +334,8 @@ const LiveArchive = (() => {
   // js/share.js + api/share.js; faller tilbake til vanleg arkiv-lenke.
   function _setShareUrl(s) {
     // Kort lenke: serveren (api/share.js) slår opp settet og lagar forhandsvisning med bilde/tittel/lyd.
-    return 'https://www.siriusfm.no/s/' + encodeURIComponent(s.id);
+    const v = s.updated_at ? Date.parse(s.updated_at) : 0;
+    return 'https://www.siriusfm.no/s/' + encodeURIComponent(s.id) + (v ? '?v=' + v.toString(36) : '');
   }
 
   function _socialRow(s) {

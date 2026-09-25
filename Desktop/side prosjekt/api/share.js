@@ -109,7 +109,10 @@ module.exports = async (req, res) => {
         : (artist ? `${artist} · Listen on SiriusFM` : 'Listen on SiriusFM — social platform for electronic music.'));
   const fullTitle = artist ? `${title} — ${artist}` : title;
   const profileUrl = isSet ? `${SITE}/#/discover` : (username ? `${SITE}/#/u/${encodeURIComponent(username)}` : SITE + '/');
-  const canonical = `${SITE}/s/${encodeURIComponent(d || '')}`;
+  // ?v=<versjon> (frå st.updated_at) gjer at Facebook/X hentar NYTT bilde/tekst etter ei redigering
+  // (dei mellomlagrar forhandsvisninga per URL i ~30 dagar, og bruker og:url som nøkkel).
+  const ver = /^[a-z0-9]{1,12}$/i.test(String((req.query && req.query.v) || '')) ? String(req.query.v) : '';
+  const canonical = `${SITE}/s/${encodeURIComponent(d || '')}${ver ? '?v=' + ver : ''}`;
 
   // Build the head OG/Twitter tags. Video pages advertise og:video (inline
   // playback in the feed) + og:image poster; audio pages use a large image card.
@@ -139,6 +142,9 @@ module.exports = async (req, res) => {
     tags.push(`<meta name="twitter:player:stream" content="${esc(media)}">`);
     tags.push(`<meta name="twitter:player:stream:content_type" content="${esc(mime)}">`);
   } else if (kind === 'image' || kind === 'link') {
+    tags.push(`<meta property="og:type" content="website">`);
+    tags.push(`<meta name="twitter:card" content="summary_large_image">`);
+  } else if (isSet) {
     tags.push(`<meta property="og:type" content="website">`);
     tags.push(`<meta name="twitter:card" content="summary_large_image">`);
   } else {
