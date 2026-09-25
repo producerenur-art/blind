@@ -267,6 +267,8 @@ const LiveMix = (() => {
   // _publishLiveStatus() over — server-sida har ein cooldown (20 min) mot fleire
   // varsel på rad om DJ-en stoppar/startar igjen. Kalla KUN ved oppstart, aldri ved stopp.
   async function _notifyLiveStart() {
+    // Test-sending (romnamn «test»): IKKJE send «vi er live no»-e-post til alle abonnentane (2026-09-25).
+    if (String((_bc && _bc.room) || '').trim().toLowerCase() === 'test') { _bcLog('Test room — no live e-mail sent.'); return; }
     try {
       await fetch('/api/live-start-notify', {
         method: 'POST',
