@@ -11453,3 +11453,10 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 #disc-wwl .btn-primary { background: linear-gradient(135deg, #38bdf8, #0ea5e9); border-color: #38bdf8; color: #fff; box-shadow: none; }
 #disc-wwl .btn-ghost { color: #7dd3fc; border-color: rgba(125,211,252,0.35); }
 #disc-wwl .wwl-edit label { color: #7dd3fc; }
+
+/* Minutt-peikar / spolelinje i «What went live»-kortet */
+.wwl-seek { display: flex; align-items: center; gap: 0.6rem; margin: 0.5rem 0; }
+.wwl-seek input[type=range] { flex: 1; min-width: 140px; accent-color: #38bdf8; }
+.wwl-time { color: #7dd3fc; font-size: 0.8rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wwl-public-main { display: flex; flex-direction: column; gap: 0.4rem; flex: 1; min-width: 0; }
+.wwl-card-public { align-items: center; }

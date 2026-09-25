@@ -333,16 +333,8 @@ const LiveArchive = (() => {
   // Delbar lenke med rik forhåndsvisning (og:image/tittel/lyd) via /s/…-sida i
   // js/share.js + api/share.js; faller tilbake til vanleg arkiv-lenke.
   function _setShareUrl(s) {
-    try {
-      if (typeof Share !== 'undefined' && Share.buildUrl) {
-        return Share.buildUrl({
-          kind: s.audio_url ? 'audio' : 'image', title: s.display_name || 'Live set', artist: s.track_title || 'SiriusFM',
-          image: s.cover_url || '', media: s.audio_url || '', mime: 'audio/webm',
-          link: _safeUrl(s.link_url) || undefined, username: s.owner_username || '',
-        });
-      }
-    } catch (e) {}
-    return location.origin + '/#/live-archive/' + s.id;
+    // Kort lenke: serveren (api/share.js) slår opp settet og lagar forhandsvisning med bilde/tittel/lyd.
+    return 'https://www.siriusfm.no/s/' + encodeURIComponent(s.id);
   }
 
   function _socialRow(s) {

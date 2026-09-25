@@ -69,7 +69,25 @@ module.exports = async (req, res) => {
     if (m) d = decodeURIComponent(m[1]);
   }
 
-  const p = decodePayload(d) || {};
+  // Kort delingslenke for live-opptak: /s/set_<id>  (i staden for ei lang base64-lenke). Oppslag mot
+  // live_sets med den OFFENTLEGE publishable-nøkkelen — RLS gir berre ut publiserte/ferdige sett.
+  let p;
+  let isSet = false;
+  if (/^set_[a-z0-9]{6,40}$/i.test(d)) {
+    isSet = true;
+    p = {};
+    try {
+      const base = process.env.SUPABASE_URL || 'https://qefdyxpyjwpohsmmmksf.supabase.co';
+      const anon = 'sb_publishable_JEV-NS9FGZ_KpSvQTPwlZg_LlyVy_eS';
+      const r = await fetch(`${base}/rest/v1/live_sets?id=eq.${encodeURIComponent(d)}&select=display_name,track_title,cover_url,audio_url&limit=1`,
+        { headers: { apikey: anon, Authorization: `Bearer ${anon}` } });
+      const rows = r.ok ? await r.json() : [];
+      const row = rows && rows[0];
+      if (row) p = { k: 'audio', t: row.display_name, a: row.track_title, i: row.cover_url, m: row.audio_url, mt: 'audio/webm' };
+    } catch (_) { /* fall tilbake til generisk side */ }
+  } else {
+    p = decodePayload(d) || {};
+  }
   const kind = p.k === 'video' ? 'video' : (p.k === 'image' ? 'image' : (p.k === 'link' ? 'link' : 'audio'));
   const title = (p.t && String(p.t).trim()) || 'Shared on SiriusFM';
   const artist = (p.a && String(p.a).trim()) || '';
@@ -90,7 +108,7 @@ module.exports = async (req, res) => {
         ? (artist ? `${artist} · Shared via SiriusFM` : 'Shared via SiriusFM — social platform for electronic music.')
         : (artist ? `${artist} · Listen on SiriusFM` : 'Listen on SiriusFM — social platform for electronic music.'));
   const fullTitle = artist ? `${title} — ${artist}` : title;
-  const profileUrl = username ? `${SITE}/#/u/${encodeURIComponent(username)}` : SITE + '/';
+  const profileUrl = isSet ? `${SITE}/#/discover` : (username ? `${SITE}/#/u/${encodeURIComponent(username)}` : SITE + '/');
   const canonical = `${SITE}/s/${encodeURIComponent(d || '')}`;
 
   // Build the head OG/Twitter tags. Video pages advertise og:video (inline

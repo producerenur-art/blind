@@ -1089,14 +1089,45 @@ const Discover = (() => {
     } catch (_) { return false; }
   }
   function _wwlUrl(st) {
-    try {
-      if (typeof Share !== 'undefined' && Share.buildUrl) {
-        return Share.buildUrl({ kind: 'audio', title: st.display_name || 'Live set', artist: st.track_title || 'SiriusFM',
-          image: st.cover_url || '', media: st.audio_url || '', mime: 'audio/webm',
-          link: /^https?:\/\//i.test(st.link_url || '') ? st.link_url : undefined, username: st.owner_username || '' });
-      }
-    } catch (_) {}
-    return location.origin + '/#/live-archive/' + st.id;
+    // Kort delingslenke (ikkje den lange base64-lenka): serveren slår opp opptaket og lagar forhandsvisning med bildet.
+    return 'https://www.siriusfm.no/s/' + encodeURIComponent(st.id);
+  }
+  // Minutt-peikar/spolelinje i kortet: viser mm:ss / total og lar deg hoppe til ein posisjon medan opptaket speler.
+  function _wwlClock(sec) {
+    sec = Math.max(0, Math.floor(Number(sec) || 0));
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), r = sec % 60;
+    return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(r).padStart(2, '0');
+  }
+  function _wwlAudioFor(id) {
+    const st = _wwlSets[id], a = document.getElementById('audio-engine');
+    if (!st || !a || !st.audio_url) return null;
+    return ((a.currentSrc || a.src || '').indexOf(st.audio_url) !== -1) ? a : null;
+  }
+  function _wwlTotal(st, a) { return (a && isFinite(a.duration) && a.duration > 0) ? a.duration : (Number(st.duration_sec) || 0); }
+  let _wwlBound = false;
+  function _wwlTick() {
+    Object.keys(_wwlSets).forEach(id => {
+      const st = _wwlSets[id], a = _wwlAudioFor(id);
+      const range = document.querySelector('#wwl-seek-' + id + ' input'), lab = document.getElementById('wwl-time-' + id);
+      if (!range || !lab) return;
+      const total = _wwlTotal(st, a);
+      if (!a) { range.disabled = true; range.value = 0; lab.textContent = '0:00 / ' + _wwlClock(total); return; }
+      range.disabled = !(total > 0);
+      if (total > 0 && document.activeElement !== range) range.value = Math.min(1000, Math.round(a.currentTime / total * 1000));
+      lab.textContent = _wwlClock(a.currentTime) + ' / ' + _wwlClock(total);
+    });
+  }
+  function _wwlBindAudio() {
+    if (_wwlBound) return;
+    const a = document.getElementById('audio-engine'); if (!a) return;
+    _wwlBound = true;
+    ['timeupdate', 'durationchange', 'loadedmetadata', 'pause', 'play', 'emptied'].forEach(ev => a.addEventListener(ev, _wwlTick));
+  }
+  function wwlSeek(id, val) {
+    const st = _wwlSets[id], a = _wwlAudioFor(id); if (!st || !a) return;
+    const total = _wwlTotal(st, a); if (!(total > 0)) return;
+    try { a.currentTime = (Number(val) / 1000) * total; } catch (_) {}
+    _wwlTick();
   }
   function _wwlFmtDate(iso) {
     const d = new Date(iso); if (isNaN(d.getTime())) return '';
@@ -1111,10 +1142,16 @@ const Discover = (() => {
       return `
       <div class="wwl-card wwl-card-public" id="wwl-${id}">
         ${pubImg}
-        <div class="wwl-public-btns">
-          <button class="btn btn-primary" onclick="Discover.wwlPlay('${id}')">▶ Play</button>
-          <button class="btn btn-ghost" onclick="Discover.wwlStop('${id}')">■ Stop</button>
-          <button class="btn btn-ghost" onclick="Discover.wwlShare('${id}')">Share</button>
+        <div class="wwl-public-main">
+          <div class="wwl-public-btns">
+            <button class="btn btn-primary" onclick="Discover.wwlPlay('${id}')">▶ Play</button>
+            <button class="btn btn-ghost" onclick="Discover.wwlStop('${id}')">■ Stop</button>
+            <button class="btn btn-ghost" onclick="Discover.wwlShare('${id}')">Share</button>
+          </div>
+          <div class="wwl-seek" id="wwl-seek-${id}">
+          <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
+          <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st.duration_sec)}</span>
+        </div>
         </div>
       </div>`;
     }
@@ -1128,6 +1165,10 @@ const Discover = (() => {
           <div class="wwl-name">${_lcEsc(st.display_name || 'Live set')}</div>
           <div class="wwl-text">${_lcEsc(st.track_title || '')}</div>
           <div class="wwl-meta">${_lcEsc(_wwlFmtDate(st.ended_at))}${mins ? ' · ' + mins : ''}</div>
+          <div class="wwl-seek" id="wwl-seek-${id}">
+          <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
+          <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st.duration_sec)}</span>
+        </div>
           <div class="wwl-actions">
             <button class="btn btn-primary btn-sm" onclick="Discover.wwlPlay('${id}')">▶ Play</button>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlStop('${id}')">■ Stop</button>
@@ -1156,6 +1197,7 @@ const Discover = (() => {
     document.getElementById('disc-wwl').innerHTML = `
       <div class="wwl-head">What went live</div>
       <div class="wwl-list">${sets.slice(0, 4).map(_wwlCard).join('')}</div>`;
+    _wwlBindAudio(); _wwlTick();
   }
   function wwlPlay(id) {
     const st = _wwlSets[id]; if (!st || typeof Player === 'undefined') return;
@@ -4099,7 +4141,7 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    wwlPlay, wwlStop, wwlShare, wwlCopy, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom,
+    wwlPlay, wwlStop, wwlShare, wwlCopy, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,
     onCategoryChange, setDiscGenreRadio, clearGenreRadio,
