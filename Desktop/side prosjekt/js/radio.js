@@ -462,7 +462,7 @@ const Radio = (() => {
   // ikkje enno i assets/jingles/ — legg til når den er spelt inn; manglar ho,
   // feilar _playLocalClip stille og hoppar rett vidare til gjenoppteken
   // rotasjon (sjå error-handteringa i _playLocalClip).
-  const LIVE_OUTRO = JINGLE_BASE + 'live-outro.mp3';
+  const LIVE_OUTRO = JINGLES.a;   // 2026-09-25: jingel ETTER kvar live-sending (same som etter Lemonchill-miksen) — «You're listening to SiriusFM»
   // Nokre namn har eit STANDALONE-klipp som alt seier heile "Welcome... + namn"
   // i éin tale — desse skal IKKJE ha LIVE_INTRO framfor seg (då seier han
   // "Welcome to SiriusFM Live — now" to gongar på rad). Gagarin Project er ein
