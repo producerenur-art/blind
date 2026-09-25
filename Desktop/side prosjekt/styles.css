@@ -11441,3 +11441,15 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 @media (max-width: 640px) {
   .wwl-art, .wwl-card-public .wwl-art-public { width: min(100%, 240px); height: auto; aspect-ratio: 1 / 1; flex-basis: auto; margin: 0 auto; }
 }
+
+/* «What went live»: same blå ramme/skrift som Lemonchill-kortet over (2026-09-25) */
+#disc-wwl .wwl-head { color: #7dd3fc; }
+#disc-wwl .wwl-card {
+  border: 1px solid rgba(125,211,252,0.3);
+  background: linear-gradient(135deg, rgba(56,189,248,0.10), rgba(168,85,247,0.10));
+}
+#disc-wwl .wwl-name, #disc-wwl .wwl-text, #disc-wwl .wwl-meta { color: #7dd3fc; }
+#disc-wwl .wwl-meta { opacity: 0.8; }
+#disc-wwl .btn-primary { background: linear-gradient(135deg, #38bdf8, #0ea5e9); border-color: #38bdf8; color: #fff; box-shadow: none; }
+#disc-wwl .btn-ghost { color: #7dd3fc; border-color: rgba(125,211,252,0.35); }
+#disc-wwl .wwl-edit label { color: #7dd3fc; }
