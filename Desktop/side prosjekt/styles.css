@@ -11434,3 +11434,10 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 @media (max-width: 640px) {
   .wwl-art, .wwl-card-public .wwl-art-public { width: min(100%, 320px); height: auto; aspect-ratio: 1 / 1; flex-basis: auto; margin: 0 auto; }
 }
+
+/* Bilde litt mindre (2026-09-25): 160 px kvadrat */
+.wwl-art { width: 160px; height: 160px; flex: 0 0 160px; }
+.wwl-card-public .wwl-art-public { width: 160px; height: 160px; flex: 0 0 160px; }
+@media (max-width: 640px) {
+  .wwl-art, .wwl-card-public .wwl-art-public { width: min(100%, 240px); height: auto; aspect-ratio: 1 / 1; flex-basis: auto; margin: 0 auto; }
+}
