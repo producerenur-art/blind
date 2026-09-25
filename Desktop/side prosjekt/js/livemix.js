@@ -537,6 +537,14 @@ const LiveMix = (() => {
     try { localStorage.setItem('sfm_bc_record', v ? '1' : '0'); } catch (e) {}
   }
 
+  // Flagg i localStorage så ANDRE faner i same nettlesar veit at denne maskina sender live. Ei anna SiriusFM-fane
+  // (som speler jingelar/radio) ville elles lekka lyd inn i BlackHole → inn i sendinga → ekko ved starten
+  // (jingelen speler både lokalt og i straumen). js/liveGlobal.js les flagget. Utløper etter 2 min utan hjarteslag.
+  function _djFlag(on) {
+    try { if (on) localStorage.setItem('sfm_dj_live', String(Date.now())); else localStorage.removeItem('sfm_dj_live'); } catch (e) {}
+  }
+  if (typeof window !== 'undefined') window.addEventListener('pagehide', () => { if (_bc && _bc.dj) _djFlag(false); });
+
   async function bcGo() {
     try {
       const sel = _byId('bc-dev'), roomEl = _byId('bc-room'), presEl = _byId('bc-presenter'), trackEl = _byId('bc-track'), linkEl = _byId('bc-link');
@@ -574,6 +582,7 @@ const LiveMix = (() => {
         onLog: _bcLog,
       });
       _bcSetLive(true);
+      _djFlag(true);
       _bcLog('You are LIVE in room "' + room + '" (' + (vTrack ? (_bc.visual === 'camera' ? 'camera' : 'image') : 'audio only') + '). Play in your DJ software.');
       // Publiser til den globale statusen SIST, etter at sendingen faktisk er i gang
       // — så ingen besøkende byttes over til et rom som ennå ikke sender noe.
@@ -592,7 +601,7 @@ const LiveMix = (() => {
       // (rapportert 2026-09-19: ei sending frå kvelden før blokkerte normal
       // radio for ALLE i 13+ timar).
       if (_bc.heartbeatTimer) clearInterval(_bc.heartbeatTimer);
-      _bc.heartbeatTimer = setInterval(() => { if (_bc.dj) _publishLiveStatus(true); }, 45000);
+      _bc.heartbeatTimer = setInterval(() => { if (_bc.dj) { _publishLiveStatus(true); _djFlag(true); } }, 45000);
       // Oppdater "24-Hour Cycle"-kortet på DENNE fana med det same — den
       // globale liveGlobal.js-vegen hopper med vilje over broadcasterens
       // eigen fane (sjølv-ekko-vernet), så det må trigges herfrå i staden.
@@ -601,6 +610,7 @@ const LiveMix = (() => {
   }
 
   function bcStop() {
+    _djFlag(false);
     // Stopp opptaket og last det opp FØR lydspora blir stoppa lenger ned (fire-and-forget).
     try { window.LiveSets?.end({ trackTitle: _bc.trackTitle, linkUrl: _bc.linkUrl }); } catch (e) {}
     // Fire-and-forget: fjern den globale live-statusen FØRST, slik at besøkende

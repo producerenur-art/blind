@@ -86,13 +86,22 @@ const LiveGlobal = (() => {
     return !!(window.LiveMix && typeof LiveMix.isBroadcastingHere === 'function' && LiveMix.isBroadcastingHere());
   }
 
+  // Ei ANNAN fane i same nettlesar sender live (js/livemix.js sett flagget). Denne fana skal då ikkje ta over
+  // lyden heller: ho speler til same utgang (BlackHole) og ville lekka jingelar/radio inn i sendinga → ekko.
+  function _djOnOtherTab() {
+    try {
+      const ts = Number(localStorage.getItem('sfm_dj_live'));
+      return !!ts && (Date.now() - ts) < 120000 && !_isBroadcastingHere();
+    } catch (e) { return false; }
+  }
+
   function _apply(status) {
     const isLive  = !!(status && status.is_live) && !_isStale(status);
     const wasLive = !!(_known && _known.is_live);
     const prevRoom = _known && _known.room;
     _known = status || { is_live: false };
 
-    if (_isBroadcastingHere()) {
+    if (_isBroadcastingHere() || _djOnOtherTab()) {
       // Sjølv-ekko-vernet under betyr denne fana ALDRI kallar enterLiveTakeover
       // (den ville kobla vår eigen innkomande straum attende i høgtalarane) —
       // men utan noko anna steg pausar aldri fana sin EIGEN radio, og han
