@@ -237,7 +237,7 @@ const LiveArchive = (() => {
           <div class="mag-article-cat">Live set · ${esc(_fmtDate(s.ended_at))}${s.duration_sec ? ' · ' + esc(_fmtDur(s.duration_sec)) : ''}</div>
           <h1 class="mag-article-title">${esc(s.display_name || 'Live set')}</h1>
           ${s.track_title ? `<p class="mag-article-ingress">${esc(s.track_title)}</p>` : ''}
-          ${s.audio_url ? `<audio controls preload="none" src="${esc(s.audio_url)}" style="width:100%;margin:0.8rem 0"></audio>` : `<p style="color:var(--text3);font-size:0.85rem">No recording available for this set.</p>`}
+          ${s.audio_url ? `<audio controls preload="metadata" src="${esc(s.audio_url)}" onloadedmetadata="window.Player&&Player.fixInfiniteDuration&&Player.fixInfiniteDuration(this)" style="width:100%;margin:0.8rem 0"></audio>` : `<p style="color:var(--text3);font-size:0.85rem">No recording available for this set.</p>`}
           ${_tracklistHtml(s.tracklist)}
           <div style="margin:1rem 0;display:flex;gap:0.6rem;flex-wrap:wrap">
             ${link ? `<a class="btn btn-ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">🔗 Visit link</a>` : ''}

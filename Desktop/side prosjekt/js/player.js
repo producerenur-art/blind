@@ -218,8 +218,18 @@ const Player = (() => {
     return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   }
 
+  // Opptak frå nettlesaren (MediaRecorder-webm) manglar lengde i fila → audio.duration = Infinity, og
+  // spolelinja verkar ikkje. Trikset: hopp til «uendeleg» ein gong, så reknar nettlesaren ut lengda;
+  // hopp så tilbake til start. Verkar òg for eksisterande opptak (ingen omkoding).
+  function fixInfiniteDuration(a) {
+    if (!a || isFinite(a.duration)) return;
+    const back = () => { a.removeEventListener('timeupdate', back); try { a.currentTime = 0; } catch (e) {} };
+    a.addEventListener('timeupdate', back);
+    try { a.currentTime = 1e101; } catch (e) { a.removeEventListener('timeupdate', back); }
+  }
   function playExternal(url, title, subtitle) {
     if (typeof Radio !== 'undefined') Radio.stopForMusicPlayer?.();
+    audio.addEventListener('loadedmetadata', () => fixInfiniteDuration(audio), { once: true });
     audio.src = url;
     $('player-title').textContent  = title    || 'DJ Mix';
     $('player-artist').textContent = subtitle || 'Mix';
@@ -236,5 +246,5 @@ const Player = (() => {
   }
 
   // Expose minimal public API
-  return { init, setQueue, jumpTo, loadTrack, togglePlay, next, prev, playExternal };
+  return { init, setQueue, jumpTo, loadTrack, togglePlay, next, prev, playExternal, fixInfiniteDuration };
 })();

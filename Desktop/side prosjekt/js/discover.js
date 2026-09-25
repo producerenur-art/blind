@@ -1107,14 +1107,19 @@ const Discover = (() => {
     const id = _lcEsc(st.id);
     // Offentleg (gjester og vanlege brukarar): berre Play og Stopp — inga tekst, ingen deling, ingen redigering.
     if (!_wwlIsAdmin()) {
+      const pubImg = st.cover_url ? `<div class="wwl-art wwl-art-public" style="cursor:zoom-in" onclick="Discover.wwlZoom('${id}')"><img src="${_lcEsc(st.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover"></div>` : '';
       return `
       <div class="wwl-card wwl-card-public" id="wwl-${id}">
-        <button class="btn btn-primary" onclick="Discover.wwlPlay('${id}')">▶ Play</button>
-        <button class="btn btn-ghost" onclick="Discover.wwlStop('${id}')">■ Stop</button>
+        ${pubImg}
+        <div class="wwl-public-btns">
+          <button class="btn btn-primary" onclick="Discover.wwlPlay('${id}')">▶ Play</button>
+          <button class="btn btn-ghost" onclick="Discover.wwlStop('${id}')">■ Stop</button>
+          <button class="btn btn-ghost" onclick="Discover.wwlShare('${id}')">Share</button>
+        </div>
       </div>`;
     }
     const fb = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(_wwlUrl(st));
-    const art = st.cover_url ? `<img src="${_lcEsc(st.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:2rem">🎧</span>';
+    const art = st.cover_url ? `<img src="${_lcEsc(st.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="Discover.wwlZoom('${id}')">` : '<span style="font-size:2rem">🎧</span>';
     const mins = st.duration_sec ? Math.round(st.duration_sec / 60) + ' min' : '';
     return `
       <div class="wwl-card" id="wwl-${id}">
@@ -1131,6 +1136,9 @@ const Discover = (() => {
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlCopy('${id}')">📋 Copy link</button>
             <a class="btn btn-ghost btn-sm" href="#/live-archive/${id}">Open →</a>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlEdit('${id}')">✏️ Edit text</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wwl-img-${id}').click()">🖼 ${st.cover_url ? 'Edit image' : 'Add image'}</button>
+            <input type="file" id="wwl-img-${id}" accept="image/*" style="display:none" onchange="Discover.wwlSetImage('${id}',this)">
+            ${st.cover_url ? `<button class="btn btn-ghost btn-sm" onclick="Discover.wwlRemoveImage('${id}')">Remove image</button>` : ''}
             <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wwl-file-${id}').click()">🎵 Replace audio</button>
             <input type="file" id="wwl-file-${id}" accept="audio/*" style="display:none" onchange="Discover.wwlReplaceAudio('${id}',this)">
             <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="Discover.wwlDelete('${id}')">🗑 Delete</button>
@@ -1160,8 +1168,9 @@ const Discover = (() => {
     if (a && (a.currentSrc || a.src || '').indexOf(st.audio_url) !== -1) { try { a.pause(); a.currentTime = 0; } catch (_) {} }
   }
   function wwlShare(id) {
-    const st = _wwlSets[id]; if (!st || !_wwlIsAdmin() || typeof Share === 'undefined') return;
-    Share.shareUrl(_wwlUrl(st), st.display_name || 'Live set', 'SiriusFM', { image: st.cover_url || '' });
+    // Del-knappen er for ALLE: SiriusFM-menyen med Facebook/X/… og forhandsvising med bildet (og:image).
+    const st = _wwlSets[id]; if (!st || typeof Share === 'undefined') return;
+    Share.shareUrl(_wwlUrl(st), st.display_name || 'Live set', 'SiriusFM', { image: st.cover_url || '', preferMenu: true });
   }
   async function wwlCopy(id) {
     const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
@@ -1180,6 +1189,34 @@ const Discover = (() => {
       <textarea id="wwl-t-${_lcEsc(id)}" rows="3" style="${inp};resize:vertical">${_lcEsc(st.track_title || '')}</textarea>
       <button class="btn btn-primary btn-sm" onclick="Discover.wwlSave('${_lcEsc(id)}')">Save</button>
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wwl-edit-${_lcEsc(id)}').innerHTML=''">Cancel</button>`;
+  }
+  // Klikk på bildet → vis det stort (full oppløysing), så små skrift/logoar kan lesast.
+  function wwlZoom(id) {
+    const st = _wwlSets[id]; if (!st || !st.cover_url) return;
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:16px';
+    ov.innerHTML = `<img src="${_lcEsc(st.cover_url)}" alt="" style="max-width:min(94vw,1200px);max-height:94vh;object-fit:contain;border-radius:8px">`;
+    ov.onclick = () => ov.remove();
+    document.body.appendChild(ov);
+  }
+  async function wwlSetImage(id, input) {
+    const st = _wwlSets[id]; const f = input && input.files && input.files[0];
+    if (!st || !f || !_wwlIsAdmin()) return;   // KUN admin
+    if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) { if (typeof App !== 'undefined') App.toast('Cloud storage is not set up.', 'error'); return; }
+    if (typeof App !== 'undefined') App.toast('Uploading image…', 'info', 4000);
+    try {
+      const res = await SC_Storage.upload(f, { prefix: 'live-sets-covers' });
+      const ok = await LiveSets.update(id, { coverUrl: res.url });
+      if (ok) { st.cover_url = res.url; const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); if (typeof App !== 'undefined') App.toast('Image saved.', 'success'); }
+      else if (typeof App !== 'undefined') App.toast('Could not save the image.', 'error');
+    } catch (e) { if (typeof App !== 'undefined') App.toast('Upload failed: ' + (e.message || e), 'error'); }
+    input.value = '';
+  }
+  async function wwlRemoveImage(id) {
+    const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
+    const ok = await LiveSets.update(id, { coverUrl: '' });
+    if (ok) { st.cover_url = ''; const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); }
+    else if (typeof App !== 'undefined') App.toast('Could not remove the image.', 'error');
   }
   async function wwlReplaceAudio(id, input) {
     const st = _wwlSets[id]; const f = input && input.files && input.files[0];
@@ -4062,7 +4099,7 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    wwlPlay, wwlStop, wwlShare, wwlCopy, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete,
+    wwlPlay, wwlStop, wwlShare, wwlCopy, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,
     onCategoryChange, setDiscGenreRadio, clearGenreRadio,
