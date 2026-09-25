@@ -1131,6 +1131,9 @@ const Discover = (() => {
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlCopy('${id}')">📋 Copy link</button>
             <a class="btn btn-ghost btn-sm" href="#/live-archive/${id}">Open →</a>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlEdit('${id}')">✏️ Edit text</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wwl-file-${id}').click()">🎵 Replace audio</button>
+            <input type="file" id="wwl-file-${id}" accept="audio/*" style="display:none" onchange="Discover.wwlReplaceAudio('${id}',this)">
+            <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="Discover.wwlDelete('${id}')">🗑 Delete</button>
           </div>
           <div class="wwl-edit" id="wwl-edit-${id}"></div>
         </div>
@@ -1177,6 +1180,26 @@ const Discover = (() => {
       <textarea id="wwl-t-${_lcEsc(id)}" rows="3" style="${inp};resize:vertical">${_lcEsc(st.track_title || '')}</textarea>
       <button class="btn btn-primary btn-sm" onclick="Discover.wwlSave('${_lcEsc(id)}')">Save</button>
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wwl-edit-${_lcEsc(id)}').innerHTML=''">Cancel</button>`;
+  }
+  async function wwlReplaceAudio(id, input) {
+    const st = _wwlSets[id]; const f = input && input.files && input.files[0];
+    if (!st || !f || !_wwlIsAdmin()) return;
+    if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) { if (typeof App !== 'undefined') App.toast('Cloud storage is not set up.', 'error'); return; }
+    if (typeof App !== 'undefined') App.toast('Uploading audio…', 'info', 4000);
+    try {
+      const res = await SC_Storage.upload(f, { prefix: 'live-sets' });
+      const ok = await LiveSets.update(id, { audioUrl: res.url });
+      if (ok) { st.audio_url = res.url; if (typeof App !== 'undefined') App.toast('Audio replaced.', 'success'); }
+      else if (typeof App !== 'undefined') App.toast('Could not save the new audio.', 'error');
+    } catch (e) { if (typeof App !== 'undefined') App.toast('Upload failed: ' + (e.message || e), 'error'); }
+    input.value = '';
+  }
+  async function wwlDelete(id) {
+    const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
+    if (!confirm('Delete "' + (st.display_name || 'this recording') + '" permanently? This cannot be undone.')) return;
+    const ok = await LiveSets.remove(id);
+    if (ok) { const c = document.getElementById('wwl-' + id); if (c) c.remove(); delete _wwlSets[id]; if (typeof App !== 'undefined') App.toast('Deleted.', 'success'); }
+    else if (typeof App !== 'undefined') App.toast('Could not delete (are you logged in as admin?)', 'error');
   }
   async function wwlSave(id) {
     const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
@@ -4039,7 +4062,7 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    wwlPlay, wwlStop, wwlShare, wwlCopy, wwlEdit, wwlSave,
+    wwlPlay, wwlStop, wwlShare, wwlCopy, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,
     onCategoryChange, setDiscGenreRadio, clearGenreRadio,

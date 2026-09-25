@@ -440,6 +440,11 @@ const LiveMix = (() => {
           <img id="bc-image-prev" src="${_esc(_bc.coverUrl || '')}" alt="" style="height:42px;border-radius:8px;${_bc.coverUrl ? '' : 'display:none'}">
           <span style="font-size:0.74rem;color:var(--text3)">Camera is off — the image is shown while the music plays.</span>
         </div>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.88rem;margin:0 0 0.3rem;cursor:pointer">
+          <input type="checkbox" id="bc-record" ${_recordPref() ? 'checked' : ''} ${live ? 'disabled' : ''} onchange="LiveMix.bcSetRecord(this.checked)">
+          Record this broadcast and add it to “What went live”
+        </label>
+        <p style="font-size:0.74rem;color:var(--text3);margin:0 0 0.9rem">Turn this off to play live without a recording. Your choice is remembered.</p>
         <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin:0 0 1.1rem">
           <button class="btn btn-primary" id="bc-go" onclick="LiveMix.bcGo()" ${(live || !_bc.permGranted) ? 'disabled' : ''}>📡 Go live</button>
           <button class="btn" id="bc-stop" onclick="LiveMix.bcStop()" ${live ? '' : 'disabled'} style="background:#ef4444;color:#fff">■ Stop</button>
@@ -524,6 +529,14 @@ const LiveMix = (() => {
     return cs.getVideoTracks()[0] || null;
   }
 
+  // Kryssboks «Record this broadcast» (brukarønske 2026-09-25): på som standard, valet blir husk lokalt.
+  function _recordPref() {
+    try { return localStorage.getItem('sfm_bc_record') !== '0'; } catch (e) { return true; }
+  }
+  function bcSetRecord(v) {
+    try { localStorage.setItem('sfm_bc_record', v ? '1' : '0'); } catch (e) {}
+  }
+
   async function bcGo() {
     try {
       const sel = _byId('bc-dev'), roomEl = _byId('bc-room'), presEl = _byId('bc-presenter'), trackEl = _byId('bc-track'), linkEl = _byId('bc-link');
@@ -567,7 +580,9 @@ const LiveMix = (() => {
       _publishLiveStatus(true);
       _notifyLiveStart();
       // Opptak + arkivrad (js/liveSets.js) — stoppar aldri sendinga, feil her ignorerast.
-      try { window.LiveSets?.begin({ stream: _bc.outStream, displayName: _bc.presenterName, room, isOwner: true, trackTitle: _bc.trackTitle, linkUrl: _bc.linkUrl }); } catch (e) {}
+      const recEl = _byId('bc-record'), wantRec = recEl ? !!recEl.checked : _recordPref();
+      if (wantRec) { try { window.LiveSets?.begin({ stream: _bc.outStream, displayName: _bc.presenterName, room, isOwner: true, trackTitle: _bc.trackTitle, linkUrl: _bc.linkUrl }); } catch (e) {} }
+      else _bcLog('Recording is OFF for this broadcast.');
       // Hjarteslag: re-publiser med jamne mellomrom mens sendinga pågår, så
       // updated_at-kolonna held seg fersk. Krasjar/lukkast fana (eller
       // internett fell heilt ut) UTAN at bcStop() rekk å køyre, sluttar
@@ -635,6 +650,7 @@ const LiveMix = (() => {
     const go = _byId('bc-go'), stop = _byId('bc-stop'), perm = _byId('bc-perm'), dev = _byId('bc-dev'), room = _byId('bc-room'), dot = _byId('bc-dot'), st = _byId('bc-status');
     if (go) go.disabled = live; if (stop) stop.disabled = !live; if (perm) perm.disabled = live;
     if (dev) dev.disabled = live; if (room) room.disabled = live;
+    const recBox = _byId('bc-record'); if (recBox) recBox.disabled = live;
     if (dot) dot.style.background = live ? '#ef4444' : '#9aa3b2';
     if (st) st.textContent = live ? 'LIVE — broadcasting' : 'Inactive';
     _refreshOwnerButton();
@@ -828,7 +844,7 @@ const LiveMix = (() => {
   return {
     openBooking, step, startCheckout, testPurchase, completeFromSession, showReceipt,
     priceFor, _makeBooking, RATE_KR, RATE_ORE,
-    goLive, bcPerm, bcGo, bcStop, bcSetVisual, bcSetImage, bcUpdateNowPlaying, tuneIn, tuneInJoin, tuneOut,
+    goLive, bcPerm, bcGo, bcStop, bcSetVisual, bcSetImage, bcUpdateNowPlaying, bcSetRecord, tuneIn, tuneInJoin, tuneOut,
     canGoLive,
     isBroadcastingHere: () => !!_bc.dj,
     // Brukt av js/radio247.js sitt "24-Hour Cycle"-kort for å vise «LIVE —
