@@ -476,6 +476,13 @@ function specialShowHtml(name, siteUrl, unsubscribeUrl, show, kind, total) {
   const first = new Date(show.slots[0]);
   const when = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hour12: false }).format(first);
   const hoursLeft = Math.round((first.getTime() - Date.now()) / 3600000);
+  const fmtDay = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long' });
+  const fmtClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit', hour12: false });
+  const slotLines = show.slots.map(iso => {
+    const st = new Date(iso), en = new Date(st.getTime() + show.durationSec * 1000);
+    return `${fmtDay.format(st)} ${fmtClock.format(st)}–${fmtClock.format(en)} CEST`;
+  });
+  let bandcamp = ''; try { bandcamp = new URL(show.linkUrl).origin; } catch (_) {}
   const lead = kind === 0 ? 'Save the date' : (kind === 1 ? 'Tomorrow' : 'Today');
   return `<!DOCTYPE html>
 <html lang="en">
@@ -484,12 +491,14 @@ function specialShowHtml(name, siteUrl, unsubscribeUrl, show, kind, total) {
   <div style="max-width:560px;margin:2rem auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(168,85,247,0.3)">
     <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:2rem;text-align:center">
       <p style="color:rgba(255,255,255,0.85);margin:0 0 0.4rem;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase">${escHtml(lead)} · ${kind + 1} of ${total}</p>
-      <h1 style="color:#fff;margin:0;font-size:1.75rem;font-weight:800">${escHtml(show.artist)} live on SiriusFM</h1>
-      <p style="color:rgba(255,255,255,0.9);margin:0.5rem 0 0;font-size:0.95rem">${escHtml(show.title)}</p>
+      <h1 style="color:#fff;margin:0;font-size:1.75rem;font-weight:800">Welcome to — ${escHtml(show.artist)} on SiriusFM</h1>
+      <p style="color:rgba(255,255,255,0.9);margin:0.5rem 0 0;font-size:0.95rem">Live Broadcast / Podcast</p>
     </div>
     <div style="padding:2rem;color:#e2e8f0">
-      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1rem">Hi ${escHtml(name)}! ${escHtml(show.artist)} takes over the 24-Hour Cycle for one full hour — a deep, slow mix made for SiriusFM.</p>
-      <p style="margin:0 0 1rem;font-size:1.05rem;font-weight:700;color:#fff">${escHtml(when)} · Norwegian time</p>
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1rem">Hi ${escHtml(name)}! ${escHtml(show.artist)} takes over SiriusFM live — a mix made for the station.</p>
+      <p style="margin:0 0 0.5rem;font-size:1.05rem;font-weight:700;color:#fff">${slotLines.map(l => escHtml(l)).join('<br>')}</p>
+      <p style="margin:0 0 1rem;color:#94a3b8;font-size:0.85rem">Norwegian time (CEST)</p>
+      ${bandcamp ? `<p style="margin:0 0 1rem"><a href="${escHtml(bandcamp)}" style="color:#c4b5fd">${escHtml(bandcamp.replace(/^https?:\/\//, ''))}</a></p>` : ''}
       ${kind === 2 && hoursLeft > 0 ? `<p style="color:#94a3b8;margin:0 0 1rem">Starts in about ${hoursLeft} hours.</p>` : ''}
       <div style="text-align:center;margin:1.5rem 0 0.5rem">
         <a href="${base}/#/radio" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;padding:0.875rem 2rem;border-radius:8px;font-weight:700;font-size:1rem">Listen on SiriusFM →</a>
