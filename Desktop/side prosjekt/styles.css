@@ -11405,3 +11405,18 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 .lc-ad-tracks ol { margin: 0.5rem 0 0; padding-left: 1.4rem; }
 @media (max-width: 640px) { .lc-ad { margin: 1rem 16px 0; padding: 1rem; } .lc-ad-title { font-size: 1.15rem; } }
 .lc-ad-on { margin: 0 0 0.5rem; font-size: 0.95rem; font-weight: 700; color: #a5b4fc; }
+
+/* «What went live» under Lemonchill-kortet på Discover */
+#disc-wwl { max-width: 900px; margin: 1rem auto 0; }
+#disc-wwl:empty { display: none; }
+.wwl-head { font-size: 1.1rem; font-weight: 800; margin: 0 0 0.6rem; text-align: center; }
+.wwl-list { display: grid; gap: 0.75rem; }
+.wwl-card { display: flex; gap: 1rem; padding: 0.9rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.12); background: rgba(10,10,25,0.72); backdrop-filter: blur(6px); }
+.wwl-art { width: 96px; height: 96px; flex: 0 0 96px; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#1a0b3d,#3a106e); }
+.wwl-body { flex: 1; min-width: 0; }
+.wwl-name { font-weight: 800; }
+.wwl-text { color: var(--text2); font-size: 0.9rem; margin: 0.15rem 0; white-space: pre-line; }
+.wwl-meta { color: var(--text3); font-size: 0.78rem; margin-bottom: 0.5rem; }
+.wwl-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.wwl-edit:not(:empty) { margin-top: 0.6rem; }
+@media (max-width: 640px) { #disc-wwl { margin: 1rem 16px 0; } .wwl-card { flex-direction: column; } .wwl-art { width: 100%; height: 140px; flex-basis: auto; } }
