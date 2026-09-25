@@ -1080,12 +1080,13 @@ const Discover = (() => {
   // «Edit text» og kan endre namn/tekst (LiveSets.update, sjekka òg i databasen).
   // Første Lemonchill-sending blir publisert via tools/publish-special-set.js etter at ho har gått.
   const _wwlSets = {};
-  // KUN innlogga eigar-admin (producerenur@gmail.com) ser alt utanom Play/Stopp (brukarønske 2026-09-25).
-  const WWL_ADMIN_EMAIL = 'producerenur@gmail.com';
+  // KUN innlogga admin (producerenur@gmail.com og constant8@gmail.com) ser redigering/deling/sletting osv.
+  // (2026-09-25). Alle andre ser Play/Stopp/Share + DJ-namn/tekst.
+  const WWL_ADMIN_EMAILS = ['producerenur@gmail.com', 'constant8@gmail.com'];
   function _wwlIsAdmin() {
     try {
       const me = Auth.current();
-      return !!me && String(me.email || '').toLowerCase().trim() === WWL_ADMIN_EMAIL;
+      return !!me && WWL_ADMIN_EMAILS.includes(String(me.email || '').toLowerCase().trim());
     } catch (_) { return false; }
   }
   function _wwlUrl(st) {
