@@ -11460,3 +11460,14 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 .wwl-time { color: #7dd3fc; font-size: 0.8rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .wwl-public-main { display: flex; flex-direction: column; gap: 0.4rem; flex: 1; min-width: 0; }
 .wwl-card-public { align-items: center; }
+
+/* DJ-namn (og tekst) ved sida av Share — synleg for alle; berre admin kan redigere */
+.wwl-public-btns { flex-wrap: wrap; }
+.wwl-dj { color: #7dd3fc; font-weight: 800; font-size: 1.05rem; margin-left: 0.4rem; overflow-wrap: anywhere; }
+.wwl-public-text { color: #7dd3fc; opacity: 0.85; font-size: 0.9rem; white-space: pre-line; overflow-wrap: anywhere; }
+/* Spolelinja i «What went live» skal vere blå (ikkje grøn) */
+#disc-wwl .wwl-seek input[type=range] { accent-color: #38bdf8; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px; background: rgba(125,211,252,0.25); outline: none; }
+#disc-wwl .wwl-seek input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #38bdf8; border: 2px solid #e0f2fe; cursor: pointer; }
+#disc-wwl .wwl-seek input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #38bdf8; border: 2px solid #e0f2fe; cursor: pointer; }
+#disc-wwl .wwl-seek input[type=range]:disabled::-webkit-slider-thumb { background: #7dd3fc; opacity: 0.6; }
+#disc-wwl .wwl-seek input[type=range]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(56,189,248,0.3); }

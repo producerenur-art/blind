@@ -1147,7 +1147,9 @@ const Discover = (() => {
             <button class="btn btn-primary" onclick="Discover.wwlPlay('${id}')">▶ Play</button>
             <button class="btn btn-ghost" onclick="Discover.wwlStop('${id}')">■ Stop</button>
             <button class="btn btn-ghost" onclick="Discover.wwlShare('${id}')">Share</button>
+            ${st.display_name ? `<span class="wwl-dj">${_lcEsc(st.display_name)}</span>` : ''}
           </div>
+          ${st.track_title ? `<div class="wwl-public-text">${_lcEsc(st.track_title)}</div>` : ''}
           <div class="wwl-seek" id="wwl-seek-${id}">
           <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
           <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st.duration_sec)}</span>
