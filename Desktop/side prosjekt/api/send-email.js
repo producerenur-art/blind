@@ -479,7 +479,7 @@ function specialShowHtml(name, siteUrl, unsubscribeUrl, show, kind, total) {
   const fmtDay = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long' });
   const fmtClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit', hour12: false });
   const slotLines = show.slots.map(iso => {
-    const st = new Date(iso), en = new Date(st.getTime() + show.durationSec * 1000);
+    const st = new Date(iso), en = new Date(st.getTime() + Math.ceil(show.durationSec / 60) * 60000);
     return `${fmtDay.format(st)} ${fmtClock.format(st)}–${fmtClock.format(en)} CEST`;
   });
   let bandcamp = ''; try { bandcamp = new URL(show.linkUrl).origin; } catch (_) {}
@@ -496,6 +496,7 @@ function specialShowHtml(name, siteUrl, unsubscribeUrl, show, kind, total) {
     </div>
     <div style="padding:2rem;color:#e2e8f0">
       <p style="color:#94a3b8;line-height:1.6;margin:0 0 1rem">Hi ${escHtml(name)}! ${escHtml(show.artist)} takes over SiriusFM live — a mix made for the station.</p>
+      <p style="margin:0 0 0.5rem;font-size:0.95rem;font-weight:700;color:#a5b4fc">Airing on the SiriusFM 24/7 Cycle</p>
       <p style="margin:0 0 0.5rem;font-size:1.05rem;font-weight:700;color:#fff">${slotLines.map(l => escHtml(l)).join('<br>')}</p>
       <p style="margin:0 0 1rem;color:#94a3b8;font-size:0.85rem">Norwegian time (CEST)</p>
       ${bandcamp ? `<p style="margin:0 0 1rem"><a href="${escHtml(bandcamp)}" style="color:#c4b5fd">${escHtml(bandcamp.replace(/^https?:\/\//, ''))}</a></p>` : ''}

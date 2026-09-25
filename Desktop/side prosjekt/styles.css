@@ -11384,3 +11384,24 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 @media (prefers-reduced-motion: reduce) {
   .live-blink, .radio-np-badge.is-broadcast .dot { animation: none; }
 }
+
+/* Lemonchill-reklame under Discover-heroen */
+.lc-ad {
+  max-width: 900px; margin: 1.25rem auto 0; padding: 1.25rem 1.5rem;
+  border-radius: 16px; border: 1px solid rgba(125,211,252,0.3);
+  background: linear-gradient(135deg, rgba(56,189,248,0.10), rgba(168,85,247,0.10));
+  text-align: center;
+}
+.lc-ad-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #7dd3fc; margin-bottom: 0.4rem; }
+.lc-ad-title { margin: 0 0 0.6rem; font-size: 1.35rem; font-weight: 800; }
+.lc-ad-lines { margin: 0; font-weight: 600; line-height: 1.6; }
+.lc-ad-note { margin: 0.2rem 0 0.9rem; font-size: 0.8rem; color: var(--text3); }
+.lc-ad-actions { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: center; justify-content: center; }
+.lc-ad-soon { font-size: 0.85rem; color: var(--text2); }
+.lc-ad-link { color: #7dd3fc; font-weight: 600; text-decoration: none; }
+.lc-ad-link:hover { text-decoration: underline; }
+.lc-ad-tracks { margin-top: 0.9rem; text-align: left; max-width: 520px; margin-left: auto; margin-right: auto; font-size: 0.85rem; color: var(--text2); }
+.lc-ad-tracks summary { cursor: pointer; text-align: center; font-weight: 600; }
+.lc-ad-tracks ol { margin: 0.5rem 0 0; padding-left: 1.4rem; }
+@media (max-width: 640px) { .lc-ad { margin: 1rem 16px 0; padding: 1rem; } .lc-ad-title { font-size: 1.15rem; } }
+.lc-ad-on { margin: 0 0 0.5rem; font-size: 0.95rem; font-weight: 700; color: #a5b4fc; }

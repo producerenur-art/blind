@@ -1037,6 +1037,41 @@ const Discover = (() => {
     return counts;
   }
 
+  // ── Lemonchill-reklame under Discover-heroen (brukarønske 2026-09-25) ──────────────
+  // Same tekst som e-postvarsla (js/specialShows.js er felles kjelde). Alle (gjester òg) kan
+  // spele miksen på forespørsel med den vanlege spelaren (Player.playExternal, med spolelinje) —
+  // men ikkje FØR første direktesending har starta (ikkje spoile premieren).
+  function _lcEsc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+  function renderLemonchillAd() {
+    const show = (typeof SpecialShows !== 'undefined' && SpecialShows.SHOWS && SpecialShows.SHOWS[0]) || null;
+    if (!show) return '';
+    const fmtDay = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long' });
+    const fmtClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit', hour12: false });
+    const lines = show.slots.map(iso => {
+      const st = new Date(iso), en = new Date(st.getTime() + Math.ceil(show.durationSec / 60) * 60000);
+      return `${fmtDay.format(st)} ${fmtClock.format(st)}–${fmtClock.format(en)} CEST`;
+    });
+    let site = ''; try { site = new URL(show.linkUrl).origin; } catch (_) {}
+    const airedYet = Date.now() >= Date.parse(show.slots[0]);
+    const mins = Math.round(show.durationSec / 60);
+    const tracks = (show.tracklist || []).map(t => `<li>${_lcEsc(t)}</li>`).join('');
+    return `
+        <div class="lc-ad" id="lc-ad">
+          <div class="lc-ad-tag">Live Broadcast / Podcast</div>
+          <h2 class="lc-ad-title">Welcome to — ${_lcEsc(show.artist)} on SiriusFM</h2>
+          <p class="lc-ad-on">Airing on the SiriusFM 24/7 Cycle</p>
+          <p class="lc-ad-lines">${lines.map(_lcEsc).join('<br>')}</p>
+          <p class="lc-ad-note">Norwegian time (CEST)</p>
+          <div class="lc-ad-actions">
+            ${airedYet
+              ? `<button class="btn btn-primary lc-ad-play" onclick="Player.playExternal('${_lcEsc(show.audioUrl)}','${_lcEsc(show.title)}','${_lcEsc(show.artist)}')">▶ Listen to the mix · ${mins} min</button>`
+              : `<span class="lc-ad-soon">The mix will be available here after the first live broadcast on ${_lcEsc(fmtDay.format(new Date(show.slots[0])))}.</span>`}
+            ${site ? `<a class="lc-ad-link" href="${_lcEsc(site)}" target="_blank" rel="noopener noreferrer">${_lcEsc(site.replace(/^https?:\/\//, ''))}</a>` : ''}
+          </div>
+          ${airedYet && tracks ? `<details class="lc-ad-tracks"><summary>Tracklist</summary><ol>${tracks}</ol></details>` : ''}
+        </div>`;
+  }
+
   function renderGenreTags() {
     const counts = getGenreCounts();
     return GENRES.map(g => {
@@ -1239,6 +1274,8 @@ const Discover = (() => {
             <p class="disc-hero-sub">Explore music and connect across the community.</p>
           </div>
         </div>
+
+        ${renderLemonchillAd()}
 
         <!-- MUSIC TAB -->
         <div id="disc-music-tab">
