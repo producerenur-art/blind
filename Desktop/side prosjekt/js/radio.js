@@ -1661,7 +1661,11 @@ const Radio = (() => {
       // Autoplay-sperre og «avbrote av ny load()» er ikkje daude strøymar.
       if (err?.name === 'NotAllowedError') {
         updatePlayBtn(false);
-        App.toast('Tap play to start the stream', 'info');
+        // Nettlesaren blokkerte autoplay (ingen brukargest enno, t.d. etter ei live-sending). Neste trykk/tast
+        // ANNAN STAD på sida held fram avspelinga — ingen treng finne play-knappen (brukarønske 2026-09-25).
+        App.toast('Tap anywhere to keep listening', 'info');
+        const again = () => { if (!isPlaying && !_liveTakeover && currentStation) _playUrl(url, info); };
+        ['click', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, again, { once: true }));
         return;
       }
       if (err?.name === 'AbortError') return;   // brukaren bytta stasjon midt i
