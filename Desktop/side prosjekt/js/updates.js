@@ -25,6 +25,12 @@ const SiriusUpdates = (() => {
       '<b>Private chat</b>: open a profile → <i>Send private message</i>. You can edit text (with emojis), send images, GIFs and music, and replace or delete what you sent.',
       '<b>Friends</b>: press <i>+ Add friend</i> on a profile. Requests appear in the Inbox and the bell. Click a name in a notification to open that profile.',
     ]},
+    { title: '🔗 Sharing to Facebook & SoundCloud', items: [
+      '<b>Facebook:</b> tick <i>Also share on Facebook</i> under your post (it is on by default). Facebook’s share window opens with your public post ready — press <i>Post</i> there. It uses whichever Facebook account you are logged into in your browser; your email does not need to match.',
+      '<b>Music and audio on Facebook:</b> uploaded tracks and mixes have a 🔗 share button that opens Facebook with your cover image, title and a playable link.',
+      '<b>SoundCloud:</b> paste any SoundCloud link in a post, comment or profile and it becomes a player right on SiriusFM. To put a SiriusFM upload on SoundCloud, upload it there yourself and share the link here.',
+      '<b>Accounts are not linked automatically.</b> Facebook and SoundCloud only allow posting with your own approval each time, so nothing is ever posted for you without you pressing the button.',
+    ]},
     { title: '🔔 Notifications & email', items: [
       'The bell shows reactions, comments, friend requests and messages. Sound can be turned off per person on their profile.',
       'When someone writes you a private message you also get an email (at most one per 15 minutes per conversation). Marketing emails have an unsubscribe link; opting out also stops message emails.',
