@@ -379,9 +379,11 @@ const Social = (() => {
     const u = me(); if (!u) { if (window.Router) Router.go('/login'); return; }
     if (!window.GifPicker) { if (typeof App !== 'undefined') App.toast('GIF picker not loaded', 'error'); return; }
     GifPicker.open(url => {
-      _pendingMedia[targetKey] = { url, kind: mediaKindOf(url) || 'image' };
-      renderPendingMedia(targetKey);
-    }, { title: 'Add an image or GIF' });
+      const kind = mediaKindOf(url) || (GifPicker.isImageLike(url) ? 'image' : null);
+      if (kind) { _pendingMedia[targetKey] = { url, kind }; renderPendingMedia(targetKey); return; }
+      // Vanleg lenke (SoundCloud, YouTube …): legg i kommentarteksten — kortet blir laga av lenka.
+      allById('sc-cmt-input-' + domId(targetKey)).forEach(inp => { inp.value = (inp.value ? inp.value.trim() + ' ' : '') + url; inp.focus(); });
+    }, { title: 'Add an image, GIF or link', anyLink: true });
   }
 
   function clearCommentMedia(targetKey) {

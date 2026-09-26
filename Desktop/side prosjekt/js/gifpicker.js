@@ -12,7 +12,10 @@ const GifPicker = (() => {
   function _esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   // Normaliser innlimt lenke → direkte bilde-URL, eller null om ho ikkje går an.
-  function normalizeUrl(raw) {
+  function isImageLike(u) {
+    try { const x = new URL(u); return /\.(gif|webp|png|jpe?g|avif)$/i.test(x.pathname) || /^(media\d*|i)\.giphy\.com$/.test(x.hostname) || /^(media\d*|c)\.tenor\.com$/.test(x.hostname); } catch (_) { return false; }
+  }
+  function normalizeUrl(raw, anyLink) {
     let s = String(raw || '').trim();
     if (!s) return null;
     if (!/^https?:\/\//i.test(s)) s = 'https://' + s;
@@ -27,7 +30,7 @@ const GifPicker = (() => {
     }
     if (/\.(gif|webp|png|jpe?g)$/i.test(u.pathname)) return u.href;
     if (/^(media\d*|i)\.giphy\.com$/.test(host) || /^(media\d*|c)\.tenor\.com$/.test(host)) return u.href;
-    return null;
+    return anyLink ? u.href : null;
   }
 
   function close() { if (_el) { _el.remove(); _el = null; } document.removeEventListener('keydown', _onKey); }
@@ -50,7 +53,7 @@ const GifPicker = (() => {
           Upload from your device
           <input type="file" accept="image/gif,image/webp,image/*" data-gp="file" style="display:none">
         </label>
-        <div style="text-align:center;opacity:.6;font-size:.8rem;margin:.4rem 0">or paste a link (image, .gif, Giphy)</div>
+        <div style="text-align:center;opacity:.6;font-size:.8rem;margin:.4rem 0">or paste a link (${opts.anyLink ? 'image, GIF, SoundCloud, YouTube…' : 'image, .gif, Giphy'})</div>
         <input type="text" data-gp="url" placeholder="https://media.giphy.com/…/giphy.gif" style="width:100%;box-sizing:border-box;padding:.6rem .7rem;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:inherit">
         <div data-gp="preview" style="margin-top:.7rem;min-height:1rem;text-align:center"></div>
         <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.8rem">
@@ -66,6 +69,10 @@ const GifPicker = (() => {
 
     function setChosen(url) {
       chosen = url; send.disabled = !url;
+      if (url && opts.anyLink && !isImageLike(url)) {
+        prev.innerHTML = `<div style="font-size:.85rem;opacity:.85;word-break:break-all">🔗 ${_esc(url)}<br><span style="opacity:.6">Will be added as a link (with preview)</span></div>`;
+        return;
+      }
       prev.innerHTML = url
         ? `<img src="${_esc(url)}" alt="GIF preview" style="max-width:100%;max-height:220px;border-radius:8px">`
         : '';
@@ -77,8 +84,8 @@ const GifPicker = (() => {
       if (e.target === el || e.target.closest('[data-gp="close"]')) close();
     });
     urlIn.addEventListener('input', () => {
-      const n = normalizeUrl(urlIn.value);
-      if (urlIn.value.trim() && !n) { chosen = null; send.disabled = true; prev.innerHTML = '<span style="opacity:.6;font-size:.85rem">Use a direct .gif link or a Giphy link</span>'; }
+      const n = normalizeUrl(urlIn.value, opts.anyLink);
+      if (urlIn.value.trim() && !n) { chosen = null; send.disabled = true; prev.innerHTML = '<span style="opacity:.6;font-size:.85rem">' + (opts.anyLink ? 'Paste a valid link' : 'Use a direct image/.gif link or a Giphy link') + '</span>'; }
       else setChosen(n);
     });
     urlIn.addEventListener('keydown', e => { if (e.key === 'Enter' && chosen) send.click(); });
@@ -105,6 +112,6 @@ const GifPicker = (() => {
     setTimeout(() => urlIn.focus(), 30);
   }
 
-  return { open, close, normalizeUrl };
+  return { open, close, normalizeUrl, isImageLike };
 })();
 window.GifPicker = GifPicker;
