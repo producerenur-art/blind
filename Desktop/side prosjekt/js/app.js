@@ -293,6 +293,7 @@ const App = (() => {
         <a href="#/"            class="btn btn-ghost btn-sm">${Icon('home')} Feed</a>
         <a href="#/radio"       class="btn btn-ghost btn-sm">${Icon('radio')} Radio</a>
         <a href="#/discover"    class="btn btn-ghost btn-sm">${Icon('music')} Discover</a>
+        <a href="https://siriusfm-studio.vercel.app/" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" title="Studio — make music in your browser (opens in a new tab)">${Icon('sliders')} Studio</a>
         <a href="#/u/${user.username}" class="btn btn-ghost btn-sm">${Icon('user')} Profile</a>
         <button id="nav-bell" class="btn btn-ghost btn-sm" onclick="if(window.Notify)Notify.togglePanel()" title="Notifications" aria-label="Notifications" style="position:relative">${Icon('bell')}</button>
         <button id="nav-more-btn" class="btn btn-ghost btn-sm nav-more-btn" onclick="App.toggleMoreMenu(this)" title="More — all features" style="position:relative">${Icon('menu')} More ${Icon('chevron-down')}${moreBadge}</button>
