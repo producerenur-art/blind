@@ -250,13 +250,8 @@ const DJ = (() => {
   // API-konto/nøkkel trengst, i motsetning til eit fullt Giphy/Tenor-søk).
   // Lim inn ei direkte .gif-lenke; pmMsgHtml/gpost-visning render kind:'gif'
   // som eit bilete i staden for tekst.
-  async function pickGif(targetUsername) {
-    const url = (prompt('Paste a GIF URL (must end in .gif):') || '').trim();
-    if (!url) return;
-    if (!/^https?:\/\/\S+\.gif(?:[?#]\S*)?$/i.test(url)) {
-      App.toast('That doesn\'t look like a direct .gif link', 'error'); return;
-    }
-    await _doSend(targetUsername, url, 'gif');
+  function pickGif(targetUsername) {
+    GifPicker.open(url => _doSend(targetUsername, url, 'gif'));
   }
 
   async function _doSend(targetUsername, text, kind) {

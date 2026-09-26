@@ -467,13 +467,7 @@ const Messenger = (() => {
 
   function pickGif() {
     if (!_active) return;
-    const url = (prompt('Paste a direct .gif URL:', '') || '').trim();
-    if (!url) return;
-    if (!/^https?:\/\/\S+\.gif(?:[?#]\S*)?$/i.test(url)) {
-      if (window.App) App.toast('Must be a direct link to a .gif file', 'error');
-      return;
-    }
-    _doSend(url, 'gif');
+    GifPicker.open(url => _doSend(url, 'gif'));
   }
 
   // Rediger/slett EIGEN melding — server (api/dm.js) sjekkar from_user === deg

@@ -531,12 +531,9 @@ const Community = (() => {
   function pickGif(fromEl) {
     const me = Auth.current();
     if (!me) { if (typeof Router !== 'undefined') Router.go('/login'); return; }
-    const url = (prompt('Paste a direct .gif URL:', '') || '').trim();
-    if (!url) return;
-    if (!/^https?:\/\/\S+\.gif(?:[?#]\S*)?$/i.test(url)) {
-      if (typeof App !== 'undefined') App.toast('Must be a direct link to a .gif file', 'error');
-      return;
-    }
+    GifPicker.open(url => _applyGif(url, fromEl));
+  }
+  function _applyGif(url, fromEl) {
     const root = _composerRoot(fromEl && fromEl.closest ? fromEl : null);
     _pendingImage = { url, name: 'gif' };
     const preview = _cField(root, 'sc-post-img-preview');
