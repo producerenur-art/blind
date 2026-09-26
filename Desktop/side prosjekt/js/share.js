@@ -398,7 +398,7 @@ const Share = (() => {
       link: SITE + '/#/community',
       username: post.author || '',
     });
-    const fb = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url) + (text ? '&quote=' + encodeURIComponent(text.slice(0, 500)) : '');
+    const fb = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url);   // ingen &quote= (utfasa av Facebook; teksten kjem frå OG-kortet)
     if (w && !w.closed) { w.location.href = fb; return true; }
     if (window.App) App.toast('Facebook popup was blocked — allow popups for siriusfm.no to share there too.', 'info', 6000);
     return false;
