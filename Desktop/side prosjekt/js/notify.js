@@ -219,7 +219,7 @@ const Notify = (() => {
   function rowHtml(n) {
     const ic   = `<span class="sc-notif-ic">${Icon(ICON[n.type] || 'bell')}</span>`;
     const body = `<span class="sc-notif-body">
-        <span class="sc-notif-text"><b>${esc(n.fromDisplay || n.from)}</b> ${esc(n.text)}</span>
+        <span class="sc-notif-text">${n.from ? `<b class="sc-notif-user" role="link" tabindex="0" title="Open profile" style="cursor:pointer;text-decoration:underline dotted" onclick="Notify.openUser(event,'${esc(n.from)}')" onkeydown="if(event.key==='Enter')Notify.openUser(event,'${esc(n.from)}')">${esc(n.fromDisplay || n.from)}</b>` : `<b>${esc(n.fromDisplay || n.from)}</b>`} ${esc(n.text)}</span>
         <span class="sc-notif-time">${timeAgo(n.ts)}</span>
       </span>`;
     // Venneforespurnad: ikkje pakk heile rada i ei lenke — då ville Aksepter/Avslå
@@ -262,6 +262,13 @@ const Notify = (() => {
     document.getElementById('sc-notif-panel')?.remove();
     document.removeEventListener('pointerdown', _outside);
   }
+  // Klikk på brukarnamnet i eit varsel opnar profilen i staden for varselet sin lenke.
+  function openUser(ev, username) {
+    if (ev && ev.preventDefault) { ev.preventDefault(); ev.stopPropagation(); }
+    if (!username) return;
+    closePanel();
+    location.hash = '#/u/' + encodeURIComponent(username);
+  }
   function togglePanel() { _panelOpen ? closePanel() : openPanel(); }
 
   // Handter Aksepter / Avslå rett frå varselpanelet. Går gjennom Social slik at
@@ -287,6 +294,6 @@ const Notify = (() => {
     closePanel();
   }
 
-  return { init, emit, pushLocal, notifyFriends, notifyAll, unreadCount, updateBell, togglePanel, openPanel, closePanel, friendAct };
+  return { init, emit, pushLocal, notifyFriends, notifyAll, unreadCount, updateBell, togglePanel, openPanel, closePanel, friendAct, openUser };
 })();
 window.Notify = Notify;
