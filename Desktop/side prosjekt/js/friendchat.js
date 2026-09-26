@@ -136,6 +136,9 @@ const FriendChat = (() => {
     updateBadges();
   }
 
+  // Brukarønske 2026-09-26: «Group lounge» skal ikkje visast på radiosida (#/radio).
+  function _onRadio() { return /^#\/radio(\/|$|\?)/.test(location.hash || ''); }
+
   // ── Mount / render ────────────────────────────────────────────────────
   function mount() {
     if (_mounted || document.getElementById('fc-dock')) { _mounted = true; return; }
@@ -194,11 +197,11 @@ const FriendChat = (() => {
         </button>`;
     }).join('');
     body.innerHTML = `
-      <button class="fc-friend fc-group-row" onclick="FriendChat.openGroup()">
+      ${_onRadio() ? '' : `<button class="fc-friend fc-group-row" onclick="FriendChat.openGroup()">
         <span class="fc-friend-av fc-group-av">${Icon('users')}</span>
         <span class="fc-friend-name">Group lounge <span class="fc-friend-sub">all friends</span></span>
         ${gUnread > 0 ? `<span class="fc-badge">${gUnread > 99 ? '99+' : gUnread}</span>` : ''}
-      </button>
+      </button>`}
       <div class="fc-list-divider">Friends (${friends.length})</div>
       ${rows || '<div class="fc-empty">No friends yet.</div>'}`;
   }
@@ -372,12 +375,14 @@ const FriendChat = (() => {
   // ── Livssyklus ────────────────────────────────────────────────────────
   function refresh() {
     if (!eligible()) { unmount(); return; }
+    // Er Group lounge open når ein kjem inn på #/radio: gå attende til lista.
+    if (_onRadio() && _active.type === 'group') { _active = { type: 'list' }; if (_mounted) renderBody(); }
     mount();
     subscribeAll();
     if (_active.type === 'list') renderList(document.getElementById('fc-body'));
     renderBar();
   }
-  function init() { refresh(); }
+  function init() { refresh(); window.addEventListener('hashchange', () => { try { refresh(); } catch (_) {} }); }
 
   return { init, refresh, toggle, toggleMin, toggleSound, openConv, openGroup, back, send,
     pickGif, editMsg, deleteMsg, toggleEmojiPicker, insertEmoji };
