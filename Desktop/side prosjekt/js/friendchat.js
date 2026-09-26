@@ -5,6 +5,8 @@ const FriendChat = (() => {
 
   const READ_KEY = 'sc_fc_read';   // { channel: lastReadTs }
   const MIN_KEY  = 'sc_fc_min';    // '1' = minimert
+  const CLOSED_KEY = 'sc_fc_closed'; // '1' = lukka (liten 💬-knapp att)
+  const POS_KEY  = 'sc_fc_pos';    // { left, top } etter flytting
   const MAX_MSGS = 200;
 
   const store  = {};               // channel → [msg]  (msg._k = Gun-nøkkel)
@@ -148,12 +150,77 @@ const FriendChat = (() => {
     el.innerHTML = `<div class="fc-bar" id="fc-bar"></div><div class="fc-body" id="fc-body"></div>`;
     document.body.appendChild(el);
     _mounted = true;
+    _applyPos(el);
+    _enableDrag(el);
+    if (localStorage.getItem(CLOSED_KEY) === '1') { el.style.display = 'none'; _showLauncher(); }
     renderBar();
     renderBody();
+  }
+
+  // ── Flytting (dra i topplinja) + lukking ──────────────────────────────
+  function _clampPos(el, left, top) {
+    const w = el.offsetWidth || 300, h = el.offsetHeight || 60;
+    return { left: Math.min(Math.max(0, left), Math.max(0, window.innerWidth - w)),
+             top:  Math.min(Math.max(0, top),  Math.max(0, window.innerHeight - h)) };
+  }
+  function _setPos(el, left, top) {
+    const c = _clampPos(el, left, top);
+    el.style.left = c.left + 'px'; el.style.top = c.top + 'px';
+    el.style.right = 'auto'; el.style.bottom = 'auto';
+  }
+  function _applyPos(el) {
+    try {
+      const p = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
+      if (p && typeof p.left === 'number') _setPos(el, p.left, p.top);
+    } catch (_) {}
+  }
+  function _enableDrag(el) {
+    let sx, sy, ox, oy, dragging = false;
+    el.addEventListener('pointerdown', (e) => {
+      const bar = e.target.closest && e.target.closest('#fc-bar');
+      if (!bar || e.target.closest('button')) return;      // ikkje når ein trykkjer på knappar
+      const r = el.getBoundingClientRect();
+      sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top; dragging = true;
+      try { bar.setPointerCapture(e.pointerId); } catch (_) {}
+      e.preventDefault();
+    });
+    el.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      _setPos(el, ox + e.clientX - sx, oy + e.clientY - sy);
+    });
+    const end = () => {
+      if (!dragging) return; dragging = false;
+      const r = el.getBoundingClientRect();
+      try { localStorage.setItem(POS_KEY, JSON.stringify({ left: r.left, top: r.top })); } catch (_) {}
+    };
+    el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    window.addEventListener('resize', () => {
+      const d = document.getElementById('fc-dock'); if (!d || d.style.left === '') return;
+      const r = d.getBoundingClientRect(); _setPos(d, r.left, r.top);
+    });
+  }
+  function _showLauncher() {
+    if (document.getElementById('fc-launch')) return;
+    const b = document.createElement('button');
+    b.id = 'fc-launch'; b.type = 'button'; b.title = 'Open chat'; b.textContent = '💬';
+    b.style.cssText = 'position:fixed;right:16px;bottom:16px;width:46px;height:46px;border-radius:50%;border:1px solid var(--border2);background:var(--bg2);font-size:1.3rem;cursor:pointer;z-index:var(--z-dock);box-shadow:0 8px 24px rgba(0,0,0,.5)';
+    b.onclick = openDock;
+    document.body.appendChild(b);
+  }
+  function closeDock() {
+    try { localStorage.setItem(CLOSED_KEY, '1'); } catch (_) {}
+    const el = document.getElementById('fc-dock'); if (el) el.style.display = 'none';
+    _showLauncher();
+  }
+  function openDock() {
+    try { localStorage.setItem(CLOSED_KEY, '0'); } catch (_) {}
+    const el = document.getElementById('fc-dock'); if (el) el.style.display = '';
+    document.getElementById('fc-launch')?.remove();
   }
   function unmount() {
     const el = document.getElementById('fc-dock');
     if (el) el.remove();
+    document.getElementById('fc-launch')?.remove();
     _mounted = false;
   }
 
@@ -171,6 +238,7 @@ const FriendChat = (() => {
       <div class="fc-bar-right">
         <button class="fc-bar-btn" onclick="FriendChat.toggleSound(this)" title="Sound on/off">${sndOn ? Icon('volume') : (Icon('volume-x') || '🔇')}</button>
         <button class="fc-bar-btn" id="fc-min-btn" onclick="FriendChat.toggleMin()" title="${_min ? 'Expand' : 'Minimize'}">${_min ? '+' : '—'}</button>
+        <button class="fc-bar-btn" onclick="FriendChat.closeDock()" title="Close">✕</button>
       </div>`;
   }
 
@@ -361,6 +429,7 @@ const FriendChat = (() => {
   }
 
   function toggle() {
+    if (localStorage.getItem(CLOSED_KEY) === '1') { openDock(); return; }
     if (!eligible()) { if (typeof App !== 'undefined') App.toast('Add a friend to use the friend chat', 'info'); return; }
     if (!_mounted) { mount(); subscribeAll(); _min = false; localStorage.setItem(MIN_KEY, '0'); document.getElementById('fc-dock')?.classList.remove('minimized'); renderBar(); return; }
     toggleMin();
@@ -387,7 +456,7 @@ const FriendChat = (() => {
   // Lytt alltid på rutebytte (init() blir ikkje kalla frå noko), så Group lounge forsvinn/kjem attende med sida.
   window.addEventListener('hashchange', () => { try { refresh(); } catch (_) {} });
 
-  return { init, refresh, toggle, toggleMin, toggleSound, openConv, openGroup, back, send,
+  return { init, refresh, closeDock, openDock, toggle, toggleMin, toggleSound, openConv, openGroup, back, send,
     pickGif, editMsg, deleteMsg, toggleEmojiPicker, insertEmoji };
 })();
 window.FriendChat = FriendChat;
