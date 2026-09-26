@@ -11499,3 +11499,38 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 .sc-guide-sec ul { margin: .3rem 0 .4rem 1.1rem; padding: 0; font-size: .85rem; line-height: 1.5; opacity: .9; }
 .sc-guide-sec li { margin: .25rem 0; }
 .sc-guide-sec a { color: #7dd3fc; }
+
+
+/* ═══ Community-veggen: mørk psykedelisk bakgrunn (kun #/community) ═══ */
+#cw-psy { position: absolute; inset: 0; background: #03030a; overflow: hidden; }
+.cw-psy-layer { position: absolute; inset: 0; opacity: 0; transition: opacity 6s ease-in-out; }
+.cw-psy-layer.on { opacity: 1; }
+.cw-psy-layer i {
+  position: absolute; width: 90vmax; height: 90vmax; border-radius: 50%;
+  filter: blur(40px); will-change: transform; opacity: 0.55;
+}
+.cw-psy-layer i:nth-child(1) { left: -30vmax; top: -30vmax;
+  background: radial-gradient(circle, var(--c1) 0%, transparent 62%); animation: cwDrift1 34s ease-in-out infinite; }
+.cw-psy-layer i:nth-child(2) { right: -35vmax; top: 5vmax;
+  background: radial-gradient(circle, var(--c2) 0%, transparent 62%); animation: cwDrift2 41s ease-in-out infinite; }
+.cw-psy-layer i:nth-child(3) { left: 5vmax; bottom: -45vmax;
+  background: radial-gradient(circle, var(--c3) 0%, transparent 62%); animation: cwDrift3 47s ease-in-out infinite; }
+.cw-psy-layer b {
+  position: absolute; left: 50%; top: 50%; width: 150vmax; height: 150vmax; margin: -75vmax 0 0 -75vmax;
+  background: repeating-conic-gradient(from 0deg, var(--c1) 0 6deg, transparent 6deg 18deg, var(--c2) 18deg 24deg, transparent 24deg 36deg);
+  opacity: 0.10; mix-blend-mode: screen; will-change: transform;
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 65%); mask-image: radial-gradient(circle, #000 0%, transparent 65%);
+  animation: cwSpin 120s linear infinite;
+}
+@keyframes cwDrift1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(38vmax,26vmax) scale(1.25); } }
+@keyframes cwDrift2 { 0%,100% { transform: translate(0,0) scale(1.1); } 50% { transform: translate(-42vmax,22vmax) scale(0.9); } }
+@keyframes cwDrift3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30vmax,-34vmax) scale(1.2); } }
+@keyframes cwSpin { to { transform: rotate(360deg); } }
+/* Skrim: demper fargene så tekst alltid har god kontrast */
+.cw-psy-scrim { position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(3,3,10,0.55) 0%, rgba(3,3,10,0.78) 100%); }
+/* Skjul standard-bakgrunnsbilde/partikler bak den mørke flaten */
+body.community-psy #bg-img-wrap, body.community-psy #bg-particles-canvas { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .cw-psy-layer i, .cw-psy-layer b { animation: none; }
+}

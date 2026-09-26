@@ -57,5 +57,22 @@
     "api/special-reminder.js": {
       "maxDuration": 300
     }
+  },
+  "images": {
+    "sizes": [
+      640,
+      1200
+    ],
+    "minimumCacheTTL": 86400,
+    "formats": [
+      "image/webp"
+    ],
+    "remotePatterns": [
+      {
+        "protocol": "https",
+        "hostname": "qefdyxpyjwpohsmmmksf.supabase.co",
+        "pathname": "/storage/v1/object/public/**"
+      }
+    ]
   }
 }

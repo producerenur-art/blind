@@ -208,7 +208,19 @@ const LiveSets = (() => {
     return !error;
   }
 
-  return { begin, end, list, get, canEdit, update, remove, recover };
+  // Delings-slug: <romnamn>-<6 siste teikn av id>, t.d. «live-it6nfk». Romnamnet (det DJ-en skriv i «Room name») blir
+  // lesbar del av lenka; suffikset gjer den unik. Serveren (api/share.js) slår opp på suffikset.
+  function shareSlug(set) {
+    const id = String((set && set.id) || '');
+    const suf = id.replace(/^set_/i, '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(-6);
+    let room = String((set && set.room) || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/æ/g, 'ae').replace(/ø/g, 'o').replace(/å/g, 'a')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30).replace(/-+$/, '');
+    if (!suf || suf.length < 6) return id;   // uvanleg id → gammal lenke-form
+    return (room || 'set') + '-' + suf;
+  }
+
+  return { begin, end, list, get, canEdit, update, remove, recover, shareSlug };
 })();
 
 if (typeof window !== 'undefined') window.LiveSets = LiveSets;

@@ -801,9 +801,10 @@ const Discover = (() => {
 
   // ── Sub-tab rendering ─────────────────────────────────────────────────
   function renderSubTabs() {
+    // «Radio favorite» er berre for innlogga brukarar (gjester ser han ikkje).
     const tabs = [
       { id: 'upload', icon: '🔼', label: 'Upload' },
-      { id: 'radio',  icon: '📻', label: 'Radio favorite' },
+      ...(Auth.current() ? [{ id: 'radio', icon: '📻', label: 'Radio favorite' }] : []),
     ];
     return `<div class="disc-sub-tab-bar" id="disc-sub-tab-bar">
       ${tabs.map(t => `
@@ -1092,7 +1093,8 @@ const Discover = (() => {
   function _wwlUrl(st) {
     // Kort delingslenke (ikkje den lange base64-lenka): serveren slår opp opptaket og lagar forhandsvisning med bildet.
     const v = st.updated_at ? Date.parse(st.updated_at) : 0;
-    return 'https://www.siriusfm.no/s/' + encodeURIComponent(st.id) + (v ? '?v=' + v.toString(36) : '');
+    const slug = (typeof LiveSets !== 'undefined' && LiveSets.shareSlug) ? LiveSets.shareSlug(st) : st.id;
+    return 'https://www.siriusfm.no/s/' + encodeURIComponent(slug) + (v ? '?v=' + v.toString(36) : '');
   }
   // Minutt-peikar/spolelinje i kortet: viser mm:ss / total og lar deg hoppe til ein posisjon medan opptaket speler.
   function _wwlClock(sec) {
@@ -1148,7 +1150,8 @@ const Discover = (() => {
           <div class="wwl-public-btns">
             <button class="btn btn-primary" onclick="Discover.wwlPlay('${id}')">▶ Play</button>
             <button class="btn btn-ghost" onclick="Discover.wwlStop('${id}')">■ Stop</button>
-            <button class="btn btn-ghost" onclick="Discover.wwlShare('${id}')">Share</button>
+            <label class="wwl-vol" title="Volume" style="display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--text2)">🔈<input type="range" class="wwl-vol-in" min="0" max="${_wwlVolMax()}" step="1" value="${_wwlVolNow()}" oninput="Discover.wwlVol(this.value)" style="width:110px" aria-label="Volume"></label>
+            <button class="btn btn-ghost" onclick="Discover.wwlCopy('${id}')">📋 Copy link</button>
             ${st.display_name ? `<span class="wwl-dj">${_lcEsc(st.display_name)}</span>` : ''}
           </div>
           ${st.track_title ? `<div class="wwl-public-text">${_lcEsc(st.track_title)}</div>` : ''}
@@ -1159,7 +1162,6 @@ const Discover = (() => {
         </div>
       </div>`;
     }
-    const fb = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(_wwlUrl(st));
     const art = st.cover_url ? `<img src="${_lcEsc(st.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="Discover.wwlZoom('${id}')">` : '<span style="font-size:2rem">🎧</span>';
     const mins = st.duration_sec ? Math.round(st.duration_sec / 60) + ' min' : '';
     return `
@@ -1177,8 +1179,7 @@ const Discover = (() => {
           <div class="wwl-actions">
             <button class="btn btn-primary btn-sm" onclick="Discover.wwlPlay('${id}')">▶ Play</button>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlStop('${id}')">■ Stop</button>
-            <button class="btn btn-ghost btn-sm" onclick="Discover.wwlShare('${id}')">Share</button>
-            <a class="btn btn-ghost btn-sm" href="${_lcEsc(fb)}" target="_blank" rel="noopener noreferrer" style="background:#1877f2;color:#fff;border-color:#1877f2">Facebook</a>
+            <label class="wwl-vol" title="Volume" style="display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--text2)">🔈<input type="range" class="wwl-vol-in" min="0" max="100" step="1" value="${_wwlVolNow()}" oninput="Discover.wwlVol(this.value)" style="width:110px" aria-label="Volume"></label>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlCopy('${id}')">📋 Copy link</button>
             <a class="btn btn-ghost btn-sm" href="#/live-archive/${id}">Open →</a>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlEdit('${id}')">✏️ Edit text</button>
@@ -1206,7 +1207,27 @@ const Discover = (() => {
   }
   function wwlPlay(id) {
     const st = _wwlSets[id]; if (!st || typeof Player === 'undefined') return;
+    window._sfmBoostSrc = st.audio_url;
     Player.playExternal(st.audio_url, st.display_name || 'Live set', st.track_title || 'What went live');
+  }
+  // Volum 0–300 %: opp til 100 % styrer <audio>.volume, over 100 % legg ein forsterking (GainNode + limiter) på.
+  // Mobil/nettbrett har ikkje Web Audio-kjeda (_sfmNoWebAudio) → maks 100 %.
+  function _wwlVolMax() { return window._sfmNoWebAudio ? 100 : 300; }
+  function _wwlVolNow() {
+    const a = document.getElementById('audio-engine');
+    return Math.round(((a ? a.volume : 0.8) * (window._sfmBoost || 1)) * 100);
+  }
+  // Felles volum for heile spelaren (same <audio>): held spelarlinja sin slider i synk.
+  function wwlVol(v) {
+    const a = document.getElementById('audio-engine'); if (!a) return;
+    v = Math.max(0, Math.min(_wwlVolMax(), +v || 0));
+    const base = Math.min(v, 100);
+    window._sfmVolSelf = Date.now();
+    a.volume = base / 100;
+    if (window._sfmSetBoost) window._sfmSetBoost(v > 100 ? v / 100 : 1);
+    const vb = document.getElementById('volume-bar'), vf = document.getElementById('vol-fill');
+    if (vb) vb.value = base; if (vf) vf.style.width = base + '%';
+    document.querySelectorAll('.wwl-vol-in').forEach(i => { if (+i.value !== v) i.value = v; });
   }
   function wwlStop(id) {
     const st = _wwlSets[id]; if (!st) return;
@@ -1214,13 +1235,9 @@ const Discover = (() => {
     // Stopp berre om det er DENNE opptaket som spelar (ikkje ei anna stasjon/spor).
     if (a && (a.currentSrc || a.src || '').indexOf(st.audio_url) !== -1) { try { a.pause(); a.currentTime = 0; } catch (_) {} }
   }
-  function wwlShare(id) {
-    // Del-knappen er for ALLE: SiriusFM-menyen med Facebook/X/… og forhandsvising med bildet (og:image).
-    const st = _wwlSets[id]; if (!st || typeof Share === 'undefined') return;
-    Share.shareUrl(_wwlUrl(st), st.display_name || 'Live set', 'SiriusFM', { image: st.cover_url || '', preferMenu: true });
-  }
+  // Kopier lenke (for alle): ingen delingsdialog, berre lenka til /s/-sida med forhandsvising.
   async function wwlCopy(id) {
-    const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
+    const st = _wwlSets[id]; if (!st) return;
     const url = _wwlUrl(st);
     try { await navigator.clipboard.writeText(url); if (typeof App !== 'undefined') App.toast('Link copied 📋', 'success'); }
     catch (_) { window.prompt('Copy this link:', url); }
@@ -1246,13 +1263,27 @@ const Discover = (() => {
     ov.onclick = () => ov.remove();
     document.body.appendChild(ov);
   }
+  // Facebook/X viser ikkje og:image over ~8 MB (skjermbilde-PNG er ofte 10+ MB) → nedskaler til maks 1600 px JPEG før opplasting.
+  async function _wwlShrinkImage(f) {
+    try {
+      if (!/^image\/(png|jpe?g|webp)$/i.test(f.type) || (f.size < 1.5e6 && f.type !== 'image/png')) return f;
+      const bmp = await createImageBitmap(f);
+      const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+      const cx = cv.getContext('2d'); cx.fillStyle = '#000'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(bmp, 0, 0, cv.width, cv.height);
+      const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.88));
+      if (!blob || blob.size >= f.size) return f;
+      return new File([blob], (f.name || 'cover').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+    } catch (_) { return f; }
+  }
   async function wwlSetImage(id, input) {
     const st = _wwlSets[id]; const f = input && input.files && input.files[0];
     if (!st || !f || !_wwlIsAdmin()) return;   // KUN admin
     if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) { if (typeof App !== 'undefined') App.toast('Cloud storage is not set up.', 'error'); return; }
     if (typeof App !== 'undefined') App.toast('Uploading image…', 'info', 4000);
     try {
-      const res = await SC_Storage.upload(f, { prefix: 'live-sets-covers' });
+      const res = await SC_Storage.upload(await _wwlShrinkImage(f), { prefix: 'live-sets-covers' });
       const ok = await LiveSets.update(id, { coverUrl: res.url });
       if (ok) { st.cover_url = res.url; st.updated_at = new Date().toISOString(); const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); if (typeof App !== 'undefined') App.toast('Image saved.', 'success'); }
       else if (typeof App !== 'undefined') App.toast('Could not save the image.', 'error');
@@ -3729,6 +3760,7 @@ const Discover = (() => {
   }
 
   function switchSubTab(tab) {
+    if (tab === 'radio' && !Auth.current()) tab = 'tracks';
     activeSubTab = tab;
     document.querySelectorAll('.disc-sub-tab').forEach(b => {
       b.classList.toggle('active',
@@ -4146,7 +4178,7 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    wwlPlay, wwlStop, wwlShare, wwlCopy, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek,
+    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,
     onCategoryChange, setDiscGenreRadio, clearGenreRadio,

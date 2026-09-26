@@ -1227,9 +1227,61 @@ const Community = (() => {
     return '';   // Zoom-kontrollene (− / +) fjernet på ønske
   }
 
+  // ── Psykedelisk bakgrunn — KUN på /community ──────────────────────────
+  // Mørk base med langsomt drivende fargeskyer; paletten roterer og kryssfades
+  // (to lag A/B). Mørk skrim ligger over for god kontrast mot teksten.
+  const PSY_PALETTES = [
+    ['#7b2cff', '#00d4ff', '#ff2e93'],
+    ['#00e5a0', '#3a5bff', '#b400ff'],
+    ['#ff6a00', '#ff0080', '#5a00ff'],
+    ['#00c2ff', '#00ffb3', '#7a00ff'],
+    ['#ff00c8', '#ffb400', '#3d00ff'],
+    ['#22ff88', '#0090ff', '#ff3d81'],
+  ];
+  let _psyTimer = null, _psyIdx = 0, _psyTop = 0;
+
+  function psyPaint(layer, pal) {
+    layer.style.setProperty('--c1', pal[0]);
+    layer.style.setProperty('--c2', pal[1]);
+    layer.style.setProperty('--c3', pal[2]);
+  }
+  function psyStart() {
+    document.body.classList.add('community-psy');
+    const host = document.getElementById('bg-layer');
+    if (!host || document.getElementById('cw-psy')) return;
+    const root = document.createElement('div');
+    root.id = 'cw-psy';
+    root.innerHTML = '<div class="cw-psy-layer"><i></i><i></i><i></i><b></b></div>' +
+                     '<div class="cw-psy-layer"><i></i><i></i><i></i><b></b></div>' +
+                     '<div class="cw-psy-scrim"></div>';
+    host.appendChild(root);
+    const layers = root.querySelectorAll('.cw-psy-layer');
+    _psyIdx = Math.floor(Math.random() * PSY_PALETTES.length);
+    _psyTop = 0;
+    psyPaint(layers[0], PSY_PALETTES[_psyIdx]);
+    layers[0].classList.add('on');
+    _psyTimer = setInterval(() => {
+      _psyIdx = (_psyIdx + 1) % PSY_PALETTES.length;
+      const next = layers[1 - _psyTop];
+      psyPaint(next, PSY_PALETTES[_psyIdx]);
+      next.classList.add('on');
+      layers[_psyTop].classList.remove('on');
+      _psyTop = 1 - _psyTop;
+    }, 18000);
+  }
+  function psyStop() {
+    if (_psyTimer) { clearInterval(_psyTimer); _psyTimer = null; }
+    document.body.classList.remove('community-psy');
+    const el = document.getElementById('cw-psy'); if (el) el.remove();
+  }
+  window.addEventListener('hashchange', () => {
+    if (!/^#\/community\/?(\?.*)?$/.test(location.hash)) psyStop();
+  });
+
   function render() {
     subscribe();
     _publicOnly = true;          // Community-veggen: alt synlig for alle innloggede
+    psyStart();
     const app = document.getElementById('app'); if (!app) return;
     app.innerHTML = `
       <div class="community-wrap">
