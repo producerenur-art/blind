@@ -240,18 +240,22 @@ const Radio247 = (() => {
   // modus. Returnerer false (ingenting gjort) om 24/7 ikkje er i gang, blokka
   // berre har éin ekte stasjon, eller det ikkje finst nokon annan å byte til
   // — då må radio.js sin eigen fallback (stopp + varsel) ta over.
-  function skipDeadStation(deadId) {
+  function skipDeadStation(deadId, opts) {
     if (!_active || typeof Radio === 'undefined') return false;
     const block = currentBlock();
-    if (!block.stationIds || block.stationIds.length < 2) return false;
-    const alt = block.stationIds.find(id => id !== deadId);
+    // Same blokk først; finst ingen annan der (t.d. Ambient Mann-timen), ta ein frå nabo-blokka
+    // eller, om nødvendig, kva som helst i hjulet — 24/7 skal aldri stoppe.
+    let alt = (block.stationIds || []).find(id => id !== deadId)
+      || (nextBlock().stationIds || []).find(id => id !== deadId)
+      || [].concat(...SCHEDULE.map(b => b.stationIds)).find(id => id !== deadId);
     if (!alt) return false;
     _lastStationId = alt;
     const doSwitch = () => {
       _selfCall = true;
       try { Radio.playStation(alt); } finally { _selfCall = false; }
     };
-    _switchWithJingle(doSwitch, DEAD_STREAM_FADE_MS);
+    if (opts && opts.noBridge) doSwitch();          // reklamen har alt vore brua
+    else _switchWithJingle(doSwitch, DEAD_STREAM_FADE_MS);
     _rerenderHost();
     return true;
   }

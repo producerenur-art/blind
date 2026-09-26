@@ -642,9 +642,15 @@ const Radio = (() => {
   const HOUR_MS = 60 * 60 * 1000;
   const ADS = [
     { url: JINGLE_BASE + 'arcturians-ad.mp3',   shiftMs: 0 },            // Arcturians (3:41)
-    { url: JINGLE_BASE + 'reklame-sirius.m4a',  shiftMs: 2 * HOUR_MS },  // «reklame sirius» (2:37)
-    { url: JINGLE_BASE + 'reklame-2-sirius.m4a', shiftMs: 4 * HOUR_MS }, // «reklame 2 sirius» (1:36)
+    { url: JINGLE_BASE + 'reklame-sirius.m4a?v=20260926',  shiftMs: 2 * HOUR_MS },  // «reklame sirius» (2:37)
+    { url: JINGLE_BASE + 'reklame-2-sirius.m4a?v=20260926', shiftMs: 4 * HOUR_MS }, // «reklame 2 sirius» (1:36)
   ];
+
+  // Brukarønske 2026-09-26: reklamar (og krisereklamen under) kuttar inn med 230 ms ut-/inn-toning.
+  const AD_FADE_MS = 230;
+  // Når ein stasjon i 24/7 Cycle sluttar å svare: spel «reklame 2 sirius» (kutt inn 230 ms, kutt ut 230 ms)
+  // og kople så til ein annan stasjon — 24/7 skal ALDRI bli ståande stille.
+  const DEAD_STREAM_AD = JINGLE_BASE + 'reklame-2-sirius.m4a?v=20260926';
 
   function _playAdAlone(url) {
     if (_jingleBusy || _liveTakeover || _special || !window._radioMode || !isPlaying || muted) return;
@@ -657,7 +663,7 @@ const Radio = (() => {
       // 24/7-modus står på (ingen notifyManualPlay), og :05-slotten ligg langt frå timeskiftet.
       try { if (currentStation && currentStation.url) _playUrl(currentStation.url, currentStation); }
       catch (e) { /* stille: brukaren kan trykke play */ }
-    }, LIVE_FADE_MS);
+    }, AD_FADE_MS);
   }
 
   function _scheduleAd(ad) {
@@ -1337,7 +1343,7 @@ const Radio = (() => {
       if (!window._radioSource) {
         window._radioSource = audioCtx.createMediaElementSource(audio);
         window._radioSource.connect(analyser);
-        analyser.connect(audioCtx.destination);
+        if (window._sfmBuildOut) window._sfmBuildOut(audioCtx, analyser); else analyser.connect(audioCtx.destination);
         window._radioCtx      = audioCtx;
         window._radioAnalyser = analyser;
       }
@@ -1436,11 +1442,26 @@ const Radio = (() => {
     if (!dead) return;
     StreamFix.markDead(dead.url);
     const r247Active = typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive();
-    if (r247Active && Radio247.skipDeadStation && Radio247.skipDeadStation(dead.id)) return;
+    if (r247Active) { _deadStreamAd(dead); return; }
     isPlaying = false;
     updatePlayBtn(false);
     updateNowPlayingStatus(false);
     App.toast(`${dead.name || 'Stasjonen'} svarer ikkje lenger – trykk play for å prøve på nytt`, 'error');
+  }
+
+  // 24/7 Cycle: strøymen er nede → reklame (230 ms kutt inn/ut), så anna stasjon. Finst ingen
+  // anna stasjon å byte til, prøv same strøym på nytt (budsjettet nullstilt) — aldri stille.
+  function _deadStreamAd(dead) {
+    const resume = () => {
+      _jingleBusy = false;
+      if (_liveTakeover) return;
+      if (typeof Radio247 !== 'undefined' && Radio247.skipDeadStation && Radio247.skipDeadStation(dead.id, { noBridge: true })) return;
+      _reconnectCount = 0; _reconnectWindowStart = Date.now();
+      try { _playUrl(dead.url, dead); } catch (e) { /* stille */ }
+    };
+    if (_jingleBusy || _liveTakeover || !window._radioMode) { resume(); return; }
+    _jingleBusy = true;
+    _playLocalClip(DEAD_STREAM_AD, resume, AD_FADE_MS);
   }
 
   function _watchdogTick() {
@@ -2857,6 +2878,34 @@ const Radio = (() => {
     return SPACE_SPECIAL_SET[day % SPACE_SPECIAL_SET.length];
   }
 
+  // ── Nye sjeldan-spesialar (brukarønske 26.09.2026) ────────────────────────────
+  // Alle lydlause (mute=1 felles, sjå visVideoSrc) og utan loop: avspelingslista går éin gong,
+  // så byter auto-rotasjonen (sjå _visAdvanceOnEnd) til neste. Berre VERIFISERT innbyggbare
+  // videoar (oEmbed 200) er med — to av Donald-lenkene brukaren sende (2xmEzOn-Opg, wWSaX3YWBbs)
+  // har innbygging sperra av eigaren og kan ikkje visast. Dag/tid reknast i CEST (fast UTC+2).
+  // `rot` gjer at startvideoen flyttar seg framover kvar gong knappen kjem opp att.
+  const _cestDay = () => Math.floor((Date.now() + 2 * 3600000) / 86400000);
+  const _cestDate = () => new Date(Date.now() + 2 * 3600000);
+  const SPECIAL_SETS = [
+    // Donald Duck (kun 720p-samlinga; «Honey Harvester» 2wt5ga4-r6E er berre 480p 4:3 og vart teken ut): fredag + laurdag kveld 18:00–23:59 CEST.
+    { mode: 'video_donald', ids: ['y0eXw2Z1DQg'], emoji: '🦆', label: 'Donald Duck', group: 'special',
+      when: () => { const d = _cestDate(); return (d.getUTCDay() === 5 || d.getUTCDay() === 6) && d.getUTCHours() >= 18; },
+      rot: () => Math.floor(_cestDay() / 7) },
+    // Heile «Donald Duck Cartoons»-lista frå kanalen «cartoon channel» (dei 14 innbyggbare): kvar 9. dag.
+    { mode: 'video_donald_ch', ids: ['1ssszVhgrU4','CwQVXTDB7uI','gLZOf17ppeM','_GLDFWf1uUc','HASiaZPtOBk','8aKZnyuueig','r3ditYmW0UY','g586svxAKXQ','DfqEuTWsozU','1_TRfDIE47c','exdV_iehbRY','qmGS6IqxdPM','hX8NRrqtTiI','MqGNqVzTL5s'],
+      emoji: '🦆', label: 'Donald Classics', group: 'special',
+      // AV (26.09.2026): alle 14 er 480p 4:3 → blir uskarpe/pikselerte når dei fyller heile flata. Slå på att ved å byte til «_cestDay() % 9 === 0».
+      when: () => false, rot: () => Math.floor(_cestDay() / 9) },
+    // History-kanalen «Alien Encounters» (hovudkanal, sjeldan): éin dag i månaden (den 15.).
+    { mode: 'video_aliens', ids: ['zNZHTlRFD6E'], emoji: '👽', label: 'Alien Encounters', group: 'special',
+      when: () => _cestDate().getUTCDate() === 15, rot: () => 0 },
+    // The Allies of Humanity (hovudkanal, sjeldan): éin dag i veka (måndag), med engelsk teksting.
+    { mode: 'video_allies', captions: true, emoji: '🌌', label: 'Allies of Humanity', group: 'special',
+      ids: ['c7yf9GuqpZ0','rXRgafThM4w','a6OZKDaK7vw','ICmJrCg6_3g','bizvepPuFnQ','caDTrYyYilQ','z_zaoxDeuNQ','BEkhRQb5VEQ','u4qtOxMd2D4','uNmWE3wevSw','MJ_IVdeLboc','Evbs2JDZiKs','TEAWNdpfiGg','riWkWBkT8AM','jzWX6bn9sTo','Z-iKQZMa0XM','PepfZwjYwfI','g_qSc64spfA','p-IFCRXD64c','i5elaH3VcsI','0xGYtG9lryo','BjC1O5bFGog','01MAsI3zghQ','-CIY1uBvL-A','h8dFkyBu1YU','ksgV6h6RwHo','9z3YUpOsEgA','ijBj2eewJIo','u42sByUhlcQ','-duvWk33Oxw'],
+      when: () => _cestDay() % 7 === 4, rot: () => Math.floor(_cestDay() / 7) * 7 },
+  ];
+  SPECIAL_SETS.forEach(v => { v.id = v.ids[0]; VIS_VIDEOS[v.mode] = v.id; });
+
   // ── Roterende utvalg ────────────────────────────────────────────────────
   // AI-modusene får navn etter video-id-en («ai_<id>»), ikke plassnummer, så en
   // valgt visual peker på SAMME video selv om raden blir bygget på nytt med et
@@ -2972,6 +3021,8 @@ const Radio = (() => {
     if (mode === EIGHT_DAY_SPECIAL.mode) return EIGHT_DAY_SPECIAL;
     const spaceSpecial = SPACE_SPECIAL_SET.find(v => v.mode === mode);
     if (spaceSpecial) return spaceSpecial;
+    const sset = SPECIAL_SETS.find(v => v.mode === mode);
+    if (sset) return sset;
     if (typeof mode === 'string' && mode.startsWith('ai_')) {
       const id = mode.slice(3);
       const meta = visMeta[id] || {};
@@ -3013,22 +3064,28 @@ const Radio = (() => {
       const today = spaceSpecialOfToday();
       if (!pinned.some(it => it && it.id === today.id)) pinned.push(today);
     }
+    // Nye sjeldan-spesialar (sjå SPECIAL_SETS over): ekstra knapp berre når tidsvindauget passar.
+    SPECIAL_SETS.forEach(v => { if (v.when() && !pinned.some(it => it && it.id === v.id)) pinned.push(v); });
     return pinned;
   }
   const isVideoMode = m =>
     Object.prototype.hasOwnProperty.call(VIS_VIDEOS, m) ||
     Object.prototype.hasOwnProperty.call(AI_VIDEOS, m);
   function visVideoSrc(id) {
-    // HTF-spesialen (sjå WEEKLY_SPECIAL over): heile klippsettet som ekte
-    // YouTube-avspelingsliste i staden for éin video på loop, sidan kvar
-    // episode berre er 3-4 min — elles ville same episode gjenteke seg heile
-    // timen. playlist-param held resten av settet, id sjølv er allereie
-    // først via embed-stien.
-    const playlist = (id === WEEKLY_SPECIAL.id)
-      ? WEEKLY_SPECIAL_IDS.slice(1).join(',')
-      : id;
-    return `https://www.youtube-nocookie.com/embed/${id}`
-      + `?autoplay=1&mute=1&loop=1&playlist=${playlist}`
+    // Ingen loop (brukarønske 26.09.2026): ei video/liste går éin gong, så byter _visAdvanceOnEnd til neste.
+    // Spesialar med fleire klipp = ekte YouTube-avspelingsliste (playlist-param), rotert så startklippet
+    // varierer. HTF-spesialen (WEEKLY_SPECIAL_IDS) er same mekanikk. Alltid lydlaus (mute=1).
+    const sset = SPECIAL_SETS.find(v => v.id === id);
+    let first = id, rest = '';
+    if (sset) {
+      const r = sset.rot() % sset.ids.length, list = sset.ids.slice(r).concat(sset.ids.slice(0, r));
+      first = list[0]; rest = list.slice(1).join(',');
+    } else if (id === WEEKLY_SPECIAL.id) {
+      rest = WEEKLY_SPECIAL_IDS.slice(1).join(',');
+    }
+    return `https://www.youtube-nocookie.com/embed/${first}`
+      + `?autoplay=1&mute=1${rest ? '&playlist=' + rest : ''}`
+      + (sset && sset.captions ? '&cc_load_policy=1&cc_lang_pref=en&hl=en' : '')
       + `&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3`
       + `&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
   }
@@ -3052,10 +3109,21 @@ const Radio = (() => {
     if (!/^https:\/\/([a-z0-9-]+\.)*youtube(-nocookie)?\.com$/.test(e.origin || '')) return;
     let data;
     try { data = JSON.parse(e.data); } catch (_) { return; }
-    if (!data || (data.event !== 'onReady' && data.event !== 'infoDelivery')) return;
+    if (!data) return;
     const frame = document.getElementById('radio-vis-video');
-    if (frame && frame.contentWindow === e.source) forceHighestQuality(frame);
+    if (!frame || frame.contentWindow !== e.source) return;
+    // Videoen/lista er ferdig (playerState 0 = ended) → neste visual i timens liste (ingen loop).
+    if (data.info && typeof data.info === 'object') {           // avspelingsliste: hugs posisjon/lengd (ended kjem etter KVART klipp)
+      if (typeof data.info.playlistIndex === 'number') _visPlIdx = data.info.playlistIndex;
+      if (Array.isArray(data.info.playlist)) _visPlLen = data.info.playlist.length;
+    }
+    const st = data.event === 'onStateChange' ? data.info : (data.info && data.info.playerState);
+    if (st === 0 && _visPlLen > 1 && _visPlIdx < _visPlLen - 1) return;   // meir att i lista → YouTube spelar neste sjølv
+    if (st === 0 && (data.event === 'onStateChange' || data.event === 'infoDelivery')) { _visAdvanceOnEnd(); return; }
+    if (data.event !== 'onReady' && data.event !== 'infoDelivery') return;
+    forceHighestQuality(frame);
   });
+  let _visPlIdx = -1, _visPlLen = 0;   // posisjon i YouTube-avspelingslista (nullstilles ved ny video)
   // Hvilken video-ID iframen viser nå (for å unngå unødig reload ved re-vis).
   let visVideoLoaded = null;
   function showVisVideo(mode) {
@@ -3064,6 +3132,8 @@ const Radio = (() => {
     const id = VIS_VIDEOS[mode] || AI_VIDEOS[mode]
       || VIS_VIDEOS[isVideoMode(visMode) ? visMode : 'video'] || AI_VIDEOS[visMode];
     if (visVideoLoaded !== id) {
+      _visPlIdx = -1; _visPlLen = 0;
+      frame.onload = () => { try { frame.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (_) {} };   // få onStateChange (ended)
       frame.src = visVideoSrc(id);
       visVideoLoaded = id;
       // Reserve i tilfelle onReady-meldingen kommer før/uten at vi rekker å
@@ -3182,6 +3252,20 @@ const Radio = (() => {
     if (mode === visMode || !isVideoMode(mode)) return;
     const btn = [...document.querySelectorAll('.vis-style-row .vis-btn')].find(b => (b.getAttribute('onclick') || '').includes("'" + mode + "'"));
     setVisMode(mode, btn, true);
+  }
+  // Video ferdig (ingen loop): gå til neste i timens liste (etter den som spelte; spesialar som ikkje står i lista → første).
+  function _visAdvanceOnEnd() {
+    if (!document.getElementById('radio-vis-video') || !_autoList.length) return;
+    const cur = visualItemForMode(visMode);
+    const i = cur ? _autoList.findIndex(it => it && it.id === cur.id) : -1;
+    for (let k = 1; k <= _autoList.length; k++) {
+      const it = _autoList[(i + k + _autoList.length) % _autoList.length];
+      const mode = it && (it.mode || aiModeOf(it.id));
+      if (!it || !mode || mode === visMode || !isVideoMode(mode)) continue;
+      const btn = [...document.querySelectorAll('.vis-style-row .vis-btn')].find(b => (b.getAttribute('onclick') || '').includes("'" + mode + "'"));
+      setVisMode(mode, btn, true);
+      return;
+    }
   }
   function _startVisAuto() {
     if (_visAutoTimer) return;
