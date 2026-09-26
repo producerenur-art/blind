@@ -11492,3 +11492,10 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 .sc-updates-date { font-size: .7rem; opacity: .6; margin-left: .3rem; }
 .sc-updates-text { font-size: .85rem; opacity: .85; line-height: 1.4; }
 #toast-container { z-index: 10050 !important; }  /* over GIF-/musikk-dialogane (10000) */
+
+.sc-guide { margin-top: .6rem; border-top: 1px solid rgba(255,255,255,.1); padding-top: .4rem; }
+.sc-guide-sec { padding: .25rem 0; }
+.sc-guide-sec summary { cursor: pointer; font-weight: 600; font-size: .9rem; padding: .2rem 0; }
+.sc-guide-sec ul { margin: .3rem 0 .4rem 1.1rem; padding: 0; font-size: .85rem; line-height: 1.5; opacity: .9; }
+.sc-guide-sec li { margin: .25rem 0; }
+.sc-guide-sec a { color: #7dd3fc; }
