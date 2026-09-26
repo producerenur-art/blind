@@ -346,6 +346,7 @@ const FriendChat = (() => {
     renderBar(); renderBody();
   }
   function openGroup() {
+    if (_onRadio()) return;
     _active = { type: 'group' };
     if (_min) { _min = false; localStorage.setItem(MIN_KEY, '0'); document.getElementById('fc-dock')?.classList.remove('minimized'); }
     renderBar(); renderBody();
@@ -382,7 +383,9 @@ const FriendChat = (() => {
     if (_active.type === 'list') renderList(document.getElementById('fc-body'));
     renderBar();
   }
-  function init() { refresh(); window.addEventListener('hashchange', () => { try { refresh(); } catch (_) {} }); }
+  function init() { refresh(); }
+  // Lytt alltid på rutebytte (init() blir ikkje kalla frå noko), så Group lounge forsvinn/kjem attende med sida.
+  window.addEventListener('hashchange', () => { try { refresh(); } catch (_) {} });
 
   return { init, refresh, toggle, toggleMin, toggleSound, openConv, openGroup, back, send,
     pickGif, editMsg, deleteMsg, toggleEmojiPicker, insertEmoji };
