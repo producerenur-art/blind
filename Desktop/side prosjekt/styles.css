@@ -11471,3 +11471,13 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 #disc-wwl .wwl-seek input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #38bdf8; border: 2px solid #e0f2fe; cursor: pointer; }
 #disc-wwl .wwl-seek input[type=range]:disabled::-webkit-slider-thumb { background: #7dd3fc; opacity: 0.6; }
 #disc-wwl .wwl-seek input[type=range]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(56,189,248,0.3); }
+
+/* DM: alltid synlege Edit/Replace/Delete, inline redigering, lydspor */
+.dj-pm-actions { opacity: .85; }
+.dj-pm-act { display: inline-flex; align-items: center; gap: .25rem; font-size: .72rem; padding: .15rem .4rem; }
+.dj-pm-edit { display: flex; flex-direction: column; gap: .4rem; min-width: 240px; }
+.dj-pm-edit input { color: var(--text); }
+.dj-pm-edit-emojis { display: flex; flex-wrap: wrap; gap: .15rem; }
+.dj-pm-edit-emojis button { background: rgba(255,255,255,.12); border: none; border-radius: 6px; cursor: pointer; padding: .1rem .3rem; font-size: 1rem; }
+.dj-pm-edit-btns { display: flex; gap: .4rem; }
+.dm-audio-title { font-size: .8rem; font-weight: 600; margin-bottom: .3rem; }

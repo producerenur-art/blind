@@ -182,6 +182,8 @@ const DJ = (() => {
           ${_pmEmojiPickerHtml()}
           <button type="button" class="btn btn-ghost btn-sm" title="Emoji" onclick="DJ.toggleEmojiPicker()">😀</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Send a GIF" onclick="DJ.pickGif('${target.username}')">${Icon('image')} GIF</button>
+          <button type="button" class="btn btn-ghost btn-sm" title="Send an image" onclick="DJ.pickImage('${target.username}')">🖼️ Image</button>
+          <button type="button" class="btn btn-ghost btn-sm" title="Share music" onclick="DJ.pickMusic('${target.username}')">🎵 Music</button>
           <input class="form-input" id="pm-input" placeholder="Write a message…" onkeydown="if(event.key==='Enter')DJ.sendPM('${target.username}')">
           <button class="btn btn-primary" onclick="DJ.sendPM('${target.username}')">Send</button>
         </div>
@@ -253,6 +255,12 @@ const DJ = (() => {
   function pickGif(targetUsername) {
     GifPicker.open(url => _doSend(targetUsername, url, 'gif'));
   }
+  function pickImage(targetUsername) {
+    GifPicker.open(url => _doSend(targetUsername, url, 'gif'), { title: 'Send an image' });
+  }
+  function pickMusic(targetUsername) {
+    DmMedia.pickAudio(text => _doSend(targetUsername, text, 'text'));
+  }
 
   async function _doSend(targetUsername, text, kind) {
     const current = Auth.current();
@@ -287,34 +295,74 @@ const DJ = (() => {
     if (window.Notify && Notify.emit) {
       Notify.emit(targetUsername, {
         type: 'message', from: current.username, fromDisplay: current.displayName,
-        text: kind === 'gif' ? 'sent you a GIF' : 'sent you a private message', link: '#/messages/' + current.username,
+        text: kind === 'gif' ? 'sent you an image' : DmMedia.isAudio({kind, text}) ? 'shared a track with you' : 'sent you a private message', link: '#/messages/' + current.username,
       });
     }
 
     // E-postvarsel til mottaker
     const target = Auth.getUser(targetUsername);
     if (target?.email && typeof Email !== 'undefined') {
-      Email.sendMessageNotification(target.email, target.displayName, current.displayName, current.username, kind === 'gif' ? 'sent a GIF' : text);
+      Email.sendMessageNotification(target.email, target.displayName, current.displayName, current.username, kind === 'gif' ? 'sent an image' : DmMedia.isAudio({kind, text}) ? 'shared a track' : text);
     }
   }
 
   // Rediger EIGEN melding (tekst-kun — ikkje GIF). Oppdaterer lokalt +
   // DmSync (autoritativ for rediger, sjå _reconcileFromServer); Gun-kopien
   // rørast ikkje (ingen node-referanse), men neste poll rettar ho uansett.
+  // Inline-redigering i boblen (tekst + smilefjes). Enter/Lagre → lagrar, Esc/Avbryt → tilbake.
   async function editPM(targetUsername, id) {
     const current = Auth.current(); if (!current) return;
     const key  = pmChannelKey(current.username, targetUsername);
     const msgs = JSON.parse(localStorage.getItem(key) || '[]');
     const m = msgs.find(x => x.id === id);
-    if (!m || m.from !== current.username || m.kind === 'gif') return;
-    const next = prompt('Edit message:', m.text);
-    if (next === null) return;
-    const trimmed = next.trim(); if (!trimmed) return;
-    m.text = trimmed; m.edited = true;
+    if (!m || m.from !== current.username || m.kind === 'gif' || DmMedia.isAudio(m)) return;
+    const wrap = document.querySelector(`.dj-pm-msg[data-mid="${(window.CSS && CSS.escape) ? CSS.escape(id) : id}"] .dj-pm-bubble`);
+    if (!wrap) return;
+    wrap.innerHTML = `<div class="dj-pm-edit">
+        <input class="form-input" id="pm-edit-input" maxlength="2000">
+        <div class="dj-pm-edit-emojis">${PM_EMOJIS.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>
+        <div class="dj-pm-edit-btns">
+          <button type="button" class="btn btn-primary btn-sm" data-ed="save">Save</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-ed="cancel">Cancel</button>
+        </div></div>`;
+    const inp = wrap.querySelector('#pm-edit-input'); inp.value = m.text; inp.focus();
+    inp.setSelectionRange(inp.value.length, inp.value.length);
+    const cancel = () => loadPMHistory(current.username, targetUsername);
+    const save = () => {
+      const trimmed = inp.value.trim();
+      if (!trimmed) { App.toast('Message cannot be empty', 'error'); return; }
+      if (trimmed !== m.text) _saveEdit(current.username, targetUsername, id, trimmed); else cancel();
+    };
+    wrap.addEventListener('click', e => {
+      const eb = e.target.closest('[data-e]');
+      if (eb) { const p = inp.selectionStart ?? inp.value.length; inp.value = inp.value.slice(0, p) + eb.dataset.e + inp.value.slice(p); inp.focus(); inp.setSelectionRange(p + eb.dataset.e.length, p + eb.dataset.e.length); return; }
+      const b = e.target.closest('[data-ed]');
+      if (b) (b.dataset.ed === 'save' ? save : cancel)();
+    });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') cancel(); });
+  }
+
+  function _saveEdit(me, other, id, newText) {
+    const key  = pmChannelKey(me, other);
+    const msgs = JSON.parse(localStorage.getItem(key) || '[]');
+    const m = msgs.find(x => x.id === id);
+    if (!m || m.from !== me) return;
+    m.text = newText; m.edited = true;
     localStorage.setItem(key, JSON.stringify(msgs));
-    loadPMHistory(current.username, targetUsername);
-    const chan = gunChanKey(current.username, targetUsername);
-    if (typeof DmSync !== 'undefined') DmSync.edit(chan, id, trimmed).catch(() => {});
+    loadPMHistory(me, other);
+    const chan = gunChanKey(me, other);
+    if (typeof DmSync !== 'undefined') DmSync.edit(chan, id, newText).catch(() => {});
+  }
+
+  // Bytt ut bilete/GIF/lydspor i ei sendt melding (Replace-knappen).
+  function replacePM(targetUsername, id) {
+    const current = Auth.current(); if (!current) return;
+    const key  = pmChannelKey(current.username, targetUsername);
+    const m = JSON.parse(localStorage.getItem(key) || '[]').find(x => x.id === id);
+    if (!m || m.from !== current.username) return;
+    const done = t => _saveEdit(current.username, targetUsername, id, t);
+    if (DmMedia.isAudio(m)) DmMedia.pickAudio(done, { title: 'Replace track' });
+    else if (m.kind === 'gif') GifPicker.open(done, { title: 'Replace image' });
   }
 
   // Slett EIGEN melding.
@@ -339,17 +387,20 @@ const DJ = (() => {
     // m.text vart før sett rått inn i innerHTML utan escaping — ein ekte XSS-
     // sårbarheit (ein annan brukar kunne sende <script>/<img onerror=...> som
     // ville køyrt hos mottakaren). Fiksa i same runde som gif/rediger/slett.
+    const isMedia = m.kind === 'gif' || DmMedia.isAudio(m);
     const body = m.kind === 'gif'
-      ? `<img class="dj-pm-gif" src="${_esc(m.text)}" alt="GIF" loading="lazy">`
-      : _esc(m.text);
+      ? `<img class="dj-pm-gif" src="${_esc(m.text)}" alt="Image" loading="lazy">`
+      : (DmMedia.audioHtml(m) || _esc(m.text));
     const editedTag = m.edited ? '<span class="dj-pm-edited"> (edited)</span>' : '';
     const actions = (isMine && targetUsername) ? `
         <span class="dj-pm-actions">
-          ${m.kind !== 'gif' ? `<button class="dj-pm-act" onclick="DJ.editPM('${_esc(targetUsername)}','${_esc(m.id)}')" title="Edit">${Icon('edit')}</button>` : ''}
-          <button class="dj-pm-act" onclick="DJ.deletePM('${_esc(targetUsername)}','${_esc(m.id)}')" title="Delete">${Icon('trash')}</button>
+          ${isMedia
+            ? `<button class="dj-pm-act" onclick="DJ.replacePM('${_esc(targetUsername)}','${_esc(m.id)}')" title="Replace">↻ Replace</button>`
+            : `<button class="dj-pm-act" onclick="DJ.editPM('${_esc(targetUsername)}','${_esc(m.id)}')" title="Edit">${Icon('edit')} Edit</button>`}
+          <button class="dj-pm-act" onclick="DJ.deletePM('${_esc(targetUsername)}','${_esc(m.id)}')" title="Delete">${Icon('trash')} Delete</button>
         </span>` : '';
     return `
-      <div class="dj-pm-msg ${isMine ? 'dj-pm-msg--mine' : ''}">
+      <div class="dj-pm-msg ${isMine ? 'dj-pm-msg--mine' : ''}" data-mid="${_esc(m.id)}">
         ${!isMine ? `<div class="dj-pm-nick">${_esc(m.displayName)}</div>` : ''}
         <div class="dj-pm-bubble">${body}${editedTag}</div>
         <div class="dj-pm-time">${new Date(m.ts).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}${actions}</div>
@@ -373,7 +424,7 @@ const DJ = (() => {
   }
 
   return {
-    renderPrivateChat, sendPM, pickGif, editPM, deletePM,
+    renderPrivateChat, sendPM, pickGif, pickImage, pickMusic, editPM, replacePM, deletePM,
     toggleEmojiPicker, insertPMEmoji,
     getTotalUnreadPMs, requestNotificationPermission,
   };

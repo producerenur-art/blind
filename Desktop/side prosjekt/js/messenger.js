@@ -357,7 +357,7 @@ const Messenger = (() => {
     const time = new Date(msg.ts || Date.now()).toLocaleTimeString('no', { hour: '2-digit', minute: '2-digit' });
     const bodyHtml = msg.kind === 'gif'
       ? `<img class="fc-msg-gif" src="${esc(msg.text)}" alt="GIF" loading="lazy" style="max-width:200px;max-height:200px;border-radius:10px;display:block">`
-      : `<div style="background:${isMine ? 'linear-gradient(135deg,#22c55e,#16a34a)' : 'var(--surface2,rgba(255,255,255,0.06))'};color:${isMine ? '#062012' : 'var(--text)'};padding:0.5rem 0.75rem;border-radius:14px;font-size:0.9rem;word-break:break-word">${esc(msg.text)}</div>`;
+      : (DmMedia.audioHtml(msg) ? `<div style="padding:0.4rem 0.6rem;border-radius:14px;background:var(--surface2,rgba(255,255,255,0.06))">${DmMedia.audioHtml(msg)}</div>` : `<div style="background:${isMine ? 'linear-gradient(135deg,#22c55e,#16a34a)' : 'var(--surface2,rgba(255,255,255,0.06))'};color:${isMine ? '#062012' : 'var(--text)'};padding:0.5rem 0.75rem;border-radius:14px;font-size:0.9rem;word-break:break-word">${esc(msg.text)}</div>`);
     const editedTag = msg.edited ? '<span style="font-size:0.65rem;color:var(--text3);font-style:italic;margin-left:0.35rem">(edited)</span>' : '';
     const actions = (isMine && msg.id) ? `
       <span class="fc-msg-actions" style="margin-left:0.4rem">

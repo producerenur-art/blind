@@ -33,28 +33,29 @@ const GifPicker = (() => {
   function close() { if (_el) { _el.remove(); _el = null; } document.removeEventListener('keydown', _onKey); }
   function _onKey(e) { if (e.key === 'Escape') close(); }
 
-  function open(cb) {
+  function open(cb, opts) {
+    opts = opts || {};
     close();
     let chosen = null;
     const el = document.createElement('div');
     el.className = 'gifpick-overlay';
     el.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:1rem';
     el.innerHTML = `
-      <div class="gifpick-box" role="dialog" aria-label="Add a GIF" style="width:min(440px,100%);background:var(--bg-card,#14171f);color:var(--text,#eee);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1.1rem;box-shadow:0 20px 60px rgba(0,0,0,.6)">
+      <div class="gifpick-box" role="dialog" aria-label="${_esc(opts.title || 'Add a GIF')}" style="width:min(440px,100%);background:var(--bg-card,#14171f);color:var(--text,#eee);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1.1rem;box-shadow:0 20px 60px rgba(0,0,0,.6)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem">
-          <b style="font-size:1.05rem">Add a GIF</b>
+          <b style="font-size:1.05rem">${_esc(opts.title || 'Add a GIF')}</b>
           <button type="button" data-gp="close" title="Close" style="background:none;border:none;color:inherit;font-size:1.3rem;cursor:pointer">×</button>
         </div>
         <label class="btn btn-primary" style="display:flex;justify-content:center;cursor:pointer;margin:0 0 .6rem">
-          Upload a GIF from your device
+          Upload from your device
           <input type="file" accept="image/gif,image/webp,image/*" data-gp="file" style="display:none">
         </label>
-        <div style="text-align:center;opacity:.6;font-size:.8rem;margin:.4rem 0">or paste a link (.gif, Giphy, Tenor)</div>
+        <div style="text-align:center;opacity:.6;font-size:.8rem;margin:.4rem 0">or paste a link (image, .gif, Giphy)</div>
         <input type="text" data-gp="url" placeholder="https://media.giphy.com/…/giphy.gif" style="width:100%;box-sizing:border-box;padding:.6rem .7rem;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:inherit">
         <div data-gp="preview" style="margin-top:.7rem;min-height:1rem;text-align:center"></div>
         <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.8rem">
           <button type="button" class="btn btn-ghost" data-gp="close">Cancel</button>
-          <button type="button" class="btn btn-primary" data-gp="send" disabled>Send GIF</button>
+          <button type="button" class="btn btn-primary" data-gp="send" disabled>Send</button>
         </div>
       </div>`;
     document.body.appendChild(el); _el = el;
