@@ -203,6 +203,9 @@ const App = (() => {
         ${feat('user',     'My page',     'Your own profile — your music, your mixes, events and friends, all in one place.')}
         ${feat('mail',     'Inbox',       'Private messages and friend requests, so you stay in touch with the people you meet along the way.')}
         ${feat('message',  'AI assistant','A built-in helper you can ask about anything — from how things work to tips on where to start.')}
+        ${feat('music',    'Studio (coming soon)', 'A full music studio built right into SiriusFM, free to use for logged-in members. Make beats and songs in your browser with synths, drums, samples, effects and a mixer, then export your track. It is powered by <strong>openDAW</strong>, an open-source browser DAW (AGPL v3), and the source code is available to everyone.')}
+        ${feat('cloud',    'Cloud storage for your projects', 'Keep your Studio projects and recordings safe in the cloud and pick them up on any device. Storage is a paid add-on with a monthly subscription; the Studio itself stays free. Pricing and storage size will be announced before launch.')}
+        ${feat('mail',     'Producer offers (optional)', 'If you opt in, you can receive special offers and news on plugins and music software from partners such as FabFilter, Soundtoys and Waves. It is completely optional, you can turn it off any time, and nothing is sent unless you say yes.')}
         ${feat('image',    'Customization','Change the background, choose from 100+ languages, and open SiriusFM on mobile, Mac or Pc. Make the experience entirely your own.')}
         <p class="info-welcome">
           We're happy to have you here. Welcome, everyone!<br>
