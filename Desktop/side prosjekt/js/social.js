@@ -331,7 +331,7 @@ const Social = (() => {
         <button class="sc-cmt-emoji-btn" type="button" onclick="Social.toggleEmoji('${jsq(targetKey)}',this)" title="Emoji">😊</button>
         <label class="sc-cmt-emoji-btn" title="Upload image" style="cursor:pointer">📎
           <input type="file" accept="image/*" style="display:none" onchange="Social.addCommentImage('${jsq(targetKey)}',this.files,this)"></label>
-        <button class="sc-cmt-emoji-btn" type="button" onclick="Social.shareCommentMedia('${jsq(targetKey)}',this)" title="Share image/GIF/audio/video via URL">🖼️</button>
+        <button class="sc-cmt-emoji-btn" type="button" onclick="Social.shareCommentMedia('${jsq(targetKey)}',this)" title="Add a GIF or image (upload or link)">🖼️</button>
         <button class="btn btn-primary btn-sm" onclick="Social.postComment('${jsq(targetKey)}',this)">Send</button>
         <div class="sc-emoji-bar" id="sc-emoji-${d}" style="display:none">
           ${EMOJIS.map(e => `<button type="button" class="sc-emoji-pill" onclick="Social.insertEmoji('${jsq(targetKey)}','${e}',this)">${e}</button>`).join('')}
@@ -377,13 +377,11 @@ const Social = (() => {
 
   function shareCommentMedia(targetKey) {
     const u = me(); if (!u) { if (window.Router) Router.go('/login'); return; }
-    const url = (prompt('Paste a URL to an image, GIF, audio (mp3) or video (mp4):', '') || '').trim();
-    if (!url) return;
-    if (!/^https?:\/\//i.test(url)) { if (typeof App !== 'undefined') App.toast('Invalid URL', 'error'); return; }
-    const kind = mediaKindOf(url);
-    if (!kind) { if (typeof App !== 'undefined') App.toast('The URL must point to an image/GIF/audio/video', 'error'); return; }
-    _pendingMedia[targetKey] = { url, kind };
-    renderPendingMedia(targetKey);
+    if (!window.GifPicker) { if (typeof App !== 'undefined') App.toast('GIF picker not loaded', 'error'); return; }
+    GifPicker.open(url => {
+      _pendingMedia[targetKey] = { url, kind: mediaKindOf(url) || 'image' };
+      renderPendingMedia(targetKey);
+    }, { title: 'Add an image or GIF' });
   }
 
   function clearCommentMedia(targetKey) {
