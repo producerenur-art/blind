@@ -399,6 +399,10 @@ const Share = (() => {
       username: post.author || '',
     });
     const fb = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url);   // ingen &quote= (utfasa av Facebook; teksten kjem frå OG-kortet)
+    // Lenka kopierast ALLTID til utklippstavla (same klikk-hending, så nettlesaren tillèt det). Skulle
+    // Facebooks delevindauge gi feil, er det berre å lime lenka inn i eit vanleg Facebook-innlegg.
+    try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).catch(() => {}); } catch (_) {}
+    if (window.App) App.toast('Link copied — if Facebook shows an error, paste it into a new Facebook post.', 'info', 7000);
     if (w && !w.closed) { w.location.href = fb; return true; }
     if (window.App) App.toast('Facebook popup was blocked — allow popups for siriusfm.no to share there too.', 'info', 6000);
     return false;
