@@ -29,6 +29,11 @@ const SiriusUpdates = (() => {
       'The bell shows reactions, comments, friend requests and messages. Sound can be turned off per person on their profile.',
       'When someone writes you a private message you also get an email (at most one per 15 minutes per conversation). Marketing emails have an unsubscribe link; opting out also stops message emails.',
     ]},
+    { title: '🏠 SiriusFM Residents', items: [
+      '<b>Everything is free for SiriusFM Residents</b> — full Pro access with no payment.',
+      '<b>Residents must give the owner their email.</b> Send the email address you registered your account with to the owner (private message to <a href="#/u/Admin001">@Admin001</a>). Free access is linked to that exact email, so it must match your account.',
+      'Once your email has been added, log out and back in (or hard-refresh) and Pro unlocks automatically.',
+    ]},
     { title: '📜 House rules (terms of use)', items: [
       '<b>Only upload what you have the rights to.</b> Your own music, mixes and images, or material you are allowed to share. Copyright complaints are handled quickly — content can be removed.',
       '<b>Electronic music and its community.</b> Be respectful: no harassment, hate, threats, spam or scams. No illegal content.',
