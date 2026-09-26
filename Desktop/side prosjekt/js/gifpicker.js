@@ -6,6 +6,9 @@
 // Ingen ekstern API-nøkkel trengst.
 const GifPicker = (() => {
   const MAX_GIF = 20 * 1024 * 1024;
+  // Giphy-søk (rutenett med GIF-ar). Gratis offentleg nøkkel frå developers.giphy.com
+  // (Create an App → API). Utan nøkkel blir gamle lim-inn-dialogen vist.
+  const GIPHY_KEY = window.GIPHY_API_KEY || '';
   let _el = null;
 
   function _toast(msg, type) { if (window.App && App.toast) App.toast(msg, type || 'info'); }
@@ -70,12 +73,16 @@ const GifPicker = (() => {
     el.className = 'gifpick-overlay';
     el.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:1rem';
     el.innerHTML = `
-      <div class="gifpick-box" role="dialog" aria-label="${_esc(opts.title || 'Add a GIF')}" style="width:min(440px,100%);background:var(--bg-card,#14171f);color:var(--text,#eee);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1.1rem;box-shadow:0 20px 60px rgba(0,0,0,.6)">
+      <div class="gifpick-box" role="dialog" aria-label="${_esc(opts.title || 'Add a GIF')}" style="width:min(${GIPHY_KEY ? 560 : 440}px,100%);max-height:92vh;overflow:auto;background:var(--bg-card,#14171f);color:var(--text,#eee);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1.1rem;box-shadow:0 20px 60px rgba(0,0,0,.6)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem">
           <b style="font-size:1.05rem">${_esc(opts.title || 'Add a GIF')}</b>
           <button type="button" data-gp="close" title="Close" style="background:none;border:none;color:inherit;font-size:1.3rem;cursor:pointer">×</button>
         </div>
-        <label class="btn btn-primary" style="display:flex;justify-content:center;cursor:pointer;margin:0 0 .6rem">
+        ${GIPHY_KEY ? `
+        <input type="search" data-gp="q" placeholder="Search GIFs…" autocomplete="off" style="width:100%;box-sizing:border-box;padding:.6rem .7rem;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:inherit;margin-bottom:.6rem">
+        <div data-gp="grid" style="columns:3;column-gap:6px;height:min(46vh,340px);overflow:auto"></div>
+        <div style="text-align:right;opacity:.5;font-size:.7rem;margin:.3rem 0 .6rem">Powered by GIPHY</div>` : ''}
+        <label class="btn ${GIPHY_KEY ? 'btn-ghost' : 'btn-primary'}" style="display:flex;justify-content:center;cursor:pointer;margin:0 0 .6rem">
           Upload from your device
           <input type="file" accept="image/gif,image/webp,image/*" data-gp="file" style="display:none">
         </label>
@@ -148,6 +155,43 @@ const GifPicker = (() => {
       const url = chosen; close();
       try { cb && cb(url); } catch (e) { console.warn('[GifPicker]', e); }
     });
+    if (GIPHY_KEY) {
+      const qIn = $('q'), grid = $('grid');
+      let timer = null, seq = 0, offset = 0, term = '', busy = false, done = false;
+      async function load(reset) {
+        if (busy || (done && !reset)) return;
+        if (reset) { offset = 0; done = false; grid.innerHTML = ''; grid.scrollTop = 0; }
+        busy = true; const my = ++seq;
+        const ep = term ? 'search' : 'trending';
+        const u = `https://api.giphy.com/v1/gifs/${ep}?api_key=${encodeURIComponent(GIPHY_KEY)}&limit=24&offset=${offset}&rating=pg-13&bundle=messaging_non_clips` + (term ? `&q=${encodeURIComponent(term)}` : '');
+        try {
+          const r = await fetch(u); const j = await r.json();
+          if (my !== seq) return;
+          const list = (j && j.data) || [];
+          if (!list.length) { done = true; if (!grid.children.length) grid.innerHTML = '<div style="opacity:.6;font-size:.85rem;padding:.5rem">No GIFs found</div>'; }
+          list.forEach(g => {
+            const im = g.images || {};
+            const th = im.fixed_width_small || im.fixed_width || im.downsized;
+            const full = (im.downsized_medium || im.original || {}).url;
+            if (!th || !full) return;
+            const b = document.createElement('button');
+            b.type = 'button'; b.title = g.title || 'GIF';
+            b.style.cssText = 'display:block;width:100%;margin:0 0 6px;padding:0;border:0;border-radius:6px;overflow:hidden;cursor:pointer;background:rgba(255,255,255,.06);break-inside:avoid';
+            b.innerHTML = `<img src="${_esc(th.url)}" alt="${_esc(g.title || 'GIF')}" loading="lazy" style="display:block;width:100%;height:auto">`;
+            b.addEventListener('click', () => { const url = full.split('?')[0]; close(); try { cb && cb(url); } catch (e) { console.warn('[GifPicker]', e); } });
+            grid.appendChild(b);
+          });
+          offset += list.length;
+        } catch (e) {
+          if (my === seq && !grid.children.length) grid.innerHTML = '<div style="color:#ff8a8a;font-size:.85rem;padding:.5rem">Could not load GIFs — upload or paste a link below</div>';
+        } finally { if (my === seq) busy = false; }
+      }
+      qIn.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { term = qIn.value.trim(); busy = false; load(true); }, 350); });
+      grid.addEventListener('scroll', () => { if (grid.scrollTop + grid.clientHeight > grid.scrollHeight - 120) load(false); });
+      load(true);
+      setTimeout(() => qIn.focus(), 30);
+      return;
+    }
     setTimeout(() => urlIn.focus(), 30);
   }
 
