@@ -383,7 +383,7 @@ const Social = (() => {
       if (kind) { _pendingMedia[targetKey] = { url, kind }; renderPendingMedia(targetKey); return; }
       // Vanleg lenke (SoundCloud, YouTube …): legg i kommentarteksten — kortet blir laga av lenka.
       allById('sc-cmt-input-' + domId(targetKey)).forEach(inp => { inp.value = (inp.value ? inp.value.trim() + ' ' : '') + url; inp.focus(); });
-    }, { title: 'Add an image, GIF or link', anyLink: true });
+    }, { title: 'Add an image, GIF or link', anyLink: true, dataFallback: true });
   }
 
   function clearCommentMedia(targetKey) {

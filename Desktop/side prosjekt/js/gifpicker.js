@@ -5,7 +5,7 @@
 //      eller ei giphy.com/gifs/...-<id>-side (blir omgjort til direkte GIF-lenke)
 // Ingen ekstern API-nøkkel trengst.
 const GifPicker = (() => {
-  const MAX_BYTES = 8 * 1024 * 1024;
+  const MAX_GIF = 20 * 1024 * 1024;
   let _el = null;
 
   function _toast(msg, type) { if (window.App && App.toast) App.toast(msg, type || 'info'); }
@@ -31,6 +31,32 @@ const GifPicker = (() => {
     if (/\.(gif|webp|png|jpe?g)$/i.test(u.pathname)) return u.href;
     if (/^(media\d*|i)\.giphy\.com$/.test(host) || /^(media\d*|c)\.tenor\.com$/.test(host)) return u.href;
     return anyLink ? u.href : null;
+  }
+
+
+  function _loadImg(file) {
+    return new Promise((res, rej) => {
+      const u = URL.createObjectURL(file), i = new Image();
+      i.onload = () => { URL.revokeObjectURL(u); res(i); };
+      i.onerror = () => { URL.revokeObjectURL(u); rej(new Error('Could not read the image')); };
+      i.src = u;
+    });
+  }
+  async function _toBlob(file, maxDim, q) {
+    const img = await _loadImg(file);
+    let w = img.naturalWidth, h = img.naturalHeight;
+    if (Math.max(w, h) > maxDim) { const k = maxDim / Math.max(w, h); w = Math.round(w * k); h = Math.round(h * k); }
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
+    return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('Could not process the image')), 'image/jpeg', q));
+  }
+  async function _shrink(file) {
+    const b = await _toBlob(file, 2000, 0.88);
+    return new File([b], (file.name || 'image').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+  }
+  async function _dataUrl(file) {
+    const b = await _toBlob(file, 1280, 0.85);
+    return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
   }
 
   function close() { if (_el) { _el.remove(); _el = null; } document.removeEventListener('keydown', _onKey); }
@@ -89,19 +115,32 @@ const GifPicker = (() => {
       else setChosen(n);
     });
     urlIn.addEventListener('keydown', e => { if (e.key === 'Enter' && chosen) send.click(); });
+    function showErr(msg) {
+      chosen = null; send.disabled = true;
+      prev.innerHTML = `<span style="color:#ff8a8a;font-size:.85rem">${_esc(msg)}</span>`;
+    }
     fileIn.addEventListener('change', async () => {
-      const f = fileIn.files && fileIn.files[0];
+      let f = fileIn.files && fileIn.files[0];
+      fileIn.value = '';                       // lar deg velje same fil igjen
       if (!f) return;
-      if (!/^image\//.test(f.type)) { _toast('Choose a GIF/image file', 'error'); return; }
-      if (f.size > MAX_BYTES) { _toast('GIF is too large (max 8 MB)', 'error'); return; }
+      if (!/^image\//.test(f.type) && !/\.(gif|png|jpe?g|webp|avif)$/i.test(f.name)) { showErr('Choose an image or GIF file'); return; }
+      const isGif = /gif$/i.test(f.type) || /\.gif$/i.test(f.name);
       prev.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> Uploading…';
       send.disabled = true;
       try {
-        if (!(window.SC_Storage && SC_Storage.isConfigured())) throw new Error('Upload is not available right now — paste a link instead');
-        const up = await SC_Storage.upload(f, { prefix: 'gif' });
-        setChosen(up.url);
+        if (isGif && f.size > MAX_GIF) throw new Error('GIF is too large (max 20 MB)');
+        if (!isGif && f.size > 2 * 1024 * 1024) f = await _shrink(f);        // store bilete → JPEG, maks 2000px
+        if (!(window.SC_Storage && SC_Storage.isConfigured())) throw new Error('cloud');
+        let url;
+        try { url = (await SC_Storage.upload(f, { prefix: 'gif' })).url; }
+        catch (e) { console.warn('[GifPicker] upload feila', e); throw new Error('cloud'); }
+        if (!url) throw new Error('cloud');
+        setChosen(url);
       } catch (e) {
-        prev.innerHTML = `<span style="color:#ff8a8a;font-size:.85rem">${_esc(e.message || 'Upload failed')}</span>`;
+        if (e.message === 'cloud' && opts.dataFallback && !isGif) {
+          try { setChosen(await _dataUrl(f)); return; } catch (e2) { console.warn(e2); }
+        }
+        showErr(e.message === 'cloud' ? 'Upload failed — try again, or paste a link instead' : (e.message || 'Upload failed'));
       }
     });
     send.addEventListener('click', () => {

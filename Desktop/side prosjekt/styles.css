@@ -11491,3 +11491,4 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 .sc-updates-ic { font-size: 1.2rem; }
 .sc-updates-date { font-size: .7rem; opacity: .6; margin-left: .3rem; }
 .sc-updates-text { font-size: .85rem; opacity: .85; line-height: 1.4; }
+#toast-container { z-index: 10050 !important; }  /* over GIF-/musikk-dialogane (10000) */
