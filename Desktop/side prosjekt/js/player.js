@@ -283,6 +283,23 @@ const Player = (() => {
     const pb = audio.play(); if (pb && pb.catch) pb.catch(() => {});
   }
 
+  // Innebygde <audio controls> inne i sider (Live Archive, opplastingar m.m.) døyr når ruta byter og
+  // DOM-en blir bytt ut. Rett før det: flytt det som spelar over til den faste spelarlinja og hald fram.
+  function adoptInlineMedia() {
+    if (!audio) return false;
+    const cand = [...document.querySelectorAll('#app audio')].find(a =>
+      a !== audio && !a.paused && !a.ended && !a.muted && !a.srcObject && /^(https?|blob):/i.test(a.currentSrc || ''));
+    if (!cand) return false;
+    const url = cand.currentSrc, t = cand.currentTime || 0;
+    const card = cand.closest('.card, .glass, article, li, section') || cand.parentElement;
+    const h = card && card.querySelector('h1, h2, h3, h4, .title, b, strong');
+    const title = (h && h.textContent.trim()) || cand.getAttribute('title') || 'Now playing';
+    try { cand.pause(); } catch (e) {}
+    playExternal(url, title, '');
+    if (t > 1) audio.addEventListener('loadedmetadata', () => { try { audio.currentTime = t; } catch (e) {} }, { once: true });
+    return true;
+  }
+
   // Expose minimal public API
-  return { init, resumeHandoff, setQueue, jumpTo, loadTrack, togglePlay, next, prev, playExternal, fixInfiniteDuration };
+  return { init, resumeHandoff, adoptInlineMedia, setQueue, jumpTo, loadTrack, togglePlay, next, prev, playExternal, fixInfiniteDuration };
 })();

@@ -30,6 +30,7 @@ const Router = (() => {
 
   async function dispatch() {
     const myId  = ++dispatchSeq;
+    try { if (typeof Player !== "undefined" && Player.adoptInlineMedia) Player.adoptInlineMedia(); } catch (e) {}   // musikken skal ikkje stoppe ved fanebyte
     const hash  = window.location.hash;
     const path  = (hash || '').replace(/^#/, '') || '/';
     // Mark the front page so home-only flourishes (e.g. the whiter starfield)
