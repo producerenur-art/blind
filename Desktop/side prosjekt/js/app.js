@@ -3391,6 +3391,7 @@ const App = (() => {
 
     // Init player
     Player.init();
+    try { Player.resumeHandoff && Player.resumeHandoff(); } catch (e) { console.warn('[handoff]', e); }
 
     // Bare én spiller av gangen: når et media-element starter, pause alle andre
     // hørbare audio/video (hovedspiller, radio, profil-temamusikk, media-modal-video).

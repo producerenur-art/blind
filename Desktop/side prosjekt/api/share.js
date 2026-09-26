@@ -354,6 +354,25 @@ ${tags.join('\n')}
   $('more-btn').onclick = function (e) { e.stopPropagation(); var o = mp.classList.toggle('open'); this.setAttribute('aria-expanded', o); };
   document.addEventListener('click', function (e) { if (!mp.contains(e.target)) mp.classList.remove('open'); });
 
+  // ── Musikken skal ikkje stoppe når ein går vidare (Community, Friends …) ──────────────
+  // Delingssida og appen er to ulike sidelastingar, så <audio> døyr ved navigering. Vi lagrar kva som
+  // spelte + posisjon i sessionStorage ved sideforlating; appen (Player) tek over og held fram.
+  (function () {
+    var au = document.querySelector('audio.audio'); if (!au) return;
+    var h1 = document.querySelector('.card h1'), ar = document.querySelector('.card .artist');
+    function save() {
+      try {
+        var src = au.currentSrc || au.src;
+        if (!src || au.ended || au.paused) { sessionStorage.removeItem('sfm_handoff'); return; }
+        sessionStorage.setItem('sfm_handoff', JSON.stringify({
+          url: src, t: au.currentTime || 0, title: h1 ? h1.textContent : '', sub: ar ? ar.textContent : '', ts: Date.now()
+        }));
+      } catch (e) {}
+    }
+    addEventListener('pagehide', save);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') save(); });
+  })();
+
   // ── Levande bakgrunn: svevande partiklar ────────────────────────────────────
   (function () {
     var cv = $('fx'), cx = cv.getContext('2d'), W, H, P = [], N = 46;

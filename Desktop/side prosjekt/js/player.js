@@ -1,3 +1,17 @@
+// Utgang med forsterking (boost >100 %) + mjuk limiter mot klipping. Delt av Player og Radio.
+window._sfmBuildOut = function (ctx, analyser) {
+  const gain = ctx.createGain();
+  gain.gain.value = window._sfmBoost || 1;
+  const lim = ctx.createDynamicsCompressor();
+  lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20;
+  lim.attack.value = 0.003; lim.release.value = 0.15;
+  analyser.connect(gain); gain.connect(lim); lim.connect(ctx.destination);
+  window._sfmGain = gain;
+};
+window._sfmSetBoost = function (g) {
+  window._sfmBoost = g;
+  if (window._sfmGain) window._sfmGain.gain.value = g;
+};
 // Persistent music player — lives in the outer shell, survives route changes
 const Player = (() => {
   let audio, queue = [], currentIndex = -1, isPlaying = false, shuffle = false, repeat = 'none';
@@ -35,6 +49,18 @@ const Player = (() => {
       $('vol-fill').style.width = e.target.value + '%';
     });
 
+    // Boost (>100 %) gjeld berre for opptaket det vart sett på; anna kjelde eller manuell volum-endring nullstiller.
+    const _resetBoost = () => {
+      if ((window._sfmBoost || 1) === 1) return;
+      window._sfmSetBoost(1);
+      document.querySelectorAll('.wwl-vol-in').forEach(i => { i.value = Math.round(audio.volume * 100); });
+    };
+    audio.addEventListener('loadstart', () => {
+      const keep = window._sfmBoostSrc, src = audio.currentSrc || audio.src || '';
+      if (!keep || src.indexOf(keep) === -1) _resetBoost();
+    });
+    audio.addEventListener('volumechange', () => { if (Date.now() - (window._sfmVolSelf || 0) > 100) _resetBoost(); });
+
     audio.addEventListener('timeupdate',     updateProgress);
     audio.addEventListener('loadedmetadata', updateDuration);
     audio.addEventListener('ended',          onEnded);
@@ -56,7 +82,7 @@ const Player = (() => {
           _analyser.smoothingTimeConstant = 0.8;
           _sourceNode = _audioCtx.createMediaElementSource(audio);
           _sourceNode.connect(_analyser);
-          _analyser.connect(_audioCtx.destination);
+          window._sfmBuildOut(_audioCtx, _analyser);
           // Expose globally for Radio visualizer
           window._radioSource  = _sourceNode;
           window._radioCtx     = _audioCtx;
@@ -245,6 +271,18 @@ const Player = (() => {
     currentIndex = -1;
   }
 
+  // Delingssida (/s/…) lagrar det som spelte i sessionStorage når ein forlèt henne; her held vi fram
+  // frå same posisjon, slik at musikken går vidare mellom URL-ar på siriusfm.no.
+  function resumeHandoff() {
+    let h = null;
+    try { h = JSON.parse(sessionStorage.getItem('sfm_handoff') || 'null'); sessionStorage.removeItem('sfm_handoff'); } catch (e) {}
+    if (!h || !/^https:\/\//i.test(h.url || '') || Date.now() - (h.ts || 0) > 120000) return;
+    playExternal(h.url, h.title, h.sub);
+    const t = Math.max(0, +h.t || 0);
+    if (t > 1) audio.addEventListener('loadedmetadata', () => { try { audio.currentTime = t; } catch (e) {} }, { once: true });
+    const pb = audio.play(); if (pb && pb.catch) pb.catch(() => {});
+  }
+
   // Expose minimal public API
-  return { init, setQueue, jumpTo, loadTrack, togglePlay, next, prev, playExternal, fixInfiniteDuration };
+  return { init, resumeHandoff, setQueue, jumpTo, loadTrack, togglePlay, next, prev, playExternal, fixInfiniteDuration };
 })();
