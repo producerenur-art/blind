@@ -797,7 +797,8 @@ const App = (() => {
       const holder = document.createElement('div');
       holder.className = 'community-composer';
       holder.style.display = 'none';
-      holder.innerHTML = '<textarea id="sc-post-input"></textarea><input id="sc-post-target" type="hidden">';
+      holder.innerHTML = '<textarea id="sc-post-input"></textarea><input id="sc-post-target" type="hidden"><input id="sc-post-fb" type="checkbox">';
+      holder.querySelector('#sc-post-fb').checked = !!document.getElementById('sc-home-fb')?.checked;
       document.body.appendChild(holder);
       holder.querySelector('#sc-post-input').value = text;
       holder.querySelector('#sc-post-target').value = 'home';   // → audience: 'public'
@@ -936,6 +937,8 @@ const App = (() => {
           <div class="sc-composer-row">
             <a class="sc-composer-media" href="#/discover" title="Upload music with cover image">${Icon('music')} Share music / image</a>
             <div class="sc-composer-actions">
+              <label class="sc-composer-fb" title="Also open Facebook's share window with this post" style="display:inline-flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer;margin-right:.4rem">
+                <input type="checkbox" id="sc-home-fb" ${(window.Share && Share.fbPref()) ? 'checked' : ''} onchange="Share.setFbPref(this.checked)"> Also share on Facebook</label>
               <select id="sc-home-target" class="sc-composer-target" title="Where do you want to share?">${_composerTargetOptions()}</select>
               <button class="btn btn-primary btn-sm sc-composer-send" onclick="App.composerPost()">${Icon('send')} Share</button>
             </div>

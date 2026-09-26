@@ -495,6 +495,9 @@ const Community = (() => {
           <label class="community-autoshare" title="Share new uploads (music/video/link) automatically to the wall">
             <input type="checkbox" ${autoShareOn() ? 'checked' : ''} onchange="Community.setAutoShare(this.checked)"> Auto-share uploads
           </label>
+          <label class="community-autoshare" title="Also open Facebook's share window with this post (public posts only)">
+            <input type="checkbox" id="sc-post-fb" ${(window.Share && Share.fbPref()) ? 'checked' : ''} onchange="Share.setFbPref(this.checked)"> Also share on Facebook
+          </label>
           <button class="btn btn-primary btn-sm" onclick="Community.post(this)">${Icon('send')} Share</button>
         </div>
       </div>`;
@@ -603,6 +606,10 @@ const Community = (() => {
     }
     // På Community-veggen og Hjem-veggen er alt offentlig for alle innloggede.
     const vis = (_publicOnly || target === 'home') ? 'public' : (me.wallVisibility || 'public');
+    // «Del også på Facebook»: kun offentlege innlegg. Vindauget opnast NO (synkront i klikket).
+    const fbBox = _cField(root, 'sc-post-fb');
+    const fbWin = (fbBox && fbBox.checked && vis === 'public' && window.Share) ? Share.fbOpenPopup() : null;
+    const fbImage = _pendingImage && _pendingImage.url;
     const p = {
       id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
       author: me.username, authorDisplay: me.displayName,
@@ -640,6 +647,7 @@ const Community = (() => {
     // subscribe()). Det når ALLE innlogga — med eller utan abonnement — og er ikkje
     // avhengig av at avsendaren kjenner til alle brukarane. canSee held venner-
     // innlegg private.
+    if (fbBox && fbBox.checked && vis === 'public' && window.Share) Share.fbFinish(fbWin, { text, image: fbImage, author: me.username, authorDisplay: me.displayName });
     if (typeof App !== 'undefined') App.toast(
       target === 'home' ? '🏠 Shared on the front page!' : (p.kind === 'image' ? '📷 Image shared!' : 'Post shared!'), 'success');
   }

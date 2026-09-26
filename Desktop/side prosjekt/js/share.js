@@ -311,12 +311,13 @@ const Share = (() => {
         title, artist: author, image, media, username: rec.author,
       });
     } else {
-      // Reine tekst-/privat-innlegg har ikkje eit offentleg OG-bilde å byggje
-      // /s/<payload>-uthentingssida rundt — link i staden til den innlogga
-      // permalenka (#/post/<id>) så mottakaren ser sjølve innlegget + kven som
-      // delte det, og blir bedt om å logge inn viss dei ikkje alt er det.
+      // Reine tekst-/privat-innlegg har ikkje eit offentleg OG-bilde. #/-lenker kan Facebook o.l. IKKJE lese
+      // (hash-delen når aldri serveren → ingen forhandsvising), så pakk permalenka (#/post/<id>) inn i ei
+      // /s/-lenke: serveren gir da ekte OG-tagger (tittel + profilbilde eller SiriusFM-standardbildet) og
+      // sida sender mottakaren vidare til sjølve innlegget.
       const sharer = (typeof Auth !== 'undefined') ? Auth.current() : null;
-      url = `${SITE}/#/post/${encodeURIComponent(rec.id || '')}` + (sharer ? `?by=${encodeURIComponent(sharer.username)}` : '');
+      const permalink = `${SITE}/#/post/${encodeURIComponent(rec.id || '')}` + (sharer ? `?by=${encodeURIComponent(sharer.username)}` : '');
+      url = buildUrl({ kind: 'link', title, artist: author, image, link: permalink, username: rec.author || (sharer && sharer.username) || '' });
     }
 
     // Del til Community er kun meiningsfullt for media som ikkje alt ligg i feeden;
@@ -369,7 +370,41 @@ const Share = (() => {
     return `<button class="${cls}" title="Share the post" onclick="event.stopPropagation();Share.post('${String(id).replace(/'/g, "\\'")}')">🔗</button>`;
   }
 
-  return { buildUrl, open, shareUrl, button, post, postButton };
+  // ── «Del også på Facebook» ved Community-innlegg ──────────────────────────
+  // Facebook tillèt ikkje at apper postar til ein personleg profil automatisk (stengt
+  // 2018), så me opnar Facebooks eige delevindauge med innlegget ferdig utfylt — brukaren
+  // trykkar «Post» der. Vindauget MÅ opnast synkront i klikk-handteraren (elles blokkerer
+  // nettlesaren popup), så: fbOpenPopup() først, fbFinish() når innlegget er lagra.
+  const FB_KEY = 'sc_share_fb';
+  function fbPref() { try { return localStorage.getItem(FB_KEY) !== '0'; } catch (_) { return true; } }   // standard: PÅ
+  function setFbPref(on) { try { localStorage.setItem(FB_KEY, on ? '1' : '0'); } catch (_) {} }
+  function fbOpenPopup() {
+    try {
+      const w = window.open('about:blank', 'sc_fb_share', 'width=640,height=620');
+      if (w && w.document) w.document.write('<title>Facebook</title><body style="background:#0f1117;color:#cbd5e1;font:16px sans-serif;padding:2rem">Opening Facebook…</body>');
+      return w || null;
+    } catch (_) { return null; }
+  }
+  function fbCancel(w) { try { if (w && !w.closed) w.close(); } catch (_) {} }
+  // post: { text, image, author, authorDisplay }
+  function fbFinish(w, post) {
+    const text = String(post.text || '').trim();
+    const excerpt = text.length > 110 ? text.slice(0, 107) + '…' : text;
+    const url = buildUrl({
+      kind: 'link',
+      title: excerpt || 'New post on SiriusFM',
+      artist: post.authorDisplay || post.author || '',
+      image: _isPublic(post.image) ? post.image : (_avatarUrl(post.author) || ''),
+      link: SITE + '/#/community',
+      username: post.author || '',
+    });
+    const fb = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url) + (text ? '&quote=' + encodeURIComponent(text.slice(0, 500)) : '');
+    if (w && !w.closed) { w.location.href = fb; return true; }
+    if (window.App) App.toast('Facebook popup was blocked — allow popups for siriusfm.no to share there too.', 'info', 6000);
+    return false;
+  }
+
+  return { buildUrl, open, shareUrl, button, post, postButton, fbPref, setFbPref, fbOpenPopup, fbCancel, fbFinish };
 })();
 
 if (typeof window !== 'undefined') window.Share = Share;
