@@ -19,17 +19,14 @@ const SiriusUpdates = (() => {
       '<b>Profile</b>: your page with About, Content, Posts, Guestbook, Community and Groups. Friends, messages and requests live in the <b>Inbox</b>.',
     ]},
     { title: '🛠️ How to do things', items: [
-      '<b>Post</b>: write on the Feed and press Share. Choose Community wall or one of your groups. Tick <i>Also share on Facebook</i> to open Facebook’s share window with your public post.',
+      '<b>Post</b>: write on the Feed and press Share. Choose Community wall or one of your groups.',
       '<b>Add media</b>: 📎 uploads an image, 🖼️ adds a GIF/image/link (upload or paste, with preview). SoundCloud and YouTube links become a player card.',
       '<b>Upload music or a DJ mix</b>: Profile → Edit → Music / Upload DJ Mix. Free accounts can upload mixes up to 3 hours; Pro up to 20 hours.',
       '<b>Private chat</b>: open a profile → <i>Send private message</i>. You can edit text (with emojis), send images, GIFs and music, and replace or delete what you sent.',
       '<b>Friends</b>: press <i>+ Add friend</i> on a profile. Requests appear in the Inbox and the bell. Click a name in a notification to open that profile.',
     ]},
-    { title: '🔗 Sharing to Facebook & SoundCloud', items: [
-      '<b>Facebook:</b> tick <i>Also share on Facebook</i> under your post (it is on by default). Facebook’s share window opens with your public post ready — press <i>Post</i> there. It uses whichever Facebook account you are logged into in your browser; your email does not need to match.',
-      '<b>Music and audio on Facebook:</b> uploaded tracks and mixes have a 🔗 share button that opens Facebook with your cover image, title and a playable link.',
+    { title: '🔗 Sharing links & SoundCloud', items: [
       '<b>SoundCloud:</b> paste any SoundCloud link in a post, comment or profile and it becomes a player right on SiriusFM. To put a SiriusFM upload on SoundCloud, upload it there yourself and share the link here.',
-      '<b>Accounts are not linked automatically.</b> Facebook and SoundCloud only allow posting with your own approval each time, so nothing is ever posted for you without you pressing the button.',
     ]},
     { title: '🔔 Notifications & email', items: [
       'The bell shows reactions, comments, friend requests and messages. Sound can be turned off per person on their profile.',
@@ -45,7 +42,7 @@ const SiriusUpdates = (() => {
       '<b>Electronic music and its community.</b> Be respectful: no harassment, hate, threats, spam or scams. No illegal content.',
       '<b>Your content stays yours.</b> By posting you allow SiriusFM to display it on the site and in link previews you share. You can edit or delete your own posts and uploads at any time.',
       '<b>Moderation.</b> Admins may remove content or suspend accounts that break these rules.',
-      '<b>Privacy.</b> Friends-only and private posts are never sent to Facebook or shown publicly. Read the full <a href="personvern.html" target="_blank" rel="noopener">Privacy Policy</a>.',
+      '<b>Privacy.</b> Friends-only and private posts are never shown publicly. Read the full <a href="personvern.html" target="_blank" rel="noopener">Privacy Policy</a>.',
       '<b>Service.</b> SiriusFM is provided as is; third-party radio streams can go offline, and features may change.',
     ]},
     { title: '🆘 Need help?', items: [

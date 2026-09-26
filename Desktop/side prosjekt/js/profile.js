@@ -661,7 +661,7 @@ const Profile = (() => {
       </div>` : '';
 
     // ── Favorite radio ─────────────────────────────────────────────────────
-    const favRadioHtml = user.favoriteRadio ? (() => {
+    const favRadioHtml = (user.favoriteRadio && Auth.current()) ? (() => {
       const fr = user.favoriteRadio;
       return `
       <div class="profile-fav-radio">
@@ -962,7 +962,7 @@ const Profile = (() => {
           <button class="btn-icon" onclick="openMediaModal('${r.id}')" title="View">${Icon('eye')}</button>
           ${isOwner ? `<button class="btn-icon" onclick="Profile.toggleMediaVisibility('${r.id}')" title="${isPriv ? 'Private — only you. Click to share with everyone' : 'Public — everyone sees it. Click to make private'}">${isPriv ? '🔒' : '🌐'}</button>` : ''}
           ${isOwner ? `<button class="btn-icon" onclick="Profile.shareMediaToCommunity('${r.id}')" title="Share to the community wall">📣</button>` : ''}
-          ${isOwner ? `<button class="btn-icon" onclick="event.stopPropagation();Share.open('media','${r.id}')" title="Share further on Facebook etc.">🔗</button>` : ''}
+          ${isOwner ? `<button class="btn-icon" onclick="event.stopPropagation();Share.open('media','${r.id}')" title="Share further">🔗</button>` : ''}
           ${isOwner ? `<button class="btn-icon btn-danger" onclick="deleteMedia('${r.id}')" title="Delete">${Icon('trash')}</button>` : ''}
         </div>
       </div>`;
@@ -1046,7 +1046,7 @@ const Profile = (() => {
           ${!isOwner ? `<button class="btn-icon" title="Report track (stolen / already released)" onclick="event.stopPropagation();Profile.reportTrack('${esc(r.id)}','${esc(username)}')">${Icon('ban')}</button>` : ''}
           ${isOwner ? `<button class="btn-icon" title="${r.visibility === 'private' ? 'Private — only you see it. Click to make public (shown in Discover for everyone)' : 'Public — shown in Discover for everyone. Click to make private'}" onclick="event.stopPropagation();Profile.toggleTrackVisibility('${esc(r.id)}','${esc(username)}')">${r.visibility === 'private' ? '🔒' : '🌐'}</button>` : ''}
           ${isOwner ? `<button class="btn-icon" title="Share to the community wall" onclick="event.stopPropagation();Profile.shareTrackToCommunity('${esc(r.id)}','${esc(username)}')">📣</button>` : ''}
-          ${isOwner ? `<button class="btn-icon" title="Share further on Facebook etc." onclick="event.stopPropagation();Share.open('music','${esc(r.id)}')">🔗</button>` : ''}
+          ${isOwner ? `<button class="btn-icon" title="Share further" onclick="event.stopPropagation();Share.open('music','${esc(r.id)}')">🔗</button>` : ''}
           ${isOwner ? `<button class="btn-icon music-credits-btn" title="Credits & buy links" onclick="event.stopPropagation();Profile.openSongCreditsModal('${esc(r.id)}')">${Icon('edit')}</button>` : ''}
           ${isOwner ? `<label class="music-cover-upload" title="Change cover" onclick="event.stopPropagation()">${Icon('camera')}<input type="file" accept="image/*" style="display:none" onchange="Profile.uploadMusicCover('${esc(r.id)}',this.files[0])"></label>` : ''}
           ${isOwner ? `<label class="music-cover-upload" title="Replace audio file" onclick="event.stopPropagation()">${Icon('upload')}<input type="file" accept="audio/*" style="display:none" onchange="Profile.replaceMusicAudio('${esc(r.id)}',this.files[0])"></label>` : ''}
@@ -1955,7 +1955,7 @@ const Profile = (() => {
             <button class="mix-play-btn" onclick="Profile.playMix('${r.id}','${(r.title||r.name).replace(/'/g,"\\'")}')">${Icon('play')} Play</button>
             ${isOwner ? `
               <button class="btn btn-ghost btn-sm" onclick="Profile.openMixEditModal('${r.id}','${username}')">${Icon('edit')} Edit</button>
-              <button class="btn-icon" onclick="Share.open('mixes','${r.id}')" title="Share further on Facebook etc.">🔗</button>
+              <button class="btn-icon" onclick="Share.open('mixes','${r.id}')" title="Share further">🔗</button>
               <button class="btn-icon" onclick="Profile.toggleMixVisibility('${r.id}','${username}')" title="${isPrivate ? 'Make public' : 'Make private'}">${isPrivate ? '🌐' : '🔒'}</button>
               <button class="btn-icon btn-danger" onclick="Profile.deleteMix('${r.id}','${username}')" title="Delete">${Icon('trash')}</button>` : ''}
           </div>
@@ -2441,7 +2441,7 @@ const Profile = (() => {
           <div style="font-size:0.75rem;color:var(--text2)">${formatDuration(r.duration || 0)} · ${r.visibility === 'private' ? '🔒 Private' : '🌐 Public'}${(r.tracklist && r.tracklist.length) ? ` · ${r.tracklist.length} tracks` : ''}</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="Profile.openMixEditModal('${r.id}','${user.username}')">${Icon('edit')}</button>
-        <button class="btn-icon" onclick="Share.open('mixes','${r.id}')" title="Share further on Facebook etc.">🔗</button>
+        <button class="btn-icon" onclick="Share.open('mixes','${r.id}')" title="Share further">🔗</button>
         ${isPro ? `<button class="btn btn-ghost btn-sm" onclick="Profile.toggleMixVisibility('${r.id}','${user.username}')">${r.visibility === 'private' ? '🌐' : '🔒'}</button>` : ''}
         <button class="btn-icon btn-danger" onclick="Profile.deleteMix('${r.id}','${user.username}')" title="Delete">${Icon('trash')}</button>
       </div>`).join('');

@@ -343,7 +343,6 @@ const LiveArchive = (() => {
     const title = (s.display_name || 'Live set') + (s.track_title ? ' — ' + s.track_title : '');
     const t = encodeURIComponent(title + ' · SiriusFM'), tt = encodeURIComponent(title);
     const nets = [
-      ['Facebook', `https://www.facebook.com/sharer/sharer.php?u=${enc}`, '#1877f2'],
       ['X',        `https://twitter.com/intent/tweet?url=${enc}&text=${t}`, '#111'],
       ['WhatsApp', `https://wa.me/?text=${t}%20${enc}`, '#25d366'],
       ['Telegram', `https://t.me/share/url?url=${enc}&text=${t}`, '#229ed9'],
