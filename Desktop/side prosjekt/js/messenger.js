@@ -467,7 +467,7 @@ const Messenger = (() => {
 
   function pickGif() {
     if (!_active) return;
-    GifPicker.open(url => _doSend(url, 'gif'));
+    GifPicker.open(url => _doSend(url, GifPicker.isImageLike(url) ? 'gif' : 'text'), { title: 'Add a GIF, image or link', anyLink: true });
   }
 
   // Rediger/slett EIGEN melding — server (api/dm.js) sjekkar from_user === deg

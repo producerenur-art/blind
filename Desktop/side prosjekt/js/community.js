@@ -534,7 +534,12 @@ const Community = (() => {
   function pickGif(fromEl) {
     const me = Auth.current();
     if (!me) { if (typeof Router !== 'undefined') Router.go('/login'); return; }
-    GifPicker.open(url => _applyGif(url, fromEl));
+    GifPicker.open(url => {
+      if (GifPicker.isImageLike(url)) { _applyGif(url, fromEl); return; }
+      // Vanleg lenke (ambientmann.com, SoundCloud, YouTube …): inn i teksten — får forhåndsvisningskort.
+      const inp = _cField(_composerRoot(fromEl && fromEl.closest ? fromEl : null), 'sc-post-input');
+      if (inp) { inp.value = (inp.value ? inp.value.trim() + ' ' : '') + url; inp.focus(); }
+    }, { title: 'Add a GIF, image or link', anyLink: true, dataFallback: true });
   }
   function _applyGif(url, fromEl) {
     const root = _composerRoot(fromEl && fromEl.closest ? fromEl : null);

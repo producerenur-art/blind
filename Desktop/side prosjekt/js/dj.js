@@ -253,10 +253,10 @@ const DJ = (() => {
   // Lim inn ei direkte .gif-lenke; pmMsgHtml/gpost-visning render kind:'gif'
   // som eit bilete i staden for tekst.
   function pickGif(targetUsername) {
-    GifPicker.open(url => _doSend(targetUsername, url, 'gif'));
+    GifPicker.open(url => _doSend(targetUsername, url, GifPicker.isImageLike(url) ? 'gif' : 'text'), { title: 'Add a GIF, image or link', anyLink: true });
   }
   function pickImage(targetUsername) {
-    GifPicker.open(url => _doSend(targetUsername, url, 'gif'), { title: 'Send an image' });
+    GifPicker.open(url => _doSend(targetUsername, url, GifPicker.isImageLike(url) ? 'gif' : 'text'), { title: 'Send an image or link', anyLink: true });
   }
   function pickMusic(targetUsername) {
     DmMedia.pickAudio(text => _doSend(targetUsername, text, 'text'));
