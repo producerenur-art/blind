@@ -30,7 +30,7 @@ const CONFIG = {
   // gratis Pro-tilgang (js/auth.js Auth.current()), moderering (js/community.js/
   // livePresence.js _isAdmin) OG rediger-rett i Live-arkivet (js/liveArchive.js).
   // Legg til ein e-post → personen får alt samtidig. Samanlikning er små bokstavar/trimma.
-  ADMIN_EMAILS: ['producerenur@gmail.com', 'constant8@gmail.com'],
+  ADMIN_EMAILS: ['producerenur@gmail.com', 'constant8@gmail.com', 'krianter@proton.me'],
   isAdminEmail(user) {
     try { return !!user && this.ADMIN_EMAILS.includes(String(user.email || '').toLowerCase().trim()); }
     catch (_) { return false; }
