@@ -11535,3 +11535,8 @@ body.community-psy #bg-img-wrap, body.community-psy #bg-particles-canvas { visib
   .cw-psy-layer i, .cw-psy-layer b { animation: none; }
 }
 .fc-bar { cursor: grab; touch-action: none; user-select: none; } .fc-bar:active { cursor: grabbing; }
+
+/* Chat-dokken (venner) glir bort ved stillhet, saman med høgre-kant-kontrollane — kjem att ved musebevegelse.
+   Blir synleg og står stille medan musa er over han eller ein skriv i han (sjå js/edgeAutohide.js). */
+#fc-dock, #fc-launch { transition: opacity 0.45s ease, transform 0.45s ease; }
+body.edge-idle #fc-dock, body.edge-idle #fc-launch { opacity: 0; transform: translateY(24px); pointer-events: none; }
