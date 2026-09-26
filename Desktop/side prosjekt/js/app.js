@@ -693,17 +693,25 @@ const App = (() => {
     return (window.SC && SC.isOnline && SC.isOnline(username)) || (typeof Auth !== 'undefined' && Auth.isOnline(username));
   }
 
+  // Totalt tal innlogga online (inkl. meg sjølv) — server-presence (SC.onlineList) + lokalt kjende.
+  function _onlineTotal(list, me) {
+    const names = new Set(list.map(u => u.username));
+    try { (window.SC && SC.onlineList ? SC.onlineList() : []).forEach(n => names.add(n)); } catch (e) {}
+    if (me) names.add(me.username);
+    return names.size;
+  }
+
   function _onlineNowHtml(users, me) {
     const list = users.filter(u => (!me || u.username !== me.username) && _isOnlineUser(u.username));
     return `
       <div class="sc-online-wrap" id="sc-online-strip">
-        <div class="sc-online-head"><span class="online-dot"></span> Online now <span class="sc-online-count">${list.length}</span></div>
+        <div class="sc-online-head"><span class="online-dot"></span> Online now <span class="sc-online-count">${_onlineTotal(list, me)}</span></div>
         <div class="sc-online-row">${_onlineRowItemsHtml(list)}</div>
       </div>`;
   }
 
   function _onlineRowItemsHtml(list) {
-    if (!list.length) return `<div class="sc-online-empty">No one online right now</div>`;
+    if (!list.length) return `<div class="sc-online-empty">Just you right now</div>`;
     return list.map(u => `
       <a class="sc-online-item" href="#/u/${_esc(u.username)}" title="${_esc(u.displayName || u.username)}">
         <span class="sc-online-av" data-av-user="${_esc(u.username)}">${_esc((u.displayName || '?').charAt(0).toUpperCase())}</span>
@@ -721,7 +729,7 @@ const App = (() => {
     const list = users.filter(u => (!me || u.username !== me.username) && _isOnlineUser(u.username));
     const count = el.querySelector('.sc-online-count');
     const row = el.querySelector('.sc-online-row');
-    if (count) count.textContent = list.length;
+    if (count) count.textContent = _onlineTotal(list, me);
     if (row) {
       row.innerHTML = _onlineRowItemsHtml(list);
       if (window.Profile && Profile.hydrateAvatars) Profile.hydrateAvatars(row);
@@ -909,14 +917,14 @@ const App = (() => {
         </div>
       </div>`;
 
-    const radioUsers    = users.filter(u => u.favoriteRadio?.url);
+    const radioUsers    = user ? users.filter(u => u.favoriteRadio?.url) : [];   // favoritt-radio: berre for innlogga
     const liveEventUsers = users.filter(u => u.liveEvent);
 
     // ── Onboarding-velkomst fjernet ────────────────────────────────────────
     const onboardHtml = '';
 
     // ── Online now — kun synleg for innlogga brukarar, ikkje gjester ────────
-    const onlineHtml = user ? _onlineNowHtml(users, user) : '';
+    const onlineHtml = user ? _onlineNowHtml(users, user) + (window.SiriusUpdates ? SiriusUpdates.html() : '') : '';
 
     // ── Komponer-boks — del et innlegg rett fra forsiden ───────────────────
     const composerHtml = user ? `
@@ -3842,7 +3850,7 @@ window.NpMiniPlayer = (() => {
     if (Radio.currentStation) {
       Radio.togglePlay();
     } else {
-      const allUsers = Object.values(Auth.getUsers()).filter(u => u.favoriteRadio?.url);
+      const allUsers = Auth.current() ? Object.values(Auth.getUsers()).filter(u => u.favoriteRadio?.url) : [];
       if (allUsers.length) {
         const r = allUsers[0].favoriteRadio;
         Radio.playUrl(r.url, r.name || 'Radio', r.emoji || '📻');
