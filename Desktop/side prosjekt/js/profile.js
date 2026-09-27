@@ -1874,6 +1874,12 @@ const Profile = (() => {
     });
     rec.buyLinks = buyLinks;
     await DB.put('music', rec);
+    // Speil endret artist/tittel til Supabase så andre ser det oppdaterte
+    // navnet i Discover, ikke bare "Unknown artist" fra den opprinnelige opplastingen.
+    const me = Auth.current();
+    if (me && rec.audioUrl && rec.visibility === 'public' && window.MusicSync) {
+      MusicSync.push(me.username, { id: trackId, ...rec });
+    }
     App.closeModal();
     App.toast('Credits saved! 🎶', 'success');
     loadEditorMusic(Auth.current());
@@ -2342,6 +2348,7 @@ const Profile = (() => {
     const rec = await DB.get('music', id);
     if (rec?.coverMediaId) await DB.delete('media', rec.coverMediaId).catch(() => {});
     await DB.delete('music', id).catch(() => {});
+    if (window.MusicSync) MusicSync.remove(current.username, id);
     current.musicIds = (current.musicIds || []).filter(x => x !== id);
     Auth.updateUser(current.username, { musicIds: current.musicIds });
     document.getElementById(`mitem-${id}`)?.remove();
@@ -3030,6 +3037,11 @@ const Profile = (() => {
       if (shared && meta.visibility === 'public' && window.Community && Community.autoShareOn()) {
         Community.shareMedia({ kind: 'audio', name: meta.name, url: meta.audioUrl, sourceId: id, audience: 'public' });
       }
+      // Speil til Supabase så ANDRE besøkende ser sporet i Discover — uten dette
+      // finnes det kun i denne nettleserens IndexedDB (se js/musicsync.js).
+      if (shared && meta.visibility === 'public' && window.MusicSync) {
+        MusicSync.push(current.username, { id, ...meta });
+      }
       current.musicIds = [...(current.musicIds || []), id];
       Auth.updateUser(current.username, { musicIds: current.musicIds });
       if (listEl) {
@@ -3455,6 +3467,12 @@ const Profile = (() => {
       url = await DB.getBlobUrl('media', id).catch(() => null);
     }
     await DB.put('music', rec);
+    // Speil oppdatert cover til Supabase (MusicSync filtrerer selv bort
+    // ikke-offentlige URL-er som data:/blob:) så ANDRE besøkende ser det nye
+    // coveret i Discover, ikke bare denne nettleseren.
+    if (rec.audioUrl && rec.visibility === 'public' && window.MusicSync) {
+      MusicSync.push(current.username, { id: trackId, ...rec });
+    }
 
     const el = document.getElementById(`mthumb-${trackId}`);
     if (el && url) {

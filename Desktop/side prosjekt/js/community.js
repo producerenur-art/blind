@@ -1150,6 +1150,8 @@ const Community = (() => {
       me.musicIds = [...(me.musicIds || []), id];
       Auth.updateUser(me.username, { musicIds: me.musicIds });
       if (up.shared) shareMedia({ kind: 'audio', name: title, url: up.url, sourceId: id, audience: 'public', caption: desc, label: labelName, buyUrl });
+      // Speil til Supabase så ANDRE besøkende ser sporet i Discover (se js/musicsync.js).
+      if (up.shared && window.MusicSync) MusicSync.push(me.username, { id, ...meta });
       // Varsling til alle innlogga skjer via den delte feeden (subscribe()).
       if (typeof App !== 'undefined') App.toast(up.shared ? '🎵 Music uploaded and shared!' : '🎵 Saved locally on this device.', 'success');
       setSection('vegg');

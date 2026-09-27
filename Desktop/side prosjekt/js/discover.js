@@ -493,9 +493,17 @@ const Discover = (() => {
   }
 
   // ── Track loading ─────────────────────────────────────────────────────
+  // To kilder, merget: (1) denne nettleserens egen IndexedDB via user.musicIds
+  // (alltid tilgjengelig, også for lokale/ikke-delte spor), og (2) Supabase via
+  // MusicSync (js/musicsync.js) — uten (2) ser INGEN andre besøkende et spor
+  // uansett hva som er lastet opp, siden musicIds/IndexedDB er rent lokale
+  // (se js/profilesync.js, som eksplisitt utelater musicIds fra synk).
   async function loadAllTracks() {
     const users = Auth.getAllPublicUsers();
+    const usersByName = {};
+    users.forEach(u => { usersByName[u.username] = u; });
     const results = [];
+    const seenIds = new Set();
     for (const user of users) {
       if (!user.musicIds || !user.musicIds.length) continue;
       for (const mid of user.musicIds) {
@@ -510,13 +518,14 @@ const Discover = (() => {
           if (!coverUrl && coverBlobId) {
             coverUrl = await DB.getBlobUrl('media', coverBlobId).catch(() => null);
           }
+          seenIds.add(mid);
           results.push({
             id:        mid,
             title:     rec.name     || rec.title || 'Untitled',
             artist:    rec.artist   || user.displayName,
             username:  user.username,
             genre:     (rec.genre   || 'electronic').toLowerCase(),
-            duration:  rec.duration || 0,
+            duration:  rec.duration || rec.durationSec || 0,
             coverUrl,
             audioUrl:  rec.audioUrl || null,
             uploadedAt:         rec.uploadedAt || user.createdAt || Date.now(),
@@ -524,6 +533,29 @@ const Discover = (() => {
             artistSubscription: user.subscription || null,
           });
         } catch { /* skip */ }
+      }
+    }
+    // Spor fra andre besøkende (eller denne enheten etter tømt IndexedDB) —
+    // hentet fra Supabase, hopper over alt vi allerede har lokalt.
+    if (typeof MusicSync !== 'undefined') {
+      const remote = await MusicSync.pullAll().catch(() => []);
+      for (const t of remote) {
+        if (!t || !t.id || seenIds.has(t.id)) continue;
+        seenIds.add(t.id);
+        const owner = usersByName[t.username];
+        results.push({
+          id:        t.id,
+          title:     t.title || 'Untitled',
+          artist:    t.artist || (owner && owner.displayName) || t.username,
+          username:  t.username,
+          genre:     (t.genre || 'electronic').toLowerCase(),
+          duration:  t.duration || 0,
+          coverUrl:  t.coverUrl || null,
+          audioUrl:  t.audioUrl || null,
+          uploadedAt:         t.uploadedAt || Date.now(),
+          isMix:              t.isMix || false,
+          artistSubscription: (owner && owner.subscription) || null,
+        });
       }
     }
     return results.sort((a, b) => b.uploadedAt - a.uploadedAt);
