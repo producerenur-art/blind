@@ -280,13 +280,18 @@ const World = (() => {
   // `events` = kommande planar (vert vist som «Planar framover» med RA-lenkjer).
   const CLUBS = [
     {
-      // events-lista under var to konkrete datoar i juli 2026 — begge passert
-      // (i dag er 07.09.2026). Fjerna i staden for å vise gamle "kommande"-
-      // arrangement som feilinfo; ingen bekrefta nye datoar funne å erstatte med.
+      // events henta frå ra.co sitt GraphQL-endepunkt (ra.co/graphql, venue id
+      // 212119) 27.09.2026 — HTML-sida sjølv er no DataDome/Cloudflare-blokkert
+      // for curl/WebFetch, sjå [[soundcore-world-clubs-ra]] for oppdatert oppskrift.
       emoji: '🏛️', name: 'IT Athens', loc: 'Exarcheia, Athens, Greece 🇬🇷',
       grad: 'linear-gradient(135deg,#0a0a14,#1a1030,#2a0d3e)',
       theme: '2 rooms at Solomou 30 & Mpotasi 9, in the heart of Exarcheia — one of Athens’ most active underground clubs, with 58 events in 2026. Residents: Plagger, MOSHBEAT, TYPEO, Human Cruelty & Brazi.',
       tags: ['Underground', '2 Rooms', 'Athens', 'Live'],
+      events: [
+        { name: 'A Psychedelic Night by Beatrip', date: '2 Oct 2026', url: 'https://ra.co/events/2542997' },
+        { name: 'Showcase Tropical Nomads Athens', date: '3 Oct 2026', url: 'https://ra.co/events/2517082' },
+        { name: 'EELF x HER PRESENT — Athens: Target Demographic, Jacopo Sb, VRGN', date: '10 Oct 2026', url: 'https://ra.co/events/2510435' },
+      ],
       links: [
         { label: 'RA profile', kind: 'web', url: 'https://ra.co/clubs/212119' },
         { label: 'Instagram', kind: 'web', url: 'https://www.instagram.com/itathensexarcheia/' },

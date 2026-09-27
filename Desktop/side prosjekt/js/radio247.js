@@ -27,7 +27,9 @@ const Radio247 = (() => {
   // 'alswin-ambient' fjerna 23.09.2026 — stadfesta CORS-blokkert i nettlesar
   // (ingen Access-Control-Allow-Origin frå server7.radio-streams.net), sjå
   // kommentaren ved stasjonen sitt tidlegare oppslag i js/radio.js STATIONS.
-  const DARK_DRONE_IDS  = ['ambient-abyss', 'dark-city-signal', 'systrum-ssr1', 'indiebeat-ambient', 'modular-station'];
+  // 'modular-station' fjerna 27.09.2026 — utløpt SSL-sertifikat, sjå
+  // kommentaren ved stasjonen sitt tidlegare oppslag i js/radio.js STATIONS.
+  const DARK_DRONE_IDS  = ['ambient-abyss', 'dark-city-signal', 'systrum-ssr1', 'indiebeat-ambient'];
   const PSYCHILL_IDS    = ['ambientpsy-1fm', 'multihuman', 'diceradio-psybient', 'paradisehunter-chillout'];
   // smoothchill (icy-genre: Soul) og anon-fm (icy-genre inkluderer rock) fjerna
   // 20.09.2026 — live ICY-metadata stadfesta ikkje-elektronisk innhald,
@@ -55,7 +57,6 @@ const Radio247 = (() => {
     'record-trancemission': 'Record Trancemission', 'dfm-avb': 'Armin van Buuren',
     'ambient-abyss': 'Ambient Abyss Broadcasting', 'dark-city-signal': 'Dark City Signal',
     'systrum-ssr1': 'Systrum Sistum SSR1', 'indiebeat-ambient': 'The Indie Beat — Ambient',
-    'modular-station': 'Modular-Station',
     'ambientpsy-1fm': 'Ambient Psychill (1.FM)', multihuman: 'MultiHuman EntheoMusic',
     'diceradio-psybient': 'DiceRadio', 'paradisehunter-chillout': 'Paradisehunter Chillout',
     '1fm-chillout': '1.FM Chillout Lounge', brokenbeats: 'Brokenbeats', cafedelmar: 'Café del Mar',

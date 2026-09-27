@@ -264,13 +264,14 @@ const Radio = (() => {
       emoji: '🌘', color: '#6366f1',
       desc: 'Dark ambient · deep ambient',
     },
-    {
-      id: 'modular-station', cat: 'Dark Ambient / Drone',
-      name: 'Modular-Station',
-      url:  'https://broadcast.modular-station.com/radio/8000/radio.aac',
-      emoji: '🔌', color: '#6366f1',
-      desc: 'Ambient · modular synthesis · soundscape',
-    },
+    // 'modular-station' fjerna 27.09.2026 — SSL-sertifikatet til
+    // broadcast.modular-station.com utløp 25.09.2026 (notAfter: Sep 25
+    // 11:04:37 2026 GMT). Serveren streamar framleis ekte lyd (bekrefta med
+    // -k), men eit utløpt sertifikat vert avvist av nettlesarar/lydmotoren
+    // same veg som CORS-blokkeringane under — ekte lyttarar ville og feila,
+    // ikkje berre helsesjekken (api/radio-healthcheck.js). Legg tilbake når
+    // dei fornyar sertifikatet (sjekk med openssl s_client -connect
+    // broadcast.modular-station.com:443 | openssl x509 -noout -dates).
     // 'alswin-ambient' (Alswin Ambient Music) fjerna 23.09.2026 — stadfesta
     // live: server7.radio-streams.net sender ingen Access-Control-Allow-
     // Origin-header, og lydmotoren (index.html <audio id="audio-engine">)
@@ -643,14 +644,14 @@ const Radio = (() => {
   const ADS = [
     { url: JINGLE_BASE + 'arcturians-ad.mp3',   shiftMs: 0 },            // Arcturians (3:41)
     { url: JINGLE_BASE + 'reklame-sirius.m4a?v=20260926',  shiftMs: 2 * HOUR_MS },  // «reklame sirius» (2:37)
-    { url: JINGLE_BASE + 'reklame-2-sirius.m4a?v=20260926', shiftMs: 4 * HOUR_MS }, // «reklame 2 sirius» (1:36)
+    { url: JINGLE_BASE + 'reklame-2-sirius-v2.m4a?v=20260927', shiftMs: 4 * HOUR_MS }, // «reklame 2 sirius» v2, Facebook-linja klipt bort 27.09 (1:16)
   ];
 
   // Brukarønske 2026-09-26: reklamar (og krisereklamen under) kuttar inn med 230 ms ut-/inn-toning.
   const AD_FADE_MS = 230;
   // Når ein stasjon i 24/7 Cycle sluttar å svare: spel «reklame 2 sirius» (kutt inn 230 ms, kutt ut 230 ms)
   // og kople så til ein annan stasjon — 24/7 skal ALDRI bli ståande stille.
-  const DEAD_STREAM_AD = JINGLE_BASE + 'reklame-2-sirius.m4a?v=20260926';
+  const DEAD_STREAM_AD = JINGLE_BASE + 'reklame-2-sirius-v2.m4a?v=20260927';
 
   function _playAdAlone(url) {
     if (_jingleBusy || _liveTakeover || _special || !window._radioMode || !isPlaying || muted) return;
