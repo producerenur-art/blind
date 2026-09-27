@@ -102,18 +102,28 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Invalid URL' });
   }
 
+  // Utgir seg for Facebook sin førehandsvisings-bot (ikkje vår eigen
+  // "SoundCoreBot"-signatur) — mange bot-sperrer (Cloudflare o.l.) slepp
+  // kjende social-preview-botar gjennom fordi nettstadene sjølv treng dei
+  // for å få fungerande delingskort. Verifisert 2026-09-15 at dette
+  // kjem gjennom sperrene som blokkerte pluginerds.com/app.bigfreq.com.
+  // SoundCloud er unntaket: den svarar 429 + generisk startside (ikkje
+  // sporsida, ingen og:image) på nett DENNE UA-en — men slepp vanlege
+  // bot-UA-ar (t.d. Twitterbot) rett gjennom. Oppdaga 2026-09-27
+  // (soundcloud.com/feedfreq/all-the-way-from-heaven mangla cover-bilete).
+  let host = '';
+  try { host = new URL(url).hostname.replace(/^www\./, ''); } catch (e) {}
+  const ua = /(^|\.)soundcloud\.com$/.test(host)
+    ? 'Mozilla/5.0 (compatible; Twitterbot/1.0)'
+    : 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)';
+
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 6000);
-    // Utgir seg for Facebook sin førehandsvisings-bot (ikkje vår eigen
-    // "SoundCoreBot"-signatur) — mange bot-sperrer (Cloudflare o.l.) slepp
-    // kjende social-preview-botar gjennom fordi nettstadene sjølv treng dei
-    // for å få fungerande delingskort. Verifisert 2026-09-15 at dette
-    // kjem gjennom sperrene som blokkerte pluginerds.com/app.bigfreq.com.
     const r = await fetch(url, {
       redirect: 'follow',
       signal: ctrl.signal,
-      headers: { 'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)' },
+      headers: { 'User-Agent': ua },
     });
     clearTimeout(t);
     // Tak: les ikkje uendeleg store sider. 600000 var for lite — enkelte
