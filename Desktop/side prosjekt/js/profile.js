@@ -1588,6 +1588,16 @@ const Profile = (() => {
         <div style="font-weight:600;margin-bottom:0.25rem">Upload music</div>
         <div style="font-size:0.8rem;color:var(--text3)">MP3, WAV, AAC, FLAC supported</div>
       </div>
+      <select id="music-genre-select" class="form-input" style="margin-top:0.75rem">
+        <option value="electronic">⚡ Electronic</option>
+        <option value="ambient">🌌 Ambient</option>
+        <option value="psytrance">🌀 Psytrance</option>
+        <option value="techno">🔊 Techno</option>
+        <option value="house">🏠 House</option>
+        <option value="chill">🌿 Chill</option>
+        <option value="experimental">🧪 Experimental</option>
+        <option value="drone">🔁 Drone</option>
+      </select>
       <input type="file" id="music-file-input" accept="audio/*" multiple style="display:none" onchange="Profile.uploadMusic(this.files)">
       <div id="music-upload-list" style="margin-top:1rem"></div>
       <div id="editor-music-list" style="margin-top:1rem"></div>
@@ -2977,6 +2987,8 @@ const Profile = (() => {
     // When Supabase is configured, big files (up to ~60 min) go to shared cloud
     // storage so all users can hear them. Otherwise we fall back to local IndexedDB.
     const useCloud = (typeof SC_Storage !== 'undefined') && SC_Storage.isConfigured();
+    const genreEl = document.getElementById('music-genre-select');
+    const genre = (genreEl && genreEl.value) || 'electronic';
     for (const file of files) {
       const id = `mus_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const row = document.createElement('div');
@@ -2994,7 +3006,7 @@ const Profile = (() => {
       // Clean name
       const name = file.name.replace(/\.[^.]+$/, '');
       const meta = {
-        name, artist: '', duration, coverMediaId: null,
+        name, artist: current.displayName || current.username, duration, coverMediaId: null, genre,
         visibility: 'public',           // 🌐 alle ser den · 🔒 kun meg
         mime: file.type, fileSize: file.size, createdAt: Date.now(),
         audioUrl: null, storagePath: null,

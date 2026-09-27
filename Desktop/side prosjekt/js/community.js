@@ -977,6 +977,17 @@ const Community = (() => {
         </label>
         ${coverField}
         <input type="text" id="cu-${kind}-title" class="community-uploader-input" placeholder="Title (optional)" maxlength="120">
+        ${isAudio ? `
+        <select id="cu-audio-genre" class="community-uploader-input">
+          <option value="electronic">⚡ Electronic</option>
+          <option value="ambient">🌌 Ambient</option>
+          <option value="psytrance">🌀 Psytrance</option>
+          <option value="techno">🔊 Techno</option>
+          <option value="house">🏠 House</option>
+          <option value="chill">🌿 Chill</option>
+          <option value="experimental">🧪 Experimental</option>
+          <option value="drone">🔁 Drone</option>
+        </select>` : ''}
         ${labelField}
         <textarea id="cu-${kind}-desc" class="community-uploader-input community-uploader-desc" placeholder="Write a text / description (optional)" maxlength="1000"></textarea>
         <button class="btn btn-primary w-full" onclick="${fn}">${Icon('send')} Upload and share</button>
@@ -1113,6 +1124,8 @@ const Community = (() => {
     }
     const title = (titleEl && titleEl.value.trim()) || file.name.replace(/\.[^.]+$/, '');
     const desc  = (descEl && descEl.value.trim()) || '';
+    const genreEl = document.getElementById('cu-audio-genre');
+    const genre = (genreEl && genreEl.value) || 'electronic';
     const labelName = (labelEl && labelEl.value.trim()) || '';
     const buyEl = document.getElementById('cu-audio-buy');
     let buyUrl  = (buyEl && buyEl.value.trim()) || '';
@@ -1128,7 +1141,7 @@ const Community = (() => {
       const up = await _uploadToStorage(file, 'shared-audio');
       const meta = {
         name: title, artist: me.displayName || me.username, visibility: 'public',
-        mime: file.type, fileSize: file.size, createdAt: Date.now(),
+        mime: file.type, fileSize: file.size, createdAt: Date.now(), genre,
         audioUrl: up.url, storagePath: up.path, source: 'community',
         description: desc, label: labelName, buyUrl, durationSec: Math.round(dur) || 0,
       };

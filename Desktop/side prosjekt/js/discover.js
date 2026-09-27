@@ -1486,13 +1486,27 @@ const Discover = (() => {
     </div>`;
   }
 
+  // Delbar /s/-lenke til sporet (samme mekanisme som «Share further»-knappen
+  // etter opplasting) — brukast som lenkemål for aktivitetsoppføringa, slik at
+  // den ikke lenger er reint tekst utan destinasjon.
+  function _activityTrackUrl(t) {
+    if (typeof Share === 'undefined' || !t.audioUrl) return null;
+    try {
+      return Share.buildUrl({ kind: 'audio', title: t.title, artist: t.artist, image: t.coverUrl, media: t.audioUrl, username: t.username });
+    } catch { return null; }
+  }
+
   function renderActivity(tracks) {
     const recent = (tracks || []).slice(0, 8);
     if (!recent.length) {
       return `<div class="disc-activity-empty">No uploads yet — be the first ${Icon('music')}</div>`;
     }
-    return recent.map(t => `
-      <div class="disc-activity-item">
+    return recent.map(t => {
+      const url = _activityTrackUrl(t);
+      const Tag = url ? 'a' : 'div';
+      const linkAttrs = url ? ` href="${escHtml(url)}" target="_blank" rel="noopener"` : '';
+      return `
+      <${Tag} class="disc-activity-item"${linkAttrs}>
         <div class="disc-activity-avatar">${escHtml((t.username || '?').charAt(0).toUpperCase())}</div>
         <div class="disc-activity-text">
           <span class="disc-activity-user">@${escHtml(t.username)}</span>
@@ -1500,8 +1514,9 @@ const Discover = (() => {
           <span class="disc-activity-track">${escHtml(t.title)}</span>
         </div>
         <div class="disc-activity-ago">${timeAgo(t.uploadedAt)}</div>
-      </div>
-    `).join('');
+      </${Tag}>
+    `;
+    }).join('');
   }
 
   // ── Main render ───────────────────────────────────────────────────────

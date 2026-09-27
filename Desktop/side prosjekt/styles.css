@@ -4505,8 +4505,10 @@ body:has(.radio-visualizer-wrap.vis-size-full.vis-controls-shown) #fc-dock {
   display: flex; align-items: flex-start; gap: 0.6rem;
   font-size: 0.75rem; color: var(--text2);
   padding: 0.35rem; border-radius: 8px;
+  text-decoration: none;
   transition: background 0.4s;
 }
+a.disc-activity-item:hover { background: var(--surface2, rgba(255,255,255,0.06)); }
 .disc-activity-avatar {
   width: 26px; height: 26px; border-radius: 50%;
   background: var(--accentG);
