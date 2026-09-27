@@ -457,13 +457,29 @@ const Radio = (() => {
   };
   const LIVE_JINGLE_GENERIC = JINGLE_BASE + 'live-generic.mp3';
   const LIVE_INTRO = JINGLE_BASE + 'live-intro.mp3'; // "Welcome to SiriusFM Live — now." — spelt FØR namne-annonsen
+  // Brukarønske 2026-09-27: jingelen FØR og ETTER ei live-sending skal RULLERE —
+  // aldri same klipp to gonger på rad. Legg berre til fleire filer i desse to
+  // listene etter kvart som dei blir spelt inn/godkjent; rotasjonen (under)
+  // plukkar automatisk neste i rekka. INGEN andre jinglar (JINGLE_CYCLE/ADS)
+  // skal nokon gong spele OVER sjølve sendinga — det er DJ-en sitt eige ansvar
+  // (dei legg på sine eigne jinglar/dropz i miksen sjølv) — det handhevast av
+  // _liveTakeover-sjekken i _playJingleOverMusic/_playAdAlone/_scheduleJingleSlots.
+  const LIVE_INTRO_POOL = [
+    LIVE_INTRO,   // "Welcome to SiriusFM Live — now." — pt. den einaste innspelinga; legg til fleire her når dei finst.
+  ];
   // Spelt FØR normal rotasjon gjenopptas, via DET SAME delte #audio-engine-
   // elementet som resten av live-systemet — alle besøkende høyrer den
-  // automatisk (js/liveGlobal.js), akkurat som intro-jingelen. Fila finst
-  // ikkje enno i assets/jingles/ — legg til når den er spelt inn; manglar ho,
-  // feilar _playLocalClip stille og hoppar rett vidare til gjenoppteken
-  // rotasjon (sjå error-handteringa i _playLocalClip).
-  const LIVE_OUTRO = JINGLES.a;   // 2026-09-25: jingel ETTER kvar live-sending (same som etter Lemonchill-miksen) — «You're listening to SiriusFM»
+  // automatisk (js/liveGlobal.js), akkurat som intro-jingelen.
+  const LIVE_OUTRO_POOL = [
+    JINGLES.a,                              // «You're listening to SiriusFM… Subscribe» (~9s)
+    JINGLES.c,                              // «You don't need an account…» (~20s)
+    JINGLES.d,                              // (~12s)
+    JINGLE_BASE + 'jingle-sirius-sarah.mp3', // Sarah-jingel (~23s)
+    JINGLE_BASE + 'jingle-steps-echo.m4a',   // «Jingle Steps Echo», lagt til 2026-09-27 (~40s)
+  ];
+  let _liveIntroIdx = 0, _liveOutroIdx = 0;
+  function _nextLiveIntro() { const u = LIVE_INTRO_POOL[_liveIntroIdx % LIVE_INTRO_POOL.length]; _liveIntroIdx++; return u; }
+  function _nextLiveOutro() { const u = LIVE_OUTRO_POOL[_liveOutroIdx % LIVE_OUTRO_POOL.length]; _liveOutroIdx++; return u; }
   // Nokre namn har eit STANDALONE-klipp som alt seier heile "Welcome... + namn"
   // i éin tale — desse skal IKKJE ha LIVE_INTRO framfor seg (då seier han
   // "Welcome to SiriusFM Live — now" to gongar på rad). Gagarin Project er ein
@@ -3696,7 +3712,7 @@ const Radio = (() => {
       // Vanleg veg: to klipp etter kvarandre (intro → namn), IKKJE éin
       // kombinert fil — så intro-teksten kan endrast utan å re-lage namna.
       const nameClip = LIVE_JINGLES[_normalizeName(presenterName)] || LIVE_JINGLE_GENERIC;
-      _playLocalClip(LIVE_INTRO, () => { _playLocalClip(nameClip, finishAnnouncement, LIVE_FADE_MS); }, LIVE_FADE_MS);
+      _playLocalClip(_nextLiveIntro(), () => { _playLocalClip(nameClip, finishAnnouncement, LIVE_FADE_MS); }, LIVE_FADE_MS);
     }
   }
 
@@ -3924,8 +3940,9 @@ const Radio = (() => {
       } catch (e) { /* ignorer — fall vidare til stopRadio() under */ }
       stopRadio();
     };
-    // Etter ei mix: mjuk jingel-overgang attende til 24-Hour Cycle (live-outro.mp3 finst ikkje enno for vanleg live).
-    _playLocalClip(wasSpecial ? JINGLES.a : LIVE_OUTRO, resumePrevious, LIVE_FADE_MS);
+    // Etter ei mix: mjuk jingel-overgang attende til 24-Hour Cycle. Vanleg live roterer
+    // gjennom LIVE_OUTRO_POOL (brukarønske 2026-09-27) — aldri same klipp to gonger på rad.
+    _playLocalClip(wasSpecial ? JINGLES.a : _nextLiveOutro(), resumePrevious, LIVE_FADE_MS);
   }
 
   return {
