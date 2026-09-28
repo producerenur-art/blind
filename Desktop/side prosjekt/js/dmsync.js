@@ -47,10 +47,15 @@ const DmSync = (() => {
   }
 
   // Hent siste meldingar i ein kanal. Tom liste ved feil/ikkje pålogga.
+  // Returnerer arrayet direkte (bakoverkompatibelt med eksisterande kallarar);
+  // arrayet har òg ein ._otherRead-eigenskap (ts, 0 om ukjend/'group') for
+  // «Read»/«Sent»-statusen, sjå listWithMeta() for full tilgang.
   async function list(channel, limit = 200) {
     if (!channel) return [];
     const data = await _call('list', { channel, limit });
-    return (data && Array.isArray(data.messages)) ? data.messages : [];
+    const msgs = (data && Array.isArray(data.messages)) ? data.messages : [];
+    try { msgs._otherRead = (data && data.otherRead) || 0; } catch (_) {}
+    return msgs;
   }
 
   // Rediger/slett EIGEN melding (server sjekkar from_user === deg sjølv).
@@ -63,7 +68,22 @@ const DmSync = (() => {
     return !!(data && data.success);
   }
 
-  return { push, list, edit, remove, _enabled: () => !!_token() };
+  // Toggle éin brukar sin reaksjon (👍 ❤️ 😂 😮 😢 🔥) på ei melding. Returnerer
+  // den oppdaterte reactions-mapen frå serveren (kjelda me stolar på), eller
+  // null om kallet feila (klienten har alt oppdatert optimistisk lokalt).
+  async function react(channel, id, emoji) {
+    const data = await _call('react', { channel, id, emoji });
+    return (data && data.success) ? (data.reactions || {}) : null;
+  }
+
+  // Marker kanalen som lest AV MEG t.o.m. no — driv motparten sin «Read»-status.
+  // Kall KUN når ein samtale faktisk er open/vist, aldri frå bakgrunnspolling.
+  async function markRead(channel) {
+    const data = await _call('markRead', { channel, ts: Date.now() });
+    return !!(data && data.success);
+  }
+
+  return { push, list, edit, remove, react, markRead, _enabled: () => !!_token() };
 })();
 
 if (typeof window !== 'undefined') window.DmSync = DmSync;

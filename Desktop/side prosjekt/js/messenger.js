@@ -33,7 +33,13 @@ const Messenger = (() => {
   // ── Lese-/historikk-persistens ────────────────────────────────────────
   const reads     = () => { try { return JSON.parse(localStorage.getItem(READ_KEY) || '{}'); } catch { return {}; } };
   const saveReads = (r) => localStorage.setItem(READ_KEY, JSON.stringify(r));
-  function markRead(chan) { const r = reads(); r[chan] = Date.now(); saveReads(r); }
+  // Lokal (eiga uleste-teljing) OG server (driv MOTPARTEN sin «Read»-status
+  // under MINE meldingar, sjå otherRead/_readStatusHtml) — for ALLE brukarar.
+  function markRead(chan) {
+    const r = reads(); r[chan] = Date.now(); saveReads(r);
+    if (typeof DmSync !== 'undefined') DmSync.markRead(chan).catch(() => {});
+  }
+  const otherRead = {}; // kanal → ts motparten har lese t.o.m. (frå server, poll)
 
   function loadHist(chan) {
     try { return JSON.parse(localStorage.getItem(HIST_KEY(chan)) || '[]'); } catch { return []; }
@@ -78,7 +84,11 @@ const Messenger = (() => {
       _dmPolled.add(chan);
       const pull = async () => {
         const rows = await DmSync.list(chan, MAX_MSGS);
+        const newOtherRead = (rows && rows._otherRead) || 0;
+        const readChanged = otherRead[chan] !== newOtherRead;
+        otherRead[chan] = newOtherRead;
         _reconcile(chan, rows);
+        if (readChanged && _view === 'conv' && _active && channelWith(_active) === chan && document.getElementById('msgr-messages')) renderMessages(chan);
       };
       pull();
       setInterval(pull, 6000);
@@ -96,12 +106,13 @@ const Messenger = (() => {
 
     for (const row of rows) {
       const idx = arr.findIndex(m => m.id === row.id);
+      const reactions = row.reactions && typeof row.reactions === 'object' ? row.reactions : {};
       if (idx === -1) {
         arr.push({ id: row.id, from: row.from_user, fromDisplay: row.from_display || row.from_user,
-          to: row.to_user, text: row.text, ts: row.ts, kind: row.kind || 'text', edited: !!row.edited, _k: row.id });
+          to: row.to_user, text: row.text, ts: row.ts, kind: row.kind || 'text', edited: !!row.edited, reactions, _k: row.id });
         changed = true;
-      } else if (arr[idx].text !== row.text || !!arr[idx].edited !== !!row.edited || (arr[idx].kind || 'text') !== (row.kind || 'text')) {
-        arr[idx] = { ...arr[idx], text: row.text, kind: row.kind || arr[idx].kind, edited: !!row.edited };
+      } else if (arr[idx].text !== row.text || !!arr[idx].edited !== !!row.edited || (arr[idx].kind || 'text') !== (row.kind || 'text') || JSON.stringify(arr[idx].reactions || {}) !== JSON.stringify(reactions)) {
+        arr[idx] = { ...arr[idx], text: row.text, kind: row.kind || arr[idx].kind, edited: !!row.edited, reactions };
         changed = true;
       }
     }
@@ -153,7 +164,7 @@ const Messenger = (() => {
 
     // Berre teikn på nytt om Min side-panelet framleis er montert.
     if (document.getElementById(_rootId)) {
-      if (viewing) { appendMsgEl(msg); if (!document.hidden) markRead(chan); }
+      if (viewing) { appendMsgEl(msg); _updateReadStatusUI(chan); if (!document.hidden) markRead(chan); }
       updateBadges();
     }
   }
@@ -346,8 +357,50 @@ const Messenger = (() => {
     box.innerHTML = msgs.length ? '' : '<p style="color:var(--text3);font-size:0.85rem;text-align:center;margin:1rem 0">No messages yet — say hi! 👋</p>';
     msgs.forEach(m => appendMsgEl(m, box));
     box.scrollTop = box.scrollHeight;
+    _updateReadStatusUI(chan);
   }
 
+  // «Read»/«Sent» under MI SISTE melding i tråden (Facebook-liknande), for
+  // ALLE brukarar (ikkje admin-gata) — basert på otherRead[chan] frå
+  // api/dm.js sitt list-svar (motparten sin last_read_ts). Fjernar/flyttar
+  // statuslinja ved kvar oppdatering, så ho aldri heng att på ei eldre melding.
+  function _updateReadStatusUI(chan) {
+    const box = document.getElementById('msgr-messages'); if (!box) return;
+    box.querySelectorAll('.msgr-read-status').forEach(n => n.remove());
+    const msgs = store[chan] || []; if (!msgs.length) return;
+    const last = msgs[msgs.length - 1];
+    const u = me(); if (!u || last.from !== u.username) return;
+    let wrap = null;
+    if (last.id) wrap = Array.from(box.querySelectorAll('.msgr-msg-wrap')).find(w => w.dataset.mid === last.id);
+    if (!wrap) wrap = box.lastElementChild;
+    if (!wrap) return;
+    const seen = (otherRead[chan] || 0) >= (last.ts || 0);
+    const div = document.createElement('div');
+    div.className = 'msgr-read-status' + (seen ? ' seen' : '');
+    div.style.textAlign = 'right';
+    div.textContent = seen ? 'Read' : 'Sent';
+    wrap.appendChild(div);
+  }
+
+  // Facebook-liknande kjapp-reaksjonar — same liste som api/dm.js DM_REACTION_EMOJIS
+  // (server whitelistar), 👍 er standard eitt-klikks-reaksjon, resten via popup.
+  const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+  function _reactionsHtml(id, reactions, isMine) {
+    const u = me(); const mine = u && u.username;
+    const pills = Object.keys(reactions || {}).filter(e => (reactions[e] || []).length).map(e => {
+      const users = reactions[e]; const active = mine && users.includes(mine);
+      return `<button type="button" class="msgr-react-pill${active ? ' active' : ''}" title="${users.map(esc).join(', ')}" onclick="Messenger.toggleReaction('${esc(id)}','${e}')">${e} ${users.length}</button>`;
+    }).join('');
+    return `<div class="msgr-react-row" style="display:flex;align-items:center;gap:0.25rem;flex-wrap:wrap;margin-top:0.15rem;${isMine ? 'justify-content:flex-end' : ''}">
+      ${pills}
+      <span style="position:relative;display:inline-block">
+        <button type="button" class="fc-msg-act" title="React" onclick="Messenger.toggleReactPicker('${esc(id)}')">${Icon('smile') || '🙂'}</button>
+        <div class="fc-emoji-pop hidden" id="msgr-react-pop-${esc(id)}" style="grid-template-columns:repeat(6,1fr)">
+          ${REACTION_EMOJIS.map(e => `<button type="button" onclick="Messenger.toggleReaction('${esc(id)}','${e}')">${e}</button>`).join('')}
+        </div>
+      </span>
+    </div>`;
+  }
   function appendMsgEl(msg, box) {
     box = box || document.getElementById('msgr-messages');
     if (!box) return;
@@ -370,7 +423,8 @@ const Messenger = (() => {
     if (msg.id) wrap.dataset.mid = msg.id;
     wrap.innerHTML = `
       ${bodyHtml}
-      <div style="font-size:0.68rem;color:var(--text3);margin-top:0.15rem;text-align:${isMine ? 'right' : 'left'};display:flex;align-items:center;${isMine ? 'justify-content:flex-end' : ''}">${time}${editedTag}${actions}</div>`;
+      <div style="font-size:0.68rem;color:var(--text3);margin-top:0.15rem;text-align:${isMine ? 'right' : 'left'};display:flex;align-items:center;${isMine ? 'justify-content:flex-end' : ''}">${time}${editedTag}${actions}</div>
+      ${msg.id ? _reactionsHtml(msg.id, msg.reactions, isMine) : ''}`;
     box.appendChild(wrap);
     box.scrollTop = box.scrollHeight;
   }
@@ -441,6 +495,7 @@ const Messenger = (() => {
     (store[chan] = store[chan] || []).push(payload);
     saveHist(chan);
     appendMsgEl(payload);
+    _updateReadStatusUI(chan);
     if (window.SC) SC.playDing('message');
     markRead(chan);
     addPartner(_active);
@@ -502,6 +557,35 @@ const Messenger = (() => {
   function toggleEmojiPicker() {
     const pop = document.getElementById('msgr-emoji-pop');
     if (pop) pop.classList.toggle('hidden');
+  }
+  function toggleReactPicker(id) {
+    const pop = document.getElementById('msgr-react-pop-' + id);
+    if (!pop) return;
+    const wasHidden = pop.classList.contains('hidden');
+    document.querySelectorAll('.msgr-react-row .fc-emoji-pop').forEach(p => p.classList.add('hidden'));
+    if (wasHidden) pop.classList.remove('hidden');
+  }
+  // Toggle éin reaksjon: oppdaterer lokalt med ein gong (optimistisk), sender
+  // så til serveren — som fasit ved neste poll (_reconcile), same mønster som
+  // edit/delete. Fungerer for ANDRE sine meldingar òg (Facebook-liknande),
+  // ikkje berre eigne, i motsetning til editMsg/deleteMsg.
+  function toggleReaction(id, emoji) {
+    const u = me(); if (!u || !_active) return;
+    const chan = channelWith(_active);
+    const arr = store[chan] || []; const m = arr.find(x => x.id === id); if (!m) return;
+    const reactions = { ...(m.reactions || {}) };
+    const users = (reactions[emoji] || []).slice();
+    const at = users.indexOf(u.username);
+    if (at === -1) users.push(u.username); else users.splice(at, 1);
+    if (users.length) reactions[emoji] = users; else delete reactions[emoji];
+    m.reactions = reactions;
+    saveHist(chan);
+    renderMessages(chan);
+    if (typeof DmSync !== 'undefined') {
+      DmSync.react(chan, id, emoji).then(serverReactions => {
+        if (serverReactions && arr.includes(m)) { m.reactions = serverReactions; saveHist(chan); renderMessages(chan); }
+      }).catch(() => {});
+    }
   }
   function insertEmoji(e) {
     const inp = document.getElementById('msgr-input');
@@ -582,6 +666,6 @@ const Messenger = (() => {
   }
 
   return { init, mount, render, show, openConv, startNew, send, sendTo, totalUnread, updateBadges,
-    pickGif, editMsg, deleteMsg, toggleEmojiPicker, insertEmoji };
+    pickGif, editMsg, deleteMsg, toggleEmojiPicker, insertEmoji, toggleReactPicker, toggleReaction };
 })();
 window.Messenger = Messenger;

@@ -54,7 +54,11 @@ const FriendChat = (() => {
     if (typeof DmSync !== 'undefined' && DmSync._enabled()) {
       const pull = async () => {
         const rows = await DmSync.list(chan, MAX_MSGS);
+        const newOtherRead = (rows && rows._otherRead) || 0;
+        const readChanged = otherRead[chan] !== newOtherRead;
+        otherRead[chan] = newOtherRead;
         _reconcile(chan, rows);
+        if (readChanged && chan === activeChannel() && document.getElementById('fc-messages')) renderMessages();
       };
       pull();
       setInterval(pull, 6000);
@@ -84,7 +88,7 @@ const FriendChat = (() => {
     const activeChan = activeChannel();
     const viewing    = chan === activeChan && !_min && !document.hidden;
 
-    if (chan === activeChan && document.getElementById('fc-messages')) appendMsgEl(msg);
+    if (chan === activeChan && document.getElementById('fc-messages')) { appendMsgEl(msg); _updateReadStatusUI(chan); }
 
     if (!isMine) {
       if (viewing) markRead(chan);
@@ -105,12 +109,13 @@ const FriendChat = (() => {
 
     for (const row of rows) {
       const idx = arr.findIndex(m => m.id === row.id);
+      const reactions = row.reactions && typeof row.reactions === 'object' ? row.reactions : {};
       if (idx === -1) {
         arr.push({ id: row.id, from: row.from_user, fromDisplay: row.from_display || row.from_user,
-          text: row.text, ts: row.ts, kind: row.kind || 'text', edited: !!row.edited });
+          text: row.text, ts: row.ts, kind: row.kind || 'text', edited: !!row.edited, reactions });
         changed = true;
-      } else if (arr[idx].text !== row.text || !!arr[idx].edited !== !!row.edited || (arr[idx].kind || 'text') !== (row.kind || 'text')) {
-        arr[idx] = { ...arr[idx], text: row.text, kind: row.kind || arr[idx].kind, edited: !!row.edited };
+      } else if (arr[idx].text !== row.text || !!arr[idx].edited !== !!row.edited || (arr[idx].kind || 'text') !== (row.kind || 'text') || JSON.stringify(arr[idx].reactions || {}) !== JSON.stringify(reactions)) {
+        arr[idx] = { ...arr[idx], text: row.text, kind: row.kind || arr[idx].kind, edited: !!row.edited, reactions };
         changed = true;
       }
     }
@@ -133,10 +138,15 @@ const FriendChat = (() => {
   function totalUnread() {
     return Object.keys(store).reduce((n, c) => n + unread(c), 0);
   }
+  // Lokal (eiga uleste-teljing) OG server (driv MOTPARTEN sin «Read»-status
+  // under MINE meldingar, sjå otherRead/_updateReadStatusUI) — for ALLE
+  // brukarar, ikkje admin-gata.
   function markRead(chan) {
     const r = reads(); r[chan] = Date.now(); saveReads(r);
     updateBadges();
+    if (typeof DmSync !== 'undefined') DmSync.markRead(chan).catch(() => {});
   }
+  const otherRead = {}; // kanal → ts motparten har lese t.o.m. (frå server, poll)
 
   // Brukarønske 2026-09-26: «Group lounge» skal ikkje visast på radiosida (#/radio).
   function _onRadio() { return /^#\/radio(\/|$|\?)/.test(location.hash || ''); }
@@ -310,8 +320,47 @@ const FriendChat = (() => {
     cont.innerHTML = '';
     (store[chan] || []).forEach(appendMsgEl);
     cont.scrollTop = cont.scrollHeight;
+    _updateReadStatusUI(chan);
   }
 
+  // «Read»/«Sent» under MI SISTE melding i tråden (Facebook-liknande), for
+  // ALLE brukarar — basert på otherRead[chan] frå api/dm.js (motparten sin
+  // last_read_ts). Kun for 1:1-DM (ikkje 'group', fleire lesarar).
+  function _updateReadStatusUI(chan) {
+    const cont = document.getElementById('fc-messages'); if (!cont || chan === 'group') return;
+    cont.querySelectorAll('.msgr-read-status').forEach(n => n.remove());
+    const msgs = store[chan] || []; if (!msgs.length) return;
+    const last = msgs[msgs.length - 1];
+    const me = Auth.current(); if (!me || last.from !== me.username) return;
+    let wrap = null;
+    if (last.id) wrap = Array.from(cont.querySelectorAll('.fc-msg')).find(w => w.dataset.mid === last.id);
+    if (!wrap) wrap = cont.lastElementChild;
+    if (!wrap) return;
+    const seen = (otherRead[chan] || 0) >= (last.ts || 0);
+    const div = document.createElement('div');
+    div.className = 'msgr-read-status' + (seen ? ' seen' : '');
+    div.textContent = seen ? 'Read' : 'Sent';
+    wrap.appendChild(div);
+  }
+
+  // Facebook-liknande kjapp-reaksjonar — same liste som api/dm.js sin whitelist.
+  const FC_REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+  function _reactionsHtml(id, reactions) {
+    const meU = Auth.current(); const mine = meU && meU.username;
+    const pills = Object.keys(reactions || {}).filter(e => (reactions[e] || []).length).map(e => {
+      const users = reactions[e]; const active = mine && users.includes(mine);
+      return `<button type="button" class="msgr-react-pill${active ? ' active' : ''}" title="${users.map(esc).join(', ')}" onclick="FriendChat.toggleReaction('${esc(id)}','${e}')">${e} ${users.length}</button>`;
+    }).join('');
+    return `<div class="msgr-react-row">
+      ${pills}
+      <span style="position:relative;display:inline-block">
+        <button type="button" class="fc-msg-act" title="React" onclick="FriendChat.toggleReactPicker('${esc(id)}')">${Icon('smile')}</button>
+        <div class="fc-emoji-pop hidden" id="fc-react-pop-${esc(id)}" style="grid-template-columns:repeat(6,1fr)">
+          ${FC_REACTION_EMOJIS.map(e => `<button type="button" onclick="FriendChat.toggleReaction('${esc(id)}','${e}')">${e}</button>`).join('')}
+        </div>
+      </span>
+    </div>`;
+  }
   function appendMsgEl(msg) {
     const cont = document.getElementById('fc-messages'); if (!cont) return;
     const me = Auth.current();
@@ -328,11 +377,13 @@ const FriendChat = (() => {
       </span>` : '';
     const el = document.createElement('div');
     el.className = 'fc-msg' + (isMine ? ' mine' : '');
+    el.style.position = 'relative';
     if (msg.id) el.dataset.mid = msg.id;
     el.innerHTML = `
       ${!isMine ? `<a class="fc-msg-from" href="#/u/${esc(msg.from)}">${esc(msg.fromDisplay || msg.from)}</a>` : ''}
       ${body}${editedTag}
-      <span class="fc-msg-time">${time}</span>${actions}`;
+      <span class="fc-msg-time">${time}</span>${actions}
+      ${msg.id ? _reactionsHtml(msg.id, msg.reactions) : ''}`;
     cont.appendChild(el);
     cont.scrollTop = cont.scrollHeight;
   }
@@ -407,6 +458,33 @@ const FriendChat = (() => {
     const pop = document.getElementById('fc-emoji-pop');
     if (pop) pop.classList.add('hidden');
   }
+  function toggleReactPicker(id) {
+    const pop = document.getElementById('fc-react-pop-' + id);
+    if (!pop) return;
+    const wasHidden = pop.classList.contains('hidden');
+    document.querySelectorAll('.msgr-react-row .fc-emoji-pop').forEach(p => p.classList.add('hidden'));
+    if (wasHidden) pop.classList.remove('hidden');
+  }
+  // Toggle éin reaksjon: oppdaterer lokalt med ein gong (optimistisk), sender
+  // så til serveren — fungerer for ANDRE sine meldingar òg (Facebook-liknande),
+  // ikkje berre eigne, i motsetning til editMsg/deleteMsg.
+  function toggleReaction(id, emoji) {
+    const me = Auth.current(); if (!me) return;
+    const chan = activeChannel(); if (!chan) return;
+    const arr = store[chan] || []; const m = arr.find(x => x.id === id); if (!m) return;
+    const reactions = { ...(m.reactions || {}) };
+    const users = (reactions[emoji] || []).slice();
+    const at = users.indexOf(me.username);
+    if (at === -1) users.push(me.username); else users.splice(at, 1);
+    if (users.length) reactions[emoji] = users; else delete reactions[emoji];
+    m.reactions = reactions;
+    renderMessages();
+    if (typeof DmSync !== 'undefined') {
+      DmSync.react(chan, id, emoji).then(serverReactions => {
+        if (serverReactions && arr.includes(m)) { m.reactions = serverReactions; renderMessages(); }
+      }).catch(() => {});
+    }
+  }
 
   function openConv(username, displayName) {
     _active = { type: 'dm', friend: username, name: displayName };
@@ -457,6 +535,6 @@ const FriendChat = (() => {
   window.addEventListener('hashchange', () => { try { refresh(); } catch (_) {} });
 
   return { init, refresh, closeDock, openDock, toggle, toggleMin, toggleSound, openConv, openGroup, back, send,
-    pickGif, editMsg, deleteMsg, toggleEmojiPicker, insertEmoji };
+    pickGif, editMsg, deleteMsg, toggleEmojiPicker, insertEmoji, toggleReactPicker, toggleReaction };
 })();
 window.FriendChat = FriendChat;

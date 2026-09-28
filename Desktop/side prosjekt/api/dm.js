@@ -24,6 +24,11 @@ function isParticipant(channel, username) {
   return String(channel).split('__').includes(username);
 }
 
+// Facebook-liknande kjapp-reaksjonar — same liste server- og klientside
+// (js/friendchat.js/messenger.js DM_REACTION_EMOJIS), whitelista så feltet
+// aldri fyllast med vilkårleg tekst.
+const DM_REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+
 const { Resend } = require('resend');
 const EMAIL_THROTTLE_MS = 15 * 60 * 1000;   // maks éin e-post per avsendar/samtale per 15 min
 
@@ -110,12 +115,24 @@ module.exports = async (req, res) => {
     if (body.action === 'list') {
       const limit = Math.max(1, Math.min(parseInt(body.limit, 10) || 200, 500));
       const { data, error } = await db.from('direct_messages')
-        .select('id, channel, from_user, from_display, to_user, text, ts, edited, kind')
+        .select('id, channel, from_user, from_display, to_user, text, ts, edited, kind, reactions')
         .eq('channel', channel)
         .order('ts', { ascending: false })
         .limit(limit);
       if (error) throw error;
-      return res.status(200).json({ messages: (data || []).reverse() });
+      // «Read»/«Sent»-status (alle brukarar, ikkje admin-gata): kor langt den
+      // ANDRE parten i ein 1:1-DM har lese. Ikkje for 'group' (fleire lesarar,
+      // ingen enkelt "sett av"-status som gir meining på same måte).
+      let otherRead = 0;
+      const parts = String(channel).split('__');
+      if (parts.length === 2 && channel !== 'group') {
+        const other = parts.find(p => p !== me);
+        if (other) {
+          const { data: r } = await db.from('dm_reads').select('last_read_ts').eq('channel', channel).eq('username', other).maybeSingle();
+          otherRead = (r && r.last_read_ts) || 0;
+        }
+      }
+      return res.status(200).json({ messages: (data || []).reverse(), otherRead });
     }
 
     if (body.action === 'send') {
@@ -162,6 +179,39 @@ module.exports = async (req, res) => {
       if (!row) return res.status(200).json({ success: true });
       if (row.from_user !== me) return res.status(403).json({ error: 'Not your message' });
       const { error } = await db.from('direct_messages').delete().eq('id', id);
+      if (error) throw error;
+      return res.status(200).json({ success: true });
+    }
+
+    // Reager på ei melding (Facebook-liknande): kvar som helst av dei to partane
+    // (isParticipant over) kan reagere, ikkje berre avsendaren — i motsetning til
+    // edit/delete. Klikk på same emoji du alt har sett = fjern reaksjonen (toggle).
+    if (body.action === 'react') {
+      const id = String(body.id || '');
+      const emoji = String(body.emoji || '').slice(0, 8).trim();
+      if (!id || !emoji || !DM_REACTION_EMOJIS.includes(emoji))
+        return res.status(400).json({ error: 'Missing/invalid id or emoji' });
+      const { data: row } = await db.from('direct_messages').select('channel, reactions').eq('id', id).maybeSingle();
+      if (!row) return res.status(200).json({ success: true, reactions: {} }); // meldinga er borte
+      if (row.channel !== channel) return res.status(403).json({ error: 'Wrong channel' });
+      const reactions = row.reactions && typeof row.reactions === 'object' ? { ...row.reactions } : {};
+      const users = Array.isArray(reactions[emoji]) ? reactions[emoji].slice() : [];
+      const at = users.indexOf(me);
+      if (at === -1) users.push(me); else users.splice(at, 1);
+      if (users.length) reactions[emoji] = users; else delete reactions[emoji];
+      const { error } = await db.from('direct_messages').update({ reactions }).eq('id', id);
+      if (error) throw error;
+      return res.status(200).json({ success: true, reactions });
+    }
+
+    // Marker at EG har lese kanalen t.o.m. no — TILGJENGELEG FOR ALLE brukarar
+    // (ikkje admin-gata). Kalla eksplisitt når ein samtale faktisk vert vist,
+    // ALDRI frå bakgrunns-polling av kjende kanalar (elles «Sett»-status vert
+    // feil/for tidleg).
+    if (body.action === 'markRead') {
+      const ts = Number(body.ts) || Date.now();
+      const { error } = await db.from('dm_reads')
+        .upsert({ channel, username: me, last_read_ts: ts, updated_at: new Date().toISOString() }, { onConflict: 'channel,username' });
       if (error) throw error;
       return res.status(200).json({ success: true });
     }
