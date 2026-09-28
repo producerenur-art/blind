@@ -476,6 +476,7 @@ const Radio = (() => {
     JINGLES.d,                              // (~12s)
     JINGLE_BASE + 'jingle-sirius-sarah.mp3', // Sarah-jingel (~23s)
     JINGLE_BASE + 'jingle-steps-echo.m4a',   // «Jingle Steps Echo», lagt til 2026-09-27 (~40s)
+    JINGLE_BASE + 'jingle-sirius-beat.m4a',  // «This is SiriusFM…» over beat, lagt til 2026-09-28 (~21s)
   ];
   let _liveIntroIdx = 0, _liveOutroIdx = 0;
   function _nextLiveIntro() { const u = LIVE_INTRO_POOL[_liveIntroIdx % LIVE_INTRO_POOL.length]; _liveIntroIdx++; return u; }
@@ -632,6 +633,7 @@ const Radio = (() => {
     { url: JINGLE_BASE + 'jingle-sirius-sarah.mp3', fade: LIVE_FADE_MS }, // Sarah-jingel (23 s), lagt til 2026-09-24
     { url: JINGLE_BASE + 'live-chat-2.mp3', fade: LIVE_FADE_MS }, // live chat (Laura, ~53s)
     { url: JINGLE_BASE + 'jingle-steps-echo.m4a', fade: LIVE_FADE_MS }, // «Jingle Steps Echo», lagt til 2026-09-27
+    { url: JINGLE_BASE + 'jingle-sirius-beat.m4a', fade: LIVE_FADE_MS }, // «This is SiriusFM…» over beat, lagt til 2026-09-28
   ];
 
   function _scheduleJingleSlots() {
