@@ -318,8 +318,8 @@ const Messenger = (() => {
         </div>
         <div class="settings-section-body" style="padding:0;position:relative">
           <div id="msgr-messages" style="max-height:min(52vh,440px);overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.5rem"></div>
-          ${_emojiPickerHtml()}
-          <div style="display:flex;gap:0.5rem;padding:0.75rem 1rem;border-top:1px solid var(--border,rgba(255,255,255,0.08))">
+          <div style="display:flex;gap:0.5rem;padding:0.75rem 1rem;border-top:1px solid var(--border,rgba(255,255,255,0.08));position:relative">
+            ${_emojiPickerHtml()}
             <button class="btn btn-ghost btn-sm" type="button" style="margin:0" title="Emoji" onclick="Messenger.toggleEmojiPicker()">😊</button>
             <button class="btn btn-ghost btn-sm" type="button" style="margin:0" title="Add a GIF" onclick="Messenger.pickGif()">${Icon('image')}</button>
             <input class="form-input" id="msgr-input" placeholder="Write a message…" autocomplete="off" style="flex:1"

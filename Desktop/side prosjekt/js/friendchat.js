@@ -285,8 +285,8 @@ const FriendChat = (() => {
     const chan = activeChannel();
     body.innerHTML = `
       <div class="fc-messages" id="fc-messages"></div>
-      ${_emojiPickerHtml()}
-      <div class="fc-input-row">
+      <div class="fc-input-row" style="position:relative">
+        ${_emojiPickerHtml()}
         <button class="fc-icon-btn" type="button" onclick="FriendChat.toggleEmojiPicker()" title="Emoji">😊</button>
         <button class="fc-icon-btn" type="button" onclick="FriendChat.pickGif()" title="Add a GIF">${Icon('image')}</button>
         <input id="fc-input" class="fc-input" placeholder="Write a message…" maxlength="600" autocomplete="off">
