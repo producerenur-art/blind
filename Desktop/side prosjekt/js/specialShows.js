@@ -13,7 +13,9 @@ const SpecialShows = (() => {
       artist: 'Lemonchill',
       title: 'Mixes for SiriusFM 001 by Lemonchill',
       liveLabel: 'Lemonchill mix on air',
-      audioUrl: 'https://qefdyxpyjwpohsmmmksf.supabase.co/storage/v1/object/public/soundcore-media/special-mixes/lemonchill-001.m4a',
+      // v2 = brukaren sin eigen "lemonchill set for noah radio.wav" (Downloads, 29.09.2026),
+      // transkoda til AAC 96kbps (afconvert) for å halde seg under Supabase Storage-grensa ~50MB.
+      audioUrl: 'https://qefdyxpyjwpohsmmmksf.supabase.co/storage/v1/object/public/soundcore-media/special-mixes/lemonchill-001-v2.m4a',
       durationSec: 3712,
       // Vist som lenke på arkivposten (Live Archive) FØRST etter at miksen har gått på lufta.
       linkUrl: 'https://lemonchill.bandcamp.com/album/minifuse',

@@ -191,6 +191,7 @@ const LiveSets = (() => {
       p_id: id, p_username: me.username || '', p_secret: _isAdmin(me) ? _secret() : null,
       p_display_name: fields.displayName ?? null, p_track_title: fields.trackTitle ?? null,
       p_link_url: fields.linkUrl ?? null, p_cover_url: fields.coverUrl ?? null, p_audio_url: fields.audioUrl ?? null,
+      p_tracklist: fields.tracklist ?? null,
     });
     if (error) console.warn('[LiveSets] update feila:', error.message);
     return !error;

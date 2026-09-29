@@ -14,11 +14,16 @@ const dry = process.argv.includes('--dry');
 
 (async () => {
   for (const show of SpecialShows.SHOWS) {
+    // Arkivposten skal FØRST bli synleg etter SISTE sending (brukarønske 29.09.2026,
+    // endra frå «etter FYRSTE» — miksen speler 4x, arkivet skal ikkje dukke opp
+    // før heile serien er ferdig).
     const first = new Date(show.slots[0]);
-    const publishedAt = new Date(first.getTime() + show.durationSec * 1000).toISOString();
+    const last = new Date(show.slots[show.slots.length - 1]);
+    const publishedAt = new Date(last.getTime() + show.durationSec * 1000).toISOString();
+    const fmt = d => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
     const body = {
       p_secret: secret, p_id: 'set_special_' + show.id, p_display_name: show.title,
-      p_track_title: 'Aired live on the SiriusFM 24-Hour Cycle · ' + new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', day: 'numeric', month: 'long', year: 'numeric' }).format(first),
+      p_track_title: 'Aired live on the SiriusFM 24-Hour Cycle · ' + (show.slots.length > 1 ? fmt(first) + ' – ' + fmt(last) : fmt(first)),
       p_audio_url: show.audioUrl, p_duration_sec: show.durationSec,
       p_tracklist: show.tracklist.map((t, i) => (i + 1) + '. ' + t).join('\n'),
       p_published_at: publishedAt, p_link_url: show.linkUrl || '',

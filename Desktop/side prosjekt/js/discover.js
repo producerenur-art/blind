@@ -1284,6 +1284,8 @@ const Discover = (() => {
       <input id="wwl-n-${_lcEsc(id)}" style="${inp}" value="${_lcEsc(st.display_name || '')}">
       <label style="font-size:0.8rem;color:var(--text2)">Text</label>
       <textarea id="wwl-t-${_lcEsc(id)}" rows="3" style="${inp};resize:vertical">${_lcEsc(st.track_title || '')}</textarea>
+      <label style="font-size:0.8rem;color:var(--text2)">Tracklist (one song per line)</label>
+      <textarea id="wwl-tl-${_lcEsc(id)}" rows="6" style="${inp};resize:vertical;font-family:monospace;font-size:0.85rem">${_lcEsc(st.tracklist || '')}</textarea>
       <button class="btn btn-primary btn-sm" onclick="Discover.wwlSave('${_lcEsc(id)}')">Save</button>
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wwl-edit-${_lcEsc(id)}').innerHTML=''">Cancel</button>`;
   }
@@ -1353,8 +1355,9 @@ const Discover = (() => {
     const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
     const name = (document.getElementById('wwl-n-' + id) || {}).value || '';
     const text = (document.getElementById('wwl-t-' + id) || {}).value || '';
-    const ok = await LiveSets.update(id, { displayName: name, trackTitle: text });
-    if (ok) { st.display_name = name; st.track_title = text; st.updated_at = new Date().toISOString(); const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); if (typeof App !== 'undefined') App.toast('Saved!', 'success'); }
+    const tracklist = (document.getElementById('wwl-tl-' + id) || {}).value || '';
+    const ok = await LiveSets.update(id, { displayName: name, trackTitle: text, tracklist });
+    if (ok) { st.display_name = name; st.track_title = text; st.tracklist = tracklist; st.updated_at = new Date().toISOString(); const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); if (typeof App !== 'undefined') App.toast('Saved!', 'success'); }
     else if (typeof App !== 'undefined') App.toast('Could not save (are you logged in as admin?)', 'error');
   }
 
