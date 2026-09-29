@@ -1108,10 +1108,44 @@ const Discover = (() => {
               ? `<button class="btn btn-primary lc-ad-play" onclick="Player.playExternal('${_lcEsc(show.audioUrl)}','${_lcEsc(show.title)}','${_lcEsc(show.artist)}')">▶ Listen to the mix · ${mins} min</button>`
               : `<span class="lc-ad-soon">The mix will be available here after the first live broadcast on ${_lcEsc(fmtDay.format(new Date(show.slots[0])))}.</span>`}
             ${site ? `<a class="lc-ad-link" href="${_lcEsc(site)}" target="_blank" rel="noopener noreferrer">${_lcEsc(site.replace(/^https?:\/\//, ''))}</a>` : ''}
+            <button class="btn btn-ghost btn-sm" onclick="Discover.showLemonchillAbout()">About Lemonchill</button>
           </div>
           ${allAired && tracks ? `<details class="lc-ad-tracks"><summary>Tracklist</summary><ol>${tracks}</ol></details>` : ''}
         </div>
         <div id="disc-wwl"></div>`;
+  }
+
+  // «About Lemonchill»-panel — same visuelle språk som det globale «About
+  // SiriusFM»-panelet (.about-block/.about-cta/.about-quote frå styles.css),
+  // men som eit overlegg knytt til Lemonchill-kortet i staden for ei global
+  // kant-fane (Lemonchill er ei tidsavgrensa oktober-sending, ikkje sitewide
+  // kringkasting). Brukarønske 29.09.2026, tekst+lenker levert av brukaren.
+  function showLemonchillAbout() {
+    if (document.getElementById('lc-about-overlay')) return;
+    const ov = document.createElement('div');
+    ov.id = 'lc-about-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;padding:16px';
+    ov.innerHTML = `
+      <aside class="about-panel open" style="position:relative;transform:none;max-width:480px;width:100%;max-height:86vh;overflow-y:auto;border-radius:14px">
+        <div class="about-panel-hdr">
+          <h2>About Lemonchill</h2>
+          <button class="about-panel-close" type="button" aria-label="Close" onclick="document.getElementById('lc-about-overlay').remove()"><span data-icon="x"></span></button>
+        </div>
+        <div class="about-panel-body">
+          <section class="about-block">
+            <p class="about-desc">This music project started as downtempo/ambient-trance, yet in recent years delved more into the realms of experimental electronica/ambient/techno/idm.</p>
+          </section>
+          <section class="about-block" style="flex-direction:row;flex-wrap:wrap;gap:10px">
+            <a class="about-cta about-cta--primary" href="https://lemonchill.bandcamp.com/album/minifuse" target="_blank" rel="noopener noreferrer">Bandcamp</a>
+            <a class="about-cta" href="https://www.discogs.com/artist/1272926-Lemonchill" target="_blank" rel="noopener noreferrer">Discogs</a>
+            <a class="about-cta" href="https://microcosmosrecords.com/" target="_blank" rel="noopener noreferrer">Microcosmos Records</a>
+            <a class="about-cta" href="https://open.spotify.com/artist/2s4Q6COjRs60E3DpaW1XoW" target="_blank" rel="noopener noreferrer">Spotify</a>
+            <a class="about-cta" href="https://www.youtube.com/@lemonchill" target="_blank" rel="noopener noreferrer">YouTube</a>
+          </section>
+        </div>
+      </aside>`;
+    ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+    document.body.appendChild(ov);
   }
 
   // ── «What went live» (opptak av sendingar) rett under Lemonchill-kortet ─────────────
@@ -4266,6 +4300,7 @@ const Discover = (() => {
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
     wwlPlay, wwlStop, wwlVol, wwlCopy, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek,
+    showLemonchillAbout,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,
     onCategoryChange, setDiscGenreRadio, clearGenreRadio,
