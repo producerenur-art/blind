@@ -1231,6 +1231,7 @@ const Discover = (() => {
     if (!box || typeof LiveSets === 'undefined' || !LiveSets.list) return;
     let sets = []; try { sets = await LiveSets.list(6); } catch (_) {}
     sets = (sets || []).filter(x => x && x.audio_url);
+    _refreshActivityFeed(sets);  // «Live activity» skal òg vise desse, ikkje berre «What went live»
     if (!sets.length || !document.getElementById('disc-wwl')) return;
     document.getElementById('disc-wwl').innerHTML = `
       <div class="wwl-head">What went live</div>
@@ -1528,13 +1529,31 @@ const Discover = (() => {
     } catch { return null; }
   }
 
+  // Gjer ei rad frå live_sets (kringkasting-opptak, js/liveSets.js) om til same
+  // form som eit vanleg opplasta spor, slik at ho kan visast saman med dei i
+  // «Live activity». Direktesendingar hamnar ALDRI i user.musicIds/DB.music
+  // (dei blir lasta opp via LiveSets._finalize, ikkje «Last opp»-flyten), så
+  // utan denne broa var sidebaren blind for dei sjølv om «What went live»
+  // like ved sida viste dei fint. Feila 29.09.2026 — sjå [[siriusfm-live-activity-missing-broadcasts]].
+  function _liveSetToActivityItem(st) {
+    return {
+      id:         'live_' + st.id,
+      title:      st.track_title || 'Live set',
+      username:   st.display_name || st.owner_username || st.user || 'DJ',
+      uploadedAt: st.ended_at ? Date.parse(st.ended_at) : Date.now(),
+      audioUrl:   st.audio_url || null,
+      coverUrl:   st.cover_url || null,
+      _isLive:    true,
+      _liveUrl:   _wwlUrl(st),
+    };
+  }
   function renderActivity(tracks) {
     const recent = (tracks || []).slice(0, 8);
     if (!recent.length) {
       return `<div class="disc-activity-empty">No uploads yet — be the first ${Icon('music')}</div>`;
     }
     return recent.map(t => {
-      const url = _activityTrackUrl(t);
+      const url = t._isLive ? t._liveUrl : _activityTrackUrl(t);
       const Tag = url ? 'a' : 'div';
       const linkAttrs = url ? ` href="${escHtml(url)}" target="_blank" rel="noopener"` : '';
       return `
@@ -1542,13 +1561,24 @@ const Discover = (() => {
         <div class="disc-activity-avatar">${escHtml((t.username || '?').charAt(0).toUpperCase())}</div>
         <div class="disc-activity-text">
           <span class="disc-activity-user">@${escHtml(t.username)}</span>
-          uploaded
+          ${t._isLive ? 'went live with' : 'uploaded'}
           <span class="disc-activity-track">${escHtml(t.title)}</span>
         </div>
         <div class="disc-activity-ago">${timeAgo(t.uploadedAt)}</div>
       </${Tag}>
     `;
     }).join('');
+  }
+  // Slå saman ferske direktesendingar (frå LiveSets.list, alt henta av
+  // _loadWhatWentLive) med allTracks og teikn «Live activity» på nytt, sortert
+  // etter ferskast først. Trygt å kalle sjølv om sidebaren ikkje finst enno
+  // (gjest/ikkje innlogga) eller feeden ikkje er montert.
+  function _refreshActivityFeed(liveSets) {
+    const feed = document.getElementById('disc-activity-feed');
+    if (!feed) return;
+    const liveItems = (liveSets || []).map(_liveSetToActivityItem);
+    const merged = [...(allTracks || []), ...liveItems].sort((a, b) => (b.uploadedAt || 0) - (a.uploadedAt || 0));
+    feed.innerHTML = renderActivity(merged);
   }
 
   // ── Main render ───────────────────────────────────────────────────────
