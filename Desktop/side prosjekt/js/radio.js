@@ -3653,8 +3653,14 @@ const Radio = (() => {
   // Denne pausar berre det som alt spelte — rører ikkje _liveTakeover (aldri
   // sett her, dette ER ikkje ei takeover), ingen jingel/annonse, held
   // currentStation slik at eit seinare trykk på play hentar same stasjon.
+  let _preOwnBroadcast = null;
   function pauseForOwnBroadcast() {
     if (_liveTakeover) return;   // burde aldri skje på sendarsida, men ufarleg å hoppe over
+    _preOwnBroadcast = {
+      wasPlaying: isPlaying,
+      r247Active: !!(typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive()),
+      station:    currentStation,
+    };
     const audio = getAudio();
     if (audio && !audio.paused) { try { audio.pause(); } catch (e) {} }
     if (!isPlaying) return;
@@ -3665,6 +3671,22 @@ const Radio = (() => {
     updateNowPlayingStatus(false);
     if (currentStation) updateSidebarActiveState(currentStation.id);
     window.RadioDock?.sync();
+  }
+
+  // Motstykket til pauseForOwnBroadcast() — kalt når DENNE fana sin eigen
+  // sending (eller DJ-flagget frå ei anna fane i same nettlesar) blir stoppa.
+  // Utan dette blir sendar-fana verande stille til brukaren trykker play
+  // manuelt (rapportert 2026-09-29: "når live playing slutter skal det ikke
+  // stoppe lyd, radioen skal fortsette etter roterende jingler").
+  function resumeForOwnBroadcast() {
+    const prev = _preOwnBroadcast;
+    _preOwnBroadcast = null;
+    if (!prev || !prev.wasPlaying) return;   // ingenting spelte før sendinga starta her
+    if (prev.r247Active && typeof Radio247 !== 'undefined' && Radio247.play) { Radio247.play(); return; }
+    if (prev.station && prev.station.url) {
+      currentStation = { ...prev.station };
+      _playUrl(currentStation.url, currentStation);
+    }
   }
 
   function enterLiveTakeover(presenterName, skipAnnouncement) {
@@ -3964,7 +3986,7 @@ const Radio = (() => {
     enterLiveTakeover, exitLiveTakeover, attachLiveStream, setLivePresenterName, isLiveTakeoverActive, getLivePresenterName,
     setLiveTrackTitle, getLiveTrackTitle, setLiveLinkUrl, getLiveLinkUrl, syncLiveHero,
     startSpecialShow, isSpecialActive, getLiveLabel, leaveSpecial: () => { if (_special) _leaveSpecialQuiet(); },
-    pauseForOwnBroadcast,
+    pauseForOwnBroadcast, resumeForOwnBroadcast,
     playLocalClip: _playLocalClip,
     // Delt "opptatt"-flagg for Radio247 (js/radio247.js) sin overgangsjingle
     // OG A/C/D-jinglane her — begge deler det same <audio>-elementet, så

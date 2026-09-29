@@ -111,6 +111,7 @@ const LiveGlobal = (() => {
       // sideoppfriskning midt i ei alt pågåande sending — isLive er då sann
       // frå fyrste poll, wasLive framleis usann).
       if (isLive && !wasLive) { try { window.Radio?.pauseForOwnBroadcast?.(); } catch (e) {} }
+      else if (!isLive && wasLive) { try { window.Radio?.resumeForOwnBroadcast?.(); } catch (e) {} }
       return;   // følg med, men ikkje koble oss til vår eigen sending
     }
 
