@@ -1086,6 +1086,13 @@ const Discover = (() => {
     });
     let site = ''; try { site = new URL(show.linkUrl).origin; } catch (_) {}
     const airedYet = Date.now() >= Date.parse(show.slots[0]);
+    // Tracklisten skal IKKJE avslørast før HEILE serien er ferdig (brukarønske
+    // 29.09.2026) — «Listen to the mix»-knappen over bruker framleis airedYet
+    // (synleg alt etter FYRSTE sending), berre sjølve songnavn-lista ventar til
+    // siste slot + varigheit er passert, same tidspunkt som arkivposten i
+    // «What went live» blir synleg (sjå tools/publish-special-set.js).
+    const lastSlotEnd = Date.parse(show.slots[show.slots.length - 1]) + show.durationSec * 1000;
+    const allAired = Date.now() >= lastSlotEnd;
     const mins = Math.round(show.durationSec / 60);
     const tracks = (show.tracklist || []).map(t => `<li>${_lcEsc(t)}</li>`).join('');
     setTimeout(_loadWhatWentLive, 0);   // container #disc-wwl finst når innerHTML er sett
@@ -1102,7 +1109,7 @@ const Discover = (() => {
               : `<span class="lc-ad-soon">The mix will be available here after the first live broadcast on ${_lcEsc(fmtDay.format(new Date(show.slots[0])))}.</span>`}
             ${site ? `<a class="lc-ad-link" href="${_lcEsc(site)}" target="_blank" rel="noopener noreferrer">${_lcEsc(site.replace(/^https?:\/\//, ''))}</a>` : ''}
           </div>
-          ${airedYet && tracks ? `<details class="lc-ad-tracks"><summary>Tracklist</summary><ol>${tracks}</ol></details>` : ''}
+          ${allAired && tracks ? `<details class="lc-ad-tracks"><summary>Tracklist</summary><ol>${tracks}</ol></details>` : ''}
         </div>
         <div id="disc-wwl"></div>`;
   }
