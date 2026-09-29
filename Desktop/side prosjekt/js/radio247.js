@@ -440,11 +440,15 @@ const Radio247 = (() => {
     _rerenderHost();
   }
 
-  // Spesialprogram (js/specialShows.js, t.d. Lemonchill-miksen): 10 s FØR sendestart
+  // Spesialprogram (js/specialShows.js, t.d. Lemonchill-miksen): 30 s FØR sendestart
   // startar jingel-introen, slik at miksen byrjar nøyaktig på klokkeslettet. Berre for
   // lyttarar som har 24-Hour Cycle i gang og faktisk speler; ei ekte direktesending
   // har førsteretten (startSpecialShow avviser då).
-  const SPECIAL_PREROLL_MS = 10000;
+  // 30s (var 10s) — 29.09.2026: Lemonchill fekk eit valfritt preRollAd (show.preRollAd,
+  // ~25s reklame) FØR LIVE_INTRO (~3s) i js/radio.js enterLiveTakeover(). Heile kjeda må
+  // rekke å spele FØR sp.startMs, elles hoppar _attachSpecialAudio() rett til eit offset
+  // midt i miksen for å halde seg synkron med klokka (misser byrjinga av miksen for alle).
+  const SPECIAL_PREROLL_MS = 30000;
   let _specialTimer = null;
   let _specialTestDone = false;
   function _specialTestRequested() {
@@ -456,10 +460,11 @@ const Radio247 = (() => {
     if (!_active || typeof Radio === 'undefined' || !Radio.startSpecialShow || typeof SpecialShows === 'undefined') return;
     if (!Radio.isPlaying || Radio.isLiveTakeoverActive()) return;
     // Testmodus (kun admin): siriusfm.no/?lemonchilltest=1#/radio → trykk play på 24-Hour Cycle,
-    // så startar miksen med jingel-intro etter ~11 s (same overgangar som den ekte sendinga).
+    // så startar miksen med reklame+jingel-intro etter ~32 s (same overgangar som den ekte
+    // sendinga — talet må matche SPECIAL_PREROLL_MS så kjeda rekk å spele ferdig i tide).
     if (!_specialTestDone && _specialTestRequested()) {
       _specialTestDone = true;
-      Radio.startSpecialShow(SpecialShows.SHOWS[0], Date.now() + 11000);
+      Radio.startSpecialShow(SpecialShows.SHOWS[0], Date.now() + 32000);
       return;
     }
     const act = SpecialShows.activeAt(Date.now() + SPECIAL_PREROLL_MS);

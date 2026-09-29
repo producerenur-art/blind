@@ -693,12 +693,28 @@ const Radio = (() => {
     }, AD_FADE_MS);
   }
 
-  function _scheduleAd(ad) {
+  function _scheduleAd(ad, slotMs, offsetMs) {
+    slotMs = slotMs || AD_SLOT_MS; offsetMs = offsetMs || AD_SLOT_OFFSET_MS;
     const now = Date.now();
-    const nextAt = Math.ceil((now - AD_SLOT_OFFSET_MS - ad.shiftMs) / AD_SLOT_MS) * AD_SLOT_MS + AD_SLOT_OFFSET_MS + ad.shiftMs;
-    setTimeout(() => { _playAdAlone(ad.url); _scheduleAd(ad); }, Math.max(1000, nextAt - now));
+    const nextAt = Math.ceil((now - offsetMs - ad.shiftMs) / slotMs) * slotMs + offsetMs + ad.shiftMs;
+    setTimeout(() => { _playAdAlone(ad.url); _scheduleAd(ad, slotMs, offsetMs); }, Math.max(1000, nextAt - now));
   }
-  if (typeof document !== 'undefined') ADS.forEach(_scheduleAd);
+  if (typeof document !== 'undefined') ADS.forEach(a => _scheduleAd(a));
+
+  // ── «Book resident DJ»-reklamer, heile året, kvar 6. time (brukarønske 2026-09-29) ──
+  // 4 korte klipp (6-7s), rullerer jamt fordelt over eit døgn (kvart klipp ca. éin
+  // gong dagleg, men noko spelar kvar 6. time totalt) — same _playAdAlone/_scheduleAd-
+  // mekanisme som ADS over, berre eige slot-intervall (24t) og eigen offset (:20)
+  // så dei aldri kolliderer med JINGLE_CYCLE (:15) eller ADS (:05).
+  const BOOKING_AD_SLOT_MS = 24 * HOUR_MS;
+  const BOOKING_AD_SLOT_OFFSET_MS = 20 * 60 * 1000;
+  const BOOKING_ADS = [
+    { url: JINGLE_BASE + 'book-residents-1.mp3',      shiftMs: 0 },
+    { url: JINGLE_BASE + 'book-residents-2.mp3',      shiftMs: 6 * HOUR_MS },
+    { url: JINGLE_BASE + 'book-residents-dame-1.mp3', shiftMs: 12 * HOUR_MS },
+    { url: JINGLE_BASE + 'book-residents-dame-2.mp3', shiftMs: 18 * HOUR_MS },
+  ];
+  if (typeof document !== 'undefined') BOOKING_ADS.forEach(a => _scheduleAd(a, BOOKING_AD_SLOT_MS, BOOKING_AD_SLOT_OFFSET_MS));
 
   // ── Electronic lock ───────────────────────────────────────────────────
   // The whole site is locked to electronic music, so the radio search is too.
@@ -3733,8 +3749,18 @@ const Radio = (() => {
       if (_pendingLiveStream) { attachLiveStream(_pendingLiveStream); _pendingLiveStream = null; }
     };
     if (skipAnnouncement) { finishAnnouncement(); return; }
-    // Forhåndsinnspelt mix: same jingel som i slutten («You're listening to SiriusFM…»), ingen namne-annonse.
-    if (_special) { _playLocalClip(JINGLES.a, finishAnnouncement, LIVE_FADE_MS); return; }
+    // Forhåndsinnspelt mix: valfri reklame (show.preRollAd, brukarønske 29.09.2026)
+    // FØR LIVE_INTRO («Welcome to SiriusFM Live — now.») — INGEN namne-annonse.
+    // Show utan preRollAd hoppar rett til LIVE_INTRO, same som før 29.09 (då var
+    // det JINGLES.a — bytta til LIVE_INTRO etter eksplisitt brukarønske om at
+    // «siriusfm live now»-jingelen skal spele rett før settet startar).
+    if (_special) {
+      const ad = _special.show && _special.show.preRollAd;
+      const playLiveIntroThenStart = () => _playLocalClip(LIVE_INTRO, finishAnnouncement, LIVE_FADE_MS);
+      if (ad) _playLocalClip(ad, playLiveIntroThenStart, LIVE_FADE_MS);
+      else playLiveIntroThenStart();
+      return;
+    }
     const standalone = LIVE_STANDALONE[_normalizeName(presenterName)];
     if (standalone) {
       // Éin fil seier alt sjølv ("Welcome... + namn") — INGEN LIVE_INTRO framfor.
@@ -3909,6 +3935,7 @@ const Radio = (() => {
     if (audio) { try { audio.pause(); } catch (e) {} try { audio.srcObject = null; } catch (e) {} }
     _teardownLiveDuck();
     const wasSpecial = !!_special;
+    const specialOutroAd = wasSpecial && _special.show && _special.show.preRollAd;
     _special = null; _liveSpecialLabel = '';
     _liveTakeover = false;
     _liveAnnouncementPlaying = false;
@@ -3973,7 +4000,16 @@ const Radio = (() => {
     };
     // Etter ei mix: mjuk jingel-overgang attende til 24-Hour Cycle. Vanleg live roterer
     // gjennom LIVE_OUTRO_POOL (brukarønske 2026-09-27) — aldri same klipp to gonger på rad.
-    _playLocalClip(wasSpecial ? JINGLES.a : _nextLiveOutro(), resumePrevious, LIVE_FADE_MS);
+    // Lemonchill (show.preRollAd) får reklamen sin EIN gong til rett etter outro-jingelen,
+    // på alle 4 sendingane (brukarønske 29.09.2026) — same reklame som spelte i forkant.
+    if (wasSpecial) {
+      _playLocalClip(JINGLES.a, () => {
+        if (specialOutroAd) _playLocalClip(specialOutroAd, resumePrevious, LIVE_FADE_MS);
+        else resumePrevious();
+      }, LIVE_FADE_MS);
+    } else {
+      _playLocalClip(_nextLiveOutro(), resumePrevious, LIVE_FADE_MS);
+    }
   }
 
   return {

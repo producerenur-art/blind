@@ -13,6 +13,10 @@ const SpecialShows = (() => {
       artist: 'Lemonchill',
       title: 'Mixes for SiriusFM 001 by Lemonchill',
       liveLabel: 'Lemonchill mix on air',
+      // Reklame (25s) rett FØR sjølve overtakinga, på alle 4 sendingane —
+      // brukarønske 29.09.2026: reklame → «SiriusFM live now»-jingelen → miksen
+      // startar. Sjå js/radio.js enterLiveTakeover() sin _special-gren.
+      preRollAd: 'assets/jingles/lemonchill-ad.mp3',
       // v2 = brukaren sin eigen "lemonchill set for noah radio.wav" (Downloads, 29.09.2026),
       // transkoda til AAC 96kbps (afconvert) for å halde seg under Supabase Storage-grensa ~50MB.
       audioUrl: 'https://qefdyxpyjwpohsmmmksf.supabase.co/storage/v1/object/public/soundcore-media/special-mixes/lemonchill-001-v2.m4a',
