@@ -443,8 +443,13 @@ const Radio = (() => {
   const JINGLE_BASE = 'assets/jingles/';
   const JINGLES = { a: JINGLE_BASE + 'jingle-a.mp3', c: JINGLE_BASE + 'jingle-c.mp3', d: JINGLE_BASE + 'jingle-d.mp3',
     chat: JINGLE_BASE + 'live-chat.mp3', // brukarønske 2026-09-23: «open the live chat»-jingel
-    promo: JINGLE_BASE + 'jingle-promo.mp3',
-    arcturians: JINGLE_BASE + 'jingle-arcturians.mp3' }; // brukarønske 2026-09-23: «Arcturians står bak SiriusFM»-reklame // brukarønske 2026-09-23: «Welcome to SiriusFM»-presentasjon (Roger-stemme)
+    // 29.09.2026: begge desse to var mastra ~7-8 dB stillare enn resten av
+    // jingelpoolen (RMS -24,8/-24,9 dBFS mot -14 til -19 for dei andre) —
+    // brukaren merka at «jingelen som gjekk» var lav samanlikna med resten.
+    // Bytt til komprimert+forsterka -boosted.m4a-versjon (RMS no -17,4 dBFS,
+    // peak trygt under -0,8 dBFS, ORIGINAL .mp3 urørt/behalden som backup).
+    promo: JINGLE_BASE + 'jingle-promo-boosted.m4a',
+    arcturians: JINGLE_BASE + 'jingle-arcturians-boosted.m4a' }; // brukarønske 2026-09-23: «Arcturians står bak SiriusFM»-reklame // brukarønske 2026-09-23: «Welcome to SiriusFM»-presentasjon (Roger-stemme)
   // Namn → fil for live-annonsen (B). Ukjende/nye presentatørnamn fell tilbake
   // på "generic" heilt til nokon lagar ei dedikert fil for dei (sjå CLAUDE.md-
   // notat i js/livemix.js om korleis nye stemmer legges til). Ambient Mann/The
