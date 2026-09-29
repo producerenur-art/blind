@@ -618,16 +618,18 @@ const Radio = (() => {
     });
   }
 
-  // ── Jingel-rotasjon på FASTE klokkeslett (brukarønske 2026-09-24) ─────────
-  // Éin felles timeplan for ALLE radioer (24/7 Cycle og alle stasjonar): kvart
-  // 20. minutt (:10, :30, :50 — aldri på heile timen, der 24/7 byter sjanger)
-  // kjem NESTE jingel i sirkelen. Slotten reknast frå klokka (ikkje frå
-  // sideinnlasting), så alle lyttarar høyrer same jingel til same tid, og to
-  // jinglar kolliderer aldri. INGEN jinglar mens nokon er live eller ei mix speler
-  // (brukarønske 2026-09-24) — dei speler berre over vanleg musikk. Vil du ha ein jingel oftare:
-  // legg han inn fleire gonger i JINGLE_CYCLE (jamt fordelt).
-  const JINGLE_SLOT_MS = 20 * 60 * 1000;
-  const JINGLE_SLOT_OFFSET_MS = 10 * 60 * 1000;   // slotar ved :10, :30, :50
+  // ── Jingel-rotasjon på FASTE klokkeslett (brukarønske 2026-09-24, frekvens
+  // endra til éin gong i timen 2026-09-29 — var 20 min, opplevdest for ofte) ──
+  // Éin felles timeplan for ALLE radioer (24/7 Cycle og alle stasjonar): kvar
+  // time, ved :15 (aldri på heile timen, der 24/7 byter sjanger, og aldri på
+  // :05, der reklameslotten ligg — sjå ADS/AD_SLOT_OFFSET_MS under) kjem NESTE
+  // jingel i sirkelen. Slotten reknast frå klokka (ikkje frå sideinnlasting),
+  // så alle lyttarar høyrer same jingel til same tid, og to jinglar kolliderer
+  // aldri. INGEN jinglar mens nokon er live eller ei mix speler (brukarønske
+  // 2026-09-24) — dei speler berre over vanleg musikk. Vil du ha ein jingel
+  // oftare: legg han inn fleire gonger i JINGLE_CYCLE (jamt fordelt).
+  const JINGLE_SLOT_MS = 60 * 60 * 1000;
+  const JINGLE_SLOT_OFFSET_MS = 15 * 60 * 1000;   // slot ved :15 kvar time
   const JINGLE_CYCLE = [
     { url: JINGLES.a,          fade: LIVE_FADE_MS },              // «You're listening to SiriusFM… Subscribe»
     { url: JINGLES.arcturians, fade: LIVE_FADE_MS },              // Arcturians-reklame
