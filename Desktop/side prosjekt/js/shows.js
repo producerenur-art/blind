@@ -126,13 +126,13 @@ const Shows = (() => {
     {
       id: 'ambient-psychill-1fm',
       name: 'Ambient Psychill',
-      host: '1.FM',
+      host: 'Ambient Psychill',
       day: 6, // Saturday
       startHour: 8, endHour: 11,
       genre: 'Psychill · Ambient',
       emoji: '🌫️',
       color: '#8854d0',
-      desc: '1.FM — ambient psychill 24/7, a slow Saturday morning.',
+      desc: 'Ambient psychill 24/7, a slow Saturday morning.',
       stream: 'ambientpsy-1fm',
     },
     {
@@ -186,13 +186,13 @@ const Shows = (() => {
     {
       id: 'slow-monday',
       name: 'Slow Monday',
-      host: '1.FM',
+      host: 'Ambient Psychill',
       day: 1, // Monday
       startHour: 10, endHour: 12,
       genre: 'Psychill · Ambient',
       emoji: '🌫️',
       color: '#8854d0',
-      desc: '1.FM ambient psychill to ease the late morning before noon.',
+      desc: 'Ambient psychill to ease the late morning before noon.',
       stream: 'ambientpsy-1fm',
     },
     {
@@ -323,10 +323,10 @@ const Shows = (() => {
       stream: 'babaganousha',
     },
     {
-      id: 'tuesday-ambient-wakeup', name: 'Tuesday Ambient Wake-up', host: '1.FM',
+      id: 'tuesday-ambient-wakeup', name: 'Tuesday Ambient Wake-up', host: 'Ambient Psychill',
       day: 2, startHour: 6, endHour: 10,
       genre: 'Psychill · Ambient', emoji: '🌫️', color: '#8854d0',
-      desc: '1.FM ambient psychill to ease into Tuesday morning.',
+      desc: 'Ambient psychill to ease into Tuesday morning.',
       stream: 'ambientpsy-1fm',
     },
     {

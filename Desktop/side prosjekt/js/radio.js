@@ -127,14 +127,14 @@ const Radio = (() => {
       name: 'TranceAround',
       url:  'https://strm112.1.fm/trance_mobile_mp3',
       emoji: '🌀', color: '#9333ea',
-      desc: '1.FM — trance around the clock',
+      desc: 'Trance around the clock',
     },
     {
       id: 'atr', cat: 'Progressive Psy / Trance',
       name: 'Amsterdam Trance Radio',
       url:  'https://strm112.1.fm/atr_mobile_mp3',
       emoji: '🎚️', color: '#22c55e',
-      desc: '1.FM — uplifting & progressive trance',
+      desc: 'Uplifting & progressive trance',
     },
     {
       id: 'rr-progressive', cat: 'Progressive Psy / Trance',
@@ -164,10 +164,10 @@ const Radio = (() => {
     // ════════════════════════════════════════════
     {
       id: 'ambientpsy-1fm', cat: 'Psybient / Psychill',
-      name: 'Ambient Psychill (1.FM)',
+      name: 'Ambient Psychill',
       url:  'https://strm112.1.fm/ambientpsy_mobile_mp3',
       emoji: '🌫️', color: '#8854d0',
-      desc: '1.FM — ambient psychill 24/7',
+      desc: 'Ambient psychill, 24/7',
     },
     {
       id: 'multihuman', cat: 'Psybient / Psychill',
@@ -199,10 +199,10 @@ const Radio = (() => {
     // ════════════════════════════════════════════
     {
       id: '1fm-chillout', cat: 'Chill Out / Downtempo',
-      name: '1.FM Chillout Lounge',
+      name: 'Chillout Lounge',
       url:  'https://strm112.1.fm/chilloutlounge_mobile_mp3',
       emoji: '🛋️', color: '#0ea5e9',
-      desc: '1.FM — electronic chill lounge 24/7',
+      desc: 'Electronic chill lounge, 24/7',
     },
     {
       id: 'smoothchill', cat: 'Chill Out / Downtempo',

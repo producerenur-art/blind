@@ -57,9 +57,9 @@ const Radio247 = (() => {
     'record-trancemission': 'Record Trancemission', 'dfm-avb': 'Armin van Buuren',
     'ambient-abyss': 'Ambient Abyss Broadcasting', 'dark-city-signal': 'Dark City Signal',
     'systrum-ssr1': 'Systrum Sistum SSR1', 'indiebeat-ambient': 'The Indie Beat — Ambient',
-    'ambientpsy-1fm': 'Ambient Psychill (1.FM)', multihuman: 'MultiHuman EntheoMusic',
+    'ambientpsy-1fm': 'Ambient Psychill', multihuman: 'MultiHuman EntheoMusic',
     'diceradio-psybient': 'DiceRadio', 'paradisehunter-chillout': 'Paradisehunter Chillout',
-    '1fm-chillout': '1.FM Chillout Lounge', brokenbeats: 'Brokenbeats', cafedelmar: 'Café del Mar',
+    '1fm-chillout': 'Chillout Lounge', brokenbeats: 'Brokenbeats', cafedelmar: 'Café del Mar',
     'uzic-techno': 'UZIC Techno Minimal', 'remember-vip-techno': 'Remember VIP Techno',
     'ambient-mann': 'Ambient Mann',
   };
@@ -155,8 +155,11 @@ const Radio247 = (() => {
   // "Anon.FM") er visuell støy i denne raden — kutt han her, berre for
   // "Now:"-linja/arkivet. Rører IKKJE `.name` i js/radio.js, så stasjonslista
   // og alt anna som viser same stasjon held fram uendra. Treff berre ENDINGA
-  // (`\.FM$`), ikkje midt i namnet — «1.FM Chillout Lounge» og
-  // «Ambient Psychill (1.FM)» har ikkje ".FM" sist, så dei påverkast ikkje.
+  // (`\.FM$`), ikkje midt i namnet.
+  // Brukarønske 29.09.2026: fjerna «1.FM»-merkevarenamnet heilt frå namn/desc
+  // (js/radio.js «Ambient Psychill»/«Chillout Lounge», tidlegare «(1.FM)»/
+  // «1.FM Chillout Lounge») — stasjonen speler framleis same straum, berre
+  // utan kjelde-attribusjonen synleg for lyttaren.
   function _stationName(sid) {
     if (!sid) return null;
     if (NAME_BY_ID[sid]) return NAME_BY_ID[sid];
