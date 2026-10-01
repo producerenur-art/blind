@@ -40,6 +40,25 @@ const Social = (() => {
   const icon  = (n) => (typeof Icon === 'function' ? Icon(n) : '');
   const me    = () => (typeof Auth !== 'undefined' ? Auth.current() : null);
 
+  // «What went live»-kommentarar (targetKey 'wwl:<id>') kan skrivast av gjester utan innlogging.
+  // Gjesten får ein lokal id (guest_xxxx) + visningsnamn lagra i nettlesaren; same per-forfattar-
+  // hemmelegheit som innlogga brukarar gjer at berre same eining kan redigere/slette si eiga.
+  const isGuestKey = (k) => /^wwl:/.test(k || '');
+  const isGuestName = (n) => /^guest_/.test(n || '');
+  function guest() {
+    let g = null;
+    try { g = JSON.parse(localStorage.getItem('sc_guest') || 'null'); } catch (_) {}
+    if (!g || !g.username) {
+      g = { username: 'guest_' + Math.random().toString(36).slice(2, 10), displayName: '' };
+      try { localStorage.setItem('sc_guest', JSON.stringify(g)); } catch (_) {}
+    }
+    return g;
+  }
+  const actor = (targetKey) => me() || (isGuestKey(targetKey) ? guest() : null);
+  const WWL_ADMINS = ['producerenur@gmail.com', 'constant8@gmail.com'];
+  const isWwlAdmin = (targetKey, u) => isGuestKey(targetKey) && !!u && WWL_ADMINS.includes(String(u.email || '').toLowerCase().trim());
+  let _lastGuestPost = 0;   // spam-brems: maks éin gjestekommentar per 20 s
+
   function timeAgo(ts) {
     const s = Math.floor((Date.now() - ts) / 1000);
     if (s < 60)    return 'just now';
@@ -323,9 +342,13 @@ const Social = (() => {
 
   function composerHtml(targetKey) {
     const d = domId(targetKey);
-    if (!me()) return `<div class="sc-cmt-login"><a href="#/login">Log in</a> to comment.</div>`;
+    if (!actor(targetKey)) return `<div class="sc-cmt-login"><a href="#/login">Log in</a> to comment.</div>`;
+    const nameField = (!me() && isGuestKey(targetKey))
+      ? `<input class="sc-cmt-guestname" id="sc-cmt-name-${d}" placeholder="Your name" maxlength="40" value="${esc(guest().displayName || '')}" style="max-width:9rem">`
+      : '';
     return `
       <div class="sc-cmt-composer">
+        ${nameField}
         <input class="sc-cmt-input" id="sc-cmt-input-${d}" placeholder="Write a comment…" maxlength="500"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();Social.postComment('${jsq(targetKey)}',this)}">
         <button class="sc-cmt-emoji-btn" type="button" onclick="Social.toggleEmoji('${jsq(targetKey)}',this)" title="Emoji">😊</button>
@@ -357,7 +380,7 @@ const Social = (() => {
   }
 
   async function addCommentImage(targetKey, files, el) {
-    const u = me(); if (!u) { if (window.Router) Router.go('/login'); return; }
+    const u = actor(targetKey); if (!u) { if (window.Router) Router.go('/login'); return; }
     const file = files && files[0];
     if (!file || !/^image\//.test(file.type)) { if (typeof App !== 'undefined') App.toast('Choose an image file', 'error'); return; }
     allById('sc-cmt-media-' + domId(targetKey)).forEach(box => { box.style.display = ''; box.innerHTML = 'Processing image…'; });
@@ -376,7 +399,7 @@ const Social = (() => {
   }
 
   function shareCommentMedia(targetKey) {
-    const u = me(); if (!u) { if (window.Router) Router.go('/login'); return; }
+    const u = actor(targetKey); if (!u) { if (window.Router) Router.go('/login'); return; }
     if (!window.GifPicker) { if (typeof App !== 'undefined') App.toast('GIF picker not loaded', 'error'); return; }
     GifPicker.open(url => {
       const kind = mediaKindOf(url) || (GifPicker.isImageLike(url) ? 'image' : null);
@@ -418,17 +441,18 @@ const Social = (() => {
     const pm = /^profile:(.+)$/.exec(targetKey);
     const isWallOwner = viewer && pm && pm[1] === viewer.username;
     const isAuthor = viewer && c.author === viewer.username;
-    const canDel = viewer && (isAuthor || isWallOwner);
+    const canDel = viewer && (isAuthor || isWallOwner || isWwlAdmin(targetKey, viewer));
+    const guestAuthor = isGuestName(c.author);
     const editedMark = c.edited ? `<span class="sc-cmt-edited" title="Edited">· edited</span>` : '';
     return `
       <div class="sc-cmt-row" id="sc-cmt-${esc(c.id)}">
-        <a class="sc-cmt-av" href="#/u/${esc(c.author)}" data-av-user="${esc(c.author)}">${esc(initial)}</a>
+        ${guestAuthor ? `<span class="sc-cmt-av">${esc(initial)}</span>` : `<a class="sc-cmt-av" href="#/u/${esc(c.author)}" data-av-user="${esc(c.author)}">${esc(initial)}</a>`}
         <div class="sc-cmt-main">
           <div class="sc-cmt-head">
-            <a class="sc-cmt-name" href="#/u/${esc(c.author)}">${esc(c.authorDisplay || c.author)}</a>
+            ${guestAuthor ? `<span class="sc-cmt-name">${esc(c.authorDisplay || 'Guest')}</span>` : `<a class="sc-cmt-name" href="#/u/${esc(c.author)}">${esc(c.authorDisplay || c.author)}</a>`}
             <span class="sc-cmt-time">${timeAgo(c.ts)}</span>
             ${editedMark}
-            ${friendBtn(c.author, { mini: true })}
+            ${guestAuthor ? '' : friendBtn(c.author, { mini: true })}
             ${isAuthor ? `<button class="sc-cmt-edit" onclick="Social.editComment('${jsq(targetKey)}','${esc(c.id)}',this)" title="Edit">${icon('edit')}</button>` : ''}
             ${canDel ? `<button class="sc-cmt-del" onclick="Social.deleteComment('${jsq(targetKey)}','${esc(c.id)}')" title="Delete">${icon('x')}</button>` : ''}
           </div>
@@ -441,7 +465,7 @@ const Social = (() => {
   function renderComments(targetKey) {
     const lists = allById('sc-cmt-list-' + domId(targetKey));   // alle monteringar, ikkje berre den fyrste
     if (!lists.length) return;
-    const viewer = me();
+    const viewer = actor(targetKey);
     const arr = Object.values(_comments[targetKey] || {}).sort((a, b) => a.ts - b.ts);
     const html = arr.map(c => commentRowHtml(targetKey, c, viewer)).join('');
     lists.forEach(list => {
@@ -453,8 +477,15 @@ const Social = (() => {
   }
 
   function postComment(targetKey, el) {
-    const u = me();
+    let u = actor(targetKey);
     if (!u) { if (window.Router) Router.go('/login'); return; }
+    if (!me()) {   // gjest: bruk namnet frå komposeren + spam-brems
+      if (Date.now() - _lastGuestPost < 20000) { if (typeof App !== 'undefined') App.toast('Please wait a few seconds before commenting again', 'error'); return; }
+      const nm = ((composerOf(el) || document).querySelector('.sc-cmt-guestname') || {}).value;
+      const g = guest(); g.displayName = (nm || g.displayName || 'Guest').trim().slice(0, 40) || 'Guest';
+      try { localStorage.setItem('sc_guest', JSON.stringify(g)); } catch (_) {}
+      u = g; _lastGuestPost = Date.now();
+    }
     // Les frå komposeren brukaren faktisk klikka/skreiv i — ikkje via getElementById,
     // som ved duplikat-montering (eige innlegg i to faner) plukkar den skjulte kopien.
     const scope = composerOf(el);
@@ -502,13 +533,13 @@ const Social = (() => {
   }
 
   function deleteComment(targetKey, id) {
-    const u = me();
+    const u = actor(targetKey);
     const store = _comments[targetKey] || {};
     const c = store[id];
     if (!u || !c) return;
     const pm = /^profile:(.+)$/.exec(targetKey);
     const isWallOwner = pm && pm[1] === u.username;
-    if (c.author !== u.username && !isWallOwner) return;
+    if (c.author !== u.username && !isWallOwner && !isWwlAdmin(targetKey, u)) return;
     try { if (c._k) SC.gun().get(SC.NS.comments).get(targetKey).get(c._k).put(null); } catch {}
     _deleted.add(id);                                  // hindra at sky-polling legg han inn att
     if (window.CommentSync) CommentSync.remove(id, c.author);   // fjern frå varig sky-liste
@@ -519,7 +550,7 @@ const Social = (() => {
   // Inline-redigering av eigen kommentar — byter body med tekstfelt + Lagre/Avbryt.
   // Låst til forfatteren: kvar kan berre redigere SIN EIGEN kommentar, uansett kvar.
   function editComment(targetKey, id, el) {
-    const u = me();
+    const u = actor(targetKey);
     const c = (_comments[targetKey] || {})[id];
     if (!u || !c || c.author !== u.username) return;   // kun forfatteren
     // Scope til rada brukaren klikka i — same kommentar kan vera montert fleire
@@ -530,7 +561,11 @@ const Social = (() => {
     body.innerHTML = `
       <div class="sc-cmt-edit-box">
         <textarea class="sc-cmt-edit-input" maxlength="500">${esc(c.text)}</textarea>
+        <div class="sc-cmt-edit-media" style="margin:.3rem 0">${c.media ? mediaHtml(c.media, c.mediaKind) : ''}</div>
         <div class="sc-cmt-edit-row">
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer">📎 ${c.media ? 'Replace image' : 'Add image'}
+            <input type="file" accept="image/*" style="display:none" onchange="Social.editCommentImage('${jsq(targetKey)}','${esc(id)}',this)"></label>
+          ${c.media ? `<button class="btn btn-ghost btn-sm" type="button" onclick="Social.editCommentImage('${jsq(targetKey)}','${esc(id)}',null)">Remove image</button>` : ''}
           <button class="btn btn-primary btn-sm" onclick="Social.saveCommentEdit('${jsq(targetKey)}','${esc(id)}',this)">Save</button>
           <button class="btn btn-ghost btn-sm" onclick="Social.cancelCommentEdit('${jsq(targetKey)}','${esc(id)}',this)">Cancel</button>
         </div>
@@ -538,21 +573,43 @@ const Social = (() => {
     const ta = body.querySelector('.sc-cmt-edit-input');
     if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
   }
+  // Bytt/fjern bilde under redigering (lagra først ved «Save»).
+  const _editMedia = {};
+  async function editCommentImage(targetKey, id, input) {
+    const c = (_comments[targetKey] || {})[id]; if (!c) return;
+    const box = input && input.closest ? input.closest('.sc-cmt-edit-box') : null;
+    const prev = box && box.querySelector('.sc-cmt-edit-media');
+    const file = input && input.files && input.files[0];
+    if (!file) { _editMedia[id] = { url: '', kind: '' }; if (prev) prev.innerHTML = '<em>Image will be removed</em>'; return; }
+    if (!/^image\//.test(file.type)) { if (typeof App !== 'undefined') App.toast('Choose an image file', 'error'); return; }
+    if (prev) prev.textContent = 'Processing image…';
+    try {
+      let url;
+      if (typeof SC_Storage !== 'undefined' && SC_Storage.isConfigured()) {
+        try { url = (await SC_Storage.upload(file, { prefix: 'cmt' })).url; } catch (e) { url = await downscaleCommentImage(file); }
+      } else { url = await downscaleCommentImage(file); }
+      _editMedia[id] = { url, kind: 'image' };
+      if (prev) prev.innerHTML = mediaHtml(url, 'image');
+    } catch (e) { if (typeof App !== 'undefined') App.toast('Image failed: ' + e.message, 'error'); }
+  }
   function saveCommentEdit(targetKey, id, el) {
-    const u = me();
+    const u = actor(targetKey);
     const store = _comments[targetKey] || {};
     const c = store[id];
     if (!u || !c || c.author !== u.username) return;   // kun forfatteren
     const box = el && el.closest ? el.closest('.sc-cmt-edit-box') : null;
     const ta = (box && box.querySelector('.sc-cmt-edit-input')) || document.querySelector('.sc-cmt-edit-input');
     const text = ta ? ta.value.trim() : '';
-    if (!text && !c.media) { App && App.toast && App.toast('The comment can\'t be empty', 'error'); return; }
+    const em = _editMedia[id]; delete _editMedia[id];
+    const newMedia = em ? em.url : c.media;
+    if (!text && !newMedia) { App && App.toast && App.toast('The comment can\'t be empty', 'error'); return; }
     // Eldre kommentar utan lagra previewUrl: forankre forhåndsvisninga NÅ frå den
     // GAMLE teksten, før ho overskrivast — så kortet ikkje forsvinn når lenka
     // fjernast frå teksten. Rørt ikkje om eigaren alt har fjerna ho (previewOff).
     const previewUrl = (c.previewOff || c.previewUrl) ? (c.previewUrl || '') : (firstCommentLink(c.text, c.media) || firstCommentLink(text, c.media));
     try { if (c._k) SC.gun().get(SC.NS.comments).get(targetKey).get(c._k).put({ text, edited: true, previewUrl }); } catch {}
     store[id] = { ...c, text, edited: true, previewUrl, editedTs: Date.now() };
+    if (em) { store[id].media = em.url; store[id].mediaKind = em.kind; if (!em.url) { delete store[id].media; delete store[id].mediaKind; } }
     // Kun forfatteren når hit → synk med eigar-push (har hemmelegheita).
     if (window.CommentSync) CommentSync.push(targetKey, store[id]);
     renderComments(targetKey);
@@ -561,7 +618,8 @@ const Social = (() => {
     const row = el && el.closest ? el.closest('.sc-cmt-row') : null;
     const body = (row && row.querySelector('.sc-cmt-body')) || document.getElementById('sc-cmt-body-' + id);
     const c = (_comments[targetKey] || {})[id];
-    const u = me();
+    const u = actor(targetKey);
+    delete _editMedia[id];
     if (body && c) { body.innerHTML = commentBodyHtml(c, !!(u && c.author === u.username), targetKey); if (window.LinkPreview) LinkPreview.hydrate(body); }
   }
 
@@ -781,7 +839,7 @@ const Social = (() => {
 
   return {
     init, wallUnread, markWallSeen,
-    commentsBlockHtml, postComment, deleteComment, setNotifyTarget, watchOwnThread,
+    commentsBlockHtml, postComment, editCommentImage, deleteComment, setNotifyTarget, watchOwnThread,
     editComment, saveCommentEdit, cancelCommentEdit, removeCommentPreview,
     addCommentImage, shareCommentMedia, clearCommentMedia,
     reactionBar, react,

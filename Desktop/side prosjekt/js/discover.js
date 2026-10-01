@@ -1232,6 +1232,7 @@ const Discover = (() => {
           <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
           <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st.duration_sec)}</span>
         </div>
+          ${window.Social ? Social.commentsBlockHtml('wwl:' + st.id) : ''}
         </div>
       </div>`;
     }
@@ -1264,6 +1265,7 @@ const Discover = (() => {
             <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="Discover.wwlDelete('${id}')">🗑 Delete</button>
           </div>
           <div class="wwl-edit" id="wwl-edit-${id}"></div>
+          ${window.Social ? Social.commentsBlockHtml('wwl:' + st.id) : ''}
         </div>
       </div>`;
   }
