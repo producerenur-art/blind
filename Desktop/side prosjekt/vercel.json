@@ -3,6 +3,10 @@
     {
       "source": "/s/:data",
       "destination": "/api/share?d=:data"
+    },
+    {
+      "source": "/what-went-live-:n(\\d+)",
+      "destination": "/api/share?d=wwl-:n"
     }
   ],
   "crons": [

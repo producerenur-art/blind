@@ -1167,6 +1167,7 @@ const Discover = (() => {
     // Kort delingslenke (ikkje den lange base64-lenka): serveren slår opp opptaket og lagar forhandsvisning med bildet.
     const v = st.updated_at ? Date.parse(st.updated_at) : 0;
     const slug = (typeof LiveSets !== 'undefined' && LiveSets.shareSlug) ? LiveSets.shareSlug(st) : st.id;
+    if (st.wwl_no) return 'https://www.siriusfm.no/what-went-live-' + st.wwl_no + (v ? '?v=' + v.toString(36) : '');   // fast nummer (migrasjon 0038)
     return 'https://www.siriusfm.no/s/' + encodeURIComponent(slug) + (v ? '?v=' + v.toString(36) : '');
   }
   // Minutt-peikar/spolelinje i kortet: viser mm:ss / total og lar deg hoppe til ein posisjon medan opptaket speler.
