@@ -37,6 +37,32 @@ const LiveBroadcast = (() => {
     return { iceServers: list };
   }
 
+  // Opus for MUSIKK: stereo + høg bitrate + FEC, utan DTX. WebRTC-standarden er tale (mono, ~32 kbps) → tynn/hakkete lyd.
+  function tuneOpus(sdp) {
+    if (!sdp) return sdp;
+    const m = /a=rtpmap:(\d+) opus\/48000\/2/i.exec(sdp);
+    if (!m) return sdp;
+    const pt = m[1];
+    const want = 'stereo=1;sprop-stereo=1;maxaveragebitrate=128000;maxplaybackrate=48000;useinbandfec=1;usedtx=0;cbr=0';
+    const re = new RegExp('(a=fmtp:' + pt + ' )([^\\r\\n]*)');
+    if (re.test(sdp)) {
+      return sdp.replace(re, (_, a, b) => {
+        const keep = b.split(';').filter(x => x && !/^(stereo|sprop-stereo|maxaveragebitrate|maxplaybackrate|useinbandfec|usedtx|cbr)=/.test(x));
+        return a + keep.concat(want.split(';')).join(';');
+      });
+    }
+    return sdp.replace(m[0], m[0] + '\r\na=fmtp:' + pt + ' ' + want);
+  }
+  async function setAudioBitrate(pc, bps) {
+    try {
+      for (const sd of pc.getSenders()) {
+        if (!sd.track || sd.track.kind !== 'audio') continue;
+        const pr = sd.getParameters(); pr.encodings = pr.encodings && pr.encodings.length ? pr.encodings : [{}];
+        pr.encodings[0].maxBitrate = bps; await sd.setParameters(pr);
+      }
+    } catch (e) {}
+  }
+
   function supaClient() {
     const c = window.CONFIG || {};
     if (!window.supabase || typeof window.supabase.createClient !== 'function') {
@@ -73,7 +99,9 @@ const LiveBroadcast = (() => {
         count();
       };
       const offer = await pc.createOffer();
+      offer.sdp = tuneOpus(offer.sdp);
       await pc.setLocalDescription(offer);
+      setAudioBitrate(pc, 128000);
       sigTo(listenerId, { type: 'offer', sdp: pc.localDescription });
       log('Sent offer to ' + listenerId);
     }
@@ -130,6 +158,7 @@ const LiveBroadcast = (() => {
           try {
             await pc.setRemoteDescription(d.sdp);
             const ans = await pc.createAnswer();
+            ans.sdp = tuneOpus(ans.sdp);
             await pc.setLocalDescription(ans);
             sigTo(djId, { type: 'answer', sdp: pc.localDescription });
           } catch (e) { log('answer error: ' + e.message); }
