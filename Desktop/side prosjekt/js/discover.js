@@ -1160,7 +1160,7 @@ const Discover = (() => {
   function _wwlIsAdmin() {
     try {
       const me = Auth.current();
-      return !!me && WWL_ADMIN_EMAILS.includes(String(me.email || '').toLowerCase().trim());
+      return !!me && (WWL_ADMIN_EMAILS.includes(String(me.email || '').toLowerCase().trim()) || (typeof CONFIG !== 'undefined' && CONFIG.isAdminEmail(me)));
     } catch (_) { return false; }
   }
   function _wwlUrl(st) {
@@ -1256,6 +1256,7 @@ const Discover = (() => {
             <label class="wwl-vol" title="Volume" style="display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--text2)">🔈<input type="range" class="wwl-vol-in" min="0" max="100" step="1" value="${_wwlVolNow()}" oninput="Discover.wwlVol(this.value)" style="width:110px" aria-label="Volume"></label>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlCopy('${id}')">📋 Copy link</button>
             <a class="btn btn-ghost btn-sm" href="#/live-archive/${id}">Open →</a>
+            <button class="btn btn-ghost btn-sm" onclick="Discover.wwlDownload('${id}')">⬇ Download</button>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlEdit('${id}')">✏️ Edit text</button>
             <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wwl-img-${id}').click()">🖼 ${st.cover_url ? 'Replace image' : 'Add image'}</button>
             <input type="file" id="wwl-img-${id}" accept="image/*" style="display:none" onchange="Discover.wwlSetImage('${id}',this)">
@@ -1317,6 +1318,19 @@ const Discover = (() => {
     const url = _wwlUrl(st);
     try { await navigator.clipboard.writeText(url); if (typeof App !== 'undefined') App.toast('Link copied 📋', 'success'); }
     catch (_) { window.prompt('Copy this link:', url); }
+  }
+  // Last ned opptaket (KUN admin). fetch→blob fordi download-attributtet blir ignorert på kryssopphav (Supabase-lagring).
+  async function wwlDownload(id) {
+    const st = _wwlSets[id]; if (!st || !st.audio_url || !_wwlIsAdmin()) return;
+    const ext = ((st.audio_url.split('?')[0].match(/\.([a-z0-9]{2,4})$/i) || [])[1] || 'mp3').toLowerCase();
+    const name = ((st.display_name || 'live-set') + ' - ' + (st.track_title || '').split('\n')[0]).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) + '.' + ext;
+    try {
+      if (typeof App !== 'undefined') App.toast('Downloading…', 'info');
+      const r = await fetch(st.audio_url); if (!r.ok) throw new Error('HTTP ' + r.status);
+      const u = URL.createObjectURL(await r.blob());
+      const a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(u), 60000);
+    } catch (_) { window.open(st.audio_url, '_blank', 'noopener'); }
   }
   function wwlEdit(id) {
     const st = _wwlSets[id], box = document.getElementById('wwl-edit-' + id);
@@ -1390,6 +1404,8 @@ const Discover = (() => {
   async function wwlDelete(id) {
     const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
     if (!confirm('Delete "' + (st.display_name || 'this recording') + '" permanently? This cannot be undone.')) return;
+    // Andre bekreftelse: sletting er permanent (hard delete i databasen), så vis kva som blir borte.
+    if (!confirm('Really delete? ' + (st.display_name || 'Recording') + ' · ' + _wwlFmtDate(st.ended_at) + (st.track_title ? '\n' + String(st.track_title).split('\n')[0].slice(0, 80) : '') + '\n\nThis cannot be recovered.')) return;
     const ok = await LiveSets.remove(id);
     if (ok) { const c = document.getElementById('wwl-' + id); if (c) c.remove(); delete _wwlSets[id]; if (typeof App !== 'undefined') App.toast('Deleted.', 'success'); }
     else if (typeof App !== 'undefined') App.toast('Could not delete (are you logged in as admin?)', 'error');
@@ -4301,7 +4317,7 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek,
+    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek,
     showLemonchillAbout,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,

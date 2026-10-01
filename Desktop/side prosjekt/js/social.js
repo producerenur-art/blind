@@ -56,7 +56,7 @@ const Social = (() => {
   }
   const actor = (targetKey) => me() || (isGuestKey(targetKey) ? guest() : null);
   const WWL_ADMINS = ['producerenur@gmail.com', 'constant8@gmail.com'];
-  const isWwlAdmin = (targetKey, u) => isGuestKey(targetKey) && !!u && WWL_ADMINS.includes(String(u.email || '').toLowerCase().trim());
+  const isWwlAdmin = (targetKey, u) => isGuestKey(targetKey) && !!u && (WWL_ADMINS.includes(String(u.email || '').toLowerCase().trim()) || (typeof CONFIG !== 'undefined' && CONFIG.isAdminEmail(u)));
   let _lastGuestPost = 0;   // spam-brems: maks éin gjestekommentar per 20 s
 
   function timeAgo(ts) {
