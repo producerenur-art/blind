@@ -477,7 +477,7 @@ const LiveMix = (() => {
   // vel BlackHole og start «Monitor in speakers» utan at DJ-en må klikke noko.
   async function _bcAutoInit() {
     try {
-      if (_bc.dj || _bc.permGranted) { if (_bc.permGranted && _monitorPref() && !_bc.monitorEl && !_bc.dj) _bcMonitorStart(); return; }
+      if (_bc.dj || _bc.permGranted) { if (_bc.permGranted && _monitorPref() && !_bc.monitorEl && !_bc.monCtx && !_bc.dj) _bcMonitorStart(); return; }
       const st = navigator.permissions && navigator.permissions.query ? await navigator.permissions.query({ name: 'microphone' }) : null;
       if (st && st.state === 'granted') await bcPerm();
     } catch (e) {}
@@ -577,6 +577,18 @@ const LiveMix = (() => {
       const outs = devs.filter(d => d.kind === 'audiooutput');
       const out = outs.find(d => /^høyttalere(\s*\(.*\))?$/i.test((d.label || '').trim()) && d.deviceId && d.deviceId !== 'default');
       if (!out) { _bcMonitorStop(); _bcLog('Monitor: output “Høyttalere” not found (outputs: ' + (outs.map(d => d.label || '?').join(' | ') || 'none') + ') — monitor stays OFF.'); return; }
+      // Foretrekk AudioContext med stor buffer (latencyHint 'playback') → stabil mot klokke-drift mellom BlackHole og «Høyttalere».
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC && AC.prototype && typeof AC.prototype.setSinkId === 'function') {
+        const mc = new AC({ latencyHint: 'playback' });
+        await mc.setSinkId(out.deviceId);               // FØR noko er kopla til, så lyd aldri rekk standardutgangen
+        const msrc = mc.createMediaStreamSource(_bc.monStream);
+        msrc.connect(mc.destination);
+        await mc.resume();
+        _bc.monCtx = mc;
+        _bcLog('Monitor ON → Høyttalere (buffered).');
+        return;
+      }
       const el = new Audio(); el.autoplay = true;
       if (typeof el.setSinkId !== 'function') { _bcMonitorStop(); _bcLog('Monitor: this browser cannot choose an output device — monitor stays OFF.'); return; }
       await el.setSinkId(out.deviceId);                 // FØR srcObject, så lyd aldri rekk standardutgangen
@@ -588,6 +600,7 @@ const LiveMix = (() => {
   }
   function _bcMonitorStop() {
     if (_bc.monitorEl) { try { _bc.monitorEl.pause(); _bc.monitorEl.srcObject = null; } catch (e) {} _bc.monitorEl = null; }
+    if (_bc.monCtx) { try { _bc.monCtx.close(); } catch (e) {} _bc.monCtx = null; }
     if (_bc.monStream) { try { _bc.monStream.getTracks().forEach(t => t.stop()); } catch (e) {} _bc.monStream = null; }
   }
   function bcSetMonitor(v) {
@@ -636,7 +649,7 @@ const LiveMix = (() => {
       try { vTrack = await _bcVisualTrack(room); } catch (e) { _bcLog('Video off (' + e.message + ') — sending audio only.'); }
       if (vTrack) outTracks.push(vTrack);
       _bc.outStream = new MediaStream(outTracks);
-      if (_monitorPref() && !_bc.monitorEl) _bcMonitorStart();
+      if (_monitorPref() && !_bc.monitorEl && !_bc.monCtx) _bcMonitorStart();
       _bc.dj = LiveBroadcast.broadcaster(room, _bc.outStream, {
         onPeerCount: n => { const el = _byId('bc-count'); if (el) el.textContent = n; },
         onLog: _bcLog,
