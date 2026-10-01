@@ -36,15 +36,45 @@ const LiveSets = (() => {
       t.onerror = () => reject(t.error); t.onabort = () => reject(t.error);
     });
   }
-  async function _saveChunk(cur, blob) {
+  // WebM: filhovudet (alt før første Cluster) ligg berre i FØRSTE bit. Vi lagrar ein kopi i meta, så recover()
+  // kan setje det på att om første bit av ein eller annan grunn manglar (då blir fila ellers uspelbar).
+  async function _extractHead(blob) {
     try {
+      const b = new Uint8Array(await blob.slice(0, 8192).arrayBuffer());
+      if (!(b[0] === 0x1a && b[1] === 0x45 && b[2] === 0xdf && b[3] === 0xa3)) return null;
+      for (let i = 4; i < b.length - 3; i++) if (b[i] === 0x1f && b[i + 1] === 0x43 && b[i + 2] === 0xb6 && b[i + 3] === 0x75) return blob.slice(0, i);
+    } catch (e) {}
+    return null;
+  }
+  async function _hasEbml(blob) {
+    try { const b = new Uint8Array(await blob.slice(0, 4).arrayBuffer()); return b[0] === 0x1a && b[1] === 0x45 && b[2] === 0xdf && b[3] === 0xa3; } catch (e) { return false; }
+  }
+  // Bitane blir lagra EIN OM GANGEN i rekkefølgje (kø) med eit teljenummer — ikkje i kappløp med Date.now()-sortering.
+  function _enqueueSave(cur, blob) {
+    cur.seq = (cur.seq || 0) + 1; const seq = cur.seq;
+    cur.saveQ = (cur.saveQ || Promise.resolve()).then(() => _saveChunk(cur, blob, seq)).catch(() => {});
+  }
+  async function _saveChunk(cur, blob, seq) {
+    try {
+      if (seq === 1 && !cur.head) cur.head = await _extractHead(blob);
       const db = await _db();
       await _tx(db, ['chunks', 'meta'], 'readwrite', t => {
-        t.objectStore('chunks').add({ setId: cur.id, blob, at: Date.now() });
-        t.objectStore('meta').put({ id: cur.id, user: cur.user, isOwner: cur.isOwner, startedAt: cur.startedAt, lastAt: Date.now(), mime: cur.mime });
+        t.objectStore('chunks').add({ setId: cur.id, blob, at: Date.now(), seq });
+        t.objectStore('meta').put({ id: cur.id, user: cur.user, isOwner: cur.isOwner, startedAt: cur.startedAt, lastAt: Date.now(), mime: cur.mime, head: cur.head || null, seq });
       });
       db.close();
     } catch (e) { /* buffer er berre ekstra sikring */ }
+  }
+  // Er dette settet framleis i opptak i ei ANNAN fane/vindauge? Då må recover() la det vere i fred (ellers sletta
+  // ei anna fane bitane midt i sendinga → fila mista starten og hovudet; 2026-10-01).
+  async function _liveElsewhere(m) {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.locks && navigator.locks.query) {
+        const q = await navigator.locks.query();
+        return (q.held || []).some(l => l.name === 'sirius-liveset-' + m.id);
+      }
+    } catch (e) {}
+    return (Date.now() - (m.lastAt || 0)) < 60000;   // reservevegen utan Web Locks: sist skrive for under 60 s sidan
   }
   async function _clearBuffer(id) {
     try {
@@ -66,9 +96,11 @@ const LiveSets = (() => {
       const metas = await _tx(db, ['meta'], 'readonly', t => t.objectStore('meta').getAll());
       for (const m of metas || []) {
         if (_cur && _cur.id === m.id) continue;
+        if (await _liveElsewhere(m)) continue;   // sendes framleis frå ei anna fane
         const chunks = await _tx(db, ['chunks'], 'readonly', t => t.objectStore('chunks').index('setId').getAll(IDBKeyRange.only(m.id)));
         db.close(); db = null;
-        const blobs = (chunks || []).sort((a, b) => a.at - b.at).map(c => c.blob);
+        const blobs = (chunks || []).sort((a, b) => (a.seq != null && b.seq != null) ? a.seq - b.seq : a.at - b.at).map(c => c.blob);
+        if (m.head && blobs.length && !(await _hasEbml(blobs[0]))) blobs.unshift(m.head);   // første bit mangla → set på lagra WebM-hovud
         const ok = !blobs.length || await _finalize({ id: m.id, user: m.user, isOwner: m.isOwner, startedAt: m.startedAt, mime: m.mime },
           new Blob(blobs, { type: m.mime || 'audio/webm' }), Math.round(((m.lastAt || Date.now()) - m.startedAt) / 1000), true);
         if (ok) await _clearBuffer(m.id);
@@ -92,6 +124,8 @@ const LiveSets = (() => {
     const me = _me();
     const cur = { id: _id(), user: (me && me.username) || '', isOwner: !!isOwner, startedAt: Date.now(), rec: null, chunks: [], mime: '' };
     _cur = cur;
+    // Hald eit Web Lock så lenge sendinga går: andre fanar sin recover() ser då at settet er i live bruk og let det vere.
+    try { if (navigator.locks) navigator.locks.request('sirius-liveset-' + cur.id, () => new Promise(res => { cur.lockRelease = res; })); } catch (e) {}
     const c = _client();
     if (c) {
       try {
@@ -109,7 +143,7 @@ const LiveSets = (() => {
       if (audioTracks.length && typeof MediaRecorder !== 'undefined') {
         cur.mime = mime;
         cur.rec = new MediaRecorder(new MediaStream(audioTracks), mime ? { mimeType: mime, audioBitsPerSecond: 80000 } : undefined);
-        cur.rec.ondataavailable = e => { if (e.data && e.data.size) { cur.chunks.push(e.data); _saveChunk(cur, e.data); } };
+        cur.rec.ondataavailable = e => { if (e.data && e.data.size) { cur.chunks.push(e.data); _enqueueSave(cur, e.data); } };
         cur.rec.start(5000);
       }
     } catch (e) { console.warn('[LiveSets] opptak kunne ikkje startast:', e.message || e); }
@@ -127,7 +161,9 @@ const LiveSets = (() => {
       try { cur.rec.stop(); } catch (e) { done(); }
     });
     // Buffer slettast BERRE når alt er lagra — feilar opplasting, ligg bitane att og recover() prøver på nytt.
+    try { await cur.saveQ; } catch (e) {}   // alle bitar skrivne før ev. sletting
     if (await _finalize(cur, blob, durationSec, false, { trackTitle, linkUrl })) await _clearBuffer(cur.id);
+    try { if (cur.lockRelease) cur.lockRelease(); } catch (e) {}
   }
 
   // Last opp opptaket og avslutt arkivrada (brukt både ved Stop og ved recover()).
