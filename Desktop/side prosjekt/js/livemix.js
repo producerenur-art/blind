@@ -571,8 +571,9 @@ const LiveMix = (() => {
         deviceId: { exact: sel.value }, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2,
       } });
       const devs = await navigator.mediaDevices.enumerateDevices();
-      const out = devs.find(d => d.kind === 'audiooutput' && /^høyttalere$/i.test((d.label || '').trim()) && d.deviceId && d.deviceId !== 'default');
-      if (!out) { _bcMonitorStop(); _bcLog('Monitor: output “Høyttalere” not found — monitor stays OFF (never uses the default output).'); return; }
+      const outs = devs.filter(d => d.kind === 'audiooutput');
+      const out = outs.find(d => /^høyttalere(\s*\(.*\))?$/i.test((d.label || '').trim()) && d.deviceId && d.deviceId !== 'default');
+      if (!out) { _bcMonitorStop(); _bcLog('Monitor: output “Høyttalere” not found (outputs: ' + (outs.map(d => d.label || '?').join(' | ') || 'none') + ') — monitor stays OFF.'); return; }
       const el = new Audio(); el.autoplay = true;
       if (typeof el.setSinkId !== 'function') { _bcMonitorStop(); _bcLog('Monitor: this browser cannot choose an output device — monitor stays OFF.'); return; }
       await el.setSinkId(out.deviceId);                 // FØR srcObject, så lyd aldri rekk standardutgangen
