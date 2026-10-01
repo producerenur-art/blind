@@ -482,6 +482,7 @@ const LiveMix = (() => {
       _bc.permGranted = true;
       const go = _byId('bc-go'); if (go) go.disabled = false;
       _bcLog(devs.length + ' input(s).' + (pref ? '  Suggested: ' + pref.label : ''));
+      if (_monitorPref()) _bcMonitorStart();   // «Monitor in speakers» huska → på så snart enheten er klar
     } catch (e) { _bcLog('Access error: ' + e.message); }
   }
 
@@ -550,15 +551,21 @@ const LiveMix = (() => {
   }
   async function _bcMonitorStart() {
     _bcMonitorStop();
-    if (!_bc.stream || !navigator.mediaDevices.enumerateDevices) return;
+    if (!navigator.mediaDevices.enumerateDevices) return;
     try {
+      // Eigen inngangsstraum frå vald enhet (BlackHole) — fungerer FØR Go live og held fram etter Stop.
+      const sel = _byId('bc-dev');
+      if (!sel || !sel.value || !_bc.permGranted) { _bcLog('Monitor: click “Grant access” and pick BlackHole first.'); return; }
+      _bc.monStream = await navigator.mediaDevices.getUserMedia({ audio: {
+        deviceId: { exact: sel.value }, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2,
+      } });
       const devs = await navigator.mediaDevices.enumerateDevices();
       const out = devs.find(d => d.kind === 'audiooutput' && /^høyttalere$/i.test((d.label || '').trim()) && d.deviceId && d.deviceId !== 'default');
-      if (!out) { _bcLog('Monitor: output “Høyttalere” not found — monitor stays OFF (never uses the default output).'); return; }
+      if (!out) { _bcMonitorStop(); _bcLog('Monitor: output “Høyttalere” not found — monitor stays OFF (never uses the default output).'); return; }
       const el = new Audio(); el.autoplay = true;
-      if (typeof el.setSinkId !== 'function') { _bcLog('Monitor: this browser cannot choose an output device — monitor stays OFF.'); return; }
+      if (typeof el.setSinkId !== 'function') { _bcMonitorStop(); _bcLog('Monitor: this browser cannot choose an output device — monitor stays OFF.'); return; }
       await el.setSinkId(out.deviceId);                 // FØR srcObject, så lyd aldri rekk standardutgangen
-      el.srcObject = _bc.stream;
+      el.srcObject = _bc.monStream;
       await el.play();
       _bc.monitorEl = el;
       _bcLog('Monitor ON → Høyttalere.');
@@ -566,11 +573,12 @@ const LiveMix = (() => {
   }
   function _bcMonitorStop() {
     if (_bc.monitorEl) { try { _bc.monitorEl.pause(); _bc.monitorEl.srcObject = null; } catch (e) {} _bc.monitorEl = null; }
+    if (_bc.monStream) { try { _bc.monStream.getTracks().forEach(t => t.stop()); } catch (e) {} _bc.monStream = null; }
   }
   function bcSetMonitor(v) {
     try { localStorage.setItem('sfm_bc_monitor', v ? '1' : '0'); } catch (e) {}
-    if (!v) { _bcMonitorStop(); if (_bc.stream) _bcLog('Monitor OFF.'); }
-    else if (_bc.stream) _bcMonitorStart();
+    if (!v) { _bcMonitorStop(); _bcLog('Monitor OFF.'); }
+    else _bcMonitorStart();
   }
 
   // Flagg i localStorage så ANDRE faner i same nettlesar veit at denne maskina sender live. Ei anna SiriusFM-fane
@@ -613,7 +621,7 @@ const LiveMix = (() => {
       try { vTrack = await _bcVisualTrack(room); } catch (e) { _bcLog('Video off (' + e.message + ') — sending audio only.'); }
       if (vTrack) outTracks.push(vTrack);
       _bc.outStream = new MediaStream(outTracks);
-      if (_monitorPref()) _bcMonitorStart();
+      if (_monitorPref() && !_bc.monitorEl) _bcMonitorStart();
       _bc.dj = LiveBroadcast.broadcaster(room, _bc.outStream, {
         onPeerCount: n => { const el = _byId('bc-count'); if (el) el.textContent = n; },
         onLog: _bcLog,
@@ -663,7 +671,6 @@ const LiveMix = (() => {
     // IKKJE same objekt som _bc.stream sine rå enhets-spor — begge må derfor
     // stoppast eksplisitt her, ikkje berre video.
     if (_bc.outStream) { _bc.outStream.getTracks().forEach(t => t.stop()); _bc.outStream = null; }
-    _bcMonitorStop();
     if (_bc.stream) { _bc.stream.getTracks().forEach(t => t.stop()); _bc.stream = null; }
     if (_bc.ctx) { try { _bc.ctx.close(); } catch (e) {} _bc.ctx = null; }
     _bc.analL = _bc.analR = null; _bc.canvas = null;
