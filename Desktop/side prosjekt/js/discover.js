@@ -1273,13 +1273,14 @@ const Discover = (() => {
   async function _loadWhatWentLive() {
     const box = document.getElementById('disc-wwl');
     if (!box || typeof LiveSets === 'undefined' || !LiveSets.list) return;
-    let sets = []; try { sets = await LiveSets.list(6); } catch (_) {}
+    const adm = _wwlIsAdmin();   // admin ser ALLE opptak (for opprydding); andre ser dei 4 nyaste
+    let sets = []; try { sets = await LiveSets.list(adm ? 200 : 6); } catch (_) {}
     sets = (sets || []).filter(x => x && x.audio_url);
-    _refreshActivityFeed(sets);  // «Live activity» skal òg vise desse, ikkje berre «What went live»
+    _refreshActivityFeed(sets.slice(0, 6));  // «Live activity» skal òg vise desse, ikkje berre «What went live»
     if (!sets.length || !document.getElementById('disc-wwl')) return;
     document.getElementById('disc-wwl').innerHTML = `
       <div class="wwl-head">What went live</div>
-      <div class="wwl-list">${sets.slice(0, 4).map(_wwlCard).join('')}</div>`;
+      <div class="wwl-list">${sets.slice(0, adm ? 200 : 4).map(_wwlCard).join('')}</div>`;
     _wwlBindAudio(); _wwlTick();
   }
   function wwlPlay(id) {
