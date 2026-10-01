@@ -339,7 +339,9 @@ const LiveMix = (() => {
 
   function _esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
   function _byId(id) { return document.getElementById(id); }
-  function _bcLog(m) { const l = _byId('bc-log'); if (!l) return; l.textContent += '\n' + new Date().toLocaleTimeString('nb-NO') + '  ' + m; l.scrollTop = l.scrollHeight; }
+  function _bcLog(m) {
+    if (/^Monitor/.test(m)) { _bc.monStatus = m; const ms = _byId('bc-monstatus'); if (ms) ms.textContent = m; }
+    const l = _byId('bc-log'); if (!l) return; l.textContent += '\n' + new Date().toLocaleTimeString('nb-NO') + '  ' + m; l.scrollTop = l.scrollHeight; }
 
   // ── DJ: gå live ─────────────────────────────────────────────────────
   // room (valgfri): forhåndsvelg rom-navn — brukes når DJ-konsollen åpnes fra
@@ -449,6 +451,7 @@ const LiveMix = (() => {
           <input type="checkbox" id="bc-monitor" ${_monitorPref() ? 'checked' : ''} onchange="LiveMix.bcSetMonitor(this.checked)">
           Monitor in speakers (MacBook + S2 main out)
         </label>
+        <div id="bc-monstatus" style="font-size:0.8rem;font-weight:700;color:#facc15;margin:0 0 0.3rem">${_esc(_bc.monStatus || '')}</div>
         <p style="font-size:0.74rem;color:var(--text3);margin:0 0 0.9rem">Plays the broadcast signal only in the macOS output “Høyttalere” — never the default output, so it can't loop back into the stream. Your choice is remembered.</p>
         <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin:0 0 1.1rem">
           <button class="btn btn-primary" id="bc-go" onclick="LiveMix.bcGo()" ${(live || !_bc.permGranted) ? 'disabled' : ''}>📡 Go live</button>
