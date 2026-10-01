@@ -445,6 +445,11 @@ const LiveMix = (() => {
           Record this broadcast and add it to “What went live”
         </label>
         <p style="font-size:0.74rem;color:var(--text3);margin:0 0 0.9rem">Turn this off to play live without a recording. Your choice is remembered.</p>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.88rem;margin:0 0 0.3rem;cursor:pointer">
+          <input type="checkbox" id="bc-monitor" ${_monitorPref() ? 'checked' : ''} onchange="LiveMix.bcSetMonitor(this.checked)">
+          Monitor in speakers (MacBook + S2 main out)
+        </label>
+        <p style="font-size:0.74rem;color:var(--text3);margin:0 0 0.9rem">Plays the broadcast signal only in the macOS output “Høyttalere” — never the default output, so it can't loop back into the stream. Your choice is remembered.</p>
         <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin:0 0 1.1rem">
           <button class="btn btn-primary" id="bc-go" onclick="LiveMix.bcGo()" ${(live || !_bc.permGranted) ? 'disabled' : ''}>📡 Go live</button>
           <button class="btn" id="bc-stop" onclick="LiveMix.bcStop()" ${live ? '' : 'disabled'} style="background:#ef4444;color:#fff">■ Stop</button>
@@ -537,6 +542,37 @@ const LiveMix = (() => {
     try { localStorage.setItem('sfm_bc_record', v ? '1' : '0'); } catch (e) {}
   }
 
+  // «Monitor in speakers»: spelar DJ-signalet (BlackHole-inngangen) lokalt i macOS-utgangen «Høyttalere»
+  // (MacBook-høyttalarar + S2 hovudutgang). SIKKERHEIT: spelar ALDRI på standardutgangen — den (Flerutgangsenhet)
+  // inneheld BlackHole, så det ville lekka tilbake i sendinga. Finst ikkje «Høyttalere» eller feilar setSinkId → ingen avspeling.
+  function _monitorPref() {
+    try { return localStorage.getItem('sfm_bc_monitor') === '1'; } catch (e) { return false; }
+  }
+  async function _bcMonitorStart() {
+    _bcMonitorStop();
+    if (!_bc.stream || !navigator.mediaDevices.enumerateDevices) return;
+    try {
+      const devs = await navigator.mediaDevices.enumerateDevices();
+      const out = devs.find(d => d.kind === 'audiooutput' && /^høyttalere$/i.test((d.label || '').trim()) && d.deviceId && d.deviceId !== 'default');
+      if (!out) { _bcLog('Monitor: output “Høyttalere” not found — monitor stays OFF (never uses the default output).'); return; }
+      const el = new Audio(); el.autoplay = true;
+      if (typeof el.setSinkId !== 'function') { _bcLog('Monitor: this browser cannot choose an output device — monitor stays OFF.'); return; }
+      await el.setSinkId(out.deviceId);                 // FØR srcObject, så lyd aldri rekk standardutgangen
+      el.srcObject = _bc.stream;
+      await el.play();
+      _bc.monitorEl = el;
+      _bcLog('Monitor ON → Høyttalere.');
+    } catch (e) { _bcMonitorStop(); _bcLog('Monitor failed (' + e.message + ') — monitor OFF.'); }
+  }
+  function _bcMonitorStop() {
+    if (_bc.monitorEl) { try { _bc.monitorEl.pause(); _bc.monitorEl.srcObject = null; } catch (e) {} _bc.monitorEl = null; }
+  }
+  function bcSetMonitor(v) {
+    try { localStorage.setItem('sfm_bc_monitor', v ? '1' : '0'); } catch (e) {}
+    if (!v) { _bcMonitorStop(); if (_bc.stream) _bcLog('Monitor OFF.'); }
+    else if (_bc.stream) _bcMonitorStart();
+  }
+
   // Flagg i localStorage så ANDRE faner i same nettlesar veit at denne maskina sender live. Ei anna SiriusFM-fane
   // (som speler jingelar/radio) ville elles lekka lyd inn i BlackHole → inn i sendinga → ekko ved starten
   // (jingelen speler både lokalt og i straumen). js/liveGlobal.js les flagget. Utløper etter 2 min utan hjarteslag.
@@ -577,6 +613,7 @@ const LiveMix = (() => {
       try { vTrack = await _bcVisualTrack(room); } catch (e) { _bcLog('Video off (' + e.message + ') — sending audio only.'); }
       if (vTrack) outTracks.push(vTrack);
       _bc.outStream = new MediaStream(outTracks);
+      if (_monitorPref()) _bcMonitorStart();
       _bc.dj = LiveBroadcast.broadcaster(room, _bc.outStream, {
         onPeerCount: n => { const el = _byId('bc-count'); if (el) el.textContent = n; },
         onLog: _bcLog,
@@ -626,6 +663,7 @@ const LiveMix = (() => {
     // IKKJE same objekt som _bc.stream sine rå enhets-spor — begge må derfor
     // stoppast eksplisitt her, ikkje berre video.
     if (_bc.outStream) { _bc.outStream.getTracks().forEach(t => t.stop()); _bc.outStream = null; }
+    _bcMonitorStop();
     if (_bc.stream) { _bc.stream.getTracks().forEach(t => t.stop()); _bc.stream = null; }
     if (_bc.ctx) { try { _bc.ctx.close(); } catch (e) {} _bc.ctx = null; }
     _bc.analL = _bc.analR = null; _bc.canvas = null;
@@ -854,7 +892,7 @@ const LiveMix = (() => {
   return {
     openBooking, step, startCheckout, testPurchase, completeFromSession, showReceipt,
     priceFor, _makeBooking, RATE_KR, RATE_ORE,
-    goLive, bcPerm, bcGo, bcStop, bcSetVisual, bcSetImage, bcUpdateNowPlaying, bcSetRecord, tuneIn, tuneInJoin, tuneOut,
+    goLive, bcPerm, bcGo, bcStop, bcSetVisual, bcSetImage, bcUpdateNowPlaying, bcSetRecord, bcSetMonitor, tuneIn, tuneInJoin, tuneOut,
     canGoLive,
     isBroadcastingHere: () => !!_bc.dj,
     // Brukt av js/radio247.js sitt "24-Hour Cycle"-kort for å vise «LIVE —
