@@ -467,6 +467,17 @@ const LiveMix = (() => {
       </div>`;
     App.openModal();
     if (live && _bc.analL) _bcStartMeter();   // gjenoppta målere når konsollen åpnes på nytt
+    _bcAutoInit();
+  }
+
+  // Panelet set seg opp sjølv: har nettlesaren allereie mikrofontilgang → fyll enhetslista (som «Grant access»),
+  // vel BlackHole og start «Monitor in speakers» utan at DJ-en må klikke noko.
+  async function _bcAutoInit() {
+    try {
+      if (_bc.dj || _bc.permGranted) { if (_bc.permGranted && _monitorPref() && !_bc.monitorEl && !_bc.dj) _bcMonitorStart(); return; }
+      const st = navigator.permissions && navigator.permissions.query ? await navigator.permissions.query({ name: 'microphone' }) : null;
+      if (st && st.state === 'granted') await bcPerm();
+    } catch (e) {}
   }
 
   async function bcPerm() {
@@ -547,7 +558,7 @@ const LiveMix = (() => {
   // (MacBook-høyttalarar + S2 hovudutgang). SIKKERHEIT: spelar ALDRI på standardutgangen — den (Flerutgangsenhet)
   // inneheld BlackHole, så det ville lekka tilbake i sendinga. Finst ikkje «Høyttalere» eller feilar setSinkId → ingen avspeling.
   function _monitorPref() {
-    try { return localStorage.getItem('sfm_bc_monitor') === '1'; } catch (e) { return false; }
+    try { return localStorage.getItem('sfm_bc_monitor') !== '0'; } catch (e) { return true; }   // PÅ som standard (brukarønske 2026-10-01)
   }
   async function _bcMonitorStart() {
     _bcMonitorStop();
