@@ -630,7 +630,7 @@ const Radio = (() => {
   // oftare: legg han inn fleire gonger i JINGLE_CYCLE (jamt fordelt).
   const JINGLE_SLOT_MS = 60 * 60 * 1000;
   const JINGLE_SLOT_OFFSET_MS = 15 * 60 * 1000;   // slot ved :15 kvar time
-  const JINGLE_CYCLE = [
+  const JINGLE_BASE_CYCLE = [
     { url: JINGLES.a,          fade: LIVE_FADE_MS },              // «You're listening to SiriusFM… Subscribe»
     { url: JINGLES.arcturians, fade: LIVE_FADE_MS },              // Arcturians-reklame
     { url: JINGLES.chat,       fade: LIVE_FADE_MS },              // live chat (Roger)
@@ -642,6 +642,17 @@ const Radio = (() => {
     { url: JINGLE_BASE + 'jingle-steps-echo.m4a', fade: LIVE_FADE_MS }, // «Jingle Steps Echo», lagt til 2026-09-27
     { url: JINGLE_BASE + 'jingle-sirius-beat.m4a', fade: LIVE_FADE_MS }, // «This is SiriusFM…» over beat, lagt til 2026-09-28
   ];
+  // 2026-10-02: 12 DJ-/Arcturia Genetics-promoklipp (10–28 s, stemmer Roger/Jessica/Jack), løfta til RMS ≈ −18 dBFS
+  // (originalane låg på −24) med toppgrense −1 dBFS. Flettast jamt inn mellom dei andre jinglane (ikkje etter kvarandre),
+  // så éin jingel-slot ved :15 kvar time tek neste i den samanvevde rekka.
+  const PROMO_CLIPS = ['roger-a1', 'jessica-c1', 'jack-1', 'roger-b1', 'jessica-a1', 'jessica-c3',
+    'roger-a2', 'jack-2', 'jessica-c2', 'roger-b2', 'jessica-a2', 'jessica-c4']
+    .map(n => ({ url: JINGLE_BASE + 'promo-' + n + '.m4a?v=20261002', fade: LIVE_FADE_MS }));
+  const JINGLE_CYCLE = (() => {
+    const out = [], n = Math.max(JINGLE_BASE_CYCLE.length, PROMO_CLIPS.length);
+    for (let i = 0; i < n; i++) { if (JINGLE_BASE_CYCLE[i]) out.push(JINGLE_BASE_CYCLE[i]); if (PROMO_CLIPS[i]) out.push(PROMO_CLIPS[i]); }
+    return out;
+  })();
 
   function _scheduleJingleSlots() {
     const now = Date.now();
