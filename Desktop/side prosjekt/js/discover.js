@@ -1280,7 +1280,8 @@ const Discover = (() => {
     if (!sets.length || !document.getElementById('disc-wwl')) return;
     document.getElementById('disc-wwl').innerHTML = `
       <div class="wwl-head">What went live</div>
-      <div class="wwl-list">${sets.slice(0, adm ? 200 : 4).map(_wwlCard).join('')}</div>`;
+      <div class="wwl-list">${sets.slice(0, adm ? 200 : 4).map(_wwlCard).join('')}</div>
+      <div id="wwl-trash-box">${_wwlTrashHtml()}</div>`;
     _wwlBindAudio(); _wwlTick();
   }
   function wwlPlay(id) {
@@ -1407,9 +1408,32 @@ const Discover = (() => {
     if (!confirm('Delete "' + (st.display_name || 'this recording') + '" permanently? This cannot be undone.')) return;
     // Andre bekreftelse: sletting er permanent (hard delete i databasen), så vis kva som blir borte.
     if (!confirm('Really delete? ' + (st.display_name || 'Recording') + ' · ' + _wwlFmtDate(st.ended_at) + (st.track_title ? '\n' + String(st.track_title).split('\n')[0].slice(0, 80) : '') + '\n\nThis cannot be recovered.')) return;
+    const snap = Object.assign({}, st);
     const ok = await LiveSets.remove(id);
-    if (ok) { const c = document.getElementById('wwl-' + id); if (c) c.remove(); delete _wwlSets[id]; if (typeof App !== 'undefined') App.toast('Deleted.', 'success'); }
+    if (ok) { const c = document.getElementById('wwl-' + id); if (c) c.remove(); delete _wwlSets[id]; _wwlTrashAdd(snap); if (typeof App !== 'undefined') App.toast('Deleted. Undo is under the list.', 'success'); }
     else if (typeof App !== 'undefined') App.toast('Could not delete (are you logged in as admin?)', 'error');
+  }
+  // ── Angre sletting: sletta rader (heile raden) ligg i localStorage hos admin, så dei kan leggast tilbake via LiveSets.restore.
+  function _wwlTrashGet() { try { return JSON.parse(localStorage.getItem('sfm_wwl_trash') || '[]') || []; } catch (_) { return []; } }
+  function _wwlTrashSet(a) { try { localStorage.setItem('sfm_wwl_trash', JSON.stringify(a.slice(0, 30))); } catch (_) {} }
+  function _wwlTrashAdd(row) { if (!row || !row.id) return; _wwlTrashSet([row].concat(_wwlTrashGet().filter(r => r.id !== row.id))); _wwlTrashRender(); }
+  function _wwlTrashHtml() {
+    const t = _wwlTrashGet(); if (!t.length || !_wwlIsAdmin()) return '';
+    return `<div class="wwl-trash" style="margin-top:.8rem;padding:.6rem .8rem;border-radius:12px;background:rgba(255,255,255,.06);font-size:.82rem">
+      <div style="color:var(--text2);margin-bottom:.4rem">Recently deleted — Undo puts it back</div>
+      ${t.map(r => `<div style="display:flex;gap:.6rem;align-items:center;margin:.25rem 0">
+        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_lcEsc(r.display_name || 'Recording')} · ${_lcEsc(_wwlFmtDate(r.ended_at))}</span>
+        <button class="btn btn-primary btn-sm" onclick="Discover.wwlUndo('${_lcEsc(r.id)}')">↩ Undo</button>
+        <button class="btn btn-ghost btn-sm" title="Forget" onclick="Discover.wwlTrashForget('${_lcEsc(r.id)}')">✕</button></div>`).join('')}</div>`;
+  }
+  function _wwlTrashRender() { const b = document.getElementById('wwl-trash-box'); if (b) b.innerHTML = _wwlTrashHtml(); }
+  function wwlTrashForget(id) { _wwlTrashSet(_wwlTrashGet().filter(r => r.id !== id)); _wwlTrashRender(); }
+  async function wwlUndo(id) {
+    if (!_wwlIsAdmin()) return;
+    const row = _wwlTrashGet().find(r => r.id === id); if (!row) return;
+    const ok = await LiveSets.restore(row);
+    if (ok) { wwlTrashForget(id); if (typeof App !== 'undefined') App.toast('Restored ↩', 'success'); _loadWhatWentLive(); }
+    else if (typeof App !== 'undefined') App.toast('Could not undo — run migration 0037_restore_live_set.sql in Supabase first.', 'error', 8000);
   }
   async function wwlSave(id) {
     const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
@@ -4318,7 +4342,7 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek,
+    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlUndo, wwlTrashForget, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek,
     showLemonchillAbout,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,

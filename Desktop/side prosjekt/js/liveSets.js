@@ -209,6 +209,15 @@ const LiveSets = (() => {
     return !error;
   }
 
+  // Angre sletting (berre admin): legg tilbake ei sletta rad via restore_live_set (migrasjon 0037).
+  async function restore(row) {
+    const c = _client(); const me = _me();
+    if (!c || !me || !_isAdmin(me) || !row) return false;
+    const { error } = await c.rpc('restore_live_set', { p_row: row, p_secret: _secret() });
+    if (error) console.warn('[LiveSets] restore feila:', error.message);
+    return !error;
+  }
+
   // Delings-slug: <romnamn>-<6 siste teikn av id>, t.d. «live-it6nfk». Romnamnet (det DJ-en skriv i «Room name») blir
   // lesbar del av lenka; suffikset gjer den unik. Serveren (api/share.js) slår opp på suffikset.
   function shareSlug(set) {
@@ -221,7 +230,7 @@ const LiveSets = (() => {
     return (room || 'set') + '-' + suf;
   }
 
-  return { begin, end, list, get, canEdit, update, remove, recover, shareSlug };
+  return { begin, end, list, get, canEdit, update, remove, restore, recover, shareSlug };
 })();
 
 if (typeof window !== 'undefined') window.LiveSets = LiveSets;
