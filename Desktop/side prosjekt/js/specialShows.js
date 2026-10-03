@@ -11,7 +11,7 @@ const SpecialShows = (() => {
     {
       id: 'lemonchill-001',
       artist: 'Lemonchill',
-      title: 'Mixes for SiriusFM 001 by Lemonchill',
+      title: 'Broadcast for SiriusFM by Lemonchill',
       liveLabel: 'Lemonchill mix on air',
       // Reklame (25s) rett FØR sjølve overtakinga, på alle 4 sendingane —
       // brukarønske 29.09.2026: reklame → «SiriusFM live now»-jingelen → miksen
