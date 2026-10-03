@@ -154,7 +154,11 @@ const LiveBroadcast = (() => {
           pc = new RTCPeerConnection(iceServers());
           pc.onicecandidate = e => { if (e.candidate) sigTo(djId, { type: 'ice', candidate: e.candidate }); };
           pc.onconnectionstatechange = () => onState && onState(pc.connectionState);
-          pc.ontrack = e => onTrack && onTrack(e.streams[0]);
+          pc.ontrack = e => {
+            // Mer jitter-buffer på lytter-sida: mobilnett svingar, litt ekstra forsinking gir jamn lyd.
+            try { if (e.receiver) { e.receiver.jitterBufferTarget = 800; e.receiver.playoutDelayHint = 0.8; } } catch (err) {}
+            onTrack && onTrack(e.streams[0]);
+          };
           try {
             await pc.setRemoteDescription(d.sdp);
             const ans = await pc.createAnswer();
