@@ -281,22 +281,7 @@ const Radio = (() => {
     // med reell avspeling i nettlesar, ikkje berre curl (server-til-server
     // har ikkje CORS-handheving, så ein enkel HTTP-sjekk ser strøymen som frisk).
 
-    // ════════════════════════════════════════════
-    // AMBIENT MANN  ▼ eiga 24/7 AzuraCast-sending, ikkje ein del av Dark
-    // Ambient/Drone-rotasjonen over (eiga fast 1-timarsplass i 24-Hour
-    // Cycle, sjå js/radio247.js SCHEDULE) — verifisert live 21.09.2026
-    // (icy-name: Ambient Mann, icy-genre: Psychill/Downtempo).
-    // ════════════════════════════════════════════
-    {
-      id: 'ambient-mann', cat: 'Ambient Mann',
-      name: 'Ambient Mann',
-      url:  'https://radio.ambientmann.com/listen/ambient_mann/radio.mp3',
-      emoji: '🌙', color: '#7c3aed',
-      desc: 'Live DJ + 24/7 rotation — psychill / downtempo · ambientmann.com',
-      // Brukarønske 23.09.2026: opplevast høgare enn resten av katalogen —
-      // trimma ned mot same nivå (sjå gain-bruken i _playUrl/onStarted).
-      gain: 0.65,
-    },
+    // Ambient Mann-stasjonen fjerna 03.10.2026 (Hetzner-serveren blokkert, brukarønske).
 
     // ════════════════════════════════════════════
     // TECHNO UNDERGROUND

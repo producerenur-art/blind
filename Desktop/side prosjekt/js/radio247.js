@@ -3,14 +3,13 @@
 // eige "SiriusFM Main station"-kort (den røres ikke). Sjangeren den spelar
 // følger ei fast, symmetrisk døgnkurve i norsk tid (Europe/Oslo):
 //   natt-topp (Techno) → Psytrance/Goa → Progressive → Dark Drone (botn,
-//   tidleg) → Ambient Mann (fast 1t, 05-06) → Psybient/Ambient (dag) →
+//   tidleg, 03-06) → Psybient/Ambient (dag) →
 //   Downtempo/Psychill → Progressive → Psytrance/Goa → topp igjen.
 // Alle blokkene bruker ekte lyd-strøymar frå STATIONS (js/radio.js) — ingen
 // video, rein lytting akkurat som alle andre radiokanalar på sida.
-// 05–06: fast 1-timarsplass for Ambient Mann (eiga 24/7 AzuraCast-sending,
-// radio.ambientmann.com) — krysspromotering, ikkje ein del av sjølve
-// Dark Drone-rotasjonen, sjå AMBIENT_MANN_IDS/NAME_BY_ID under (lagt til
-// 21.09.2026, brukarønske).
+// Ambient Mann (eiga 24/7 AzuraCast-sending) fjerna frå hjulet 03.10.2026 —
+// Hetzner-serveren (radio.ambientmann.com) er blokkert, brukarønske. Dark
+// Drone dekkjer no 03-06.
 const Radio247 = (() => {
   // [start, end) i norsk lokaltid, 24-timars klokke (desimaltimar). Må
   // dekke heile 0–24 utan hol.
@@ -39,8 +38,6 @@ const Radio247 = (() => {
   // attende til dei tre opphavlege stasjonane.
   const CHILLOUT_IDS    = ['1fm-chillout', 'brokenbeats', 'cafedelmar'];
   const TECHNO_IDS      = ['uzic-techno', 'remember-vip-techno'];
-  // Eiga fast plass i SCHEDULE 05-06 (berre éin id, så ingen rotasjon der).
-  const AMBIENT_MANN_IDS = ['ambient-mann'];
 
   // Visningsnamn for stasjonane over — same namn som STATIONS i js/radio.js
   // (shortName der han finst, elles name, «.FM»-endinga kutta), men ein
@@ -61,14 +58,12 @@ const Radio247 = (() => {
     'diceradio-psybient': 'DiceRadio', 'paradisehunter-chillout': 'Paradisehunter Chillout',
     '1fm-chillout': 'Chillout Lounge', brokenbeats: 'Brokenbeats', cafedelmar: 'Café del Mar',
     'uzic-techno': 'UZIC Techno Minimal', 'remember-vip-techno': 'Remember VIP Techno',
-    'ambient-mann': 'Ambient Mann',
   };
 
   const SCHEDULE = [
     { start: 0,  end: 1,  genre: 'goa',         label: 'Psytrance / Goa',      stationIds: GOA_IDS },
     { start: 1,  end: 3,  genre: 'progressive', label: 'Progressive',          stationIds: PROGRESSIVE_IDS },
-    { start: 3,  end: 5,  genre: 'dark-drone',  label: 'Dark Drone',           stationIds: DARK_DRONE_IDS },
-    { start: 5,  end: 6,  genre: 'ambient-mann',label: 'Ambient Mann',         stationIds: AMBIENT_MANN_IDS },
+    { start: 3,  end: 6,  genre: 'dark-drone',  label: 'Dark Drone',           stationIds: DARK_DRONE_IDS },
     { start: 6,  end: 12, genre: 'psychill',    label: 'Psybient / Ambient',   stationIds: PSYCHILL_IDS },
     { start: 12, end: 16, genre: 'chillout',    label: 'Downtempo / Psychill', stationIds: CHILLOUT_IDS },
     { start: 16, end: 18, genre: 'progressive', label: 'Progressive',          stationIds: PROGRESSIVE_IDS },
@@ -247,7 +242,7 @@ const Radio247 = (() => {
   function skipDeadStation(deadId, opts) {
     if (!_active || typeof Radio === 'undefined') return false;
     const block = currentBlock();
-    // Same blokk først; finst ingen annan der (t.d. Ambient Mann-timen), ta ein frå nabo-blokka
+    // Same blokk først; finst ingen annan der (t.d. ei blokk med berre éin stasjon), ta ein frå nabo-blokka
     // eller, om nødvendig, kva som helst i hjulet — 24/7 skal aldri stoppe.
     let alt = (block.stationIds || []).find(id => id !== deadId)
       || (nextBlock().stationIds || []).find(id => id !== deadId)
