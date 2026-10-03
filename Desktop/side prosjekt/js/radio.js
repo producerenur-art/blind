@@ -999,7 +999,7 @@ const Radio = (() => {
       : (broadcastingHere ? (LiveMix.getBroadcastLinkUrl ? LiveMix.getBroadcastLinkUrl() : '') : '');
     const onAir = n => `<span class="live-blink"><span class="live-blink-dot"></span><span class="live-blink-name">${escHtml(n)} on air now</span></span>`;
     if (_liveTakeover && _liveSpecialLabel) {
-      return onAir(_special ? _special.show.artist : presenter) + (_special ? ' — ' + escHtml(_special.show.title) : '');
+      return onAir(_special ? _special.show.artist : presenter);   // berre «<artist> on air now» (brukarønske 03.10.2026, også mobil)
     }
     if (presenter) {
       return onAir(presenter) + (trackTitle ? ' — ' + escHtml(trackTitle) : '')
