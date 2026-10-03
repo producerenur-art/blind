@@ -987,6 +987,31 @@ const Radio = (() => {
   }
 
   // ── Render page ───────────────────────────────────────────────────────
+  // Tekst under «SiriusFM 24/7» i stasjonslista. Under ei direktesending/spesialsending:
+  // «<artist> on air now» (brukarønske 03.10.2026) i staden for «Non-stop day-arc — …».
+  function _r247RowDescHtml() {
+    const broadcastingHere = typeof LiveMix !== 'undefined' && LiveMix.isBroadcastingHere && LiveMix.isBroadcastingHere();
+    const presenter = _liveTakeover ? _liveTakeoverPresenter
+      : (broadcastingHere ? (LiveMix.getBroadcastPresenterName ? LiveMix.getBroadcastPresenterName() : '') : '');
+    const trackTitle = _liveTakeover ? _liveTrackTitle
+      : (broadcastingHere ? (LiveMix.getBroadcastTrackTitle ? LiveMix.getBroadcastTrackTitle() : '') : '');
+    const link = _liveTakeover ? _liveLinkUrl
+      : (broadcastingHere ? (LiveMix.getBroadcastLinkUrl ? LiveMix.getBroadcastLinkUrl() : '') : '');
+    const onAir = n => `<span class="live-blink"><span class="live-blink-dot"></span><span class="live-blink-name">${escHtml(n)} on air now</span></span>`;
+    if (_liveTakeover && _liveSpecialLabel) {
+      return onAir(_special ? _special.show.artist : presenter) + (_special ? ' — ' + escHtml(_special.show.title) : '');
+    }
+    if (presenter) {
+      return onAir(presenter) + (trackTitle ? ' — ' + escHtml(trackTitle) : '')
+        + (/^https?:\/\//i.test(link) ? ` · <a href="${escHtml(link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Link</a>` : '');
+    }
+    return `Non-stop day-arc — ${escHtml(Radio247.currentBlock().label)} now`;
+  }
+  function _syncR247RowDesc() {
+    const el = document.getElementById('r247-row-desc');
+    if (el && typeof Radio247 !== 'undefined') { try { el.innerHTML = _r247RowDescHtml(); } catch (e) {} }
+  }
+
   function render() {
     const app = document.getElementById('app');
     app.innerHTML = `
@@ -1021,21 +1046,7 @@ const Radio = (() => {
             // radiOzora/DMT FM/osv, i tillegg til det store 24/7-kortet lenger
             // ned (som har skjema + påmelding). Ligg heilt øverst, over kategoriane.
             const r247Active = typeof Radio247 !== 'undefined' && Radio247.isActive();
-            // Same live-presentator-unntak som Radio247.cardHtml() — denne
-            // kompakte rada har sin EIGEN separate tekst (bygger ikkje på
-            // cardHtml()), så ho trong same fiks separat (rapportert 2026-09-18).
-            const r247RowBroadcastingHere = typeof LiveMix !== 'undefined' && LiveMix.isBroadcastingHere && LiveMix.isBroadcastingHere();
-            const r247RowLivePresenter = _liveTakeover ? _liveTakeoverPresenter
-              : (r247RowBroadcastingHere ? (LiveMix.getBroadcastPresenterName ? LiveMix.getBroadcastPresenterName() : '') : '');
-            const r247RowLiveTrackTitle = _liveTakeover ? _liveTrackTitle
-              : (r247RowBroadcastingHere ? (LiveMix.getBroadcastTrackTitle ? LiveMix.getBroadcastTrackTitle() : '') : '');
-            const r247RowLiveLink = _liveTakeover ? _liveLinkUrl
-              : (r247RowBroadcastingHere ? (LiveMix.getBroadcastLinkUrl ? LiveMix.getBroadcastLinkUrl() : '') : '');
-            const r247RowDesc = (_liveTakeover && _liveSpecialLabel)
-              ? `<span class="live-blink"><span class="live-blink-dot"></span><span class="live-blink-name">${escHtml(_liveSpecialLabel)}</span></span>${_special ? ' — ' + escHtml(_special.show.title) : ''}`
-              : r247RowLivePresenter
-              ? `<span class="live-blink"><span class="live-blink-dot"></span><span class="live-blink-name">LIVE — ${escHtml(r247RowLivePresenter)}</span></span>${r247RowLiveTrackTitle ? ' — ' + escHtml(r247RowLiveTrackTitle) : ''}${/^https?:\/\//i.test(r247RowLiveLink) ? ` · <a href="${escHtml(r247RowLiveLink)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Link</a>` : ''}`
-              : `Non-stop day-arc — ${escHtml(Radio247.currentBlock().label)} now`;
+            const r247RowDesc = _r247RowDescHtml();
             const r247RowHtml = typeof Radio247 !== 'undefined' ? `
               <div class="radio-category">SIRIUSFM 24/7</div>
               <div
@@ -1047,7 +1058,7 @@ const Radio = (() => {
                 <span class="station-emoji">${iconForEmoji('🌘')}</span>
                 <span class="station-info">
                   <span class="station-name">SiriusFM 24/7</span>
-                  <span class="station-desc">${r247RowDesc}</span>
+                  <span class="station-desc" id="r247-row-desc">${r247RowDesc}</span>
                 </span>
                 <div class="station-actions">
                   <button class="station-play-btn" title="Play / Stop" onclick="event.stopPropagation();Radio247.toggle()">
@@ -1981,6 +1992,7 @@ const Radio = (() => {
   // Kalla når live-info endrar seg (start/tittel/lenke/slutt) — byter hero-boksen
   // til live-visning, eller attende til stasjonen som gjekk før (stopp/sluttar).
   function syncLiveHero() {
+    _syncR247RowDesc();
     const info = _liveHeroInfo();
     if (info) { _applyLiveHero(info); return; }
     if (currentStation) { updateNowPlaying(currentStation); updateNowPlayingStatus(isPlaying); return; }
