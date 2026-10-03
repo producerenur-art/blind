@@ -1163,7 +1163,7 @@ const Radio = (() => {
         <div class="radio-main">
           <!-- Hero welcome -->
           <div class="radio-welcome-hero">
-            <div class="radio-welcome-title">Welcome to SiriusFM</div>
+            <div class="radio-welcome-title">SiriusFM</div>
             <div class="radio-welcome-sub">Electronic music streams · Psychedelic · Ambient · Trance</div>
             <div class="radio-welcome-sub2">World Wide</div>
           </div>
