@@ -1085,14 +1085,16 @@ const Discover = (() => {
       return `${fmtDay.format(st)} ${fmtClock.format(st)}–${fmtClock.format(en)} CEST`;
     });
     let site = ''; try { site = new URL(show.linkUrl).origin; } catch (_) {}
-    const airedYet = Date.now() >= Date.parse(show.slots[0]);
     // Tracklisten skal IKKJE avslørast før HEILE serien er ferdig (brukarønske
-    // 29.09.2026) — «Listen to the mix»-knappen over bruker framleis airedYet
+    // 29.09.2026) — «Listen to the mix»-knappen (mixOpen, sjå under) er skjult til 24.10 21:04 —
     // (synleg alt etter FYRSTE sending), berre sjølve songnavn-lista ventar til
     // siste slot + varigheit er passert, same tidspunkt som arkivposten i
     // «What went live» blir synleg (sjå tools/publish-special-set.js).
     const lastSlotEnd = Date.parse(show.slots[show.slots.length - 1]) + show.durationSec * 1000;
     const allAired = Date.now() >= lastSlotEnd;
+    // Brukarønske 05.10.2026: «Listen to the mix» + Play skal IKKJE vere der (heller ingen
+    // «available after…»-tekst) før etter siste sending: 24.10 kl 21:04 CEST = 19:04Z.
+    const mixOpen = Date.now() >= Date.parse('2026-10-24T19:04:00Z');
     const mins = Math.round(show.durationSec / 60);
     const tracks = (show.tracklist || []).map(t => `<li>${_lcEsc(t)}</li>`).join('');
     setTimeout(_loadWhatWentLive, 0);   // container #disc-wwl finst når innerHTML er sett
@@ -1104,9 +1106,9 @@ const Discover = (() => {
           <p class="lc-ad-lines">${lines.map(_lcEsc).join('<br>')}</p>
           <p class="lc-ad-note">Norwegian time (CEST)</p>
           <div class="lc-ad-actions">
-            ${airedYet
+            ${mixOpen
               ? `<button class="btn btn-primary lc-ad-play" onclick="Player.playExternal('${_lcEsc(show.audioUrl)}','${_lcEsc(show.title)}','${_lcEsc(show.artist)}')">▶ Listen to the mix · ${mins} min</button>`
-              : `<span class="lc-ad-soon">The mix will be available here after the first live broadcast on ${_lcEsc(fmtDay.format(new Date(show.slots[0])))}.</span>`}
+              : ''}
             ${site ? `<a class="lc-ad-link" href="${_lcEsc(site)}" target="_blank" rel="noopener noreferrer">${_lcEsc(site.replace(/^https?:\/\//, ''))}</a>` : ''}
             <button class="btn btn-ghost btn-sm" onclick="Discover.showLemonchillAbout()">About Lemonchill</button>
           </div>
