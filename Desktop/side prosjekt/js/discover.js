@@ -1277,8 +1277,12 @@ const Discover = (() => {
     const box = document.getElementById('disc-wwl');
     if (!box || typeof LiveSets === 'undefined' || !LiveSets.list) return;
     const adm = _wwlIsAdmin();   // admin ser ALLE opptak (for opprydding); andre ser dei 4 nyaste
-    let sets = []; try { sets = await LiveSets.list(adm ? 200 : 6); } catch (_) {}
+    let sets = []; try { sets = await LiveSets.list(adm ? 200 : 60); } catch (_) {}
     sets = (sets || []).filter(x => x && x.audio_url);
+    // Brukarønske 05.10.2026: Dj Arcturia Genetics (what-went-live-1) skal stå synleg no og
+    // framover — festa først, uansett kor mange nyare opptak (Lemonchill m.fl.) som kjem til.
+    const _pin = sets.find(x => Number(x.wwl_no) === 1);
+    if (_pin) sets = [_pin].concat(sets.filter(x => x !== _pin));
     _refreshActivityFeed(sets.slice(0, 6));  // «Live activity» skal òg vise desse, ikkje berre «What went live»
     if (!sets.length || !document.getElementById('disc-wwl')) return;
     document.getElementById('disc-wwl').innerHTML = `
