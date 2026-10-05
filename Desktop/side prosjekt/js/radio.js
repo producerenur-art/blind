@@ -1492,8 +1492,8 @@ const Radio = (() => {
   // til på nytt automatisk. Eit lite reconnect-budsjett (maks 4 per
   // 10-minuttarsvindauge) hindrar at ein reelt daud straum blir hamra på i det uendelege.
   const WATCHDOG_INTERVAL_MS = 5000;
-  const STALL_AFTER_MS = 10000;
-  const RECONNECT_MAX = 4;
+  const STALL_AFTER_MS_FAST = 10000, STALL_AFTER_MS_SLOW = 18000;
+  const RECONNECT_MAX = 4;   // 6 på tregt nett, sjå _tryAutoReconnect
   const RECONNECT_WINDOW_MS = 10 * 60 * 1000;
   let _lastCurrentTime = -1;
   let _lastProgressTime = 0;
@@ -1509,7 +1509,7 @@ const Radio = (() => {
     if (!window._radioMode || !isPlaying || _jingleBusy || _liveTakeover || !currentStation) return;
     const now = Date.now();
     if (now - _reconnectWindowStart > RECONNECT_WINDOW_MS) { _reconnectCount = 0; _reconnectWindowStart = now; }
-    if (_reconnectCount >= RECONNECT_MAX) { _giveUpOnStation(); return; }
+    if (_reconnectCount >= (StreamFix.slow() ? RECONNECT_MAX + 2 : RECONNECT_MAX)) { _giveUpOnStation(); return; }
     _reconnectCount++;
     console.warn('Radio: avspeling stoppa uventa — koblar til på nytt', currentStation.url);
     _playUrl(currentStation.url, currentStation);
@@ -1574,7 +1574,7 @@ const Radio = (() => {
       _lastProgressTime = Date.now();
       return;
     }
-    if (_lastProgressTime && Date.now() - _lastProgressTime >= STALL_AFTER_MS) {
+    if (_lastProgressTime && Date.now() - _lastProgressTime >= (StreamFix.slow() ? STALL_AFTER_MS_SLOW : STALL_AFTER_MS_FAST)) {
       _lastProgressTime = Date.now();   // unngå å hamre på nytt kvart tick før reconnect har rukke verke
       _tryAutoReconnect();
     }
@@ -1758,11 +1758,11 @@ const Radio = (() => {
       if (info.npApi) startNowPlayingPoll(info);   // live track/show updates
       info.onPlay?.();
     };
-    const onFailed = (why) => {
+    const onFailed = (why, timedOut) => {
       if (settled) return;
       settled = true;
       console.warn('Stream error:', url, why);
-      StreamFix.markDead(url);
+      if (!timedOut) StreamFix.markDead(url);   // treg oppkobling alene = ikkje daud straum
       isPlaying = false;
       updatePlayBtn(false);
       updateNowPlayingStatus(false);
@@ -2547,6 +2547,7 @@ const Radio = (() => {
     fxCanvas.classList.add('active');
     fxResize();
     fxLastTs = 0;
+    let fxEnergyBuf = null;
     function loop() {
       fxFrame = requestAnimationFrame(loop);
       if (!fxGl) return;
@@ -2558,7 +2559,7 @@ const Radio = (() => {
       let energy = 0;
       if (analyser) {
         const n = Math.min(24, analyser.frequencyBinCount);
-        const d = new Uint8Array(n);
+        const d = fxEnergyBuf || (fxEnergyBuf = new Uint8Array(24));
         analyser.getByteFrequencyData(d);
         let s = 0; for (let i = 0; i < n; i++) s += d[i];
         energy = Math.min(1, (s / (n * 255)) * 1.6);
@@ -2589,6 +2590,7 @@ const Radio = (() => {
     particles = [];
     visLastTs = 0;
 
+    let dataFreq = null, dataTime = null;   // gjenbrukte buffer (ingen allokering per frame)
     function draw() {
       visFrame = requestAnimationFrame(draw);
       if (!visCtx || !canvas.width) return;
@@ -2598,8 +2600,7 @@ const Radio = (() => {
       visClock += (now - visLastTs) * visSpeed;
       visLastTs = now;
       const bufLen = analyser.frequencyBinCount;
-      const dataFreq = new Uint8Array(bufLen);
-      const dataTime = new Uint8Array(bufLen);
+      if (!dataFreq || dataFreq.length !== bufLen) { dataFreq = new Uint8Array(bufLen); dataTime = new Uint8Array(bufLen); }
       analyser.getByteFrequencyData(dataFreq);
       analyser.getByteTimeDomainData(dataTime);
 
@@ -3384,23 +3385,40 @@ const Radio = (() => {
       renderAiVisualButtons();
     }
     if (!isVideoMode(visMode) || _visManualSlot === slot || !_autoList.length) return;
-    const step = Math.floor((Date.now() % 3600000) / VIS_AUTO_STEP_MS);
-    const it = _autoList[step % _autoList.length];
+    // 14.10.2026: gå gjennom HEILE poolen (AI + klassikarar, sjanger-flettet) i staden for berre timens
+    // 20 knappar — kvar video kjem då att først etter ~N×5 min (≈7 t med 86 videoar), ikkje etter ~3 t.
+    // Same rekkjefølgje for alle lyttarar (klokkestyrt), så ingen ser same video to gonger på rad.
+    const full = _fullVisRotation();
+    const step = Math.floor(Date.now() / VIS_AUTO_STEP_MS);
+    const it = full.length ? full[step % full.length] : _autoList[step % _autoList.length];
     if (!it) return;
     const mode = it.mode || aiModeOf(it.id);
+    if (!it.mode) { AI_VIDEOS[mode] = it.id; visMeta[it.id] = { emoji: it.emoji, label: it.label, channel: it.channel || null }; }
     if (mode === visMode || !isVideoMode(mode)) return;
     const btn = [...document.querySelectorAll('.vis-style-row .vis-btn')].find(b => (b.getAttribute('onclick') || '').includes("'" + mode + "'"));
     setVisMode(mode, btn, true);
   }
+  let _fullVisKey = '', _fullVisList = [];
+  function _fullVisRotation() {
+    const key = (aiPool ? aiPool.length : 0) + ':' + (aiPool && aiPool[0] ? aiPool[0].id : '');
+    if (key === _fullVisKey) return _fullVisList;
+    const seen = new Set();
+    _fullVisList = interleaveByGroup([].concat(aiPool || [], VIS_CLASSICS)).filter(it => it && it.id && !seen.has(it.id) && seen.add(it.id));
+    _fullVisKey = key;
+    return _fullVisList;
+  }
   // Video ferdig (ingen loop): gå til neste i timens liste (etter den som spelte; spesialar som ikkje står i lista → første).
   function _visAdvanceOnEnd() {
-    if (!document.getElementById('radio-vis-video') || !_autoList.length) return;
+    const lst = _fullVisRotation().length ? _fullVisRotation() : _autoList;
+    if (!document.getElementById('radio-vis-video') || !lst.length) return;
     const cur = visualItemForMode(visMode);
-    const i = cur ? _autoList.findIndex(it => it && it.id === cur.id) : -1;
-    for (let k = 1; k <= _autoList.length; k++) {
-      const it = _autoList[(i + k + _autoList.length) % _autoList.length];
+    const i = cur ? lst.findIndex(it => it && it.id === cur.id) : -1;
+    for (let k = 1; k <= lst.length; k++) {
+      const it = lst[(i + k + lst.length) % lst.length];
       const mode = it && (it.mode || aiModeOf(it.id));
-      if (!it || !mode || mode === visMode || !isVideoMode(mode)) continue;
+      if (!it || !mode) continue;
+      if (!it.mode) { AI_VIDEOS[mode] = it.id; visMeta[it.id] = { emoji: it.emoji, label: it.label, channel: it.channel || null }; }
+      if (mode === visMode || !isVideoMode(mode)) continue;
       const btn = [...document.querySelectorAll('.vis-style-row .vis-btn')].find(b => (b.getAttribute('onclick') || '').includes("'" + mode + "'"));
       setVisMode(mode, btn, true);
       return;

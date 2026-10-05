@@ -67,7 +67,13 @@ const StreamFix = (() => {
   //
   // Kvar ny watch() bumpar ein generasjonsteljar på audio-elementet, så ein eldre
   // vakt for ein stasjon brukaren har forlatt aldri melder feil på den nye.
-  function watch(audio, { timeout = 9000, onPlay, onFail } = {}) {
+  // Tregt nett (saveData/2G/3G/<2 Mbit): gi oppkoblinga 20 s i staden for 9 s, og ein tidsavbrot
+  // åleine skal ikkje stemple stasjonen som daud (sjå onFail-argument 2).
+  function slow() {
+    const c = (typeof navigator !== 'undefined' && navigator.connection) || {};
+    return !!(c.saveData || /^(slow-2g|2g|3g)$/.test(c.effectiveType || '') || (typeof c.downlink === 'number' && c.downlink < 2));
+  }
+  function watch(audio, { timeout = slow() ? 20000 : 9000, onPlay, onFail } = {}) {
     if (!audio) return { cancel() {} };
     const gen = audio._sfxGen = (audio._sfxGen || 0) + 1;
     let done = false, timer = null;
@@ -77,12 +83,12 @@ const StreamFix = (() => {
       audio.removeEventListener('playing', ok);
       audio.removeEventListener('error', bad);
     }
-    function finish(good, why) {
+    function finish(good, why, timedOut) {
       if (done) return;
       done = true;
       cleanup();
       if (audio._sfxGen !== gen) return;   // ein annan stasjon tok over — resultatet er ugyldig
-      if (good) onPlay?.(); else onFail?.(why || 'Stream did not respond');
+      if (good) onPlay?.(); else onFail?.(why || 'Stream did not respond', !!timedOut);
     }
     const ok  = () => finish(true);
     const bad = () => finish(false, errorText(audio));
@@ -92,7 +98,7 @@ const StreamFix = (() => {
     timer = setTimeout(() => {
       // Verkeleg avspeling har lyd som renn: readyState ≥ 3 og currentTime > 0.
       const running = !audio.paused && audio.readyState >= 3 && audio.currentTime > 0;
-      finish(running, 'No sound from this stream — it timed out');
+      finish(running, 'No sound from this stream — it timed out', true);
     }, timeout);
 
     return { cancel: () => { done = true; cleanup(); } };
@@ -130,7 +136,7 @@ const StreamFix = (() => {
   function markDead(url) { if (url) dead.add(normalize(url)); }
   function isDead(url)   { return !!url && dead.has(normalize(url)); }
 
-  return { normalize, playable, canPlayHls, watch, api, markDead, isDead, errorText };
+  return { normalize, playable, canPlayHls, slow, watch, api, markDead, isDead, errorText };
 })();
 
 window.StreamFix = StreamFix;
