@@ -1329,8 +1329,10 @@ const Discover = (() => {
     catch (_) { window.prompt('Copy this link:', url); }
   }
   // Last ned opptaket (KUN admin).
+  let _wwlDlBusy = false;
   async function wwlDownload(id) {
     const st = _wwlSets[id]; if (!st || !st.audio_url || !_wwlIsAdmin()) return;
+    if (_wwlDlBusy) { if (typeof App !== 'undefined') App.toast('Already preparing a WAV — wait for it to finish…', 'info'); return; }
     const ext0 = ((st.audio_url.split('?')[0].match(/\.([a-z0-9]{2,4})$/i) || [])[1] || 'mp3').toLowerCase();
     const base = ((st.display_name || 'live-set') + ' - ' + (st.track_title || '').split('\n')[0]).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
     const save = (href, name) => { const a = document.createElement('a'); a.href = href; a.download = name; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); };
@@ -1342,6 +1344,7 @@ const Discover = (() => {
       save(href, base + '.' + ext0);
     };
     if (ext0 === 'wav') { toast('Downloading…'); return rawDownload(); }
+    _wwlDlBusy = true;
     try {
       // Dekod (webm/opus, mp3, m4a …) → 16-bit PCM WAV, skrevet i biter for å spare minne
       toast('Preparing WAV… (long recordings take a minute)');
@@ -1374,7 +1377,7 @@ const Discover = (() => {
     } catch (e) {
       toast('Could not convert to WAV — downloading original file', 'error');
       rawDownload();
-    }
+    } finally { _wwlDlBusy = false; }
   }
   function wwlEdit(id) {
     const st = _wwlSets[id], box = document.getElementById('wwl-edit-' + id);
