@@ -1331,15 +1331,50 @@ const Discover = (() => {
   // Last ned opptaket (KUN admin).
   async function wwlDownload(id) {
     const st = _wwlSets[id]; if (!st || !st.audio_url || !_wwlIsAdmin()) return;
-    const ext = ((st.audio_url.split('?')[0].match(/\.([a-z0-9]{2,4})$/i) || [])[1] || 'mp3').toLowerCase();
-    const name = ((st.display_name || 'live-set') + ' - ' + (st.track_title || '').split('\n')[0]).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) + '.' + ext;
-    // Supabase-lagring: ?download=<filnavn> gir Content-Disposition: attachment → nettleseren lagrer rett til disk (strømmer, ingen blob i minnet, ingen navigering).
-    if (typeof App !== 'undefined') App.toast('Downloading…', 'info');
-    const base = st.audio_url.split('#')[0];
-    const href = /supabase\.co\/storage\//.test(base)
-      ? base.replace(/([?&])download(=[^&]*)?(&|$)/, '$1').replace(/[?&]$/, '') + (base.includes('?') ? '&' : '?') + 'download=' + encodeURIComponent(name)
-      : base;
-    const a = document.createElement('a'); a.href = href; a.download = name; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+    const ext0 = ((st.audio_url.split('?')[0].match(/\.([a-z0-9]{2,4})$/i) || [])[1] || 'mp3').toLowerCase();
+    const base = ((st.display_name || 'live-set') + ' - ' + (st.track_title || '').split('\n')[0]).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+    const save = (href, name) => { const a = document.createElement('a'); a.href = href; a.download = name; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); };
+    const toast = (m, t) => { if (typeof App !== 'undefined') App.toast(m, t || 'info'); };
+    // Reserve: originalfila direkte til disk (Supabase ?download= gir Content-Disposition: attachment)
+    const rawDownload = () => {
+      const u = st.audio_url.split('#')[0];
+      const href = /supabase\.co\/storage\//.test(u) ? u.replace(/([?&])download(=[^&]*)?(&|$)/, '$1').replace(/[?&]$/, '') + (u.includes('?') ? '&' : '?') + 'download=' + encodeURIComponent(base + '.' + ext0) : u;
+      save(href, base + '.' + ext0);
+    };
+    if (ext0 === 'wav') { toast('Downloading…'); return rawDownload(); }
+    try {
+      // Dekod (webm/opus, mp3, m4a …) → 16-bit PCM WAV, skrevet i biter for å spare minne
+      toast('Preparing WAV… (long recordings take a minute)');
+      const r = await fetch(st.audio_url); if (!r.ok) throw new Error('HTTP ' + r.status);
+      const ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+      const buf = await ctx.decodeAudioData(await r.arrayBuffer());
+      ctx.close && ctx.close();
+      const ch = Math.min(2, buf.numberOfChannels), n = buf.length, sr = buf.sampleRate, dataLen = n * ch * 2;
+      const hdr = new DataView(new ArrayBuffer(44));
+      const w4 = (o, t) => { for (let i = 0; i < 4; i++) hdr.setUint8(o + i, t.charCodeAt(i)); };
+      w4(0, 'RIFF'); hdr.setUint32(4, 36 + dataLen, true); w4(8, 'WAVE'); w4(12, 'fmt ');
+      hdr.setUint32(16, 16, true); hdr.setUint16(20, 1, true); hdr.setUint16(22, ch, true);
+      hdr.setUint32(24, sr, true); hdr.setUint32(28, sr * ch * 2, true); hdr.setUint16(32, ch * 2, true); hdr.setUint16(34, 16, true);
+      w4(36, 'data'); hdr.setUint32(40, dataLen, true);
+      const parts = [hdr.buffer], CH = 1 << 20, chans = [];
+      for (let c = 0; c < ch; c++) chans.push(buf.getChannelData(c));
+      for (let i = 0; i < n; i += CH) {
+        const len = Math.min(CH, n - i), out = new Int16Array(len * ch);
+        for (let j = 0; j < len; j++) for (let c = 0; c < ch; c++) {
+          const v = Math.max(-1, Math.min(1, chans[c][i + j]));
+          out[j * ch + c] = v < 0 ? v * 0x8000 : v * 0x7FFF;
+        }
+        parts.push(out.buffer);
+        if ((i / CH) % 8 === 0) await new Promise(res => setTimeout(res, 0));
+      }
+      const u = URL.createObjectURL(new Blob(parts, { type: 'audio/wav' }));
+      save(u, base + '.wav');
+      toast('WAV saved ✓', 'success');
+      setTimeout(() => URL.revokeObjectURL(u), 120000);
+    } catch (e) {
+      toast('Could not convert to WAV — downloading original file', 'error');
+      rawDownload();
+    }
   }
   function wwlEdit(id) {
     const st = _wwlSets[id], box = document.getElementById('wwl-edit-' + id);
