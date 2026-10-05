@@ -549,7 +549,17 @@ const Radio = (() => {
     const audio = getAudio();
     if (!audio || !url) { onDone(); return; }
     const prevVolume = audio.volume;
+    let finished = false, startGuard = null, endGuard = null;
+    // Tregt nett: klippet skal aldri la radioen stå stille. Startar det ikkje innan 6 s (eller
+    // heng det seinare), hopp over det og kople radioen til att.
+    const onClipPlaying = () => {
+      clearTimeout(startGuard);
+      clearTimeout(endGuard);
+      endGuard = setTimeout(done, ((audio.duration > 0 && isFinite(audio.duration)) ? audio.duration : 90) * 1000 + 5000);
+    };
     const cleanup = () => {
+      clearTimeout(startGuard); clearTimeout(endGuard);
+      audio.removeEventListener('playing', onClipPlaying);
       audio.removeEventListener('ended', done);
       audio.removeEventListener('error', done);
       // Mjuk inn-toning attende til fullt volum i staden for eit brått hopp
@@ -558,13 +568,15 @@ const Radio = (() => {
       audio.volume = 0;
       _fadeVolume(audio, prevVolume, ms);
     };
-    function done() { cleanup(); onDone(); }
+    function done() { if (finished) return; finished = true; cleanup(); onDone(); }
     const startClip = () => {
       try { audio.srcObject = null; } catch (e) {}
       audio.volume = 0;
       audio.src = url;
       audio.addEventListener('ended', done, { once: true });
       audio.addEventListener('error', done, { once: true });
+      audio.addEventListener('playing', onClipPlaying, { once: true });
+      startGuard = setTimeout(done, 6000);
       audio.play()?.catch(done);
       _fadeVolume(audio, prevVolume * JINGLE_VOLUME_SCALE, ms);
     };
@@ -573,6 +585,30 @@ const Radio = (() => {
     // eit hardt kutt. Ingenting å tone ut viss ingenting spelar frå før.
     if (!audio.paused) _fadeVolume(audio, 0, ms, startClip);
     else startClip();
+  }
+
+  // Førehandslasting (tregt nett): jingel/reklame blir lasta ned ~90 s FØR sendetid, slik at
+  // klippet startar med éin gong i staden for å la radioen stå stille mens fila lastast.
+  // Spelt over musikk (_playJingleOverMusic) brukar sjølve element-et; reklame/overgang via
+  // delt <audio> treffer nettlesar-cachen. Hoppar over ved Datasparing.
+  const PRELOAD_LEAD_MS = 90 * 1000;
+  const _preloaded = new Map();
+  function _preloadClip(url) {
+    try {
+      const c = navigator.connection;
+      if (!url || _preloaded.has(url) || (c && c.saveData)) return;
+      const a = new Audio();
+      a.preload = 'auto';
+      a.src = url;
+      a.load();
+      _preloaded.set(url, a);
+      setTimeout(() => { if (_preloaded.get(url) === a) _preloaded.delete(url); }, 10 * 60 * 1000);
+    } catch (_) { /* best-effort */ }
+  }
+  function _preloadAt(url, atMs) {
+    const wait = atMs - PRELOAD_LEAD_MS - Date.now();
+    if (wait > 0) setTimeout(() => _preloadClip(url), wait);
+    else if (atMs - Date.now() > 2000) _preloadClip(url);
   }
 
   // Jingel OVER musikken (brukarønske 2026-09-24: «ikkje stopp musikken»): stasjonen
@@ -585,7 +621,8 @@ const Radio = (() => {
     if (!audio || audio.paused) return;
     _jingleBusy = true;
     const ms = typeof fadeMs === 'number' ? fadeMs : LIVE_FADE_MS;
-    const j = new Audio(url);
+    const j = _preloaded.get(url) || new Audio(url);
+    _preloaded.delete(url);
     j.volume = Math.max(0, Math.min(1, volume));
     let done = false;
     const restore = () => {
@@ -643,6 +680,7 @@ const Radio = (() => {
     const now = Date.now();
     const slotIdx = Math.floor((now - JINGLE_SLOT_OFFSET_MS) / JINGLE_SLOT_MS) + 1;
     const nextAt = slotIdx * JINGLE_SLOT_MS + JINGLE_SLOT_OFFSET_MS;
+    _preloadAt(JINGLE_CYCLE[slotIdx % JINGLE_CYCLE.length].url, nextAt);
     setTimeout(() => {
       const j = JINGLE_CYCLE[slotIdx % JINGLE_CYCLE.length];
       if (!_liveTakeover) _playJingleOverMusic(j.url, j.fade);   // aldri under live/mix
@@ -693,6 +731,7 @@ const Radio = (() => {
     slotMs = slotMs || AD_SLOT_MS; offsetMs = offsetMs || AD_SLOT_OFFSET_MS;
     const now = Date.now();
     const nextAt = Math.ceil((now - offsetMs - ad.shiftMs) / slotMs) * slotMs + offsetMs + ad.shiftMs;
+    _preloadAt(ad.url, nextAt);
     setTimeout(() => { _playAdAlone(ad.url); _scheduleAd(ad, slotMs, offsetMs); }, Math.max(1000, nextAt - now));
   }
   if (typeof document !== 'undefined') ADS.forEach(a => _scheduleAd(a));
@@ -1515,6 +1554,7 @@ const Radio = (() => {
   }
 
   function _watchdogTick() {
+    _maybeRecoverVis();
     // Same suspended-AudioContext-fella som visibilitychange-handteraren under:
     // <audio>-elementet sitt currentTime kan tikke vidare (framleis "spelar")
     // medan output er stille fordi konteksten vart suspendert av mobilen —
@@ -1677,6 +1717,10 @@ const Radio = (() => {
       playerLeft.addEventListener('click', playerLeft._radioClickHandler);
     }
 
+    if (!audio._sfxStallBound) {
+      audio._sfxStallBound = true;
+      ['waiting', 'stalled'].forEach(ev => audio.addEventListener(ev, _noteAudioStall));
+    }
     audio.src  = url;
     audio.load();
     // Start lydlaust og ton inn når strøymen faktisk byrjar spele (sjå
@@ -3151,8 +3195,52 @@ const Radio = (() => {
       frame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: args || [] }), '*');
     } catch (_) { /* ignorer — best-effort */ }
   }
-  function forceHighestQuality(frame) {
-    postYtCommand(frame, 'setPlaybackQuality', ['highres']);
+  // Tilpass videokvaliteten til nettet (14.10.2026-fiks for hakking på tregt nett): ein lydlaus
+  // bakgrunnsvideo i 4K åt opp båndbreidda til radiostraumen. Kvalitet følgjer navigator.connection
+  // (saveData/effectiveType/downlink), og _visStallLevel (sjå _noteAudioStall) tvingar han ned
+  // (nivå 1) eller pausar videoen heilt (nivå 2) så lenge lyden hakkar.
+  let _visStallLevel = 0;
+  function _visQuality() {
+    if (_visStallLevel >= 1) return 'tiny';
+    const c = (typeof navigator !== 'undefined' && navigator.connection) || {};
+    if (c.saveData) return 'small';
+    const t = c.effectiveType;
+    if (t === 'slow-2g' || t === '2g') return 'tiny';
+    if (t === '3g') return 'small';
+    if (typeof c.downlink === 'number') {
+      if (c.downlink < 2) return 'small';
+      if (c.downlink < 5) return 'medium';
+      if (c.downlink < 10) return 'large';
+    }
+    return 'hd1080';
+  }
+  function applyVisQuality(frame) {
+    postYtCommand(frame, 'setPlaybackQuality', [_visQuality()]);
+    postYtCommand(frame, _visStallLevel >= 2 ? 'pauseVideo' : 'playVideo');
+  }
+  // Lyden hakkar (waiting/stalled): 2 hendingar på 30 s → lågaste videokvalitet; 4 → pause videoen.
+  // Etter 3 min utan hakk går alt attende til normalt (sjekka frå _watchdogTick).
+  let _stallTimes = [], _lastStallAt = 0;
+  function _noteAudioStall() {
+    if (!window._radioMode || !isPlaying || _jingleBusy || _liveTakeover) return;
+    const now = Date.now();
+    _stallTimes = _stallTimes.filter(t => now - t < 30000);
+    _stallTimes.push(now);
+    _lastStallAt = now;
+    const lvl = _stallTimes.length >= 4 ? 2 : _stallTimes.length >= 2 ? 1 : 0;
+    if (lvl > _visStallLevel) {
+      _visStallLevel = lvl;
+      applyVisQuality(document.getElementById('radio-vis-video'));
+    }
+  }
+  function _maybeRecoverVis() {
+    if (_visStallLevel && Date.now() - _lastStallAt > 3 * 60 * 1000) {
+      _visStallLevel = 0; _stallTimes = [];
+      applyVisQuality(document.getElementById('radio-vis-video'));
+    }
+  }
+  if (typeof navigator !== 'undefined' && navigator.connection && navigator.connection.addEventListener) {
+    navigator.connection.addEventListener('change', () => applyVisQuality(document.getElementById('radio-vis-video')));
   }
   // Spilleren svarer med onReady/infoDelivery-meldinger når den faktisk er
   // klar til å ta imot kommandoer — da ber vi om høy kvalitet med en gang.
@@ -3172,7 +3260,7 @@ const Radio = (() => {
     if (st === 0 && _visPlLen > 1 && _visPlIdx < _visPlLen - 1) return;   // meir att i lista → YouTube spelar neste sjølv
     if (st === 0 && (data.event === 'onStateChange' || data.event === 'infoDelivery')) { _visAdvanceOnEnd(); return; }
     if (data.event !== 'onReady' && data.event !== 'infoDelivery') return;
-    forceHighestQuality(frame);
+    applyVisQuality(frame);
   });
   let _visPlIdx = -1, _visPlLen = 0;   // posisjon i YouTube-avspelingslista (nullstilles ved ny video)
   // Hvilken video-ID iframen viser nå (for å unngå unødig reload ved re-vis).
@@ -3189,7 +3277,7 @@ const Radio = (() => {
       visVideoLoaded = id;
       // Reserve i tilfelle onReady-meldingen kommer før/uten at vi rekker å
       // koble lytteren — spilleren ignorerer kommandoer den ikke er klar for.
-      [500, 1200, 2500].forEach(ms => setTimeout(() => forceHighestQuality(frame), ms));
+      [500, 1200, 2500].forEach(ms => setTimeout(() => applyVisQuality(frame), ms));
     }
     frame.classList.add('active');
     sizeVisVideo();
