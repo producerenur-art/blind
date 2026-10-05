@@ -1328,18 +1328,18 @@ const Discover = (() => {
     try { await navigator.clipboard.writeText(url); if (typeof App !== 'undefined') App.toast('Link copied 📋', 'success'); }
     catch (_) { window.prompt('Copy this link:', url); }
   }
-  // Last ned opptaket (KUN admin). fetch→blob fordi download-attributtet blir ignorert på kryssopphav (Supabase-lagring).
+  // Last ned opptaket (KUN admin).
   async function wwlDownload(id) {
     const st = _wwlSets[id]; if (!st || !st.audio_url || !_wwlIsAdmin()) return;
     const ext = ((st.audio_url.split('?')[0].match(/\.([a-z0-9]{2,4})$/i) || [])[1] || 'mp3').toLowerCase();
     const name = ((st.display_name || 'live-set') + ' - ' + (st.track_title || '').split('\n')[0]).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) + '.' + ext;
-    try {
-      if (typeof App !== 'undefined') App.toast('Downloading…', 'info');
-      const r = await fetch(st.audio_url); if (!r.ok) throw new Error('HTTP ' + r.status);
-      const u = URL.createObjectURL(await r.blob());
-      const a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(u), 60000);
-    } catch (_) { window.open(st.audio_url, '_blank', 'noopener'); }
+    // Supabase-lagring: ?download=<filnavn> gir Content-Disposition: attachment → nettleseren lagrer rett til disk (strømmer, ingen blob i minnet, ingen navigering).
+    if (typeof App !== 'undefined') App.toast('Downloading…', 'info');
+    const base = st.audio_url.split('#')[0];
+    const href = /supabase\.co\/storage\//.test(base)
+      ? base.replace(/([?&])download(=[^&]*)?(&|$)/, '$1').replace(/[?&]$/, '') + (base.includes('?') ? '&' : '?') + 'download=' + encodeURIComponent(name)
+      : base;
+    const a = document.createElement('a'); a.href = href; a.download = name; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
   }
   function wwlEdit(id) {
     const st = _wwlSets[id], box = document.getElementById('wwl-edit-' + id);
