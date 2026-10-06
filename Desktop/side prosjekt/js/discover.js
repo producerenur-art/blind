@@ -1247,7 +1247,7 @@ const Discover = (() => {
         <div class="wwl-body">
           <div class="wwl-name">${_lcEsc(st.display_name || 'Live set')}</div>
           <div class="wwl-text">${_lcEsc(st.track_title || '')}</div>
-          <div class="wwl-meta">${_lcEsc(_wwlFmtDate(st.ended_at))}${mins ? ' · ' + mins : ''}</div>
+          <div class="wwl-meta">${_lcEsc(_wwlFmtDate(st.ended_at))}${mins ? ' · ' + mins : ''}${st.room === 'upload' ? ' · upload' : ''}</div>
           <div class="wwl-url" style="font-size:.75rem;margin:.15rem 0 .4rem;word-break:break-all"><a href="${_lcEsc(_wwlUrl(st))}" target="_blank" rel="noopener noreferrer" style="color:var(--text2)">${_lcEsc(_wwlUrl(st))}</a></div>
           <div class="wwl-seek" id="wwl-seek-${id}">
           <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
@@ -1283,10 +1283,11 @@ const Discover = (() => {
     // framover — festa først, uansett kor mange nyare opptak (Lemonchill m.fl.) som kjem til.
     const _pin = sets.find(x => Number(x.wwl_no) === 1);
     if (_pin) sets = [_pin].concat(sets.filter(x => x !== _pin));
-    _refreshActivityFeed(sets.slice(0, 6));  // «Live activity» skal òg vise desse, ikkje berre «What went live»
+    _refreshActivityFeed(sets.filter(x => x.room !== 'upload').slice(0, 6));   // opplastinger (ikkje live) skal ikkje stå som «went live»  // «Live activity» skal òg vise desse, ikkje berre «What went live»
     if (!sets.length || !document.getElementById('disc-wwl')) return;
     document.getElementById('disc-wwl').innerHTML = `
       <div class="wwl-head">What went live</div>
+      ${adm ? '<div style="margin:.2rem 0 .6rem"><button class="btn btn-ghost btn-sm" onclick="Discover.wwlUploadToggle()">⬆ Uploads (not live)</button></div><div id="wwl-upl"></div>' : ''}
       <div class="wwl-list">${sets.slice(0, adm ? 200 : 4).map(_wwlCard).join('')}</div>
       <div id="wwl-trash-box">${_wwlTrashHtml()}</div>`;
     _wwlBindAudio(); _wwlTick();
@@ -1439,14 +1440,92 @@ const Discover = (() => {
     const st = _wwlSets[id]; const f = input && input.files && input.files[0];
     if (!st || !f || !_wwlIsAdmin()) return;
     if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) { if (typeof App !== 'undefined') App.toast('Cloud storage is not set up.', 'error'); return; }
-    if (typeof App !== 'undefined') App.toast('Uploading audio…', 'info', 4000);
     try {
-      const res = await SC_Storage.upload(f, { prefix: 'live-sets' });
+      const { res } = await _wwlUploadAudio(f);
       const ok = await LiveSets.update(id, { audioUrl: res.url });
       if (ok) { st.audio_url = res.url; st.updated_at = new Date().toISOString(); if (typeof App !== 'undefined') App.toast('Audio replaced.', 'success'); }
       else if (typeof App !== 'undefined') App.toast('Could not save the new audio.', 'error');
-    } catch (e) { if (typeof App !== 'undefined') App.toast('Upload failed: ' + (e.message || e), 'error'); }
+    } catch (e) { if (typeof App !== 'undefined') App.toast('Upload failed: ' + (e.message || e), 'error', 8000); }
+    _wwlProg(null);
     input.value = '';
+  }
+
+  // ── Fremdriftsvising 0–100 % (komprimering + opplasting) ─────────────────────────────
+  function _wwlProg(label, frac) {
+    let el = document.getElementById('wwl-prog');
+    if (label == null) { if (el) el.remove(); return; }
+    if (!el) {
+      el = document.createElement('div'); el.id = 'wwl-prog';
+      el.style.cssText = 'position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);z-index:99999;width:min(440px,92vw);padding:.8rem 1rem;border-radius:14px;background:rgba(12,16,30,.96);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:.9rem;box-shadow:0 8px 30px rgba(0,0,0,.55)';
+      el.innerHTML = '<div class="wp-l" style="margin-bottom:.5rem"></div><div style="height:10px;border-radius:6px;background:rgba(255,255,255,.15);overflow:hidden"><div class="wp-b" style="height:100%;width:0;background:linear-gradient(90deg,#38bdf8,#818cf8);transition:width .25s"></div></div><div style="margin-top:.45rem;font-size:.75rem;opacity:.7">Keep this tab open until it reaches 100%.</div>';
+      document.body.appendChild(el);
+    }
+    const pc = Math.max(0, Math.min(100, Math.round((frac || 0) * 100)));
+    el.querySelector('.wp-l').textContent = label + ' — ' + pc + '%';
+    el.querySelector('.wp-b').style.width = pc + '%';
+  }
+  // Pakk (om >45 MB, lagringa tar maks 50 MB) og last opp lyd. Totalfremdrift 0–100 %.
+  async function _wwlUploadAudio(f) {
+    if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) throw new Error('Cloud storage is not set up.');
+    let up = f, wC = 0;
+    try {
+      if (f.size > 45e6) {
+        if (typeof AudioCompress === 'undefined') throw new Error('File is over 50 MB and compression is unavailable');
+        wC = 0.7; _wwlProg('Compressing ' + Math.round(f.size / 1e6) + ' MB audio', 0);
+        up = await AudioCompress.toOpusOgg(f, { maxBytes: 45e6, onProgress: p => _wwlProg('Compressing ' + Math.round(f.size / 1e6) + ' MB audio', p * wC) });
+        if (up.size > 49e6) throw new Error('Still too large after compression (' + Math.round(up.size / 1e6) + ' MB)');
+      }
+      _wwlProg('Uploading ' + Math.round(up.size / 1e6) + ' MB', wC);
+      const res = await SC_Storage.upload(up, { prefix: 'live-sets', onProgress: p => _wwlProg('Uploading ' + Math.round(up.size / 1e6) + ' MB', wC + p * (1 - wC)) });
+      _wwlProg('Done', 1); setTimeout(() => _wwlProg(null), 1200);
+      return { res, file: up };
+    } catch (e) { _wwlProg(null); throw e; }
+  }
+  function _wwlAudioDuration(file) {
+    return new Promise(r => {
+      const a = new Audio(); a.preload = 'metadata'; const u = URL.createObjectURL(file);
+      const done = v => { try { URL.revokeObjectURL(u); } catch (_) {} r(isFinite(v) && v > 0 ? Math.round(v) : 0); };
+      a.onloadedmetadata = () => done(a.duration); a.onerror = () => done(0); setTimeout(() => done(0), 8000); a.src = u;
+    });
+  }
+  // ── «Uploads (not live)» — berre admin ser opplastingsskjemaet; resultatet blir synleg for alle ──
+  function wwlUploadToggle() {
+    const box = document.getElementById('wwl-upl'); if (!box || !_wwlIsAdmin()) return;
+    if (box.innerHTML) { box.innerHTML = ''; return; }
+    const inp = 'width:100%;box-sizing:border-box;padding:.55rem .7rem;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:var(--text);font:inherit;margin:.2rem 0 .6rem';
+    const me = (typeof Auth !== 'undefined' && Auth.current && Auth.current()) || {};
+    box.innerHTML = `<div style="padding:.9rem 1rem;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);margin:.4rem 0 1rem">
+      <div style="font-weight:600;margin-bottom:.5rem">Uploads (not live) <span style="font-weight:400;font-size:.78rem;opacity:.7">— only you see this form; once uploaded it shows for everyone</span></div>
+      <label style="font-size:.8rem;color:var(--text2)">Audio file (WAV/MP3/… large files are compressed automatically)</label>
+      <input type="file" id="wwl-u-file" accept="audio/*" style="${inp}">
+      <label style="font-size:.8rem;color:var(--text2)">Name</label>
+      <input id="wwl-u-name" style="${inp}" value="${_lcEsc(me.displayName || me.username || '')}">
+      <label style="font-size:.8rem;color:var(--text2)">Text / title</label>
+      <textarea id="wwl-u-text" rows="3" style="${inp}"></textarea>
+      <label style="font-size:.8rem;color:var(--text2)">Preview image (used as the picture when shared on social media)</label>
+      <input type="file" id="wwl-u-img" accept="image/*" style="${inp}">
+      <label style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;margin-bottom:.7rem"><input type="checkbox" id="wwl-u-live"> This was a live recording (otherwise it is marked as an upload)</label>
+      <button class="btn btn-primary btn-sm" id="wwl-u-go" onclick="Discover.wwlUploadSubmit()">⬆ Upload</button>
+      <button class="btn btn-ghost btn-sm" onclick="Discover.wwlUploadToggle()">Cancel</button>
+    </div>`;
+  }
+  async function wwlUploadSubmit() {
+    if (!_wwlIsAdmin()) return;
+    const g = id => document.getElementById(id), toast = (m, t, ms) => { if (typeof App !== 'undefined') App.toast(m, t || 'info', ms || 5000); };
+    const f = g('wwl-u-file') && g('wwl-u-file').files[0]; if (!f) { toast('Choose an audio file first.', 'error'); return; }
+    const btn = g('wwl-u-go'); if (btn) btn.disabled = true;
+    try {
+      const name = (g('wwl-u-name').value || '').trim(), text = (g('wwl-u-text').value || '').trim(), live = !!g('wwl-u-live').checked, img = g('wwl-u-img').files[0];
+      const { res, file: up } = await _wwlUploadAudio(f);
+      let cover = '';
+      if (img) { _wwlProg('Uploading image', 0.9); cover = (await SC_Storage.upload(img, { prefix: 'live-sets' })).url; _wwlProg(null); }
+      const dur = await _wwlAudioDuration(up);
+      const ok = await LiveSets.addUpload({ displayName: name, trackTitle: text, coverUrl: cover, audioUrl: res.url, durationSec: dur, isLive: live });
+      if (!ok) throw new Error('Saved the file but could not create the entry (database function missing?)');
+      toast('Uploaded — it is now visible to everyone.', 'success', 7000);
+      const box = g('wwl-upl'); if (box) box.innerHTML = '';
+      _loadWhatWentLive();
+    } catch (e) { _wwlProg(null); toast('Upload failed: ' + (e.message || e), 'error', 9000); if (btn) btn.disabled = false; }
   }
   async function wwlDelete(id) {
     const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
@@ -4387,7 +4466,7 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlUndo, wwlTrashForget, wwlEdit, wwlSave, wwlReplaceAudio, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek,
+    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlUndo, wwlTrashForget, wwlEdit, wwlSave, wwlReplaceAudio, wwlUploadToggle, wwlUploadSubmit, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek,
     showLemonchillAbout,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,

@@ -63,6 +63,22 @@ const SC_Storage = (() => {
     if (!resp.ok) throw new Error(info.error || `upload-url HTTP ${resp.status}`);
 
     // 2) Upload the bytes directly to Supabase (bypasses Vercel's 4.5MB limit).
+    //    Med onProgress: XHR PUT mot signedUrl gir ekte 0–100 %-fremdrift (reserve: uploadToSignedUrl nedanfor).
+    if (onProgress && info.signedUrl && typeof XMLHttpRequest !== 'undefined') {
+      try {
+        await new Promise((resolve, reject) => {
+          const x = new XMLHttpRequest();
+          x.open('PUT', info.signedUrl);
+          x.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+          x.upload.onprogress = e => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
+          x.onload = () => (x.status >= 200 && x.status < 300) ? resolve() : reject(new Error('Upload HTTP ' + x.status + ' ' + String(x.responseText || '').slice(0, 120)));
+          x.onerror = () => reject(new Error('Network error during upload'));
+          x.send(file);
+        });
+        onProgress(1);
+        return { url: info.publicUrl, path: info.path, type: file.type, size: file.size, bucket: info.bucket };
+      } catch (e) { if (/HTTP 413|too large/i.test(String(e.message))) throw e; /* elles: prøv standardveien */ }
+    }
     const { error } = await client()
       .storage.from(info.bucket)
       .uploadToSignedUrl(info.path, info.token, file, {

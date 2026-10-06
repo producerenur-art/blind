@@ -254,6 +254,27 @@ const LiveSets = (() => {
     return !error;
   }
 
+
+  // Admin: legg til ein opplasta lydfil (ikkje frå ei direktesending) som eit ferdig opptak. Synleg for alle etterpå.
+  // Same RPC-ar som ei vanleg sending (start → finish → update), så ingen ny databasefunksjon trengst.
+  async function addUpload(o) {
+    const c = _client(), me = _me();
+    if (!c || !me || !_isAdmin(me) || !o || !o.audioUrl) return false;
+    const id = _id(), user = me.username || '', sec = _secret();
+    try {
+      let r = await c.rpc('start_live_set', { p_id: id, p_username: user, p_display_name: o.displayName || '', p_room: o.isLive ? 'live' : 'upload',
+        p_is_owner: true, p_secret: sec, p_track_title: o.trackTitle || '', p_link_url: '' });
+      if (r.error) throw r.error;
+      r = await c.rpc('finish_live_set', { p_id: id, p_username: user, p_secret: sec, p_audio_url: o.audioUrl, p_duration_sec: o.durationSec || 0 });
+      if (r.error) throw r.error;
+      if (o.coverUrl) {
+        r = await c.rpc('update_live_set', { p_id: id, p_username: user, p_secret: sec, p_cover_url: o.coverUrl });
+        if (r.error) throw r.error;
+      }
+      return true;
+    } catch (e) { console.warn('[LiveSets] addUpload feila:', e.message || e); return false; }
+  }
+
   // Delings-slug: <romnamn>-<6 siste teikn av id>, t.d. «live-it6nfk». Romnamnet (det DJ-en skriv i «Room name») blir
   // lesbar del av lenka; suffikset gjer den unik. Serveren (api/share.js) slår opp på suffikset.
   function shareSlug(set) {
@@ -266,7 +287,7 @@ const LiveSets = (() => {
     return (room || 'set') + '-' + suf;
   }
 
-  return { begin, end, list, get, canEdit, update, remove, restore, recover, shareSlug };
+  return { begin, end, list, get, canEdit, update, remove, restore, addUpload, recover, shareSlug };
 })();
 
 if (typeof window !== 'undefined') window.LiveSets = LiveSets;
