@@ -752,7 +752,8 @@ const LiveMix = (() => {
   let _ownerBtn = null;
   function _mountOwnerButton() {
     const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
-    if (!_isOwner(cur)) { _removeOwnerButton(); return; }
+    const freeLive = typeof CONFIG !== 'undefined' && !!CONFIG.isFreeLiveEmail && CONFIG.isFreeLiveEmail(cur);
+    if (!_isOwner(cur) && !freeLive) { _removeOwnerButton(); return; }
     if (!_ownerBtn) {
       _ownerBtn = document.createElement('button');
       _ownerBtn.id = 'owner-golive-btn';
