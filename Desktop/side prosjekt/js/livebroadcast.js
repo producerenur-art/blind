@@ -10,32 +10,38 @@
 const LiveBroadcast = (() => {
   // ICE: gratis STUN alltid. TURN (for å passere brannmur/NAT over internett)
   // hentes fra CONFIG hvis satt, ellers et offentlig test-TURN (Open Relay).
+  // ICE-oppsett. STUN alltid; TURN-relay frå /api/turn (Cloudflare, kortlevde nøklar) eller
+  // CONFIG.TURN_*. Den gamle gratis openrelay.metered.ca-TURN-en er DAUD (verifisert 2026-10-07:
+  // ingen relay-kandidatar) og er fjerna — han bremsa berre tilkoplinga.
+  const STUN = { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] };
+  let _turnList = null, _turnAt = 0, _turnPromise = null;
   function iceServers() {
     const c = window.CONFIG || {};
-    const list = [{ urls: [
-      'stun:stun.l.google.com:19302',
-      'stun:stun1.l.google.com:19302',
-      'stun:stun.cloudflare.com:3478',
-    ] }];
+    const list = [STUN];
     if (c.TURN_URL && c.TURN_USERNAME && c.TURN_CREDENTIAL) {
-      // Egen TURN (coturn/Twilio/metered) — anbefalt i produksjon.
       list.push({ urls: c.TURN_URL, username: c.TURN_USERNAME, credential: c.TURN_CREDENTIAL });
-    } else {
-      // Gratis offentlig fallback-TURN. Flere transporter for å passere streng NAT/brannmur:
-      // UDP/80, ren TCP/443 og TLS (turns)/443 — sistnevnte punkterer brannmurer som blokkerer UDP.
-      list.push({
-        urls: [
-          'turn:openrelay.metered.ca:80',
-          'turn:openrelay.metered.ca:443',
-          'turn:openrelay.metered.ca:443?transport=tcp',
-          'turns:openrelay.metered.ca:443?transport=tcp',
-        ],
-        username: 'openrelayproject',
-        credential: 'openrelayproject',
-      });
     }
+    if (_turnList) list.push(..._turnList);
     return { iceServers: list };
   }
+  // Hentar relay-nøklar éin gong (cache 50 min). Feil/timeout → berre STUN, aldri blokkering.
+  function loadIce() {
+    if (_turnList && Date.now() - _turnAt < 50 * 60 * 1000) return Promise.resolve();
+    if (_turnPromise) return _turnPromise;
+    _turnPromise = (async () => {
+      try {
+        const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 4000);
+        const r = await fetch('/api/turn', { cache: 'no-store', signal: ctl.signal }); clearTimeout(t);
+        if (!r.ok) return;
+        const j = await r.json();
+        const relay = (j.iceServers || []).filter(x => x && x.username && x.credential);
+        if (relay.length) { _turnList = relay; _turnAt = Date.now(); }
+      } catch (e) { /* ingen relay tilgjengeleg — fortset med STUN */ }
+      finally { _turnPromise = null; }
+    })();
+    return _turnPromise;
+  }
+  loadIce();
 
   // Opus for MUSIKK: stereo + høg bitrate + FEC, utan DTX. WebRTC-standarden er tale (mono, ~32 kbps) → tynn/hakkete lyd.
   function tuneOpus(sdp) {
@@ -87,6 +93,8 @@ const LiveBroadcast = (() => {
     const sigTo = (to, data) => sig('signal', { to, from: id, data });
 
     async function addListener(listenerId) {
+      if (peers.has(listenerId)) return;
+      await loadIce();
       if (peers.has(listenerId)) return;
       const pc = new RTCPeerConnection(iceServers());
       peers.set(listenerId, pc);
@@ -151,7 +159,7 @@ const LiveBroadcast = (() => {
         const d = payload.data;
         if (d.type === 'offer') {
           djId = payload.from;
-          pc = new RTCPeerConnection(iceServers());
+          pc = new RTCPeerConnection(iceServers());  // nøklane er forhåndslasta av loadIce() ved modulstart
           pc.onicecandidate = e => { if (e.candidate) sigTo(djId, { type: 'ice', candidate: e.candidate }); };
           pc.onconnectionstatechange = () => onState && onState(pc.connectionState);
           pc.ontrack = e => {
