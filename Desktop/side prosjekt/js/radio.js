@@ -3812,11 +3812,16 @@ const Radio = (() => {
     const prev = _preOwnBroadcast;
     _preOwnBroadcast = null;
     if (!prev || !prev.wasPlaying) return;   // ingenting spelte før sendinga starta her
-    if (prev.r247Active && typeof Radio247 !== 'undefined' && Radio247.play) { Radio247.play(); return; }
-    if (prev.station && prev.station.url) {
-      currentStation = { ...prev.station };
-      _playUrl(currentStation.url, currentStation);
-    }
+    const resume = () => {
+      if (prev.r247Active && typeof Radio247 !== 'undefined' && Radio247.play) { Radio247.play(); return; }
+      if (prev.station && prev.station.url) {
+        currentStation = { ...prev.station };
+        _playUrl(currentStation.url, currentStation);
+      }
+    };
+    // Same outro-jingel som lyttarane får (exitLiveTakeover) — gjeld ALLE som speler live
+    // (eigar og gjester), brukarønske 2026-10-07. Jingel FØR rotasjonen går vidare.
+    _playLocalClip(_nextLiveOutro(), resume, LIVE_FADE_MS);
   }
 
   function enterLiveTakeover(presenterName, skipAnnouncement) {
