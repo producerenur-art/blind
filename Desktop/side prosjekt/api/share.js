@@ -204,6 +204,18 @@ module.exports = async (req, res) => {
         ? `<img class="media media-free" src="${esc(image)}" alt="${esc(fullTitle)}">`
         : `<img class="media${image === FALLBACK_IMG ? ' media-free' : ''}" src="${esc(image)}" alt="${esc(fullTitle)}">${media ? `<audio class="audio" controls playsinline preload="metadata" src="${esc(media)}"></audio>` : ''}`);
 
+  // Nedlasting for ALLE (også gjester): Supabase gir Content-Disposition: attachment med ?download=<filnamn>.
+  // Berre lyd/video frå vår eigen lagring (media har alt passert safeUrl-vertsfilteret).
+  const dlUrl = (media && (kind === 'audio' || kind === 'video')) ? (() => {
+    try {
+      const u = new URL(media);
+      const ext = ((u.pathname.match(/\.([a-z0-9]{2,4})$/i) || [])[1] || (kind === 'video' ? 'mp4' : 'mp3')).toLowerCase();
+      const base = (fullTitle || 'SiriusFM').replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'SiriusFM';
+      u.searchParams.set('download', base + '.' + ext);
+      return u.href;
+    } catch (_) { return null; }
+  })() : null;
+
   // JSON til inline-script: escape < så «</script>» aldri kan bryte ut av taggen.
   const jsonForScript = v => JSON.stringify(v).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
   const bgImage = image === FALLBACK_IMG ? '' : ogImg;
@@ -264,6 +276,8 @@ ${tags.join('\n')}
   .cta { display:inline-flex; align-items:center; gap:.5rem; text-decoration:none; color:#fff; font-weight:700; padding:.8rem 1.5rem; border-radius:999px;
          background:linear-gradient(135deg,#0ea5e9,var(--blueD)); border:1.5px solid var(--blue); box-shadow:0 0 22px rgba(125,211,252,.38), 0 8px 24px rgba(37,99,235,.35); }
   .cta:hover { filter:brightness(1.1); }
+  .ctas { display:flex; flex-wrap:wrap; gap:.7rem; justify-content:center; }
+  .cta-dl { background:rgba(125,211,252,.10); box-shadow:none; color:var(--text); }
   .foot { margin-top:1.2rem; font-size:.78rem; color:#6f8aa0; }
   a.plain { color:var(--blue); text-decoration:none; }
   /* Kommentarar */
@@ -326,7 +340,7 @@ ${tags.join('\n')}
       ${(kind === 'link' && extLink)
         ? `<a class="cta" href="${esc(extLink)}" target="_blank" rel="noopener">▶ Open link</a>
       <div class="foot"><a class="plain" href="${esc(profileUrl)}">See profile on SiriusFM</a></div>`
-        : `<a class="cta" href="${esc(profileUrl)}">▶ Open in SiriusFM</a>
+        : `<div class="ctas"><a class="cta" href="${esc(profileUrl)}">▶ Open in SiriusFM</a>${dlUrl ? `<a class="cta cta-dl" href="${esc(dlUrl)}" download rel="noopener">⬇ Download</a>` : ''}</div>
       <div class="foot">Shared via <a class="plain" href="${SITE}/">siriusfm.no</a></div>`}
     </div>
     <section class="cm" id="cm" aria-label="Comments">
