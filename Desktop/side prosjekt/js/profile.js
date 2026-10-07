@@ -1047,7 +1047,7 @@ const Profile = (() => {
           ${isOwner ? `<button class="btn-icon" title="${r.visibility === 'private' ? 'Private — only you see it. Click to make public (shown in Discover for everyone)' : 'Public — shown in Discover for everyone. Click to make private'}" onclick="event.stopPropagation();Profile.toggleTrackVisibility('${esc(r.id)}','${esc(username)}')">${r.visibility === 'private' ? '🔒' : '🌐'}</button>` : ''}
           ${isOwner ? `<button class="btn-icon" title="Share to the community wall" onclick="event.stopPropagation();Profile.shareTrackToCommunity('${esc(r.id)}','${esc(username)}')">📣</button>` : ''}
           ${isOwner ? `<button class="btn-icon" title="Share further" onclick="event.stopPropagation();Share.open('music','${esc(r.id)}')">🔗</button>` : ''}
-          ${isOwner ? `<button class="btn-icon music-credits-btn" title="Credits & buy links" onclick="event.stopPropagation();Profile.openSongCreditsModal('${esc(r.id)}')">${Icon('edit')}</button>` : ''}
+          ${isOwner ? `<button class="btn-icon music-credits-btn" title="Edit text, credits &amp; buy links" onclick="event.stopPropagation();Profile.openSongCreditsModal('${esc(r.id)}')">${Icon('edit')}</button>` : ''}
           ${isOwner ? `<label class="music-cover-upload" title="Change cover" onclick="event.stopPropagation()">${Icon('camera')}<input type="file" accept="image/*" style="display:none" onchange="Profile.uploadMusicCover('${esc(r.id)}',this.files[0])"></label>` : ''}
           ${isOwner ? `<label class="music-cover-upload" title="Replace audio file" onclick="event.stopPropagation()">${Icon('upload')}<input type="file" accept="audio/*" style="display:none" onchange="Profile.replaceMusicAudio('${esc(r.id)}',this.files[0])"></label>` : ''}
           ${isOwner ? `<button class="btn-icon btn-danger music-delete-btn" title="Delete this song" onclick="event.stopPropagation();Profile.deleteTrack('${esc(r.id)}','${esc(username)}')">${Icon('trash')}</button>` : ''}
@@ -1789,6 +1789,10 @@ const Profile = (() => {
           <label class="form-label">Title</label>
           <input class="form-input" id="sc-title" value="${esc(rec.name || rec.title || '')}" placeholder="Song title">
         </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-input" id="sc-desc" rows="3" maxlength="500" placeholder="Text shown under the song and on its share page">${esc(rec.description || '')}</textarea>
+        </div>
 
         <div class="mix-edit-section-title">Credits</div>
         <div class="form-group">
@@ -1861,6 +1865,8 @@ const Profile = (() => {
     const val = id => document.getElementById(id)?.value?.trim() || '';
     rec.name    = val('sc-title') || rec.name;
     rec.artist  = val('sc-artist');
+    rec.description = val('sc-desc');
+    rec.updatedAt = Date.now();
     rec.credits = {
       label:     val('sc-label'),
       producer:  val('sc-producer'),
@@ -2333,6 +2339,11 @@ const Profile = (() => {
     if (!rec) return;
     rec.visibility = rec.visibility === 'private' ? 'public' : 'private';
     await DB.put('music', rec);
+    // Hold Supabase i takt: offentleg → synleg for alle (Discover + eigen delingsside), privat → vekk.
+    if (window.MusicSync) {
+      if (rec.visibility === 'public' && rec.audioUrl) MusicSync.push(current.username, { id, ...rec });
+      else MusicSync.remove(current.username, id);
+    }
     App.toast(rec.visibility === 'private' ? '🔒 Song set to private (only you)' : '🌐 Song made public (everyone)', 'success');
     renderMusicPlayer(current, true);
     loadEditorMusic(current);
@@ -3466,6 +3477,7 @@ const Profile = (() => {
       rec.coverMediaId = id;
       url = await DB.getBlobUrl('media', id).catch(() => null);
     }
+    rec.updatedAt = Date.now();
     await DB.put('music', rec);
     // Speil oppdatert cover til Supabase (MusicSync filtrerer selv bort
     // ikke-offentlige URL-er som data:/blob:) så ANDRE besøkende ser det nye
@@ -3523,6 +3535,11 @@ const Profile = (() => {
       meta.mime = file.type; meta.fileSize = file.size; meta.duration = duration;
       await DB.storeFile('music', trackId, file, meta);
     }
+    if (shared) {
+      const fresh = await DB.get('music', trackId);
+      if (fresh) { fresh.updatedAt = Date.now(); await DB.put('music', fresh); }
+      if (fresh && fresh.visibility === 'public' && window.MusicSync) MusicSync.push(current.username, { id: trackId, ...fresh });
+    }
     App.toast('Audio file replaced! 🎵 Links, plays and comments are kept.', 'success');
     loadMusicCoverArts([await DB.get('music', trackId)]);
   }
@@ -3546,7 +3563,10 @@ const Profile = (() => {
         url = await _imageToDataUrl(file);
       }
       rec.coverUrl = url;
+      rec.updatedAt = Date.now();
       await DB.put('music', rec);
+      const _me = Auth.current();
+      if (_me && rec.audioUrl && rec.visibility === 'public' && window.MusicSync) MusicSync.push(_me.username, { id: trackId, ...rec });
       if (preview) preview.innerHTML = `<img src="${url}" alt="" style="max-width:120px;max-height:120px;border-radius:8px;display:block">`;
       App.toast('Cover saved! 🖼️', 'success');
     } catch (e) {

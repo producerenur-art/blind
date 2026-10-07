@@ -133,7 +133,16 @@ const Share = (() => {
     // platform, regardless of whether they bothered to set a cover image.
     if (!_isPublic(image)) image = _avatarUrl(username) || image;
 
-    const url = buildUrl({
+    // Eigne offentlege spor: KORT, levande lenke /s/<spor-id> — serveren slår opp sporet i Supabase, så
+    // bytte av cover/lyd/tekst slår inn med éi gong (ikkje innbakt i lenka). ?v= tvingar ny forhåndsvisning.
+    let shortUrl = null;
+    if (store === 'music' && rec.visibility !== 'private' && /^[a-z0-9_]{6,60}$/i.test(String(id)) && window.MusicSync && MusicSync._enabled()) {
+      try {
+        await MusicSync.push(username, { id, ...rec });
+        shortUrl = `${SITE}/s/${id}?v=${Math.floor(rec.updatedAt || rec.createdAt || Date.now()).toString(36)}`;
+      } catch (_) { shortUrl = null; }
+    }
+    const url = shortUrl || buildUrl({
       kind: isVideo ? 'video' : 'audio',
       title,
       artist: rec.artist || (cur && (cur.displayName || cur.username)) || '',

@@ -54,6 +54,10 @@ const MusicSync = (() => {
       coverUrl:   _httpUrl(track.coverUrl),
       isMix:      !!track.isMix,
       uploadedAt: track.uploadedAt || track.createdAt || Date.now(),
+      description: String(track.description || '').slice(0, 500),
+      updatedAt:  track.updatedAt || track.uploadedAt || track.createdAt || Date.now(),
+      // Profilbilde som reserve-forhåndsvisning (api/share.js) når sporet ikke har eget cover.
+      avatarUrl:  _httpUrl((typeof Auth !== 'undefined' && Auth.getUser && (Auth.getUser(username) || {}).avatarUrl) || null),
     };
   }
 

@@ -26,7 +26,7 @@ const FALLBACK_IMG = SITE + '/assets/og-cover.png?v=4';
 // site itself). Prevents the page from being abused to slap SiriusFM branding
 // on an arbitrary attacker-controlled image/video.
 function allowedHosts() {
-  const hosts = new Set(['www.siriusfm.no', 'siriusfm.no']);
+  const hosts = new Set(['www.siriusfm.no', 'siriusfm.no', 'qefdyxpyjwpohsmmmksf.supabase.co']);
   try {
     if (process.env.SUPABASE_URL) hosts.add(new URL(process.env.SUPABASE_URL).host);
   } catch (_) { /* ignore */ }
@@ -83,7 +83,24 @@ module.exports = async (req, res) => {
   let shareKey = String(d || '').slice(0, 180);   // nøkkel for kommentarar på delesida
   const slugM = /^[a-z0-9][a-z0-9-]{0,40}-([a-z0-9]{6})$/i.exec(d);
   const wwlM = /^wwl-(\d{1,6})$/i.exec(d);   // /what-went-live-<nr> (fast nummer, kolonna live_sets.wwl_no)
-  if (/^set_[a-z0-9]{6,40}$/i.test(d) || wwlM || slugM) {
+  // Kort levande lenke for ein brukar-opplasta song: /s/mus_<id> (tabellen music_tracks, speila av js/musicsync.js).
+  // Slår opp via den offentlege RPC-en list_music_tracks (same som Discover) — cover/lyd/tekst er alltid ferske.
+  const trkM = /^(?:mus|m)_[a-z0-9_]{6,60}$/i.test(d);
+  let trkRow = null;
+  if (trkM) {
+    try {
+      const base = process.env.SUPABASE_URL || 'https://qefdyxpyjwpohsmmmksf.supabase.co';
+      const anon = 'sb_publishable_JEV-NS9FGZ_KpSvQTPwlZg_LlyVy_eS';
+      const r = await fetch(`${base}/rest/v1/rpc/list_music_tracks`, { method: 'POST', headers: { apikey: anon, Authorization: `Bearer ${anon}`, 'Content-Type': 'application/json' }, body: '{}' });
+      const rows = r.ok ? await r.json() : [];
+      trkRow = (Array.isArray(rows) ? rows : []).find(x => x && x.id === d) || null;
+    } catch (_) { /* fall tilbake til generisk side */ }
+  }
+  if (trkM) {
+    p = trkRow
+      ? { k: 'audio', t: trkRow.title, a: trkRow.artist, i: trkRow.coverUrl || trkRow.avatarUrl, m: trkRow.audioUrl, mt: mimeFromUrl(trkRow.audioUrl), u: trkRow.username, dsc: trkRow.description }
+      : {};
+  } else if (/^set_[a-z0-9]{6,40}$/i.test(d) || wwlM || slugM) {
     isSet = true;
     p = {};
     try {
@@ -114,7 +131,8 @@ module.exports = async (req, res) => {
     try { const pl = new URL(p.l); if (pl.protocol === 'http:' || pl.protocol === 'https:') extLink = pl.href; } catch (_) { /* ignore */ }
   }
 
-  const desc = kind === 'image'
+  const dsc = (p.dsc && String(p.dsc).trim().replace(/\s+/g, ' ').slice(0, 200)) || '';
+  const desc = dsc ? dsc : kind === 'image'
     ? (artist ? `Made by ${artist} · SiriusFM` : 'Made in Blend Studio on SiriusFM.')
     : (kind === 'link'
         ? (artist ? `${artist} · Shared via SiriusFM` : 'Shared via SiriusFM — social platform for electronic music.')
