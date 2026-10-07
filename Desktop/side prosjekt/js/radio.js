@@ -548,7 +548,11 @@ const Radio = (() => {
     const ms = typeof fadeMs === 'number' ? fadeMs : FADE_MS;
     const audio = getAudio();
     if (!audio || !url) { onDone(); return; }
-    const prevVolume = audio.volume;
+    // Kjedede klipp (intro → namn): forrige klipp sin cleanup nullar audio.volume synkront FØR
+    // dette klippet startar, så audio.volume er 0 her og sendinga blei kopla på med volum 0
+    // (stille for nye lyttarar, funne 2026-10-07). 0 tel berre som «tidlegare volum» når brukaren
+    // sjølv har dempa / sett glidaren til 0 — elles bruk den valde styrken.
+    const prevVolume = audio.volume > 0 ? audio.volume : (muted ? 0 : volume);
     let finished = false, startGuard = null, endGuard = null;
     // Tregt nett: klippet skal aldri la radioen stå stille. Startar det ikkje innan 6 s (eller
     // heng det seinare), hopp over det og kople radioen til att.
