@@ -1183,7 +1183,7 @@ const Discover = (() => {
     if (!st || !a || !st.audio_url) return null;
     return ((a.currentSrc || a.src || '').indexOf(st.audio_url) !== -1) ? a : null;
   }
-  function _wwlTotal(st, a) { return (a && isFinite(a.duration) && a.duration > 0) ? a.duration : (Number(st.duration_sec) || 0); }
+  function _wwlTotal(st, a) { return (a && isFinite(a.duration) && a.duration > 0) ? a.duration : (Number(st._dur) || Number(st.duration_sec) || 0); }
   let _wwlBound = false;
   let _wwlDragging = false;   // brukaren held i spolelinja — tikk-funksjonen får ikkje flytte tommelen (iOS gir ikkje range-feltet fokus)
   function _wwlTick() {
@@ -1262,25 +1262,25 @@ const Discover = (() => {
           ${st.track_title ? `<div class="wwl-public-text">${_lcEsc(st.track_title)}</div>` : ''}
           <div class="wwl-seek" id="wwl-seek-${id}">
           <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlPreview('${id}', this.value)" onchange="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
-          <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st.duration_sec)}</span>
+          <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st._dur || st.duration_sec)}</span>
         </div>
           ${window.Social ? Social.commentsBlockHtml('wwl:' + st.id) : ''}
         </div>
       </div>`;
     }
     const art = st.cover_url ? `<img src="${_lcEsc(st.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="Discover.wwlZoom('${id}')">` : '<span style="font-size:2rem">🎧</span>';
-    const mins = st.duration_sec ? Math.round(st.duration_sec / 60) + ' min' : '';
+    const mins = (st._dur || st.duration_sec) ? _wwlClock(st._dur || st.duration_sec) : '';
     return `
       <div class="wwl-card" id="wwl-${id}">
         <div class="wwl-art">${art}</div>
         <div class="wwl-body">
           <div class="wwl-name">${_lcEsc(st.display_name || 'Live set')}</div>
           <div class="wwl-text">${_lcEsc(st.track_title || '')}</div>
-          <div class="wwl-meta">${_lcEsc(_wwlFmtDate(st.ended_at))}${mins ? ' · ' + mins : ''}${st.room === 'upload' ? ' · upload' : ''}</div>
+          <div class="wwl-meta">${_lcEsc(_wwlFmtDate(st.ended_at))}${mins ? ' · <span class="wwl-dur">' + mins + '</span>' : ''}${st.room === 'upload' ? ' · upload' : ''}</div>
           <div class="wwl-url" style="font-size:.75rem;margin:.15rem 0 .4rem;word-break:break-all"><a href="${_lcEsc(_wwlUrl(st))}" target="_blank" rel="noopener noreferrer" style="color:var(--text2)">${_lcEsc(_wwlUrl(st))}</a></div>
           <div class="wwl-seek" id="wwl-seek-${id}">
           <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlPreview('${id}', this.value)" onchange="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
-          <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st.duration_sec)}</span>
+          <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st._dur || st.duration_sec)}</span>
         </div>
           <div class="wwl-actions">
             <button class="btn btn-primary btn-sm" onclick="Discover.wwlPlay('${id}')">▶ Play</button>
@@ -1302,6 +1302,30 @@ const Discover = (() => {
         </div>
       </div>`;
   }
+  // duration_sec i databasen kan vera feil (t.d. etter «Replace audio» eller gamal måling). Les den ekte lengda frå
+  // lydfila (berre metadata, ingen full nedlasting) og vis den i kortet. WebM frå live-opptak gir Infinity → behald DB-verdien.
+  const _wwlDurCache = {};
+  function _wwlApplyDur(st, d) {
+    st._dur = d;
+    const card = document.getElementById('wwl-' + st.id);
+    const el = card && card.querySelector('.wwl-dur'); if (el) el.textContent = _wwlClock(d);
+    _wwlTick();
+  }
+  function _wwlProbeDurations(sets) {
+    (sets || []).forEach(st => {
+      if (!st || !st.audio_url) return;
+      if (_wwlDurCache[st.audio_url]) { _wwlApplyDur(st, _wwlDurCache[st.audio_url]); return; }
+      try {
+        const a = new Audio(); a.preload = 'metadata'; a.muted = true;
+        a.addEventListener('loadedmetadata', () => {
+          const d = a.duration;
+          if (isFinite(d) && d > 0 && Math.abs(d - (Number(st.duration_sec) || 0)) > 1) { _wwlDurCache[st.audio_url] = d; _wwlApplyDur(st, d); }
+          a.removeAttribute('src'); a.load();
+        }, { once: true });
+        a.src = st.audio_url;
+      } catch (_) {}
+    });
+  }
   async function _loadWhatWentLive() {
     const box = document.getElementById('disc-wwl');
     if (!box || typeof LiveSets === 'undefined' || !LiveSets.list) return;
@@ -1320,6 +1344,7 @@ const Discover = (() => {
       <div class="wwl-list">${sets.slice(0, adm ? 200 : 4).map(_wwlCard).join('')}</div>
       <div id="wwl-trash-box">${_wwlTrashHtml()}</div>`;
     _wwlBindAudio(); _wwlTick();
+    _wwlProbeDurations(sets);
   }
   function wwlPlay(id) {
     const st = _wwlSets[id]; if (!st || typeof Player === 'undefined') return;
