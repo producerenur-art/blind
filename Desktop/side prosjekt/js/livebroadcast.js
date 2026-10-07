@@ -59,14 +59,37 @@ const LiveBroadcast = (() => {
     }
     return sdp.replace(m[0], m[0] + '\r\na=fmtp:' + pt + ' ' + want);
   }
+  // Lyd har førsteprioritet; video (stillbilde/kamera) strupast hardt så han aldri tek båndbredde
+  // eller koding-CPU frå lyden — éin koder per lytter i mesh, så video er den dyre delen.
   async function setAudioBitrate(pc, bps) {
-    try {
-      for (const sd of pc.getSenders()) {
-        if (!sd.track || sd.track.kind !== 'audio') continue;
+    for (const sd of pc.getSenders()) {
+      try {
+        if (!sd.track) continue;
         const pr = sd.getParameters(); pr.encodings = pr.encodings && pr.encodings.length ? pr.encodings : [{}];
-        pr.encodings[0].maxBitrate = bps; await sd.setParameters(pr);
-      }
-    } catch (e) {}
+        const e0 = pr.encodings[0];
+        if (sd.track.kind === 'audio') { e0.maxBitrate = bps; e0.priority = 'high'; e0.networkPriority = 'high'; }
+        else { e0.maxBitrate = 600000; e0.maxFramerate = 15; e0.priority = 'very-low'; e0.networkPriority = 'very-low'; }
+        await sd.setParameters(pr);
+      } catch (e) {}
+    }
+  }
+
+  // Adaptiv jitter-buffer på lytter: måler kor mykje lyd nettlesaren må dikte opp (concealedSamples) og
+  // aukar bufferet stegvis (maks 3 s) når det hakkar — sunt nett beheld låg forsinking.
+  function _adaptJitter(pc, receiver) {
+    let prevTotal = 0, prevConc = 0, target = 800;
+    const timer = setInterval(async () => {
+      if (pc.connectionState === 'closed' || pc.connectionState === 'failed') { clearInterval(timer); return; }
+      try {
+        const stats = await pc.getStats(); let tot = 0, conc = 0;
+        stats.forEach(r => { if (r.type === 'inbound-rtp' && r.kind === 'audio') { tot = r.totalSamplesReceived || 0; conc = r.concealedSamples || 0; } });
+        const dT = tot - prevTotal, dC = conc - prevConc; prevTotal = tot; prevConc = conc;
+        if (dT > 0 && dC / dT > 0.03 && target < 3000) {
+          target = Math.min(3000, target + 400);
+          receiver.jitterBufferTarget = target; receiver.playoutDelayHint = target / 1000;
+        }
+      } catch (e) {}
+    }, 4000);
   }
 
   function supaClient() {
@@ -103,7 +126,13 @@ const LiveBroadcast = (() => {
       pc.onicecandidate = e => { if (e.candidate) sigTo(listenerId, { type: 'ice', candidate: e.candidate }); };
       pc.onconnectionstatechange = () => {
         log('Listener ' + listenerId + ': ' + pc.connectionState);
-        if (['failed', 'closed', 'disconnected'].includes(pc.connectionState)) { pc.close(); peers.delete(listenerId); }
+        // 'disconnected' er ofte forbigåande (nettverksglipp som løyser seg på sekund). Å lukke med ein
+        // gong gav høyrbart brot + full ny oppkopling — gje 8 s ro, lukk berre om det ikkje kjem tilbake.
+        clearTimeout(pc._dcTimer);
+        if (['failed', 'closed'].includes(pc.connectionState)) { pc.close(); peers.delete(listenerId); }
+        else if (pc.connectionState === 'disconnected') {
+          pc._dcTimer = setTimeout(() => { if (pc.connectionState !== 'connected') { try { pc.close(); } catch (e) {} if (peers.get(listenerId) === pc) peers.delete(listenerId); count(); } }, 8000);
+        }
         count();
       };
       const offer = await pc.createOffer();
@@ -161,10 +190,17 @@ const LiveBroadcast = (() => {
           djId = payload.from;
           pc = new RTCPeerConnection(iceServers());  // nøklane er forhåndslasta av loadIce() ved modulstart
           pc.onicecandidate = e => { if (e.candidate) sigTo(djId, { type: 'ice', candidate: e.candidate }); };
-          pc.onconnectionstatechange = () => onState && onState(pc.connectionState);
+          // 'disconnected' kan hela av seg sjølv — gje 8 s før vi melder det vidare (og dermed byggjer ny lytter).
+          pc.onconnectionstatechange = () => {
+            clearTimeout(pc._dcTimer);
+            const s = pc.connectionState;
+            if (s === 'disconnected') { const me = pc; pc._dcTimer = setTimeout(() => { if (me === pc && me.connectionState !== 'connected') onState && onState('disconnected'); }, 8000); }
+            else onState && onState(s);
+          };
           pc.ontrack = e => {
             // Mer jitter-buffer på lytter-sida: mobilnett svingar, litt ekstra forsinking gir jamn lyd.
             try { if (e.receiver) { e.receiver.jitterBufferTarget = 800; e.receiver.playoutDelayHint = 0.8; } } catch (err) {}
+            if (e.track && e.track.kind === 'audio') _adaptJitter(pc, e.receiver);
             onTrack && onTrack(e.streams[0]);
           };
           try {

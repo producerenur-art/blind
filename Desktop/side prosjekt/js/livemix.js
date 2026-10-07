@@ -629,7 +629,7 @@ const LiveMix = (() => {
       _bc.stream = await navigator.mediaDevices.getUserMedia({ audio: {
         deviceId: { exact: sel.value }, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2,
       } });
-      _bc.ctx = new (window.AudioContext || window.webkitAudioContext)(); await _bc.ctx.resume();
+      _bc.ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback', sampleRate: 48000 }); await _bc.ctx.resume();   // stor buffer + Opus-rate: ingen omsampling, tåler hakk i hovudtråden
       const src = _bc.ctx.createMediaStreamSource(_bc.stream), sp = _bc.ctx.createChannelSplitter(2);
       _bc.analL = _bc.ctx.createAnalyser(); _bc.analR = _bc.ctx.createAnalyser(); _bc.analL.fftSize = _bc.analR.fftSize = 1024;
       src.connect(sp); sp.connect(_bc.analL, 0); sp.connect(_bc.analR, 1);

@@ -76,7 +76,7 @@ const Player = (() => {
         if (!_audioCtx) {
           const Ctx = window.AudioContext || window.webkitAudioContext;
           if (!Ctx) return;
-          _audioCtx  = new Ctx();
+          _audioCtx  = new Ctx({ latencyHint: 'playback' });   // stor utbuffer: visualizer/video i hovudtråden skal ikkje gi hakk i lyden
           _analyser  = _audioCtx.createAnalyser();
           _analyser.fftSize = 512;
           _analyser.smoothingTimeConstant = 0.8;

@@ -1428,7 +1428,7 @@ const Radio = (() => {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return;
     try {
-      audioCtx  = new Ctx();
+      audioCtx  = new Ctx({ latencyHint: 'playback' });   // stor utbuffer: visualizer/video i hovudtråden skal ikkje gi hakk i lyden
       analyser  = audioCtx.createAnalyser();
       analyser.fftSize = 512;
       analyser.smoothingTimeConstant = 0.8;

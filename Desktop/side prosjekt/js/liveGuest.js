@@ -416,7 +416,7 @@ const LiveGuest = (() => {
       _g.stream = await navigator.mediaDevices.getUserMedia({ audio: {
         deviceId: { exact: sel.value }, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2,
       } });
-      _g.ctx = new (window.AudioContext || window.webkitAudioContext)(); await _g.ctx.resume();
+      _g.ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback', sampleRate: 48000 }); await _g.ctx.resume();
       const src = _g.ctx.createMediaStreamSource(_g.stream), sp = _g.ctx.createChannelSplitter(2);
       _g.analL = _g.ctx.createAnalyser(); _g.analR = _g.ctx.createAnalyser(); _g.analL.fftSize = _g.analR.fftSize = 1024;
       src.connect(sp); sp.connect(_g.analL, 0); sp.connect(_g.analR, 1);
