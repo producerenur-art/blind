@@ -11551,3 +11551,14 @@ body.community-psy #bg-img-wrap, body.community-psy #bg-particles-canvas { visib
    Blir synleg og står stille medan musa er over han eller ein skriv i han (sjå js/edgeAutohide.js). */
 #fc-dock, #fc-launch { transition: opacity 0.45s ease, transform 0.45s ease; }
 body.edge-idle #fc-dock, body.edge-idle #fc-launch { opacity: 0; transform: translateY(24px); pointer-events: none; }
+
+/* Gjestenamn-felt i kommentarkomposer: SiriusFM-blå bakgrunn (som Send-knappen), svart tekst */
+.sc-cmt-guestname {
+  background: var(--accentG);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-weight: 600;
+}
+.sc-cmt-guestname::placeholder { color: rgba(0,0,0,0.65); }
