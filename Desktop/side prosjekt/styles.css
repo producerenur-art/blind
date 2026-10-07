@@ -11481,6 +11481,12 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 #disc-wwl .wwl-seek input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #38bdf8; border: 2px solid #e0f2fe; cursor: pointer; }
 #disc-wwl .wwl-seek input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #38bdf8; border: 2px solid #e0f2fe; cursor: pointer; }
 #disc-wwl .wwl-seek input[type=range]:disabled::-webkit-slider-thumb { background: #7dd3fc; opacity: 0.6; }
+#disc-wwl .wwl-seek input[type=range] { touch-action: none; }
+@media (pointer: coarse) {
+  #disc-wwl .wwl-seek input[type=range] { height: 10px; margin: 8px 0; }
+  #disc-wwl .wwl-seek input[type=range]::-webkit-slider-thumb { width: 26px; height: 26px; }
+  #disc-wwl .wwl-seek input[type=range]::-moz-range-thumb { width: 24px; height: 24px; }
+}
 #disc-wwl .wwl-seek input[type=range]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(56,189,248,0.3); }
 
 /* DM: alltid synlege Edit/Replace/Delete, inline redigering, lydspor */

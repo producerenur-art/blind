@@ -1185,6 +1185,7 @@ const Discover = (() => {
   }
   function _wwlTotal(st, a) { return (a && isFinite(a.duration) && a.duration > 0) ? a.duration : (Number(st.duration_sec) || 0); }
   let _wwlBound = false;
+  let _wwlDragging = false;   // brukaren held i spolelinja — tikk-funksjonen får ikkje flytte tommelen (iOS gir ikkje range-feltet fokus)
   function _wwlTick() {
     Object.keys(_wwlSets).forEach(id => {
       const st = _wwlSets[id], a = _wwlAudioFor(id);
@@ -1193,8 +1194,8 @@ const Discover = (() => {
       const total = _wwlTotal(st, a);
       if (!a) { range.disabled = true; range.value = 0; lab.textContent = '0:00 / ' + _wwlClock(total); return; }
       range.disabled = !(total > 0);
-      if (total > 0 && document.activeElement !== range) range.value = Math.min(1000, Math.round(a.currentTime / total * 1000));
-      lab.textContent = _wwlClock(a.currentTime) + ' / ' + _wwlClock(total);
+      if (total > 0 && !_wwlDragging && document.activeElement !== range) range.value = Math.min(1000, Math.round(a.currentTime / total * 1000));
+      if (!_wwlDragging) lab.textContent = _wwlClock(a.currentTime) + ' / ' + _wwlClock(total);
     });
   }
   function _wwlBindAudio() {
@@ -1202,11 +1203,39 @@ const Discover = (() => {
     const a = document.getElementById('audio-engine'); if (!a) return;
     _wwlBound = true;
     ['timeupdate', 'durationchange', 'loadedmetadata', 'pause', 'play', 'emptied'].forEach(ev => a.addEventListener(ev, _wwlTick));
+    // Dra i spolelinja: marker at brukaren held (pointer/touch/mus), slepp ved loslating — gjeld alle .wwl-seek-felt, også nyrenderte.
+    const isSeek = e => !!(e.target && e.target.closest && e.target.closest('.wwl-seek'));
+    // Eigen peikar-dra-støtte (mobil: nokre nettlesarar drar ikkje <input type=range> av seg sjølv, eller scroll stjel draget).
+    // Same verdi som det innebygde feltet gir, så begge kan gå side om side utan å kollidere.
+    let _act = null;
+    const setFromX = (inp, x) => { const r = inp.getBoundingClientRect(); if (!(r.width > 0)) return; inp.value = Math.round(Math.max(0, Math.min(1, (x - r.left) / r.width)) * 1000); const id = String((inp.closest('.wwl-seek') || {}).id || '').replace(/^wwl-seek-/, ''); wwlPreview(id, inp.value); return id; };
+    document.addEventListener('pointerdown', e => {
+      const inp = e.target && e.target.closest && e.target.closest('.wwl-seek input[type=range]');
+      if (!inp || inp.disabled || e.button > 0) return;
+      _act = inp; _wwlDragging = true; try { inp.setPointerCapture(e.pointerId); } catch (_) {}
+      setFromX(inp, e.clientX);
+    }, true);
+    document.addEventListener('pointermove', e => { if (_act) setFromX(_act, e.clientX); }, true);
+    const endAct = e => { if (!_act) return; const inp = _act; _act = null; const id = setFromX(inp, e.clientX != null ? e.clientX : inp.getBoundingClientRect().left); if (id && e.type !== 'pointercancel') wwlSeek(id, inp.value); else { _wwlDragging = false; _wwlTick(); } };
+    document.addEventListener('pointerup', endAct, true);
+    document.addEventListener('pointercancel', endAct, true);
+    ['pointerdown', 'touchstart', 'mousedown'].forEach(ev => document.addEventListener(ev, e => { if (isSeek(e)) _wwlDragging = true; }, { capture: true, passive: true }));
+    // «change» (hoppet) kjem ETTER pointerup — vent litt, så tikken ikkje flyttar tommelen attende før hoppet er gjort (wwlSeek slepp òg flagget).
+    ['pointerup', 'pointercancel', 'touchend', 'touchcancel', 'mouseup'].forEach(ev => document.addEventListener(ev, () => { if (_wwlDragging) setTimeout(() => { _wwlDragging = false; _wwlTick(); }, 500); }, { capture: true, passive: true }));
+    window.addEventListener('blur', () => { _wwlDragging = false; });
+  }
+  // Under dragging: berre vis tida (ingen hopp i lyden, så mobil ikkje buffrar på kvar pikselflytt). Hoppet skjer ved slepp (change).
+  function wwlPreview(id, val) {
+    const st = _wwlSets[id], a = _wwlAudioFor(id); if (!st || !a) return;
+    const total = _wwlTotal(st, a); if (!(total > 0)) return;
+    const lab = document.getElementById('wwl-time-' + id);
+    if (lab) lab.textContent = _wwlClock((Number(val) / 1000) * total) + ' / ' + _wwlClock(total);
   }
   function wwlSeek(id, val) {
     const st = _wwlSets[id], a = _wwlAudioFor(id); if (!st || !a) return;
     const total = _wwlTotal(st, a); if (!(total > 0)) return;
     try { a.currentTime = (Number(val) / 1000) * total; } catch (_) {}
+    _wwlDragging = false;
     _wwlTick();
   }
   function _wwlFmtDate(iso) {
@@ -1232,7 +1261,7 @@ const Discover = (() => {
           </div>
           ${st.track_title ? `<div class="wwl-public-text">${_lcEsc(st.track_title)}</div>` : ''}
           <div class="wwl-seek" id="wwl-seek-${id}">
-          <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
+          <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlPreview('${id}', this.value)" onchange="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
           <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st.duration_sec)}</span>
         </div>
           ${window.Social ? Social.commentsBlockHtml('wwl:' + st.id) : ''}
@@ -1250,7 +1279,7 @@ const Discover = (() => {
           <div class="wwl-meta">${_lcEsc(_wwlFmtDate(st.ended_at))}${mins ? ' · ' + mins : ''}${st.room === 'upload' ? ' · upload' : ''}</div>
           <div class="wwl-url" style="font-size:.75rem;margin:.15rem 0 .4rem;word-break:break-all"><a href="${_lcEsc(_wwlUrl(st))}" target="_blank" rel="noopener noreferrer" style="color:var(--text2)">${_lcEsc(_wwlUrl(st))}</a></div>
           <div class="wwl-seek" id="wwl-seek-${id}">
-          <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
+          <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlPreview('${id}', this.value)" onchange="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
           <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st.duration_sec)}</span>
         </div>
           <div class="wwl-actions">
@@ -4469,7 +4498,7 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlUndo, wwlTrashForget, wwlEdit, wwlSave, wwlReplaceAudio, wwlUploadToggle, wwlUploadSubmit, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek,
+    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlUndo, wwlTrashForget, wwlEdit, wwlSave, wwlReplaceAudio, wwlUploadToggle, wwlUploadSubmit, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek, wwlPreview,
     showLemonchillAbout,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,
