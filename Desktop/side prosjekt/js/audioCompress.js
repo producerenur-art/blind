@@ -65,9 +65,9 @@ const AudioCompress = (() => {
   }
 
   // ── Resampler (Catmull-Rom, straumande) til 48 kHz ──
-  function makeResampler(inRate, ch) {
-    if (inRate === OUT_RATE) return { push: a => a, flush: () => null };
-    const ratio = inRate / OUT_RATE; let pos = 0, base = 0, bufs = Array.from({ length: ch }, () => new Float32Array(0));
+  function makeResampler(inRate, ch, outRate = OUT_RATE) {
+    if (inRate === outRate) return { push: a => a, flush: () => null };
+    const ratio = inRate / outRate; let pos = 0, base = 0, bufs = Array.from({ length: ch }, () => new Float32Array(0));
     function run(chunk) {
       const comb = bufs.map((b, c) => { const x = new Float32Array(b.length + chunk[c].length); x.set(b); x.set(chunk[c], b.length); return x; });
       const last = base + comb[0].length - 1, n = Math.max(0, Math.ceil((last - 2 - pos) / ratio) + 1);
@@ -145,6 +145,49 @@ const AudioCompress = (() => {
     return new File(parts, name, { type: 'audio/ogg' });
   }
 
-  return { toOpusOgg };
+  // MP3 (lamejs) — spelast overalt, òg på iPhone/iPad der Ogg/Opus og webm ikkje fungerer.
+  const LAME_URL = 'https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js';
+  function loadLame() {
+    if (window.lamejs) return Promise.resolve(window.lamejs);
+    return new Promise((res, rej) => {
+      const s = document.createElement('script'); s.src = LAME_URL;
+      s.onload = () => window.lamejs ? res(window.lamejs) : rej(new Error('lamejs missing'));
+      s.onerror = () => rej(new Error('Could not load the MP3 encoder'));
+      document.head.appendChild(s);
+    });
+  }
+  /** Pakk `file` til MP3-File under maxBytes (CBR 64–128 kbps). onProgress(0..1). */
+  async function toMp3(file, { maxBytes = 45e6, onProgress } = {}) {
+    const lame = await loadLame();
+    const src = (await openWav(file)) || (await openDecoded(file));
+    const duration = src.totalFrames / src.sampleRate;
+    const fit = Math.floor(maxBytes * 8 * 0.97 / Math.max(1, duration) / 1000);
+    const kbps = [128, 112, 96, 80, 64, 48].find(b => b <= fit) || 48;
+    const ch = kbps < 80 ? 1 : src.channels, rate = [32000, 44100, 48000].includes(src.sampleRate) ? src.sampleRate : 44100;
+    const enc = new lame.Mp3Encoder(ch, rate, kbps), rs = makeResampler(src.sampleRate, src.channels, rate), parts = [];
+    const toI16 = f => { const o = new Int16Array(f.length); for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); o[i] = v < 0 ? v * 32768 : v * 32767; } return o; };
+    const feed = planar => {
+      const n = planar[0].length; if (!n) return;
+      const L = toI16(planar[0]), R = planar[1] ? toI16(planar[1]) : L;
+      let mono = L; if (ch === 1 && planar[1]) { mono = new Int16Array(n); for (let i = 0; i < n; i++) mono[i] = (L[i] + R[i]) >> 1; }
+      for (let s = 0; s < n; s += 1152 * 40) {
+        const e = Math.min(n, s + 1152 * 40);
+        const out = ch === 1 ? enc.encodeBuffer(mono.subarray(s, e)) : enc.encodeBuffer(L.subarray(s, e), R.subarray(s, e));
+        if (out.length) parts.push(new Uint8Array(out));
+      }
+    };
+    const READ = 1 << 18;
+    for (let start = 0, i = 0; start < src.totalFrames; start += READ, i++) {
+      const chunk = await src.read(start, READ); if (!chunk) break;
+      feed(rs.push(chunk));
+      if (onProgress) onProgress(Math.min(1, (start + READ) / src.totalFrames));
+      if (i % 4 === 0) await new Promise(r => setTimeout(r, 0));   // la nettlesaren puste
+    }
+    const tail = rs.flush(); if (tail) feed(tail);
+    const end = enc.flush(); if (end.length) parts.push(new Uint8Array(end));
+    return new File(parts, (file.name || 'audio').replace(/\.[^.]+$/, '') + '.mp3', { type: 'audio/mpeg' });
+  }
+
+  return { toOpusOgg, toMp3 };
 })();
 if (typeof window !== 'undefined') window.AudioCompress = AudioCompress;

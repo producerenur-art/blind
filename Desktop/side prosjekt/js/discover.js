@@ -1472,7 +1472,10 @@ const Discover = (() => {
       if (f.size > 45e6) {
         if (typeof AudioCompress === 'undefined') throw new Error('File is over 50 MB and compression is unavailable');
         wC = 0.7; _wwlProg('Compressing ' + Math.round(f.size / 1e6) + ' MB audio', 0);
-        up = await AudioCompress.toOpusOgg(f, { maxBytes: 45e6, onProgress: p => _wwlProg('Compressing ' + Math.round(f.size / 1e6) + ' MB audio', p * wC) });
+        const prog = p => _wwlProg('Compressing ' + Math.round(f.size / 1e6) + ' MB audio', p * wC);
+        // MP3 først: spelast òg på iPhone (Ogg/Opus gjer det ikkje). Opus berre som nødløysing.
+        try { up = await AudioCompress.toMp3(f, { maxBytes: 45e6, onProgress: prog }); }
+        catch (e1) { console.warn('MP3 compress failed, falling back to Opus', e1); up = await AudioCompress.toOpusOgg(f, { maxBytes: 45e6, onProgress: prog }); }
         if (up.size > 49e6) throw new Error('Still too large after compression (' + Math.round(up.size / 1e6) + ' MB)');
       }
       _wwlProg('Uploading ' + Math.round(up.size / 1e6) + ' MB', wC);

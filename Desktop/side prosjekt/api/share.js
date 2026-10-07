@@ -58,6 +58,12 @@ function decodePayload(d) {
   } catch (_) { return null; }
 }
 
+// Riktig MIME ut frå filending (live_sets kan vera .webm, .ogg, .m4a eller .mp3). Feil type får iOS til å nekte avspeling.
+function mimeFromUrl(u) {
+  const e = (String(u || '').split('?')[0].match(/\.([a-z0-9]{2,4})$/i) || [])[1];
+  return ({ mp3: 'audio/mpeg', m4a: 'audio/mp4', mp4: 'audio/mp4', aac: 'audio/aac', ogg: 'audio/ogg', oga: 'audio/ogg', opus: 'audio/ogg', webm: 'audio/webm', wav: 'audio/wav' })[String(e || '').toLowerCase()] || '';
+}
+
 module.exports = async (req, res) => {
   if (req.query && req.query.cover) return require('./_cover')(req, res);   // /api/share?cover=<url> → 1200x630 JPEG
   const hosts = allowedHosts();
@@ -89,7 +95,7 @@ module.exports = async (req, res) => {
       const row = rows && rows[0];
       if (!row && slugM && !wwlM) { isSet = false; p = decodePayload(d) || {}; }   // slug-liknande men ikkje eit sett → gammal nyttelast-lenke
       if (row && row.id) shareKey = row.id;
-      if (row) p = { k: 'audio', t: row.display_name, a: row.track_title, i: row.cover_url, m: row.audio_url, mt: 'audio/webm' };
+      if (row) p = { k: 'audio', t: row.display_name, a: row.track_title, i: row.cover_url, m: row.audio_url, mt: mimeFromUrl(row.audio_url) };
     } catch (_) { /* fall tilbake til generisk side */ }
   } else {
     p = decodePayload(d) || {};
@@ -178,7 +184,7 @@ module.exports = async (req, res) => {
     ? `<video class="media" controls playsinline poster="${esc(image)}" preload="metadata"><source src="${esc(media)}" type="${esc(mime)}"></video>`
     : (kind === 'image'
         ? `<img class="media media-free" src="${esc(image)}" alt="${esc(fullTitle)}">`
-        : `<img class="media${image === FALLBACK_IMG ? ' media-free' : ''}" src="${esc(image)}" alt="${esc(fullTitle)}">${media ? `<audio class="audio" controls preload="metadata"><source src="${esc(media)}" type="${esc(mime)}"></audio>` : ''}`);
+        : `<img class="media${image === FALLBACK_IMG ? ' media-free' : ''}" src="${esc(image)}" alt="${esc(fullTitle)}">${media ? `<audio class="audio" controls playsinline preload="metadata" src="${esc(media)}"></audio>` : ''}`);
 
   // JSON til inline-script: escape < så «</script>» aldri kan bryte ut av taggen.
   const jsonForScript = v => JSON.stringify(v).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
@@ -370,6 +376,22 @@ ${tags.join('\n')}
         }));
       } catch (e) {}
     }
+    // Opptak frå nettlesaren (webm/ogg) manglar lengde i fila → Infinity / 00:00 på mobil. Hopp til slutten
+    // éin gong så reknar nettlesaren ut lengda, og tilbake til start.
+    au.addEventListener('loadedmetadata', function () {
+      if (isFinite(au.duration)) return;
+      var back = function () { au.removeEventListener('timeupdate', back); try { au.currentTime = 0; } catch (e) {} };
+      au.addEventListener('timeupdate', back);
+      try { au.currentTime = 1e101; } catch (e) { au.removeEventListener('timeupdate', back); }
+    });
+    // Formatet kan ikkje spelast av denne nettlesaren (t.d. Ogg/Opus på iPhone): seie frå i staden for ein død knapp.
+    au.addEventListener('error', function () {
+      if (document.getElementById('au-err')) return;
+      var m = document.createElement('p'); m.id = 'au-err';
+      m.style.cssText = 'margin:.6rem 0 0;font-size:.85rem;color:#fca5a5;text-align:center';
+      m.textContent = 'This recording uses a format your device cannot play here. Tap “Open in SiriusFM” instead.';
+      au.parentNode.insertBefore(m, au.nextSibling);
+    });
     addEventListener('pagehide', save);
     document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') save(); });
   })();
