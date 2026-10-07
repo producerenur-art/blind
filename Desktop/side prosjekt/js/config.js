@@ -45,6 +45,15 @@ const CONFIG = {
     catch (_) { return false; }
   },
 
+  // Fri live-sending UTAN admin-rettar (2026-10-07): desse kontoane kan gå live når dei vil —
+  // ingen booking, ingen godkjenning frå eigar, ingen tidsvindauge (js/livemix.js canGoLive()).
+  // Får IKKJE moderering/rediger-rett (det er ADMIN_EMAILS). Samanlikning er små bokstavar/trimma.
+  FREE_LIVE_EMAILS: ['shinichizen@gmail.com'],
+  isFreeLiveEmail(user) {
+    try { return !!user && this.FREE_LIVE_EMAILS.includes(String(user.email || '').toLowerCase().trim()); }
+    catch (_) { return false; }
+  },
+
   // Klarerte gjeste-DJ-e-postar (js/liveGuest.js «Søk om å gå live»): desse hoppar
   // over eigarens godkjenning HELT AUTOMATISK, men må likevel oppgi eit konkret
   // tidspunkt (kan ikke la det stå tomt/«avtales nærmere» slik andre kan).

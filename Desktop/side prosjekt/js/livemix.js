@@ -228,7 +228,7 @@ const LiveMix = (() => {
   // Bruker den delte modulen js/livebroadcast.js (WebRTC + Supabase Realtime
   // som signaling). State er modul-scopet så sendingen/lyden overlever at
   // modalen lukkes (App.closeModal() skjuler bare overlayet, tømmer ikke DOM).
-  const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null, devBypass: false, ownerBypass: false,
+  const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null, devBypass: false, ownerBypass: false, freeLive: false,
     visual: 'image', coverUrl: '', coverImg: null, canvas: null, canvasRaf: null, camStream: null, outStream: null, presenterName: '', trackTitle: '', linkUrl: '', heartbeatTimer: null,
     listening: false, ended: false, permGranted: false };
   let _lnReconnecting = false;
@@ -334,7 +334,8 @@ const LiveMix = (() => {
     const active = cur ? _activeBooking(cur) : null;
     const devBypass = _isLocalDev();
     const owner = _isOwner(cur);
-    return { user: cur, active, next: cur ? _nextBooking(cur) : null, devBypass, owner, ok: !!active || devBypass || owner };
+    const freeLive = typeof CONFIG !== 'undefined' && !!CONFIG.isFreeLiveEmail && CONFIG.isFreeLiveEmail(cur);
+    return { user: cur, active, next: cur ? _nextBooking(cur) : null, devBypass, owner, freeLive, ok: !!active || devBypass || owner || freeLive };
   }
 
   function _esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
@@ -364,8 +365,9 @@ const LiveMix = (() => {
         return;
       }
       _bc.activeBooking = gate.active;                 // null ved localhost-/eier-bypass
+      _bc.freeLive = !!gate.freeLive && !gate.owner;
       _bc.devBypass = gate.devBypass && !gate.active;  // vis «lokal test»-merke da
-      _bc.ownerBypass = gate.owner && !gate.active && !gate.devBypass; // «eier»-merke da
+      _bc.ownerBypass = (gate.owner || gate.freeLive) && !gate.active && !gate.devBypass; // «eier»-merke da
     }
     _renderDJ();
   }
@@ -411,7 +413,7 @@ const LiveMix = (() => {
         ${_bc.activeBooking
           ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(34,197,94,0.12);color:#22c55e;margin:0 0 1rem">${_I('clock')} Active time: ${_bc.activeBooking.slot ? _fmtDateTime(_bc.activeBooking.slot) : 'to be scheduled'}${_bc.activeBooking.test ? ' · TEST' : ''}</div>`
           : (_bc.devBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">🧪 Local test — booking gate bypassed</div>`
-              : (_bc.ownerBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">${_I('radio')} Owner — broadcasting without booking</div>` : ''))}
+              : (_bc.ownerBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">${_I('radio')} ${_bc.freeLive ? 'Free broadcaster' : 'Owner'} — broadcasting without booking</div>` : ''))}
         <label style="${lbl}">Your artist/presenter name</label>
         <input id="bc-presenter" value="${_esc(_bc.presenterName || '')}" placeholder="Your artist name" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
         <p style="font-size:0.74rem;color:var(--text3);margin:-0.55rem 0 0.9rem">Shown to ALL visitors on the site as "with {your name}" while you're live — they get automatically switched over from their station to your broadcast.</p>

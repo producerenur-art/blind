@@ -128,7 +128,7 @@ const BroadcastSchedule = (() => {
     const cur = me();
     if (cur && user && cur.username === user.username && window.LiveMix && LiveMix.canGoLive) {
       const g = LiveMix.canGoLive();
-      if (g.devBypass || g.owner) return true;
+      if (g.devBypass || g.owner || g.freeLive) return true;
     }
     return false;
   }
@@ -374,6 +374,7 @@ const BroadcastSchedule = (() => {
     if (!window.LiveMix || !LiveMix.canGoLive) return '';
     const g = LiveMix.canGoLive();
     const wrap = (bg, col, html) => `<div style="background:${bg};border:1px solid ${col}55;border-radius:12px;padding:0.7rem 0.9rem;font-size:0.85rem;color:var(--text);margin:0 0 1rem">${html}</div>`;
+    if (g.freeLive && !g.owner) return wrap('rgba(34,197,94,0.1)', '#22c55e', `${_I('check')} You can go live any time — no booking needed.`);
     if (g.owner)     return wrap('rgba(34,197,94,0.1)', '#22c55e', `${_I('check')} You're the station owner — you can go live without booking.`);
     if (g.active)    return wrap('rgba(34,197,94,0.1)', '#22c55e', `${_I('check')} Active Live Mix time found — your broadcast goes live now.`);
     if (g.devBypass) return wrap('rgba(245,158,11,0.12)', '#f59e0b', `🧪 Local test — the payment gate is bypassed here.`);
