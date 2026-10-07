@@ -16,7 +16,7 @@ const BroadcastSchedule = (() => {
   const KEY   = 'broadcasts';        // user.broadcasts = [{ id, slot, hours, room, title, youtubeId, coverUrl, createdAt }]
   let _pendingCover = '';            // cover-bilde (data-URL) valgt i editoren, lagres på neste sendetid
   const GRACE = 10 * 60 * 1000;      // 10 min slingringsmonn før start (samme som booking-gaten)
-  const MAX_HOURS = 12;
+  const MAX_HOURS = 20;
 
   const _I  = (n) => (typeof Icon === 'function' ? Icon(n) : '');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));

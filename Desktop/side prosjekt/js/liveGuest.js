@@ -134,7 +134,7 @@ const LiveGuest = (() => {
   }
 
   function step(delta) {
-    _hours = Math.max(1, Math.min(12, _hours + (parseInt(delta, 10) || 0)));
+    _hours = Math.max(1, Math.min(20, _hours + (parseInt(delta, 10) || 0)));
     const h = _byId('lg-hours'); if (h) h.textContent = _hours + ' h';
   }
 
