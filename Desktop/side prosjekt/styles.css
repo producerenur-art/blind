@@ -2794,8 +2794,12 @@ input[type="range"]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(34,
   display: none;
   pointer-events: none;
   z-index: 1;
+  /* Fade inn først når YouTube har nådd HD (skjuler den uskarpe oppstarten). */
+  opacity: 0;
+  transition: opacity 1.2s ease;
 }
 #radio-vis-video.active { display: block; }
+#radio-vis-video.active.vis-ready { opacity: 1; }
 /* Kreditering: hvilken YouTube-kanal den aktive AI-visualen er fra (se
    api/visuals-fresh.js → channel-feltet). Skjules for klassikerne, som
    mangler kanalnavn. Ligger over videoen, under kontroll-knappene. */

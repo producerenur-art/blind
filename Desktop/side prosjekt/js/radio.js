@@ -3264,9 +3264,24 @@ const Radio = (() => {
     const st = data.event === 'onStateChange' ? data.info : (data.info && data.info.playerState);
     if (st === 0 && _visPlLen > 1 && _visPlIdx < _visPlLen - 1) return;   // meir att i lista → YouTube spelar neste sjølv
     if (st === 0 && (data.event === 'onStateChange' || data.event === 'infoDelivery')) { _visAdvanceOnEnd(); return; }
+    // Fade videoen inn når YouTube har nådd HD (skjuler den uskarpe oppstarten).
+    const pq = data.info && typeof data.info === 'object' ? data.info.playbackQuality : null;
+    if (pq && /^hd/.test(pq)) _visReveal(frame);
     if (data.event !== 'onReady' && data.event !== 'infoDelivery') return;
     applyVisQuality(frame);
   });
+  // Ny video starter skjult; vises ved HD, ved tregt nett/hakking (låg kvalitet er då bevisst), eller etter 7 s.
+  let _visRevealTimer = null;
+  function _visReveal(frame) {
+    clearTimeout(_visRevealTimer);
+    frame.classList.add('vis-ready');
+  }
+  function _visHideUntilHd(frame) {
+    clearTimeout(_visRevealTimer);
+    if (_visQuality() !== 'hd1080') { frame.classList.add('vis-ready'); return; }
+    frame.classList.remove('vis-ready');
+    _visRevealTimer = setTimeout(() => frame.classList.add('vis-ready'), 7000);
+  }
   let _visPlIdx = -1, _visPlLen = 0;   // posisjon i YouTube-avspelingslista (nullstilles ved ny video)
   // Hvilken video-ID iframen viser nå (for å unngå unødig reload ved re-vis).
   let visVideoLoaded = null;
@@ -3278,6 +3293,7 @@ const Radio = (() => {
     if (visVideoLoaded !== id) {
       _visPlIdx = -1; _visPlLen = 0;
       frame.onload = () => { try { frame.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (_) {} };   // få onStateChange (ended)
+      _visHideUntilHd(frame);
       frame.src = visVideoSrc(id);
       visVideoLoaded = id;
       // Reserve i tilfelle onReady-meldingen kommer før/uten at vi rekker å
