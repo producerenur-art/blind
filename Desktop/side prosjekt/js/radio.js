@@ -2941,6 +2941,12 @@ const Radio = (() => {
     { mode: 'video77', id: 'hU-UGvU8Y6I', emoji: '🌊', label: 'Ocean Coaster', group: 'coaster' }, // Tommy T\'s Extreme Roller Coasters
     { mode: 'video78', id: 'KTji1hOICEI', emoji: '🏔️', label: 'Expedition Everest', group: 'coaster' }, // CoasterForce
     { mode: 'video79', id: 'hti152LSw90', emoji: '🎢', label: 'The Beast', group: 'coaster' }, // CoasterForce
+    // Lenkjer 08.10.2026 (fortellar-/forklaringsvideoar, mute=1; alle HD/4K):
+    { mode: 'video80', id: 'X7otJuJ_7Wk', emoji: '⭐', label: 'Sirius Star', group: 'space' }, // Explified Labs
+    { mode: 'video81', id: 'ZTX64qW_LK0', emoji: '🧭', label: 'Polaris', group: 'space' }, // Astrum
+    { mode: 'video82', id: 'vw4vQUVXb_8', emoji: '🌀', label: 'Gravity Explained', group: 'space' }, // Astrum Extra
+    { mode: 'video83', id: '9qZZJTYEE2k', emoji: '⚛️', label: 'Inside the Proton', group: 'space' }, // Cosmic Atoms
+    { mode: 'video84', id: 'fzHCtZGq7xM', emoji: '💥', label: 'Higgs Boson', group: 'space' }, // Cosmic Atoms
   ];
   const VIS_VIDEOS = {};
   VIS_CLASSICS.forEach(v => { VIS_VIDEOS[v.mode] = v.id; });
