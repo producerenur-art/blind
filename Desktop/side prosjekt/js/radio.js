@@ -3181,7 +3181,11 @@ const Radio = (() => {
       const r = sset.rot() % sset.ids.length, list = sset.ids.slice(r).concat(sset.ids.slice(0, r));
       first = list[0]; rest = list.slice(1).join(',');
     } else if (id === WEEKLY_SPECIAL.id) {
-      rest = WEEKLY_SPECIAL_IDS.slice(1).join(',');
+      // Startklippet roterer med uke OG time (brukarønske 08.10.2026: same HTF-video kvar torsdag).
+      const days = Math.floor(Date.now() / 86400000), n = WEEKLY_SPECIAL_IDS.length;
+      const r = (Math.floor(days / 7) + new Date().getUTCHours()) % n;
+      const list = WEEKLY_SPECIAL_IDS.slice(r).concat(WEEKLY_SPECIAL_IDS.slice(0, r));
+      first = list[0]; rest = list.slice(1).join(',');
     }
     return `https://www.youtube-nocookie.com/embed/${first}`
       + `?autoplay=1&mute=1${rest ? '&playlist=' + rest : ''}`
