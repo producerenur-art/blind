@@ -2894,11 +2894,7 @@ const Radio = (() => {
     // Steampunk-serien (brukarønske 13.09.2026): heile spelelista «Steampunk Fantasy
     // Cities | Cinematic Clockwork Worlds in 4K» (Fantasy Realms), lagt inn i vanleg
     // rotasjon på lik linje med resten av klassikarane — IKKJE ein sjeldan spesial.
-    { mode: 'video31', id: '7ijCOrFyoPs', emoji: '⚙️', label: 'Empire of Steam', group: 'steampunk' },
-    { mode: 'video32', id: 'kJDW5pwVWoE', emoji: '🛫', label: 'Sky Wars',        group: 'steampunk' },
-    { mode: 'video33', id: 'Fx9TqU_5bME', emoji: '📜', label: 'Steam Legends',   group: 'steampunk' },
     { mode: 'video36', id: 'pS--SPF2Yjw', emoji: '🏛️', label: 'City of Brass', group: 'steampunk' },
-    { mode: 'video37', id: 'mK2LMIG_jHI', emoji: '🏰', label: 'Clockwork Realm', group: 'steampunk' },
     { mode: 'video39', id: 'fqNtN6A08Gs', emoji: '🏭', label: 'Metropolis',     group: 'steampunk' },
     // Trimma 13→6 (15.09.2026): dei 6 mest visuelt særeigne att, resten var for
     // like til å bidra med variasjon (sjå [[siriusfm-visuals-special-slots]]).
@@ -2931,7 +2927,6 @@ const Radio = (() => {
     { mode: 'video67', id: '3BxiYkCPZwI', emoji: '🍄', label: 'Shroom Trip POV', group: 'psy' }, // Loka
     { mode: 'video68', id: '_7RLZAWxZCQ', emoji: '💎', label: 'Raytraced Supermix', group: 'psy' }, // UON Visuals
     { mode: 'video69', id: 'R2PiVXjanws', emoji: '🔮', label: 'Deep Exploration', group: 'fractal' }, // Trippy Everything
-    { mode: 'video70', id: '1R2CM6lQJsE', emoji: '🎢', label: 'Psychedelic Coaster', group: 'coaster' }, // Cosmic Highway
     { mode: 'video71', id: 'DkcrmzHhsy4', emoji: '🎢', label: 'Flight of Fantasy', group: 'coaster' }, // Tommy T\'s Extreme Roller Coasters
     { mode: 'video72', id: 'W9as7QP8GkM', emoji: '🌆', label: 'Cyberpunk Coaster', group: 'coaster' }, // Neon 4K
     { mode: 'video73', id: 'pbQ3okrpexA', emoji: '🎢', label: 'Trippy Coaster', group: 'coaster' }, // Hofmann\'s Dream Lab
