@@ -3044,7 +3044,10 @@ const Radio = (() => {
     // Donald Duck (kun 720p-samlinga; «Honey Harvester» 2wt5ga4-r6E er berre 480p 4:3 og vart teken ut): fredag + laurdag kveld 18:00–23:59 CEST.
     // Utvida 08.10.2026: 8 Disney Kids-klipp (Donald + Mickey, alle ≥720p, målt innbyggbare) i tillegg til det opphavlege.
     // Lista spelar gjennom heile timen; startklippet flyttar seg med uke OG time.
-    { mode: 'video_donald', ids: ['y0eXw2Z1DQg','PGQ0Ge6kiz8','REHJ1lz_HLQ','G-pqP_9r55E','znMnAdzlVMY','d_kDKuwTPD8','83sdwFOL1r8','Lpi4WuSoc94','kssoXnSwMSQ'],
+    { mode: 'video_donald', ids: ['y0eXw2Z1DQg','PGQ0Ge6kiz8','REHJ1lz_HLQ','G-pqP_9r55E','znMnAdzlVMY','d_kDKuwTPD8','83sdwFOL1r8','Lpi4WuSoc94','kssoXnSwMSQ',
+            'T1M1aklQVkk','HdanK11dQBw','R0jJcp1OFsw','zsVyO8O3JRg'],
+      // Lange samlingar (sekund): startar på ulikt punkt kvar uke/time, så ein 2–6 t video ikkje alltid byrjar frå 0:00.
+      long: { 'T1M1aklQVkk': 11060, 'HdanK11dQBw': 10760, 'R0jJcp1OFsw': 7066, 'zsVyO8O3JRg': 21799 },
       emoji: '🦆', label: 'Donald Duck', group: 'special',
       when: () => { const d = _cestDate(); return (d.getUTCDay() === 5 || d.getUTCDay() === 6) && d.getUTCHours() >= 18; },
       rot: () => Math.floor(_cestDay() / 7) + _cestDate().getUTCHours() },
@@ -3243,10 +3246,11 @@ const Radio = (() => {
     // Spesialar med fleire klipp = ekte YouTube-avspelingsliste (playlist-param), rotert så startklippet
     // varierer. HTF-spesialen (WEEKLY_SPECIAL_IDS) er same mekanikk. Alltid lydlaus (mute=1).
     const sset = SPECIAL_SETS.find(v => v.id === id);
-    let first = id, rest = '';
+    let first = id, rest = '', startAt = 0;
     if (sset) {
       const r = sset.rot() % sset.ids.length, list = sset.ids.slice(r).concat(sset.ids.slice(0, r));
       first = list[0]; rest = list.slice(1).join(',');
+      if (sset.long && sset.long[first]) startAt = (sset.rot() * 7919 % Math.max(1, sset.long[first] - 1200));
     } else if (id === WEEKLY_SPECIAL.id) {
       // Startklippet roterer med uke OG time (brukarønske 08.10.2026: same HTF-video kvar torsdag).
       const days = Math.floor(Date.now() / 86400000), n = WEEKLY_SPECIAL_IDS.length;
@@ -3255,7 +3259,7 @@ const Radio = (() => {
       first = list[0]; rest = list.slice(1).join(',');
     }
     return `https://www.youtube-nocookie.com/embed/${first}`
-      + `?autoplay=1&mute=1${rest ? '&playlist=' + rest : ''}`
+      + `?autoplay=1&mute=1${rest ? '&playlist=' + rest : ''}${startAt ? '&start=' + startAt : ''}`
       + (sset && sset.captions ? '&cc_load_policy=1&cc_lang_pref=en&hl=en' : '')
       + `&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3`
       + `&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
