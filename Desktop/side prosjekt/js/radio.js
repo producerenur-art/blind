@@ -2947,6 +2947,22 @@ const Radio = (() => {
     { mode: 'video82', id: 'vw4vQUVXb_8', emoji: '🌀', label: 'Gravity Explained', group: 'space' }, // Astrum Extra
     { mode: 'video83', id: '9qZZJTYEE2k', emoji: '⚛️', label: 'Inside the Proton', group: 'space' }, // Cosmic Atoms
     { mode: 'video84', id: 'fzHCtZGq7xM', emoji: '💥', label: 'Higgs Boson', group: 'space' }, // Cosmic Atoms
+    // Brukarens lenkjebatch 08.10.2026 (psykedelisk, alle ≥1080p og målt innbyggbare; mute=1):
+    { mode: 'video85', id: 'y0ZzjPG_OHA', emoji: '🪩', label: 'Magic Acid', group: 'psy' }, // Chill Space
+    { mode: 'video86', id: '0hgha1Kgz4A', emoji: '🍄', label: 'Imaginarium', group: 'psy' }, // Trancentral
+    { mode: 'video87', id: '6XGzJQKbV40', emoji: '📐', label: 'Sacred Geometry', group: 'fractal' }, // Trippy Everything
+    { mode: 'video88', id: '-SfIrsJFHJE', emoji: '🌲', label: 'Forest Shroom High', group: 'psy' }, // AllSeen
+    { mode: 'video89', id: 'bxaX7Y_l5-M', emoji: '🌿', label: 'Psilocybin Nature', group: 'surreal' }, // Ocean Psychedelics
+    { mode: 'video90', id: '4a89rc-AulU', emoji: '🌙', label: 'Moonlight Purpose', group: 'psy' }, // Getafix Visuals
+    { mode: 'video91', id: 'ZeFfg3_xqhQ', emoji: '🍄', label: 'Shroom Simulation', group: 'psy' }, // DMT Enlightenment
+    { mode: 'video92', id: '1bgZT9OE8OQ', emoji: '🍄', label: 'Shroom Visuals 4K', group: 'psy' }, // DMT Enlightenment
+    { mode: 'video93', id: '8MOZvVoKhh8', emoji: '🎞️', label: 'Hypnotic Visuals', group: 'psy' }, // AllSeen
+    { mode: 'video94', id: 'MGwWHMDhh7M', emoji: '🧪', label: 'Experimental Shroom', group: 'psy' }, // DMT Enlightenment
+    { mode: 'video95', id: 'G1yK79qUcWk', emoji: '🍄', label: 'Trip Level 5', group: 'psy' }, // Victor Oliveira
+    { mode: 'video96', id: 'nOhCNC_lhiA', emoji: '🏠', label: 'Indoor Shroom', group: 'psy' }, // DMT Enlightenment
+    { mode: 'video97', id: 'exbfXyJJj4o', emoji: '✨', label: 'Magical Mushroom', group: 'psy' }, // Psychedelic Zen
+    { mode: 'video98', id: '8CpA-h_lXcs', emoji: '🍄', label: 'Shroom Trip', group: 'psy' }, // DMT Enlightenment
+    { mode: 'video99', id: 'eV7FXMkMIVQ', emoji: '⚡', label: 'Shock Therapy', group: 'psy' }, // Trancentral
   ];
   const VIS_VIDEOS = {};
   VIS_CLASSICS.forEach(v => { VIS_VIDEOS[v.mode] = v.id; });
