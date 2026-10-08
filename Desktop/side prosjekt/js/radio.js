@@ -2914,6 +2914,33 @@ const Radio = (() => {
     { mode: 'video51', id: 'sAiLaFaYTxU', emoji: '🛸', label: 'Cosmic Dreamscape',   group: 'ai'       }, // Wakening Dreams
     { mode: 'video52', id: 'VBwBg9g7Yog', emoji: '🏰', label: 'Quiet Gardens',       group: 'surreal'  }, // Surreal AI
     { mode: 'video53', id: 'Gqfx-yw9H0E', emoji: '🎭', label: 'Mistress of Nonsense', group: 'surreal' }, // Kelly Boesch AI Art
+    // Brukarens lenkjebatch 08.10.2026 (alle målt innbyggbare + HD/4K, mute=1 uansett):
+    { mode: 'video54', id: 'Em3HCTeTlQg', emoji: '🕳️', label: 'TON 618', group: 'space' }, // Cosmic Void
+    { mode: 'video55', id: 'QOOkS0E9whU', emoji: '🌌', label: 'Universe Mysteries', group: 'space' }, // Science Channel
+    { mode: 'video56', id: '43z-9I_wgFY', emoji: '⚛️', label: 'Quantum Realm', group: 'space' }, // The Sleepy Scientist
+    { mode: 'video57', id: 'DTGFWd2WKdg', emoji: '📜', label: 'Book of Enoch', group: 'darkdrone' }, // Deep Dive History
+    { mode: 'video58', id: 'QxzU3FBy57k', emoji: '♾️', label: 'Multiverse Travel', group: 'fractal' }, // Relaxation Time
+    { mode: 'video59', id: 'Ax1bbSlOBSU', emoji: '🍄', label: 'Ayahuasca Visions', group: 'ai' }, // AI Manifest
+    { mode: 'video60', id: 'GhT4iFp-KpA', emoji: '🌀', label: 'Antithesis', group: 'psy' }, // Trippy Everything
+    { mode: 'video61', id: 'uNNk-V08J7k', emoji: '🍄', label: 'Magic Mushrooms', group: 'psy' }, // Speedsound
+    { mode: 'video62', id: 'HLem8E2dx6o', emoji: '🍄', label: 'Mushroom Trippy', group: 'psy' }, // Speedsound
+    { mode: 'video63', id: 'J0YZQNgkf9Y', emoji: '🔱', label: 'Andromeda LSD', group: 'psy' }, // Speedsound
+    { mode: 'video64', id: 'WDU1UXiUZhs', emoji: '🎞️', label: 'Human Made Visuals', group: 'psy' }, // AllSeen
+    { mode: 'video65', id: 'JKe0gryiCCw', emoji: '🚀', label: 'Interdimensional', group: 'fractal' }, // Trippy Everything
+    { mode: 'video66', id: 'GzcTxjDo670', emoji: '🌀', label: 'Flying Portals', group: 'psy' }, // Psychedelic Tales
+    { mode: 'video67', id: '3BxiYkCPZwI', emoji: '🍄', label: 'Shroom Trip POV', group: 'psy' }, // Loka
+    { mode: 'video68', id: '_7RLZAWxZCQ', emoji: '💎', label: 'Raytraced Supermix', group: 'psy' }, // UON Visuals
+    { mode: 'video69', id: 'R2PiVXjanws', emoji: '🔮', label: 'Deep Exploration', group: 'fractal' }, // Trippy Everything
+    { mode: 'video70', id: '1R2CM6lQJsE', emoji: '🎢', label: 'Psychedelic Coaster', group: 'coaster' }, // Cosmic Highway
+    { mode: 'video71', id: 'DkcrmzHhsy4', emoji: '🎢', label: 'Flight of Fantasy', group: 'coaster' }, // Tommy T\'s Extreme Roller Coasters
+    { mode: 'video72', id: 'W9as7QP8GkM', emoji: '🌆', label: 'Cyberpunk Coaster', group: 'coaster' }, // Neon 4K
+    { mode: 'video73', id: 'pbQ3okrpexA', emoji: '🎢', label: 'Trippy Coaster', group: 'coaster' }, // Hofmann\'s Dream Lab
+    { mode: 'video74', id: 'oAJLKDMihnU', emoji: '🎢', label: 'Twister Coaster', group: 'coaster' }, // Theme Park Review
+    { mode: 'video75', id: 'yUGwvwG9fFk', emoji: '🎢', label: 'Raiders Coaster', group: 'coaster' }, // Tommy T\'s Extreme Roller Coasters
+    { mode: 'video76', id: 'UYJIqBZENjU', emoji: '🐠', label: 'Sea Life Coaster', group: 'coaster' }, // HIKAWA RIDES
+    { mode: 'video77', id: 'hU-UGvU8Y6I', emoji: '🌊', label: 'Ocean Coaster', group: 'coaster' }, // Tommy T\'s Extreme Roller Coasters
+    { mode: 'video78', id: 'KTji1hOICEI', emoji: '🏔️', label: 'Expedition Everest', group: 'coaster' }, // CoasterForce
+    { mode: 'video79', id: 'hti152LSw90', emoji: '🎢', label: 'The Beast', group: 'coaster' }, // CoasterForce
   ];
   const VIS_VIDEOS = {};
   VIS_CLASSICS.forEach(v => { VIS_VIDEOS[v.mode] = v.id; });
