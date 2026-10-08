@@ -3122,6 +3122,12 @@ const Radio = (() => {
   // slik at ETHVERT sammenhengende utsnitt får en sjanger-miks — ellers kunne
   // et timesvindu bestå av bare romfilm eller bare fraktaler.
   function interleaveByGroup(list) {
+    // Maksimalt blanda (brukarønske 08.10.2026): kvar gruppe blir stokka og så jamt spreidd utover heile
+    // lista i forhold til storleiken (store grupper som «psy» klumpar seg ikkje i slutten). Stokkinga
+    // er seeda med dagsnummer → SAME rekkefølgje for alle lyttarar heile dagen, ny kvar dag.
+    const day = Math.floor(Date.now() / 86400000);
+    const rng = seed => () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+    const hash = str => { let h = 7; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
     const buckets = new Map();
     (list || []).forEach(it => {
       if (!it || !it.id) return;
@@ -3129,11 +3135,15 @@ const Radio = (() => {
       if (!buckets.has(k)) buckets.set(k, []);
       buckets.get(k).push(it);
     });
-    const rows = [...buckets.values()];
-    const out = [];
-    for (let i = 0; out.length < (list || []).length && i < 100; i++)
-      rows.forEach(r => { if (r[i]) out.push(r[i]); });
-    return out;
+    const keyed = [];
+    buckets.forEach((arr, k) => {
+      const r = rng(hash(k) ^ (day * 2654435761 >>> 0));
+      for (let a = arr.length - 1; a > 0; a--) {            // Fisher–Yates
+        const b = Math.floor(r() * (a + 1)); [arr[a], arr[b]] = [arr[b], arr[a]];
+      }
+      arr.forEach((it, n) => keyed.push({ it, key: (n + 0.15 + 0.7 * r()) / arr.length }));
+    });
+    return keyed.sort((x, y) => x.key - y.key).map(x => x.it);
   }
   // Ta n elementer fra lista — vindauget HOPPAR n plassar per time (ikkje
   // glid 1 plass), så DENNE timen sitt utvalg aldri deler ein einaste video
