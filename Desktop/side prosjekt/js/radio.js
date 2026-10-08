@@ -3042,12 +3042,10 @@ const Radio = (() => {
   const _cestDate = () => new Date(Date.now() + 2 * 3600000);
   const SPECIAL_SETS = [
     // Donald Duck (kun 720p-samlinga; «Honey Harvester» 2wt5ga4-r6E er berre 480p 4:3 og vart teken ut): fredag + laurdag kveld 18:00–23:59 CEST.
-    // Utvida 08.10.2026: 8 Disney Kids-klipp (Donald + Mickey, alle ≥720p, målt innbyggbare) i tillegg til det opphavlege.
-    // Lista spelar gjennom heile timen; startklippet flyttar seg med uke OG time.
-    { mode: 'video_donald', ids: ['y0eXw2Z1DQg','PGQ0Ge6kiz8','REHJ1lz_HLQ','G-pqP_9r55E','znMnAdzlVMY','d_kDKuwTPD8','83sdwFOL1r8','Lpi4WuSoc94','kssoXnSwMSQ',
-            'T1M1aklQVkk','HdanK11dQBw','R0jJcp1OFsw','zsVyO8O3JRg'],
-      // Lange samlingar (sekund): startar på ulikt punkt kvar uke/time, så ein 2–6 t video ikkje alltid byrjar frå 0:00.
-      long: { 'T1M1aklQVkk': 11060, 'HdanK11dQBw': 10760, 'R0jJcp1OFsw': 7066, 'zsVyO8O3JRg': 21799 },
+    // 08.10.2026 (brukarønske): berre lange klipp (>1 t) på Donald-dagane, dei spelar ferdig — ingen 5-min-bytte
+    // (`hold`, sjå _visAutoTick). Kortklippa (Disney Kids, 6–7 min) er ute. Startpunktet flyttar seg med uke og time.
+    { mode: 'video_donald', ids: ['T1M1aklQVkk','HdanK11dQBw','R0jJcp1OFsw','zsVyO8O3JRg','Fg_KxhW8-PY'], hold: true,
+      long: { 'T1M1aklQVkk': 11060, 'HdanK11dQBw': 10760, 'R0jJcp1OFsw': 7066, 'zsVyO8O3JRg': 21799, 'Fg_KxhW8-PY': 3622 },
       emoji: '🦆', label: 'Donald Duck', group: 'special',
       when: () => { const d = _cestDate(); return (d.getUTCDay() === 5 || d.getUTCDay() === 6) && d.getUTCHours() >= 18; },
       rot: () => Math.floor(_cestDay() / 7) + _cestDate().getUTCHours() },
@@ -3463,6 +3461,8 @@ const Radio = (() => {
       visualsShown = buildVisualList(aiPool || []);
       renderAiVisualButtons();
     }
+    const _held = SPECIAL_SETS.find(v => v.mode === visMode);
+    if (_held && _held.hold && _held.when()) return;                  // lang spesial (Donald-dagar): spelar ferdig, ikkje bytt kvart 5. min
     if (!isVideoMode(visMode) || _visManualSlot === slot || !_autoList.length) return;
     // 14.10.2026: gå gjennom HEILE poolen (AI + klassikarar, sjanger-flettet) i staden for berre timens
     // 20 knappar — kvar video kjem då att først etter ~N×5 min (≈7 t med 86 videoar), ikkje etter ~3 t.
