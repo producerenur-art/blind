@@ -2932,7 +2932,12 @@ const Radio = (() => {
   // oEmbed. Lydlaus som alt anna i AI visuals-raden (mute=1 er felles for alle
   // video-modus, sjå visVideoSrc). IKKJE rør denne utan eksplisitt beskjed frå
   // brukaren.
-  const WEEKLY_SPECIAL_IDS = ['PgWYZctea40', 'cN7XXLyb1Fo', 'dfTPlsIq7d0', 'OyvYuSPIJrY'];
+  // Utvida 08.10.2026 (14 klipp frå brukaren, alle @MondoMedia/@HappyTreeFriendsHD, målt spelbare i HD;
+  // utelatt: JNQdySSccBU (ikkje innbyggbar), 2ne_KwVeIco (maks 480p), OEeSpFo30ok (tredjeparts-kopi, 360p)).
+  const WEEKLY_SPECIAL_IDS = ['PgWYZctea40', 'cN7XXLyb1Fo', 'dfTPlsIq7d0', 'OyvYuSPIJrY',
+    '165VjNKRNdw', 'xcvmM7Rg6j4', 'gHt9Bys-N5E', 'gxA8R7UfdPI', 'sea9yrjxT9M', '-gOWBYu2Ndk',
+    '6WrAYm-mFQg', 'y0dihusPRII', 'opAinuVvKfw', '6JQPoaTKiu4', 'dLLNKpJrHro', 'cvS-2dK1X4I',
+    'jmG3A7yvn9Y', 'nmXL6-F3vZQ'];
   const WEEKLY_SPECIAL = { mode: 'video_htf', id: WEEKLY_SPECIAL_IDS[0], emoji: '🐿️', label: 'Happy Tree Friends', group: 'special' };
   VIS_VIDEOS[WEEKLY_SPECIAL.mode] = WEEKLY_SPECIAL.id;
   function isWeeklySpecialDay() {
