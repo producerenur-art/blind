@@ -3042,9 +3042,12 @@ const Radio = (() => {
   const _cestDate = () => new Date(Date.now() + 2 * 3600000);
   const SPECIAL_SETS = [
     // Donald Duck (kun 720p-samlinga; «Honey Harvester» 2wt5ga4-r6E er berre 480p 4:3 og vart teken ut): fredag + laurdag kveld 18:00–23:59 CEST.
-    { mode: 'video_donald', ids: ['y0eXw2Z1DQg'], emoji: '🦆', label: 'Donald Duck', group: 'special',
+    // Utvida 08.10.2026: 8 Disney Kids-klipp (Donald + Mickey, alle ≥720p, målt innbyggbare) i tillegg til det opphavlege.
+    // Lista spelar gjennom heile timen; startklippet flyttar seg med uke OG time.
+    { mode: 'video_donald', ids: ['y0eXw2Z1DQg','PGQ0Ge6kiz8','REHJ1lz_HLQ','G-pqP_9r55E','znMnAdzlVMY','d_kDKuwTPD8','83sdwFOL1r8','Lpi4WuSoc94','kssoXnSwMSQ'],
+      emoji: '🦆', label: 'Donald Duck', group: 'special',
       when: () => { const d = _cestDate(); return (d.getUTCDay() === 5 || d.getUTCDay() === 6) && d.getUTCHours() >= 18; },
-      rot: () => Math.floor(_cestDay() / 7) },
+      rot: () => Math.floor(_cestDay() / 7) + _cestDate().getUTCHours() },
     // Heile «Donald Duck Cartoons»-lista frå kanalen «cartoon channel» (dei 14 innbyggbare): kvar 9. dag.
     { mode: 'video_donald_ch', ids: ['1ssszVhgrU4','CwQVXTDB7uI','gLZOf17ppeM','_GLDFWf1uUc','HASiaZPtOBk','8aKZnyuueig','r3ditYmW0UY','g586svxAKXQ','DfqEuTWsozU','1_TRfDIE47c','exdV_iehbRY','qmGS6IqxdPM','hX8NRrqtTiI','MqGNqVzTL5s'],
       emoji: '🦆', label: 'Donald Classics', group: 'special',
