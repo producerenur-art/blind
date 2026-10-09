@@ -3055,9 +3055,7 @@ const Radio = (() => {
     // The Allies of Humanity (hovudkanal, sjeldan): éin dag i veka (måndag), med engelsk teksting.
     { mode: 'video_allies', captions: true, emoji: '🌌', label: 'Allies of Humanity', group: 'special',
       ids: ['c7yf9GuqpZ0','rXRgafThM4w','a6OZKDaK7vw','ICmJrCg6_3g','bizvepPuFnQ','caDTrYyYilQ','z_zaoxDeuNQ','BEkhRQb5VEQ','u4qtOxMd2D4','uNmWE3wevSw','MJ_IVdeLboc','Evbs2JDZiKs','TEAWNdpfiGg','riWkWBkT8AM','jzWX6bn9sTo','Z-iKQZMa0XM','PepfZwjYwfI','g_qSc64spfA','p-IFCRXD64c','i5elaH3VcsI','0xGYtG9lryo','BjC1O5bFGog','01MAsI3zghQ','-CIY1uBvL-A','h8dFkyBu1YU','ksgV6h6RwHo','9z3YUpOsEgA','ijBj2eewJIo','u42sByUhlcQ','-duvWk33Oxw'],
-      // 09.10.2026 (brukarønske): i TILLEGG til måndagen, kvar laurdag 2 timar — 09:00–09:59 og 21:00–21:59 CEST. Lydlaus (mute=1).
-      when: () => { const d = _cestDate(), h = d.getUTCHours(); return _cestDay() % 7 === 4 || (d.getUTCDay() === 6 && (h === 9 || h === 21)); },
-      rot: () => Math.floor(_cestDay() / 7) * 7 },
+      when: () => _cestDay() % 7 === 4, rot: () => Math.floor(_cestDay() / 7) * 7 },
   ];
   SPECIAL_SETS.forEach(v => { v.id = v.ids[0]; VIS_VIDEOS[v.mode] = v.id; });
 
