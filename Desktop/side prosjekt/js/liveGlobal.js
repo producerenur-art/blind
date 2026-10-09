@@ -157,6 +157,7 @@ const LiveGlobal = (() => {
   function _spawnListener(room) {
     try {
       _listener = LiveBroadcast.listener(room, {
+        audioOnly: true,   // hovudradioen viser ikkje DJ-bilete — hopp over videosporet (mindre CPU/data, særleg mobil)
         onTrack: stream => { window.Radio?.attachLiveStream?.(stream); },
         // Lyttarens EIGEN WebRTC-tilkobling kan døy av eit kort nettverksglipp
         // på DENNE eininga (ikkje DJ-en sin feil) — DJ-sida (js/livebroadcast.js

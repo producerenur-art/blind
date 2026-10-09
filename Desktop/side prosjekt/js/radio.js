@@ -3289,7 +3289,9 @@ const Radio = (() => {
   }
   function applyVisQuality(frame) {
     postYtCommand(frame, 'setPlaybackQuality', [_visQuality()]);
-    postYtCommand(frame, _visStallLevel >= 2 ? 'pauseVideo' : 'playVideo');
+    // Mobil under direktesending: pause bakgrunnsvideoen (YouTube-dekoding + animasjon tek CPU frå lyden).
+    const pauseForLive = _liveTakeover && IS_TOUCH_MOBILE;
+    postYtCommand(frame, (_visStallLevel >= 2 || pauseForLive) ? 'pauseVideo' : 'playVideo');
   }
   // Lyden hakkar (waiting/stalled): 2 hendingar på 30 s → lågaste videokvalitet; 4 → pause videoen.
   // Etter 3 min utan hakk går alt attende til normalt (sjekka frå _watchdogTick).
@@ -3926,6 +3928,7 @@ const Radio = (() => {
     isPlaying = false;
     window._radioMode = false;
     _liveTakeover = true;
+    if (IS_TOUCH_MOBILE) { try { applyVisQuality(document.getElementById('radio-vis-video')); } catch (e) {} }
     _renderLiveBadge(presenterName);
     if (bar) { bar.classList.remove('hidden', 'idle'); bar.classList.add('radio-mode'); }
     document.getElementById('radio-idle')?.classList.add('hidden');
@@ -4131,6 +4134,7 @@ const Radio = (() => {
     const specialOutroAd = wasSpecial && _special.show && _special.show.preRollAd;
     _special = null; _liveSpecialLabel = '';
     _liveTakeover = false;
+    if (IS_TOUCH_MOBILE) { try { applyVisQuality(document.getElementById('radio-vis-video')); } catch (e) {} }
     _liveAnnouncementPlaying = false;
     syncLiveHero();   // hero-boksen tilbake frå live-visning
     _pendingLiveStream = null; // sending stoppa midt i annonsen (B) eller like etter — kast ev. ventande straum

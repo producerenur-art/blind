@@ -32,11 +32,11 @@ const LiveBroadcast = (() => {
       try {
         const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 4000);
         const r = await fetch('/api/turn', { cache: 'no-store', signal: ctl.signal }); clearTimeout(t);
-        if (!r.ok) return;
+        if (!r.ok) { console.warn('[LiveBroadcast] /api/turn svarte ' + r.status + ' — kjører utan TURN-relay'); return; }
         const j = await r.json();
         const relay = (j.iceServers || []).filter(x => x && x.username && x.credential);
         if (relay.length) { _turnList = relay; _turnAt = Date.now(); }
-      } catch (e) { /* ingen relay tilgjengeleg — fortset med STUN */ }
+      } catch (e) { console.warn('[LiveBroadcast] kunne ikkje hente TURN (' + (e && e.message || e) + ') — kjører utan relay'); }
       finally { _turnPromise = null; }
     })();
     return _turnPromise;
@@ -92,6 +92,32 @@ const LiveBroadcast = (() => {
     }, 4000);
   }
 
+  // Anonym lyttar-måling: kvar 10. s sender lyttaren eit lite stats-sammendrag til DJ-en over same
+  // signalkanal (ingen database). DJ-en ser kven som hakkar (concealed = lyd nettlesaren måtte dikte opp).
+  function _reportStats(pc, getDj, sig, room, id) {
+    const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    let pT = 0, pC = 0, pL = 0, pR = 0;
+    const timer = setInterval(async () => {
+      if (pc.connectionState === 'closed' || pc.connectionState === 'failed') { clearInterval(timer); return; }
+      try {
+        const st = await pc.getStats(); let tot = 0, conc = 0, lost = 0, recv = 0, jit = 0, rtt = 0, route = '?';
+        const byId = {}; st.forEach(r => { byId[r.id] = r; });
+        st.forEach(r => {
+          if (r.type === 'inbound-rtp' && r.kind === 'audio') { tot = r.totalSamplesReceived || 0; conc = r.concealedSamples || 0; lost = r.packetsLost || 0; recv = r.packetsReceived || 0; jit = r.jitter || 0; }
+          if (r.type === 'candidate-pair' && (r.nominated || r.state === 'succeeded') && r.currentRoundTripTime) {
+            rtt = r.currentRoundTripTime;
+            const lc = byId[r.localCandidateId], rc = byId[r.remoteCandidateId];
+            route = (lc && lc.candidateType === 'relay') || (rc && rc.candidateType === 'relay') ? 'relay' : 'direkte';
+          }
+        });
+        const dT = tot - pT, dC = conc - pC, dL = lost - pL, dR = recv - pR; pT = tot; pC = conc; pL = lost; pR = recv;
+        if (dT <= 0) return;
+        const r1 = x => Math.round(x * 10) / 10;
+        sig('stats', { room, from: id, to: getDj(), mobile, concealedPct: r1(100 * dC / dT), lossPct: r1(100 * dL / Math.max(1, dL + dR)), jitterMs: Math.round(jit * 1000), rttMs: Math.round(rtt * 1000), route });
+      } catch (e) {}
+    }, 10000);
+  }
+
   function supaClient() {
     const c = window.CONFIG || {};
     if (!window.supabase || typeof window.supabase.createClient !== 'function') {
@@ -105,9 +131,10 @@ const LiveBroadcast = (() => {
   const rid = pfx => pfx + '_' + Math.random().toString(36).slice(2, 8);
 
   // ── DJ (kringkaster) ────────────────────────────────────────────────
-  function broadcaster(room, stream, { onPeerCount, onLog } = {}) {
+  function broadcaster(room, stream, { onPeerCount, onLog, onStats } = {}) {
     const id = rid('dj');
     const peers = new Map();           // listenerId -> RTCPeerConnection
+    const lstats = new Map();          // listenerId -> siste stats-rapport frå lyttaren
     const client = supaClient();
     const ch = client.channel(channelName(room), { config: { broadcast: { self: false } } });
     const log = m => onLog && onLog(m);
@@ -115,14 +142,16 @@ const LiveBroadcast = (() => {
     const sig = (event, payload) => ch.send({ type: 'broadcast', event, payload });
     const sigTo = (to, data) => sig('signal', { to, from: id, data });
 
-    async function addListener(listenerId) {
+    async function addListener(listenerId, audioOnly) {
       if (peers.has(listenerId)) return;
       await loadIce();
       if (peers.has(listenerId)) return;
       const pc = new RTCPeerConnection(iceServers());
       peers.set(listenerId, pc);
-      // Send alle spor: lyd + ev. video (stillbilde-canvas eller laptop-kamera).
-      stream.getTracks().forEach(t => pc.addTrack(t, stream));
+      // Send lyd + ev. video (stillbilde-canvas eller laptop-kamera). Lyttarar som ikkje viser bilete
+      // (hovudradioen, særleg mobil) ber om audioOnly: då hoppar vi over videosporet — sparer éin
+      // programvare-VP8-koder på DJ-maskina og ~300 kbps per lyttar.
+      stream.getTracks().filter(t => !(audioOnly && t.kind === 'video')).forEach(t => pc.addTrack(t, stream));
       pc.onicecandidate = e => { if (e.candidate) sigTo(listenerId, { type: 'ice', candidate: e.candidate }); };
       pc.onconnectionstatechange = () => {
         log('Listener ' + listenerId + ': ' + pc.connectionState);
@@ -143,8 +172,15 @@ const LiveBroadcast = (() => {
       log('Sent offer to ' + listenerId);
     }
 
-    ch.on('broadcast', { event: 'hello' }, ({ payload }) => { if (payload.room === room) addListener(payload.from); })
+    ch.on('broadcast', { event: 'hello' }, ({ payload }) => { if (payload.room === room) addListener(payload.from, !!payload.audioOnly); })
       .on('broadcast', { event: 'bye' }, ({ payload }) => { const pc = peers.get(payload.from); if (pc) { pc.close(); peers.delete(payload.from); count(); } })
+      .on('broadcast', { event: 'stats' }, ({ payload }) => {
+        if (!payload || payload.room !== room || !peers.has(payload.from)) return;
+        lstats.set(payload.from, Object.assign({ at: Date.now() }, payload));
+        if (onStats) { try { onStats([...lstats.values()]); } catch (e) {} }
+        const bad = payload.concealedPct > 3 || payload.lossPct > 2;
+        if (bad) log('⚠ ' + (payload.mobile ? 'Mobil' : 'PC') + ' ' + payload.from + ': hakk ' + payload.concealedPct + '%, tap ' + payload.lossPct + '%, jitter ' + payload.jitterMs + ' ms, RTT ' + payload.rttMs + ' ms, rute ' + payload.route);
+      })
       .on('broadcast', { event: 'signal' }, async ({ payload }) => {
         if (payload.to !== id) return;
         const pc = peers.get(payload.from); if (!pc) return;
@@ -160,6 +196,7 @@ const LiveBroadcast = (() => {
     return {
       id,
       get listeners() { return [...peers.values()].filter(p => p.connectionState === 'connected').length; },
+      get listenerStats() { return [...lstats.values()].filter(x => peers.has(x.from)); },
       stop() {
         peers.forEach(p => p.close()); peers.clear();
         try { sig('dj-offline', { room, from: id }); } catch (e) {}
@@ -169,7 +206,7 @@ const LiveBroadcast = (() => {
   }
 
   // ── Lytter ──────────────────────────────────────────────────────────
-  function listener(room, { onTrack, onState, onLog } = {}) {
+  function listener(room, { onTrack, onState, onLog, audioOnly } = {}) {
     const id = rid('ln');
     let pc = null, djId = null;
     const client = supaClient();
@@ -180,7 +217,7 @@ const LiveBroadcast = (() => {
 
     ch.on('broadcast', { event: 'dj-online' }, ({ payload }) => {
         if (payload.room !== room) return;
-        djId = payload.from; sig('hello', { room, from: id }); log('DJ online — requesting stream');
+        djId = payload.from; sig('hello', { room, from: id, audioOnly: !!audioOnly }); log('DJ online — requesting stream');
       })
       .on('broadcast', { event: 'dj-offline' }, () => { onState && onState('dj-offline'); })
       .on('broadcast', { event: 'signal' }, async ({ payload }) => {
@@ -188,7 +225,8 @@ const LiveBroadcast = (() => {
         const d = payload.data;
         if (d.type === 'offer') {
           djId = payload.from;
-          pc = new RTCPeerConnection(iceServers());  // nøklane er forhåndslasta av loadIce() ved modulstart
+          await loadIce();   // sikrar relay-nøklar (maks 4 s) FØR tilkoplinga byggjast
+          pc = new RTCPeerConnection(iceServers());
           pc.onicecandidate = e => { if (e.candidate) sigTo(djId, { type: 'ice', candidate: e.candidate }); };
           // 'disconnected' kan hela av seg sjølv — gje 8 s før vi melder det vidare (og dermed byggjer ny lytter).
           pc.onconnectionstatechange = () => {
@@ -200,7 +238,7 @@ const LiveBroadcast = (() => {
           pc.ontrack = e => {
             // Mer jitter-buffer på lytter-sida: mobilnett svingar, litt ekstra forsinking gir jamn lyd.
             try { if (e.receiver) { e.receiver.jitterBufferTarget = 800; e.receiver.playoutDelayHint = 0.8; } } catch (err) {}
-            if (e.track && e.track.kind === 'audio') _adaptJitter(pc, e.receiver);
+            if (e.track && e.track.kind === 'audio') { _adaptJitter(pc, e.receiver); _reportStats(pc, () => djId, sig, room, id); }
             onTrack && onTrack(e.streams[0]);
           };
           try {
@@ -214,7 +252,7 @@ const LiveBroadcast = (() => {
       })
       .subscribe(status => {
         log('Signaling: ' + status);
-        if (status === 'SUBSCRIBED') sig('hello', { room, from: id });  // DJ kan alt være online
+        if (status === 'SUBSCRIBED') sig('hello', { room, from: id, audioOnly: !!audioOnly });  // DJ kan alt være online
       });
 
     return {
