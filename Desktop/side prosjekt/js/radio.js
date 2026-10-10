@@ -1809,6 +1809,16 @@ const Radio = (() => {
 
   function togglePlay() {
     const audio = getAudio();
+    // Under direktesending/spesialmix: ▶/⏸ styrer sjølve live-lyden (tidlegare kopla ▶ om til vanleg stasjon eller
+    // gjorde ingenting → brukaren fekk ikkje lyd før ein trykte i nedre spelarlinje, 2026-10-10).
+    if (_liveTakeover && audio) {
+      if (audio.paused) {
+        try { const c = window._radioCtx || audioCtx; if (c && c.state === 'suspended') c.resume(); } catch (e) {}
+        const pr = audio.play(); if (pr && pr.catch) pr.catch(() => {});
+      } else { audio.pause(); }
+      setTimeout(_syncLivePlayBtn, 150);
+      return;
+    }
     if (!currentStation) {
       App.toast('Choose a radio station first', 'info');
       return;
@@ -3944,12 +3954,27 @@ const Radio = (() => {
     document.body.appendChild(b);
     _unlockEl = b;
   }
+  function _syncLivePlayBtn() {
+    if (!_liveTakeover) return;
+    const a = getAudio(); if (!a) return;
+    const playing = !a.paused;
+    const b = document.getElementById('radio-play-btn');
+    if (b) b.textContent = playing ? '⏸' : '▶';
+    const c = document.getElementById('ctrl-play');
+    if (c) c.textContent = playing ? '⏸' : '▶';
+  }
   function _watchLiveUnlock() {
     if (_unlockTimer) return;
-    const gesture = () => { if (_liveTakeover && !_liveAudible()) _unlockLiveAudio(); };
+    try { const a = getAudio(); if (a) ['play', 'pause', 'playing'].forEach(ev => a.addEventListener(ev, _syncLivePlayBtn)); } catch (e) {}
+    const gesture = e => {
+      // Spelar-/dempeknappane skal styre sjølve lyden (togglePlay) — ikkje også utløyse oppvakninga (dobbel-toggle).
+      try { if (e && e.target && e.target.closest && e.target.closest('#radio-play-btn,#ctrl-play,#radio-mute-btn,.station-vol-btn,.radio-play-btn')) return; } catch (x) {}
+      if (_liveTakeover && !_liveAudible()) _unlockLiveAudio();
+    };
     ['click', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, gesture, true));
     _unlockTimer = setInterval(() => {
       if (!_liveTakeover) { _hideLiveUnlock(); _unlockMiss = 0; return; }
+      _syncLivePlayBtn();
       if (_liveAudible()) { _unlockMiss = 0; _hideLiveUnlock(); return; }
       if (++_unlockMiss >= 2) _showLiveUnlock();   // 2 sek stille på rad — ikkje blink under oppkopling
     }, 1000);

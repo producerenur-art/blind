@@ -5,6 +5,10 @@
 // Utan dei svarar vi 503 og klienten fell tilbake til berre STUN.
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
+  // Bar-vert (siriusfm.no) sender /api/* direkte til www (index.html), så anropet er cross-origin → trengs CORS.
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   const id = process.env.CF_TURN_KEY_ID, token = process.env.CF_TURN_API_TOKEN;
   if (!id || !token) { res.status(503).json({ error: 'turn_not_configured' }); return; }
   try {
