@@ -254,7 +254,7 @@ const LiveMix = (() => {
   function _zenSet() {
     try {
       const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
-      if (!(typeof CONFIG !== 'undefined' && CONFIG.isFreeLiveEmail && CONFIG.isFreeLiveEmail(cur))) return -1;
+      if (!(typeof CONFIG !== 'undefined' && CONFIG.isFreeLiveEmail && CONFIG.isFreeLiveEmail(cur))) { _bc.zenSet = null; return -1; }
       if (_bc.zenSet == null) {
         let n = -1;
         try { n = parseInt(localStorage.getItem('sfm_zen_set'), 10); } catch (e) {}
@@ -958,7 +958,7 @@ const LiveMix = (() => {
     // {namn}» på BROADCASTERENS EIGEN fane også — reint visuelt, kobler
     // ALDRI til lyden der (det er nettopp isBroadcastingHere()-sjekken i
     // js/liveGlobal.js som hindrar sjølv-ekko).
-    getZenSet: () => (typeof _bc.zenSet === 'number' ? _bc.zenSet : -1),
+    getZenSet: () => { try { const cur = Auth.current(); return (CONFIG.isFreeLiveEmail(cur) && typeof _bc.zenSet === 'number') ? _bc.zenSet : -1; } catch (e) { return -1; } },
     getBroadcastPresenterName: () => (_bc.dj ? (_bc.presenterName || '') : ''),
     getBroadcastTrackTitle: () => (_bc.dj ? (_bc.trackTitle || '') : ''),
     getBroadcastLinkUrl: () => (_bc.dj ? (_bc.linkUrl || '') : ''),

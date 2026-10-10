@@ -4077,8 +4077,8 @@ const Radio = (() => {
 
   function enterLiveTakeover(presenterRaw, skipAnnouncement) {
     const _z = _splitZen(presenterRaw), presenterName = _z.name;
-    if (_z.set >= 0) _liveZenSet = _z.set;
-    if (_liveTakeover) { _renderLiveBadge(presenterName); return; }   // alt i gang — berre oppdater namnet
+    if (_liveTakeover) { if (_z.set >= 0) _liveZenSet = _z.set; _renderLiveBadge(presenterName); return; }   // alt i gang — berre oppdater namnet
+    _liveZenSet = _z.set;   // ny sending: -1 (ingen) for alle andre enn shinichizen, så settet aldri lekk over til andre DJ-ar/mixar
     const audio  = getAudio();
     const title  = document.getElementById('player-title');
     const artist = document.getElementById('player-artist');
@@ -4334,6 +4334,8 @@ const Radio = (() => {
     if (audio) { try { audio.pause(); } catch (e) {} try { audio.srcObject = null; } catch (e) {} }
     _teardownLiveDuck();
     const wasSpecial = !!_special;
+    const zenForThis = (!wasSpecial && _liveZenSet >= 0) ? ZEN_SETS[_liveZenSet] : null;
+    _liveZenSet = -1;   // alltid nullstilt ved slutt, uansett type sending
     const specialOutroAd = wasSpecial && _special.show && _special.show.preRollAd;
     _special = null; _liveSpecialLabel = '';
     _liveTakeover = false;
@@ -4408,8 +4410,7 @@ const Radio = (() => {
         else resumePrevious();
       }, LIVE_FADE_MS);
     } else {
-      const zen = _liveZenSet >= 0 ? ZEN_SETS[_liveZenSet] : null;
-      _liveZenSet = -1;
+      const zen = zenForThis;
       _playLocalClip(zen ? zen.outro : _nextLiveOutro(), resumePrevious, LIVE_FADE_MS);
     }
   }
