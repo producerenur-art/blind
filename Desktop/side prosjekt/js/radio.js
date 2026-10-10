@@ -1813,9 +1813,10 @@ const Radio = (() => {
     // gjorde ingenting → brukaren fekk ikkje lyd før ein trykte i nedre spelarlinje, 2026-10-10).
     if (_liveTakeover && audio) {
       if (audio.paused) {
+        _liveUserPaused = false;
         try { const c = window._radioCtx || audioCtx; if (c && c.state === 'suspended') c.resume(); } catch (e) {}
         const pr = audio.play(); if (pr && pr.catch) pr.catch(() => {});
-      } else { audio.pause(); }
+      } else { _liveUserPaused = true; audio.pause(); }
       setTimeout(_syncLivePlayBtn, 150);
       return;
     }
@@ -3932,6 +3933,7 @@ const Radio = (() => {
   // Utan dette såg lyttaren «LIVE» men høyrde ingenting (rapportert 2026-10-10). Mens ei sending/mix pågår og
   // lyden ikkje faktisk går, ligg ein stor, vedvarande knapp på skjermen; kva som helst trykk/tast låser opp.
   let _unlockEl = null, _unlockTimer = null, _unlockMiss = 0;
+  let _liveUserPaused = false, _stallLast = -1, _stallTicks = 0, _stallFixes = 0;
   // ?diag=1 → liten tilstandsvisning nede til venstre (til feilsøking på einingar eg ikkje kan teste, t.d. Safari/Mac).
   (function _initDiag() {
     try {
@@ -3988,16 +3990,39 @@ const Radio = (() => {
   }
   function _watchLiveUnlock() {
     if (_unlockTimer) return;
+    try {
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden || !_liveTakeover || _liveUserPaused || _liveAnnouncementPlaying || _special) return;
+        const a = getAudio(); if (!a || !a.srcObject) return;
+        try { const c = window._radioCtx || audioCtx; if (c && c.state === 'suspended') c.resume(); } catch (e) {}
+        if (a.paused) { const pr = a.play(); if (pr && pr.catch) pr.catch(() => {}); }
+      });
+    } catch (e) {}
     try { const a = getAudio(); if (a) ['play', 'pause', 'playing'].forEach(ev => a.addEventListener(ev, _syncLivePlayBtn)); } catch (e) {}
     const gesture = e => {
       // Spelar-/dempeknappane skal styre sjølve lyden (togglePlay) — ikkje også utløyse oppvakninga (dobbel-toggle).
       try { if (e && e.target && e.target.closest && e.target.closest('#radio-play-btn,#ctrl-play,#radio-mute-btn,.station-vol-btn,.radio-play-btn')) return; } catch (x) {}
-      if (_liveTakeover && !_liveAudible()) _unlockLiveAudio();
+      if (_liveTakeover && !_liveUserPaused && !_liveAudible()) _unlockLiveAudio();
     };
     ['click', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, gesture, true));
     _unlockTimer = setInterval(() => {
-      if (!_liveTakeover) { _hideLiveUnlock(); _unlockMiss = 0; return; }
+      if (!_liveTakeover) { _hideLiveUnlock(); _unlockMiss = 0; _liveUserPaused = false; _stallTicks = 0; _stallFixes = 0; return; }
       _syncLivePlayBtn();
+      if (_liveUserPaused) { _hideLiveUnlock(); _unlockMiss = 0; return; }
+      // Fastfrose live-straum: elementet «spelar» men currentTime står stille (nettlesar-/nettverksglipp, bakgrunnsfane).
+      // Etter 6 s: dytt straumen på nytt (srcObject + play); etter 3 slike forsøk gir liveGlobal sin eigen reconnect over.
+      try {
+        const a = getAudio();
+        if (a && a.srcObject && !a.paused && !_liveAnnouncementPlaying && !_special && !document.hidden) {
+          if (a.currentTime === _stallLast) _stallTicks++; else { _stallTicks = 0; _stallLast = a.currentTime; }
+          if (_stallTicks >= 6 && _stallFixes < 3) {
+            _stallTicks = 0; _stallFixes++;
+            const ms = a.srcObject; a.srcObject = null; a.srcObject = ms;
+            const pr = a.play(); if (pr && pr.catch) pr.catch(() => {});
+          }
+        } else { _stallTicks = 0; }
+        if (a && !a.paused && a.currentTime !== _stallLast) _stallFixes = 0;
+      } catch (e) {}
       // Vaktpost (Safari-mistanke 2026-10-10): spelar live-lyden med volum ~0 etter jingel-toninga (timer/fade
       // stoppa) er det stille sjølv om ⏸ og høgtalar-ikon viser «spelar». Set tilbake til valt volum når ingen fade pågår.
       try {
