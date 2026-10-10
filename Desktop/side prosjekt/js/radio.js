@@ -3932,6 +3932,29 @@ const Radio = (() => {
   // Utan dette såg lyttaren «LIVE» men høyrde ingenting (rapportert 2026-10-10). Mens ei sending/mix pågår og
   // lyden ikkje faktisk går, ligg ein stor, vedvarande knapp på skjermen; kva som helst trykk/tast låser opp.
   let _unlockEl = null, _unlockTimer = null, _unlockMiss = 0;
+  // ?diag=1 → liten tilstandsvisning nede til venstre (til feilsøking på einingar eg ikkje kan teste, t.d. Safari/Mac).
+  (function _initDiag() {
+    try {
+      if (!/[?&]diag=1/.test((location.search || '') + (location.hash || ''))) return;
+      const box = document.createElement('pre');
+      box.style.cssText = 'position:fixed;left:6px;bottom:6px;z-index:100001;margin:0;padding:8px 10px;max-width:92vw;background:rgba(0,0,0,.82);color:#7CFC9A;font:11px/1.35 ui-monospace,Menlo,monospace;border-radius:8px;white-space:pre-wrap;pointer-events:none';
+      const add = () => { if (document.body && !box.parentNode) document.body.appendChild(box); };
+      setInterval(() => {
+        add();
+        const a = document.getElementById('audio-engine');
+        const ctx = window._radioCtx;
+        const tr = a && a.srcObject && a.srcObject.getTracks ? a.srcObject.getTracks().map(t => t.kind + ':' + t.readyState + (t.muted ? ':MUTED' : '') + (t.enabled ? '' : ':DISABLED')).join(',') : '-';
+        box.textContent = [
+          'UA ' + (navigator.userAgent.match(/(Version|Chrome|Firefox)\/[\d.]+/) || ['?'])[0] + (IS_TOUCH_MOBILE ? ' touch' : ''),
+          'live=' + _liveTakeover + ' special=' + !!_special + ' announce=' + !!_liveAnnouncementPlaying + ' playing=' + isPlaying,
+          a ? ('paused=' + a.paused + ' muted=' + a.muted + ' vol=' + a.volume.toFixed(2) + ' (ui ' + volume.toFixed(2) + (muted ? ' MUTED' : '') + ')') : 'no audio el',
+          a ? ('ready=' + a.readyState + ' net=' + a.networkState + ' t=' + a.currentTime.toFixed(1) + ' err=' + (a.error ? a.error.code : '-')) : '',
+          a ? ('src=' + (a.srcObject ? 'STREAM[' + tr + ']' : ((a.currentSrc || a.src || '').split('/').pop().slice(0, 40) || '-'))) : '',
+          'webaudio=' + (NO_WEBAUDIO ? 'AV' : 'PÅ') + ' ctx=' + (ctx ? ctx.state : 'none') + ' fade=' + !!_fadeTimer,
+        ].join('\n');
+      }, 1000);
+    } catch (e) {}
+  })();
   function _liveAudible() {
     const a = getAudio(); const ctx = window._radioCtx || audioCtx;
     return !!a && !a.paused && !(ctx && ctx.state === 'suspended');
@@ -3975,6 +3998,13 @@ const Radio = (() => {
     _unlockTimer = setInterval(() => {
       if (!_liveTakeover) { _hideLiveUnlock(); _unlockMiss = 0; return; }
       _syncLivePlayBtn();
+      // Vaktpost (Safari-mistanke 2026-10-10): spelar live-lyden med volum ~0 etter jingel-toninga (timer/fade
+      // stoppa) er det stille sjølv om ⏸ og høgtalar-ikon viser «spelar». Set tilbake til valt volum når ingen fade pågår.
+      try {
+        const a = getAudio();
+        if (a && !a.paused && !_fadeTimer && !_liveAnnouncementPlaying && !_special && !muted && volume > 0.05 && a.volume < 0.05) a.volume = volume;
+        if (a && !muted && a.muted) a.muted = false;
+      } catch (e) {}
       if (_liveAudible()) { _unlockMiss = 0; _hideLiveUnlock(); return; }
       if (++_unlockMiss >= 2) _showLiveUnlock();   // 2 sek stille på rad — ikkje blink under oppkopling
     }, 1000);
