@@ -54,6 +54,11 @@ const FriendChat = (() => {
     if (typeof DmSync !== 'undefined' && DmSync._enabled()) {
       const pull = async () => {
         const rows = await DmSync.list(chan, MAX_MSGS);
+        if (rows._failed) {   // feila kall: ikkje rekonsilier (ville sletta alt), men vis synk-banneret
+          const stF = DmSync.status();
+          if (_lastStatus !== stF) { _lastStatus = stF; if (chan === activeChannel() && document.getElementById('fc-messages')) renderMessages(); }
+          return;
+        }
         const newOtherRead = (rows && rows._otherRead) || 0;
         const readChanged = otherRead[chan] !== newOtherRead;
         otherRead[chan] = newOtherRead;
@@ -432,6 +437,13 @@ const FriendChat = (() => {
     const id = `${me.username}_${now}_${Math.random().toString(36).slice(2, 7)}`;
     const payload = { id, from: me.username, fromDisplay: me.displayName, text, ts: now, kind: kind || 'text' };
     if (_active.type === 'dm') payload.to = _active.friend;
+    // Vis meldinga med ein gong (lokalt ekko) — ikkje vent på Gun/server. Dedup på id gjer at Gun-ekko og
+    // server-henting seinare ikkje gir dobbel rad. Utan dette var eigne meldingar usynlege om Gun/server svikta.
+    const arr = store[chan] || (store[chan] = []);
+    if (!arr.some(m => m.id === id)) {
+      arr.push({ ...payload, _local: true }); arr.sort((a, b) => a.ts - b.ts);
+      if (document.getElementById('fc-messages')) renderMessages();
+    }
     try { ref.set(payload); } catch (e) { console.warn('[FriendChat] send feila', e); }
     if (typeof DmSync !== 'undefined') DmSync.push(chan, payload).catch(() => {});
   }

@@ -84,6 +84,7 @@ const Messenger = (() => {
       _dmPolled.add(chan);
       const pull = async () => {
         const rows = await DmSync.list(chan, MAX_MSGS);
+        if (rows._failed) return;   // feila kall ≠ tom liste (ville rydda bort alle meldingar)
         const newOtherRead = (rows && rows._otherRead) || 0;
         const readChanged = otherRead[chan] !== newOtherRead;
         otherRead[chan] = newOtherRead;

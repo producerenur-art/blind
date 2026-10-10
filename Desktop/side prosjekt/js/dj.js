@@ -143,6 +143,7 @@ const DJ = (() => {
     if (typeof DmSync !== 'undefined' && DmSync._enabled()) {
       const pull = async () => {
         const rows = await DmSync.list(chan, 200);
+        if (rows._failed) return;   // feila kall ≠ tom liste (ville rydda bort alle meldingar)
         _reconcileFromServer(me, other, rows);
       };
       pull();

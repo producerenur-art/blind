@@ -74,6 +74,9 @@ const DmSync = (() => {
     const data = await _call('list', { channel, limit });
     const msgs = (data && Array.isArray(data.messages)) ? data.messages : [];
     try { msgs._otherRead = (data && data.otherRead) || 0; } catch (_) {}
+    // Feila kall (utløpt token/nett) er IKKJE «ingen meldingar». Utan dette flagget tolka kallarane tom liste som
+    // «alt sletta på serveren» og rydda bort alle meldingar frå vindauget (sjå _reconcile i friendchat/messenger/dj).
+    if (!data || !Array.isArray(data.messages)) { try { msgs._failed = true; } catch (_) {} }
     return msgs;
   }
 
