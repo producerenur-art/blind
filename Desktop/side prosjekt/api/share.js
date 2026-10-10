@@ -141,7 +141,7 @@ module.exports = async (req, res) => {
   const tracksHtml = (() => {
     const lines = String(p.tl || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean).slice(0, 200);
     if (!lines.length) return '';
-    return `<div class="tl"><div class="tl-h">Track list</div><ol>${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ol></div>`;
+    return `<div class="tl"><div class="tl-h">Track list</div><div class="tl-l">${lines.map(l => `<div>${esc(l)}</div>`).join('')}</div></div>`;
   })();
   const fullTitle = artist ? `${title} — ${artist}` : title;
   const profileUrl = isSet ? `${SITE}/#/discover` : (username ? `${SITE}/#/u/${encodeURIComponent(username)}` : SITE + '/');
@@ -281,7 +281,7 @@ ${tags.join('\n')}
   .artist { color:#b6c6d6; margin:0 0 1.4rem; white-space:pre-line; }
   .tl { text-align:left; margin:0 0 1.4rem; padding:.9rem 1.1rem; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
   .tl-h { font-weight:800; font-size:.9rem; margin:0 0 .5rem; color:#cfe8ff; }
-  .tl ol { margin:0; padding-left:1.4rem; line-height:1.75; font-size:.92rem; color:#9fd8fd; }
+  .tl-l { line-height:1.75; font-size:.92rem; color:#9fd8fd; }
   .cta { display:inline-flex; align-items:center; gap:.5rem; text-decoration:none; color:#fff; font-weight:700; padding:.8rem 1.5rem; border-radius:999px;
          background:linear-gradient(135deg,#0ea5e9,var(--blueD)); border:1.5px solid var(--blue); box-shadow:0 0 22px rgba(125,211,252,.38), 0 8px 24px rgba(37,99,235,.35); }
   .cta:hover { filter:brightness(1.1); }

@@ -213,7 +213,7 @@ const LiveArchive = (() => {
     if (!lines.length) return '';
     return `<div style="margin:0.4rem 0 1rem;padding:0.9rem 1.1rem;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
       <div style="font-weight:800;font-size:0.9rem;margin:0 0 0.5rem">${_I('list')} Track list</div>
-      <ol style="margin:0;padding-left:1.4rem;line-height:1.75;font-size:0.92rem;color:var(--text2)">${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ol>
+      <div style="line-height:1.75;font-size:0.92rem;color:var(--text2)">${lines.map(l => `<div>${esc(l)}</div>`).join('')}</div>
     </div>`;
   }
 

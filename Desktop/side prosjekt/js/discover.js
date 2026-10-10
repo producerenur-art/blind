@@ -1248,7 +1248,7 @@ const Discover = (() => {
     if (!lines.length) return '';
     return `<div class="wwl-tracklist" style="margin:.5rem 0 .7rem;padding:.6rem .9rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
       <div style="font-weight:800;font-size:.8rem;margin:0 0 .3rem;color:var(--text)">Track list</div>
-      <ol style="margin:0;padding-left:1.3rem;line-height:1.65;font-size:.85rem;color:var(--text2)">${lines.map(l => `<li>${_lcEsc(l)}</li>`).join('')}</ol>
+      <div style="line-height:1.65;font-size:.85rem;color:var(--text2)">${lines.map(l => `<div>${_lcEsc(l)}</div>`).join('')}</div>
     </div>`;
   }
   function _wwlCard(st) {
