@@ -247,13 +247,34 @@ const LiveMix = (() => {
   // Fire-and-forget: publiser/avpubliser den globale live-statusen som
   // js/liveGlobal.js les/abonnerer på for å bytte over ALLE besøkende
   // (innlogga eller ikkje), uansett kva 24/7-stasjon dei høyrer på.
+  // Eigen intro/outro-rotasjon for kontoane i CONFIG.FREE_LIVE_EMAILS (shinichizen@gmail.com, brukarønske
+  // 2026-10-11): 3 sett som rullerer éitt per sending. Lyttarane ser aldri e-posten, så settnummeret
+  // (0-2) blir sendt som eit usynleg merke bak presentatørnamnet (nulbreidde teikn) — js/radio.js les og
+  // fjernar det. Nytt sett berre ved fyrste publisering av ei sending (heartbeatTimer ikkje sett enno).
+  function _zenSet() {
+    try {
+      const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
+      if (!(typeof CONFIG !== 'undefined' && CONFIG.isFreeLiveEmail && CONFIG.isFreeLiveEmail(cur))) return -1;
+      if (_bc.zenSet == null) {
+        let n = -1;
+        try { n = parseInt(localStorage.getItem('sfm_zen_set'), 10); } catch (e) {}
+        n = ((isNaN(n) ? -1 : n) + 1) % 3;
+        try { localStorage.setItem('sfm_zen_set', String(n)); } catch (e) {}
+        _bc.zenSet = n;
+      }
+      return _bc.zenSet;
+    } catch (e) { return -1; }
+  }
+  function _zenMark(set) { return set >= 0 ? '\u200B' + '\u200C'.repeat(set + 1) + '\u200B' : ''; }
+
   async function _publishLiveStatus(isLive) {
     try {
       if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) return;
+      if (isLive && !_bc.heartbeatTimer) _bc.zenSet = null;
       const { error } = await SC_Storage.client().rpc('set_live_broadcast_status', {
         p_secret:         _liveSecret(),
         p_is_live:        !!isLive,
-        p_presenter_name: isLive ? (_bc.presenterName || '') : '',
+        p_presenter_name: isLive ? ((_bc.presenterName || '') + _zenMark(_zenSet())) : '',
         p_room:           isLive ? (_bc.room || '') : '',
         p_track_title:    isLive ? (_bc.trackTitle || '') : '',
         p_link_url:       isLive ? (_bc.linkUrl || '') : '',
@@ -937,6 +958,7 @@ const LiveMix = (() => {
     // {namn}» på BROADCASTERENS EIGEN fane også — reint visuelt, kobler
     // ALDRI til lyden der (det er nettopp isBroadcastingHere()-sjekken i
     // js/liveGlobal.js som hindrar sjølv-ekko).
+    getZenSet: () => (typeof _bc.zenSet === 'number' ? _bc.zenSet : -1),
     getBroadcastPresenterName: () => (_bc.dj ? (_bc.presenterName || '') : ''),
     getBroadcastTrackTitle: () => (_bc.dj ? (_bc.trackTitle || '') : ''),
     getBroadcastLinkUrl: () => (_bc.dj ? (_bc.linkUrl || '') : ''),

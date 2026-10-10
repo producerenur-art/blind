@@ -468,6 +468,21 @@ const Radio = (() => {
     JINGLE_BASE + 'jingle-steps-echo.m4a',   // «Jingle Steps Echo», lagt til 2026-09-27 (~40s)
     JINGLE_BASE + 'jingle-sirius-beat.m4a',  // «This is SiriusFM…» over beat, lagt til 2026-09-28 (~21s)
   ];
+  // Eigne intro/outro-sett for shinichizen@gmail.com (brukarønske 2026-10-11): 3 sett som rullerer
+  // éitt per sending, spelt BERRE rett før og rett etter sendinga i staden for vanleg intro/outro
+  // (aldri midt i). Settnummeret kjem som usynleg merke bak presentatørnamnet frå js/livemix.js.
+  const ZEN_SETS = [
+    { intro: JINGLE_BASE + 'zen-1-intro.mp3', outro: JINGLE_BASE + 'zen-1-outro.mp3' },
+    { intro: JINGLE_BASE + 'zen-2-intro.mp3', outro: JINGLE_BASE + 'zen-2-outro.mp3' },
+    { intro: JINGLE_BASE + 'zen-3.mp3',       outro: JINGLE_BASE + 'zen-3.mp3' },
+  ];
+  const _ZEN_RE = /\u200B(\u200C{1,3})\u200B/;
+  let _liveZenSet = -1;   // gjeld sendinga som pågår
+  function _splitZen(name) {
+    const s = String(name || '');
+    const m = _ZEN_RE.exec(s);
+    return { name: s.replace(/[\u200B-\u200D]/g, ''), set: m ? m[1].length - 1 : -1 };
+  }
   let _liveIntroIdx = 0, _liveOutroIdx = 0;
   function _nextLiveIntro() { const u = LIVE_INTRO_POOL[_liveIntroIdx % LIVE_INTRO_POOL.length]; _liveIntroIdx++; return u; }
   function _nextLiveOutro() { const u = LIVE_OUTRO_POOL[_liveOutroIdx % LIVE_OUTRO_POOL.length]; _liveOutroIdx++; return u; }
@@ -3948,7 +3963,9 @@ const Radio = (() => {
     };
     // Same outro-jingel som lyttarane får (exitLiveTakeover) — gjeld ALLE som speler live
     // (eigar og gjester), brukarønske 2026-10-07. Jingel FØR rotasjonen går vidare.
-    _playLocalClip(_nextLiveOutro(), resume, LIVE_FADE_MS);
+    let zenSet = -1;
+    try { zenSet = window.LiveMix && window.LiveMix.getZenSet ? window.LiveMix.getZenSet() : -1; } catch (e) {}
+    _playLocalClip(zenSet >= 0 && ZEN_SETS[zenSet] ? ZEN_SETS[zenSet].outro : _nextLiveOutro(), resume, LIVE_FADE_MS);
   }
 
   // «Trykk for å høre»: nettlesarar (iOS Safari, Chrome, desktop-Safari) held lyd tilbake til ein brukargest,
@@ -4058,7 +4075,9 @@ const Radio = (() => {
     }, 1000);
   }
 
-  function enterLiveTakeover(presenterName, skipAnnouncement) {
+  function enterLiveTakeover(presenterRaw, skipAnnouncement) {
+    const _z = _splitZen(presenterRaw), presenterName = _z.name;
+    if (_z.set >= 0) _liveZenSet = _z.set;
     if (_liveTakeover) { _renderLiveBadge(presenterName); return; }   // alt i gang — berre oppdater namnet
     const audio  = getAudio();
     const title  = document.getElementById('player-title');
@@ -4117,7 +4136,10 @@ const Radio = (() => {
       return;
     }
     const standalone = LIVE_STANDALONE[_normalizeName(presenterName)];
-    if (standalone) {
+    if (_liveZenSet >= 0 && ZEN_SETS[_liveZenSet]) {
+      // Eige intro-klipp i staden for «Welcome to SiriusFM Live» + namn.
+      _playLocalClip(ZEN_SETS[_liveZenSet].intro, finishAnnouncement, LIVE_FADE_MS);
+    } else if (standalone) {
       // Éin fil seier alt sjølv ("Welcome... + namn") — INGEN LIVE_INTRO framfor.
       _playLocalClip(standalone, finishAnnouncement, LIVE_FADE_MS);
     } else {
@@ -4132,7 +4154,9 @@ const Radio = (() => {
   // ei sending held fram (t.d. om eigaren skreiv det inn litt seint).
   function setLivePresenterName(name) {
     if (!_liveTakeover) return;
-    _renderLiveBadge(name);
+    const z = _splitZen(name);
+    if (z.set >= 0) _liveZenSet = z.set;
+    _renderLiveBadge(z.name);
   }
 
   // Kalla av js/liveGlobal.js kvar gong track_title-feltet endrar seg (ved
@@ -4384,7 +4408,9 @@ const Radio = (() => {
         else resumePrevious();
       }, LIVE_FADE_MS);
     } else {
-      _playLocalClip(_nextLiveOutro(), resumePrevious, LIVE_FADE_MS);
+      const zen = _liveZenSet >= 0 ? ZEN_SETS[_liveZenSet] : null;
+      _liveZenSet = -1;
+      _playLocalClip(zen ? zen.outro : _nextLiveOutro(), resumePrevious, LIVE_FADE_MS);
     }
   }
 
