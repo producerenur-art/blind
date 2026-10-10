@@ -9464,12 +9464,15 @@ body.edge-idle #r247-card .r247-sub-btn {
 
 .fc-messages { flex: 1; overflow-y: auto; padding: 0.6rem; display: flex; flex-direction: column; gap: 0.35rem; min-height: 180px; }
 .fc-msg {
-  max-width: 85%; align-self: flex-start; background: rgba(255,255,255,0.05);
+  max-width: 85%; align-self: flex-start; background: rgba(255,255,255,0.14); color: #fff;
   border-radius: 10px; padding: 0.35rem 0.55rem; font-size: 0.84rem; line-height: 1.35; word-break: break-word;
 }
 .fc-msg.mine { align-self: flex-end; background: linear-gradient(135deg, rgba(34,197,94,0.5), rgba(37,99,235,0.45)); }
 .fc-msg-from { display: block; font-size: 0.68rem; font-weight: 700; color: #38bdf8; text-decoration: none; }
-.fc-msg-text { color: var(--text); }
+.fc-msg-text { color: #fff; }
+.fc-sync-warn { background: rgba(245,158,11,0.18); border: 1px solid rgba(245,158,11,0.5); color: #fde68a;
+  border-radius: 8px; padding: 0.45rem 0.55rem; font-size: 0.75rem; line-height: 1.3; display: flex; flex-direction: column; gap: 0.35rem; }
+.fc-sync-warn button { align-self: flex-start; background: #f59e0b; color: #000; border: 0; border-radius: 6px; padding: 0.25rem 0.6rem; font-weight: 700; cursor: pointer; }
 .fc-msg-time { display: block; font-size: 0.6rem; color: var(--text3); margin-top: 1px; text-align: right; }
 .fc-input-row { display: flex; gap: 0.35rem; padding: 0.5rem; border-top: 1px solid var(--border); flex-shrink: 0; }
 .fc-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; padding: 0.45rem 0.6rem; color: var(--text); font-size: 0.84rem; }

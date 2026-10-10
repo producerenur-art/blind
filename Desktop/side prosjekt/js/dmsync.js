@@ -20,6 +20,22 @@ const DmSync = (() => {
     return me && me.sessionToken ? me.sessionToken : null;
   }
 
+  // 'ok' | 'no-token' (aldri fekk token) | 'expired' (server avviste tokenet).
+  // Utan dette feila DM TAUST: ingen meldingar vist, ingen varsel, ingen feilmelding.
+  let _expired = false;
+  function status() {
+    if (!_token()) return 'no-token';
+    return _expired ? 'expired' : 'ok';
+  }
+
+  // Server sender eit fornya token når det er halvvegs mot utløp — lagre det
+  // slik at brukaren aldri må logge inn på nytt for å få DM tilbake.
+  function _adoptFresh(tok) {
+    const me = (typeof Auth !== 'undefined') ? Auth.current() : null;
+    if (!tok || !me || tok === me.sessionToken) return;
+    try { Auth.adoptServerUser({ username: me.username, sessionToken: tok }); } catch (_) {}
+  }
+
   async function _call(action, payload) {
     const sessionToken = _token();
     if (!sessionToken) return null;
@@ -31,7 +47,10 @@ const DmSync = (() => {
       });
       if (res.status === 404 || res.status === 503) return null; // ikkje sett opp / lokal utvikling
       const data = await res.json().catch(() => ({}));
+      if (res.status === 401) { _expired = true; console.warn('[DmSync]', action, 'sesjon utløpt'); return null; }
       if (!res.ok) { console.warn('[DmSync]', action, data.error || res.status); return null; }
+      _expired = false;
+      if (data.sessionToken) _adoptFresh(data.sessionToken);
       return data;
     } catch (e) { console.warn('[DmSync]', action, e.message || e); return null; }
   }
@@ -83,7 +102,7 @@ const DmSync = (() => {
     return !!(data && data.success);
   }
 
-  return { push, list, edit, remove, react, markRead, _enabled: () => !!_token() };
+  return { push, list, edit, remove, react, markRead, status, _enabled: () => !!_token() };
 })();
 
 if (typeof window !== 'undefined') window.DmSync = DmSync;

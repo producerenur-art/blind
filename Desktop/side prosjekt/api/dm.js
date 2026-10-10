@@ -10,7 +10,17 @@
 // er ein av dei to partane i kanalen (eller at kanalen er den opne fellesroma
 // 'group') FØR nokon spørring mot databasen køyrer.
 const { createClient } = require('@supabase/supabase-js');
-const { verify } = require('./_hmac');
+const { verify, sign } = require('./_hmac');
+
+// Rullerande sesjon: er tokenet halvvegs mot utløp (30 dagar TTL, ingen anna
+// refresh-mekanisme) gir vi klienten eit nytt i 'list'-svaret. Utan dette
+// blir DM stilt tause 30 dagar etter innlogging (401 → tom liste, ingen varsel).
+const SESSION_TTL = 30 * 24 * 3600;
+function freshToken(claim) {
+  const left = (claim.exp || 0) - Math.floor(Date.now() / 1000);
+  if (left > SESSION_TTL / 2) return null;
+  try { return sign({ purpose: 'session', username: claim.username }, SESSION_TTL); } catch (_) { return null; }
+}
 
 function supa() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -132,7 +142,7 @@ module.exports = async (req, res) => {
           otherRead = (r && r.last_read_ts) || 0;
         }
       }
-      return res.status(200).json({ messages: (data || []).reverse(), otherRead });
+      return res.status(200).json({ messages: (data || []).reverse(), otherRead, sessionToken: freshToken(claim) });
     }
 
     if (body.action === 'send') {
@@ -152,6 +162,20 @@ module.exports = async (req, res) => {
       };
       const { error } = await db.from('direct_messages').upsert(row, { onConflict: 'id' });
       if (error) throw error;
+      // Varsel (bjelle + toast + lyd) til mottakaren, skrive server-side så det
+      // ikkje avheng av at avsendaren sin klient (Gun) når mottakaren. Idempotent
+      // på id (DM-id), så re-send/upsert aldri gir dobbelt varsel.
+      try {
+        const parts = channel.split('__');
+        if (channel !== 'group' && parts.length === 2 && body.to && String(body.to) !== from && parts.includes(String(body.to))) {
+          await db.from('notifications').upsert({
+            id: `dm_${id}`.slice(0, 120), to_user: String(body.to), from_user: from,
+            from_display: row.from_display, type: 'dm',
+            text: `sent you a message: ${_preview(row)}`.slice(0, 200),
+            link: `#/messages/${encodeURIComponent(from)}`, ts: row.ts,
+          }, { onConflict: 'id' });
+        }
+      } catch (e) { console.warn('dm notif:', e && e.message); }
       // E-postvarsel til mottakaren (privat DM). Feil her skal aldri velte sendinga.
       let emailed = false;
       try { emailed = await notifyByEmail(db, row); } catch (e) { console.warn('dm email:', e && e.message); }

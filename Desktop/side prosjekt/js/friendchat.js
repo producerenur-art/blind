@@ -57,8 +57,11 @@ const FriendChat = (() => {
         const newOtherRead = (rows && rows._otherRead) || 0;
         const readChanged = otherRead[chan] !== newOtherRead;
         otherRead[chan] = newOtherRead;
+        const stNow = DmSync.status();
+        const stChanged = _lastStatus !== stNow;
+        _lastStatus = stNow;
         _reconcile(chan, rows);
-        if (readChanged && chan === activeChannel() && document.getElementById('fc-messages')) renderMessages();
+        if ((readChanged || stChanged) && chan === activeChannel() && document.getElementById('fc-messages')) renderMessages();
       };
       pull();
       setInterval(pull, 6000);
@@ -125,7 +128,10 @@ const FriendChat = (() => {
 
     arr.sort((a, b) => a.ts - b.ts);
     while (arr.length > MAX_MSGS) arr.shift();
-    if (chan === activeChannel() && document.getElementById('fc-messages')) renderMessages();
+    if (chan === activeChannel() && document.getElementById('fc-messages')) {
+      renderMessages();
+      if (!_min && !document.hidden && rows.some(r => r.from_user !== (Auth.current() || {}).username)) markRead(chan);
+    }
     updateBadges();
   }
 
@@ -146,6 +152,7 @@ const FriendChat = (() => {
     updateBadges();
     if (typeof DmSync !== 'undefined') DmSync.markRead(chan).catch(() => {});
   }
+  let _lastStatus = 'ok';
   const otherRead = {}; // kanal → ts motparten har lese t.o.m. (frå server, poll)
 
   // Brukarønske 2026-09-26: «Group lounge» skal ikkje visast på radiosida (#/radio).
@@ -318,6 +325,17 @@ const FriendChat = (() => {
     const cont = document.getElementById('fc-messages'); if (!cont) return;
     const chan = activeChannel();
     cont.innerHTML = '';
+    // Synleg feilstatus i staden for TAUS svikt: utan gyldig sesjon går ingen
+    // meldingar ut/inn mellom ulike nettlesarar (kun lokal Gun), og brukaren såg
+    // berre ei tom rute.
+    const st = (typeof DmSync !== 'undefined') ? DmSync.status() : 'ok';
+    if (st !== 'ok') {
+      const b = document.createElement('div');
+      b.className = 'fc-sync-warn';
+      b.innerHTML = `<span>⚠ Chat sync is off — your login ${st === 'expired' ? 'has expired' : 'is missing a session'}, so messages can't be sent or received.</span>
+        <button type="button" onclick="FriendChat.relogin()">Log in again</button>`;
+      cont.appendChild(b);
+    }
     (store[chan] || []).forEach(appendMsgEl);
     cont.scrollTop = cont.scrollHeight;
     _updateReadStatusUI(chan);
@@ -390,6 +408,13 @@ const FriendChat = (() => {
 
   function updateBadges() {
     if (!_mounted) return;
+    const l = document.getElementById('fc-launch');
+    if (l) {
+      const n = totalUnread();
+      l.textContent = n > 0 ? `💬 ${n > 99 ? '99+' : n}` : '💬';
+      l.style.width = n > 0 ? 'auto'  : '46px';
+      l.style.padding = n > 0 ? '0 0.8rem' : '';
+    }
     renderBar();
     if (_active.type === 'list' && document.getElementById('fc-body')) renderList(document.getElementById('fc-body'));
     if (typeof App !== 'undefined' && App.updateNavBadge) App.updateNavBadge();
@@ -497,6 +522,11 @@ const FriendChat = (() => {
     if (_min) { _min = false; localStorage.setItem(MIN_KEY, '0'); document.getElementById('fc-dock')?.classList.remove('minimized'); }
     renderBar(); renderBody();
   }
+  // Sesjonstokenet er utløpt/manglar og kan ikkje fornyast utan passord:
+  // logg ut så innloggingsskjermen kjem opp, og DM synkar att etter innlogging.
+  function relogin() {
+    try { if (typeof App !== 'undefined' && App.logout) { App.logout(); return; } Auth.logout(); location.hash = '#/'; location.reload(); } catch (_) { location.reload(); }
+  }
   function back() { _active = { type: 'list' }; renderBar(); renderBody(); }
 
   function toggleMin() {
@@ -534,7 +564,7 @@ const FriendChat = (() => {
   // Lytt alltid på rutebytte (init() blir ikkje kalla frå noko), så Group lounge forsvinn/kjem attende med sida.
   window.addEventListener('hashchange', () => { try { refresh(); } catch (_) {} });
 
-  return { init, refresh, closeDock, openDock, toggle, toggleMin, toggleSound, openConv, openGroup, back, send,
+  return { init, refresh, closeDock, openDock, toggle, toggleMin, toggleSound, openConv, openGroup, back, send, relogin,
     pickGif, editMsg, deleteMsg, toggleEmojiPicker, insertEmoji, toggleReactPicker, toggleReaction };
 })();
 window.FriendChat = FriendChat;
