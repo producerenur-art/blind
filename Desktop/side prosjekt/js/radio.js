@@ -710,6 +710,61 @@ const Radio = (() => {
   function _initJingleSchedule() { _scheduleJingleSlots(); }
   if (typeof document !== 'undefined') _initJingleSchedule();
 
+  // ── Synchronos Recordings-jinglar kl. 04/08/12/16/20 norsk tid (brukarønske 2026-10-11) ──
+  // 4 korte klipp (3,5–4,4 s, løfta til RMS ≈ −18 dBFS) i TILFELDIG rekkefølge, men berre 5 gonger i døgnet
+  // (kvar 4. time, ikkje midnatt), over musikken som dei andre jinglane (_playJingleOverMusic → aldri under
+  // live/mix). Same klokkeslett for alle lyttarar: valet er deterministisk frå norsk dato (stokka rekkefølge
+  // per dag, aldri same klipp to gonger på rad, òg ikkje over dagsskiftet). Slot ved :40 — ikkje :05
+  // (reklame), :15 (jingel-sirkel), :20 (booking-reklame) eller timeskiftet i 24/7.
+  const SYNC_JINGLES = [1, 2, 3, 4].map(n => JINGLE_BASE + 'synchronos-' + n + '.mp3?v=20261011');
+  const SYNC_HOURS = [4, 8, 12, 16, 20];
+  const SYNC_MINUTE_MS = 40 * 60 * 1000;
+  function _osloParts(t) {
+    try {
+      const f = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Oslo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' });
+      const o = {}; f.formatToParts(new Date(t)).forEach(p => { o[p.type] = p.value; });
+      return { day: o.year + o.month + o.day, hour: parseInt(o.hour, 10) % 24 };
+    } catch (e) { const d = new Date(t); return { day: d.toISOString().slice(0, 10).replace(/-/g, ''), hour: d.getHours() }; }
+  }
+  function _syncOrder(dayKey) {            // stokka rekkefølge av klippindeksar, same for alle for ein gitt dato
+    let h = 0; for (let i = 0; i < dayKey.length; i++) h = (Math.imul(h, 31) + dayKey.charCodeAt(i)) >>> 0;
+    const a = SYNC_JINGLES.map((_, i) => i);
+    for (let i = a.length - 1; i > 0; i--) {
+      h = (Math.imul(h ^ (h >>> 15), 2246822507) + 374761393) >>> 0;
+      const j = h % (i + 1); [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function _syncPick(dayKey, slotIdx, prevDayKey) {
+    const order = _syncOrder(dayKey);
+    let pick = order[slotIdx % order.length];
+    if (slotIdx === 0 && prevDayKey) {      // ikkje same klipp som gårsdagens siste slot (slot 4 = order[0] i går)
+      const prev = _syncOrder(prevDayKey)[(SYNC_HOURS.length - 1) % order.length];
+      if (pick === prev) pick = order[3];
+    }
+    return pick;
+  }
+  function _nextSyncSlot(now) {
+    const HOUR = 60 * 60 * 1000;
+    let t = Math.floor(now / HOUR) * HOUR + SYNC_MINUTE_MS;   // :40 i inneverande time (UTC-timar = Oslo-timar + heiltalsforskyving)
+    if (t <= now) t += HOUR;
+    for (let k = 0; k < 30; k++, t += HOUR) {
+      const p = _osloParts(t), idx = SYNC_HOURS.indexOf(p.hour);
+      if (idx >= 0) return { at: t, url: SYNC_JINGLES[_syncPick(p.day, idx, _osloParts(t - 24 * HOUR).day)] };
+    }
+    return null;
+  }
+  function _scheduleSyncJingle() {
+    const now = Date.now(), slot = _nextSyncSlot(now);
+    if (!slot) return;
+    _preloadAt(slot.url, slot.at);
+    setTimeout(() => {
+      if (!_liveTakeover) _playJingleOverMusic(slot.url, LIVE_FADE_MS);   // aldri under live/mix
+      _scheduleSyncJingle();
+    }, Math.max(1000, slot.at - now));
+  }
+  if (typeof document !== 'undefined') _scheduleSyncJingle();
+
   // ── Reklamer ALENE, kvar 7. time kvar (brukarønske 2026-09-24) ─────────────────────
   // ~1,5–4 min reklame som speler HELT åleine (ikkje oppå musikk): det som spelar tonast ut
   // (320 ms), reklamen speler, så tonast stasjonen inn att (320 ms) og koplar seg til på
