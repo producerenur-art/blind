@@ -1074,6 +1074,8 @@ const Discover = (() => {
   // Same tekst som e-postvarsla (js/specialShows.js er felles kjelde). Alle (gjester òg) kan
   // spele miksen på forespørsel med den vanlege spelaren (Player.playExternal, med spolelinje) —
   // men ikkje FØR første direktesending har starta (ikkje spoile premieren).
+  // Tekst → escapa HTML med klikkbare lenker (https://… og www.…) — for alle: gjester og innlogga.
+  function _lcLink(t) { const v = String(t == null ? '' : t); return (window.LinkPreview && LinkPreview.linkify) ? LinkPreview.linkify(v).html : _lcEsc(v); }
   function _lcEsc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
   function renderLemonchillAd() {
     const show = (typeof SpecialShows !== 'undefined' && SpecialShows.SHOWS && SpecialShows.SHOWS[0]) || null;
@@ -1248,7 +1250,7 @@ const Discover = (() => {
     if (!lines.length) return '';
     return `<div class="wwl-tracklist" style="margin:.5rem 0 .7rem;padding:.6rem .9rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
       <div style="font-weight:800;font-size:.8rem;margin:0 0 .3rem;color:var(--text)">Track list</div>
-      <div style="line-height:1.65;font-size:.85rem;color:var(--text2)">${lines.map(l => `<div>${_lcEsc(l)}</div>`).join('')}</div>
+      <div style="line-height:1.65;font-size:.85rem;color:var(--text2)">${lines.map(l => `<div>${_lcLink(l)}</div>`).join('')}</div>
     </div>`;
   }
   function _wwlCard(st) {
@@ -1268,7 +1270,7 @@ const Discover = (() => {
             <button class="btn btn-ghost" onclick="Discover.wwlCopy('${id}')">📋 Copy link</button>
             ${st.display_name ? `<span class="wwl-dj">${_lcEsc(st.display_name)}</span>` : ''}
           </div>
-          ${st.track_title ? `<div class="wwl-public-text">${_lcEsc(st.track_title)}</div>` : ''}
+          ${st.track_title ? `<div class="wwl-public-text">${_lcLink(st.track_title)}</div>` : ''}
           ${_wwlTracks(st)}
           <div class="wwl-seek" id="wwl-seek-${id}">
           <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlPreview('${id}', this.value)" onchange="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
@@ -1285,7 +1287,7 @@ const Discover = (() => {
         <div class="wwl-art">${art}</div>
         <div class="wwl-body">
           <div class="wwl-name">${_lcEsc(st.display_name || 'Live set')}</div>
-          <div class="wwl-text">${_lcEsc(st.track_title || '')}</div>
+          <div class="wwl-text">${_lcLink(st.track_title || '')}</div>
           ${_wwlTracks(st)}
           <div class="wwl-meta">${_lcEsc(_wwlFmtDate(st.ended_at))}${mins ? ' · <span class="wwl-dur">' + mins + '</span>' : ''}${st.room === 'upload' ? ' · upload' : ''}</div>
           <div class="wwl-url" style="font-size:.75rem;margin:.15rem 0 .4rem;word-break:break-all"><a href="${_lcEsc(_wwlUrl(st))}" target="_blank" rel="noopener noreferrer" style="color:var(--text2)">${_lcEsc(_wwlUrl(st))}</a></div>

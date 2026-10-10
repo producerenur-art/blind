@@ -207,13 +207,16 @@ const LiveArchive = (() => {
       </a>`;
   }
 
+  // Tekst med klikkbare lenker (https://… og www.…), ellers vanleg escapa.
+  function _lnk(t) { const v = String(t == null ? '' : t); return (window.LinkPreview && LinkPreview.linkify) ? LinkPreview.linkify(v).html : esc(v); }
+
   // Tracklist under lydspilleren (ei linje per spor). Vist for alle.
   function _tracklistHtml(txt) {
     const lines = String(txt || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
     if (!lines.length) return '';
     return `<div style="margin:0.4rem 0 1rem;padding:0.9rem 1.1rem;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
       <div style="font-weight:800;font-size:0.9rem;margin:0 0 0.5rem">${_I('list')} Track list</div>
-      <div style="line-height:1.75;font-size:0.92rem;color:var(--text2)">${lines.map(l => `<div>${esc(l)}</div>`).join('')}</div>
+      <div style="line-height:1.75;font-size:0.92rem;color:var(--text2)">${lines.map(l => `<div>${_lnk(l)}</div>`).join('')}</div>
     </div>`;
   }
 
@@ -236,7 +239,7 @@ const LiveArchive = (() => {
           </div>
           <div class="mag-article-cat">Live set · ${esc(_fmtDate(s.ended_at))}${s.duration_sec ? ' · ' + esc(_fmtDur(s.duration_sec)) : ''}</div>
           <h1 class="mag-article-title">${esc(s.display_name || 'Live set')}</h1>
-          ${s.track_title ? `<p class="mag-article-ingress">${esc(s.track_title)}</p>` : ''}
+          ${s.track_title ? `<p class="mag-article-ingress">${_lnk(s.track_title)}</p>` : ''}
           ${s.audio_url ? `<audio controls preload="metadata" src="${esc(s.audio_url)}" onloadedmetadata="window.Player&&Player.fixInfiniteDuration&&Player.fixInfiniteDuration(this)" style="width:100%;margin:0.8rem 0"></audio>` : `<p style="color:var(--text3);font-size:0.85rem">No recording available for this set.</p>`}
           ${_tracklistHtml(s.tracklist)}
           <div style="margin:1rem 0;display:flex;gap:0.6rem;flex-wrap:wrap">

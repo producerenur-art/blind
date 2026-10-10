@@ -70,14 +70,14 @@ const LiveBroadcast = (() => {
   }
   // Lyd har førsteprioritet; video (stillbilde/kamera) strupast hardt så han aldri tek båndbredde
   // eller koding-CPU frå lyden — éin koder per lytter i mesh, så video er den dyre delen.
-  async function setAudioBitrate(pc, bps) {
+  async function setAudioBitrate(pc, bps, videoOn = true) {
     for (const sd of pc.getSenders()) {
       try {
         if (!sd.track) continue;
         const pr = sd.getParameters(); pr.encodings = pr.encodings && pr.encodings.length ? pr.encodings : [{}];
         const e0 = pr.encodings[0];
         if (sd.track.kind === 'audio') { e0.maxBitrate = bps; e0.priority = 'high'; e0.networkPriority = 'high'; }
-        else { e0.maxBitrate = 600000; e0.maxFramerate = 15; e0.priority = 'very-low'; e0.networkPriority = 'very-low'; }
+        else { e0.maxBitrate = 400000; e0.maxFramerate = 10; e0.priority = 'very-low'; e0.networkPriority = 'very-low'; e0.active = !!videoOn; }
         await sd.setParameters(pr);
       } catch (e) {}
     }
@@ -147,6 +147,37 @@ const LiveBroadcast = (() => {
     const client = supaClient();
     const ch = client.channel(channelName(room), { config: { broadcast: { self: false } } });
     const log = m => onLog && onLog(m);
+    // Automatisk bitrate-kontroll (DJ-sida): lyttarane rapporterer hakk/tap kvar 10. s. Går ein lyttar dårleg,
+    // eller to+ samtidig (= DJ-ens opplasting/maskin er flaskehalsen), senkar vi lydbitraten stegvis og
+    // skrur av video til det er stabilt; så stig vi sakte opp att. Mål: aldri hørbart hakk, same kor nettet svingar.
+    const LADDER = [128000, 96000, 64000, 48000, 32000];
+    const abr = new Map();             // listenerId -> { idx, ceil, good, at, lastBad, videoOn }
+    let holdUpUntil = 0, lastGlobalDrop = 0;
+    const applyAbr = (lid, why) => {
+      const a = abr.get(lid), pc = peers.get(lid); if (!a || !pc) return;
+      a.videoOn = a.idx <= 1;
+      setAudioBitrate(pc, LADDER[a.idx], a.videoOn);
+      log('⚙ Auto-bitrate ' + lid + ': ' + (LADDER[a.idx] / 1000) + ' kbps' + (a.videoOn ? '' : ', video av') + ' (' + why + ')');
+    };
+    const abrDown = (lid, why) => {
+      const a = abr.get(lid); if (!a || a.idx >= LADDER.length - 1) return;
+      a.idx++; a.good = 0; a.at = Date.now(); applyAbr(lid, why);
+    };
+    const abrOnStats = p => {
+      const a = abr.get(p.from); if (!a) return;
+      const now = Date.now();
+      const bad = p.lossPct > 3 || p.concealedPct > 5;
+      if (bad) {
+        a.good = 0; a.lastBad = now; holdUpUntil = Math.max(holdUpUntil, now + 90000);
+        const recentBad = [...abr.values()].filter(x => now - x.lastBad < 25000).length;
+        if (recentBad >= 2 && now - lastGlobalDrop > 15000) {   // fleire samtidig → problemet er hos DJ-en
+          lastGlobalDrop = now; holdUpUntil = now + 150000;
+          abr.forEach((x, lid) => { if (x.idx < LADDER.length - 1) { x.idx++; x.good = 0; x.at = now; applyAbr(lid, 'fleire lyttarar hakkar'); } });
+        } else if (now - a.at > 8000) abrDown(p.from, 'hakk ' + p.concealedPct + '%, tap ' + p.lossPct + '%');
+      } else if (++a.good >= 6 && a.idx > a.ceil && now > holdUpUntil && now - a.at > 45000) {
+        a.idx--; a.good = 0; a.at = now; applyAbr(p.from, 'stabilt 60 s');
+      }
+    };
     const count = () => onPeerCount && onPeerCount([...peers.values()].filter(p => p.connectionState === 'connected').length);
     const sig = (event, payload) => ch.send({ type: 'broadcast', event, payload });
     const sigTo = (to, data) => sig('signal', { to, from: id, data });
@@ -167,7 +198,7 @@ const LiveBroadcast = (() => {
         // 'disconnected' er ofte forbigåande (nettverksglipp som løyser seg på sekund). Å lukke med ein
         // gong gav høyrbart brot + full ny oppkopling — gje 8 s ro, lukk berre om det ikkje kjem tilbake.
         clearTimeout(pc._dcTimer);
-        if (['failed', 'closed'].includes(pc.connectionState)) { pc.close(); peers.delete(listenerId); }
+        if (['failed', 'closed'].includes(pc.connectionState)) { pc.close(); peers.delete(listenerId); abr.delete(listenerId); }
         else if (pc.connectionState === 'disconnected') {
           pc._dcTimer = setTimeout(() => { if (pc.connectionState !== 'connected') { try { pc.close(); } catch (e) {} if (peers.get(listenerId) === pc) peers.delete(listenerId); count(); } }, 8000);
         }
@@ -176,16 +207,19 @@ const LiveBroadcast = (() => {
       const offer = await pc.createOffer();
       offer.sdp = tuneOpus(offer.sdp);
       await pc.setLocalDescription(offer);
-      setAudioBitrate(pc, mobile ? 96000 : 128000);
+      // Start på 96 kbps (ikkje 128) så ei oppstart/omstart med mange lyttarar ikkje sprengjer opplastinga; stig til tak.
+      abr.set(listenerId, { idx: 1, ceil: mobile ? 1 : 0, good: 0, at: Date.now(), lastBad: 0, videoOn: true });
+      setAudioBitrate(pc, LADDER[1], true);
       sigTo(listenerId, { type: 'offer', sdp: pc.localDescription });
       log('Sent offer to ' + listenerId);
     }
 
     ch.on('broadcast', { event: 'hello' }, ({ payload }) => { if (payload.room === room) addListener(payload.from, !!payload.audioOnly, !!payload.mobile); })
-      .on('broadcast', { event: 'bye' }, ({ payload }) => { const pc = peers.get(payload.from); if (pc) { pc.close(); peers.delete(payload.from); count(); } })
+      .on('broadcast', { event: 'bye' }, ({ payload }) => { const pc = peers.get(payload.from); if (pc) { pc.close(); peers.delete(payload.from); abr.delete(payload.from); count(); } })
       .on('broadcast', { event: 'stats' }, ({ payload }) => {
         if (!payload || payload.room !== room || !peers.has(payload.from)) return;
         lstats.set(payload.from, Object.assign({ at: Date.now() }, payload));
+        try { abrOnStats(payload); } catch (e) {}
         if (onStats) { try { onStats([...lstats.values()]); } catch (e) {} }
         const bad = payload.concealedPct > 3 || payload.lossPct > 2;
         if (bad) log('⚠ ' + (payload.mobile ? 'Mobil' : 'PC') + ' ' + payload.from + ': hakk ' + payload.concealedPct + '%, tap ' + payload.lossPct + '%, jitter ' + payload.jitterMs + ' ms, RTT ' + payload.rttMs + ' ms, rute ' + payload.route);

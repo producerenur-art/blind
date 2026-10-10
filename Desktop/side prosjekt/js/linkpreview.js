@@ -42,7 +42,7 @@
     const text = String(raw == null ? '' : raw);
     const urls = [];
     const mentions = [];
-    const re = /\bhttps?:\/\/[^\s<]+|@([a-zA-Z0-9_]{3,32})\b/g;
+    const re = /\b(?:https?:\/\/|www\.)[^\s<]+|@([a-zA-Z0-9_]{3,32})\b/g;
     let out = '', last = 0, m;
     while ((m = re.exec(text))) {
       if (m[1]) {
@@ -60,8 +60,10 @@
       let tail = '';
       const t = url.match(/[)\].,!?:;'"»]+$/);
       if (t) { tail = t[0]; url = url.slice(0, url.length - tail.length); }
-      urls.push(url);
-      out += '<a class="cp-link notranslate" href="' + esc(url) +
+      // «www.x.com» uten skjema: vis som skrevet, lenk til https://
+      const href = /^www\./i.test(url) ? 'https://' + url : url;
+      urls.push(href);
+      out += '<a class="cp-link notranslate" href="' + esc(href) +
         '" target="_blank" rel="noopener noreferrer">' + esc(url) + '</a>' + esc(tail);
       last = m.index + m[0].length;
     }
