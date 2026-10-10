@@ -3334,12 +3334,14 @@ const Radio = (() => {
     if (lvl > _visStallLevel) {
       _visStallLevel = lvl;
       applyVisQuality(document.getElementById('radio-vis-video'));
+      sizeVisVideo();   // dropp oppskaleringa (k) med ein gong når lyden hakkar
     }
   }
   function _maybeRecoverVis() {
     if (_visStallLevel && Date.now() - _lastStallAt > 3 * 60 * 1000) {
       _visStallLevel = 0; _stallTimes = [];
       applyVisQuality(document.getElementById('radio-vis-video'));
+      sizeVisVideo();
     }
   }
   if (typeof navigator !== 'undefined' && navigator.connection && navigator.connection.addEventListener) {
@@ -3408,7 +3410,7 @@ const Radio = (() => {
   // over et par frames slik at videoen dukker opp umiddelbart ved bytte.
   function forceVisRepaint(frame) {
     if (!frame) return;
-    const base = 'translate(-50%, -50%) translateZ(0)';
+    const base = frame._vBase || 'translate(-50%, -50%) translateZ(0)';
     frame.style.transform = base + ' scale(1.0001)';
     requestAnimationFrame(() => {
       frame.style.transform = base;
@@ -3442,8 +3444,24 @@ const Radio = (() => {
     let w, h;
     if (cw / ch > ar) { w = cw; h = cw / ar; }   // beholder bredde → overflow i høyden
     else              { h = ch; w = ch * ar; }   // beholder høyde → overflow i bredden
-    frame.style.width  = Math.ceil(w) + 'px';
-    frame.style.height = Math.ceil(h) + 'px';
+    // TEKST I BUNN (2026-10-10): cover-beskjæringa var sentrert, så undertekstar/tekst nederst i videoen vart
+    // kutta. Når videoen er høgare enn ramma held vi NEDRE kant fast (beskjer berre toppen) — ramma og
+    // storleiken er uendra, berre kva del av videoen som vert klipt bort.
+    frame.style.top = (h > ch + 1) ? Math.round(ch - h / 2) + 'px' : '';
+    // SKARPARE BILETE: YouTube vel kvalitet etter spelaren sin CSS-storleik, og ignorerer setPlaybackQuality
+    // (målt: hd720 på 1400 px uansett kommando). Bygg derfor iframen opp til ca. 1920 px brei og skaler han
+    // tilbake med CSS — same synlege storleik, men YouTube serverer 1080p. Berre på desktop og godt nett.
+    let k = 1;
+    try {
+      const c = (typeof navigator !== 'undefined' && navigator.connection) || {};
+      const okNet = !c.saveData && !(typeof c.downlink === 'number' && c.downlink < 3) && !/(^|-)2g|3g/.test(c.effectiveType || '');
+      if (!IS_TOUCH_MOBILE && okNet && _visStallLevel === 0 && w < 1900) k = Math.min(2.5, 1920 / w);
+    } catch (e) {}
+    if (k < 1.05) k = 1;
+    frame.style.width  = Math.ceil(w * k) + 'px';
+    frame.style.height = Math.ceil(h * k) + 'px';
+    frame._vBase = 'translate(-50%, -50%)' + (k > 1 ? ' scale(' + (1 / k).toFixed(5) + ')' : '') + ' translateZ(0)';
+    frame.style.transform = frame._vBase;
   }
 
   // ── AI-roterte visuals (lydløse 4K-looper AI henter fra YouTube) ─────────
