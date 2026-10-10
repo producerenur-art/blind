@@ -219,6 +219,8 @@ const LiveBroadcast = (() => {
       .on('broadcast', { event: 'stats' }, ({ payload }) => {
         if (!payload || payload.room !== room || !peers.has(payload.from)) return;
         lstats.set(payload.from, Object.assign({ at: Date.now() }, payload));
+        statLog.push({ t: Date.now(), from: payload.from, mobile: !!payload.mobile, c: payload.concealedPct, l: payload.lossPct, j: payload.jitterMs, rtt: payload.rttMs, route: payload.route });
+        if (statLog.length > 4000) statLog.shift();
         try { abrOnStats(payload); } catch (e) {}
         if (onStats) { try { onStats([...lstats.values()]); } catch (e) {} }
         const bad = payload.concealedPct > 3 || payload.lossPct > 2;
@@ -236,6 +238,34 @@ const LiveBroadcast = (() => {
         if (status === 'SUBSCRIBED') sig('dj-online', { room, from: id });  // be eksisterende lyttere melde seg
       });
 
+    // Varig måling: alle lyttar-samplingar (kvar 10. s per lyttar) for heile settet. Ligg i minnet, blir
+    // lagra i localStorage kvar 30. s (overlever refresh) og kan hentast ut med SfmStats.download() i
+    // konsollen etterpå — så hakking kan analyserast i ettertid, ikkje berre sjåast i DJ-loggen medan det går.
+    const statLog = [];
+    const pct = (arr, q) => { if (!arr.length) return 0; const a = arr.slice().sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.floor(q * a.length))]; };
+    const summarize = () => {
+      const out = {};
+      for (const [name, rows] of [['mobil', statLog.filter(x => x.mobile)], ['PC', statLog.filter(x => !x.mobile)]]) {
+        if (!rows.length) continue;
+        const c = rows.map(x => x.c);
+        out[name] = { samples: rows.length, lyttarar: new Set(rows.map(x => x.from)).size,
+          hakkPct_p50: pct(c, 0.5), hakkPct_p95: pct(c, 0.95), hakkPct_maks: Math.max(...c),
+          samplingarOver3pct: Math.round(1000 * c.filter(v => v > 3).length / rows.length) / 10,
+          tapPct_maks: Math.max(...rows.map(x => x.l)), jitterMs_p95: pct(rows.map(x => x.j), 0.95),
+          rttMs_p50: pct(rows.map(x => x.rtt), 0.5), relayAndel: Math.round(1000 * rows.filter(x => x.route === 'relay').length / rows.length) / 10 };
+      }
+      return out;
+    };
+    const persist = () => { try { localStorage.setItem('sfm_stats_last', JSON.stringify({ room, savedAt: Date.now(), samples: statLog.slice(-3000) })); } catch (e) {} };
+    window.SfmStats = {
+      log: () => statLog.slice(), summary: summarize,
+      download: () => {
+        const blob = new Blob([JSON.stringify({ room, at: new Date().toISOString(), summary: summarize(), samples: statLog }, null, 1)], { type: 'application/json' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = 'sirius-lyttar-maaling-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.json'; a.click();
+      },
+    };
+
     // Oppsummering til DJ-loggen kvar 30. s: kor mange lyttarar rapporterer, kor mange hakkar, og den verste.
     // (Enkeltvarsel «⚠» kjem berre når éin lyttar går over grensa — dette viser heile biletet, også at alt er greitt.)
     const sumTimer = setInterval(() => {
@@ -247,6 +277,7 @@ const LiveBroadcast = (() => {
       log('📊 ' + connected + ' lyttar(e), ' + fresh.length + ' med måling (' + fresh.filter(x => x.mobile).length + ' mobil): '
         + (bad.length ? bad.length + ' hakkar' : 'ingen hakkar')
         + (worst ? ' · verst ' + (worst.mobile ? 'mobil' : 'PC') + ' hakk ' + worst.concealedPct + '%, jitter ' + worst.jitterMs + ' ms, ' + worst.route : ''));
+      persist();
     }, 30000);
 
     return {
@@ -255,6 +286,7 @@ const LiveBroadcast = (() => {
       get listenerStats() { return [...lstats.values()].filter(x => peers.has(x.from)); },
       stop() {
         clearInterval(sumTimer);
+        try { persist(); if (statLog.length) log('📈 Måling heile settet: ' + JSON.stringify(summarize()) + ' — hent alle tal med SfmStats.download() i konsollen'); } catch (e) {}
         peers.forEach(p => p.close()); peers.clear();
         try { sig('dj-offline', { room, from: id }); } catch (e) {}
         client.removeChannel(ch);
