@@ -193,6 +193,7 @@ const LiveGlobal = (() => {
 
   async function _poll() {
     const status = await _fetchStatus();
+    window._liveStatusChecked = true;   // radio.js: først no kan reklame/jingel trygt spele (fersk sidelasting)
     if (status) _apply(status);
   }
 

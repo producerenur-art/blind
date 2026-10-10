@@ -620,7 +620,7 @@ const Radio = (() => {
   // kortlevd element og stasjonen toner tilbake (same fade) når han er ferdig. Ingen
   // pause/reconnect. (iOS ignorerer audio.volume — der speler jingelen berre oppå.)
   function _playJingleOverMusic(url, fadeMs) {
-    if (_jingleBusy || _liveTakeover || !window._radioMode || !isPlaying || muted) return;
+    if (_jingleBusy || _liveTakeover || _liveStatusPending() || !window._radioMode || !isPlaying || muted) return;
     const audio = getAudio();
     if (!audio || audio.paused) return;
     _jingleBusy = true;
@@ -717,8 +717,13 @@ const Radio = (() => {
   // og kople så til ein annan stasjon — 24/7 skal ALDRI bli ståande stille.
   const DEAD_STREAM_AD = JINGLE_BASE + 'reklame-2-sirius-v2.m4a?v=20260927';
 
+  // Fersk sidelasting: vent på første live-status (maks 10 s) før reklame/jingel kan spele, så ei sending som
+  // alt pågår ikkje blir avbroten av ei reklame rett før live-overtakinga (rapportert 2026-10-11).
+  function _liveStatusPending() {
+    try { return !!window.LiveGlobal && !window._liveStatusChecked && performance.now() < 10000; } catch (e) { return false; }
+  }
   function _playAdAlone(url) {
-    if (_jingleBusy || _liveTakeover || _special || !window._radioMode || !isPlaying || muted) return;
+    if (_jingleBusy || _liveTakeover || _special || _liveStatusPending() || !window._radioMode || !isPlaying || muted) return;
     _jingleBusy = true;
     _playLocalClip(url, () => {
       _jingleBusy = false;
@@ -1567,7 +1572,7 @@ const Radio = (() => {
       _reconnectCount = 0; _reconnectWindowStart = Date.now();
       try { _playUrl(dead.url, dead); } catch (e) { /* stille */ }
     };
-    if (_jingleBusy || _liveTakeover || !window._radioMode) { resume(); return; }
+    if (_jingleBusy || _liveTakeover || _liveStatusPending() || !window._radioMode) { resume(); return; }
     _jingleBusy = true;
     _playLocalClip(DEAD_STREAM_AD, resume, AD_FADE_MS);
   }
