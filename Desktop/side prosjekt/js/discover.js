@@ -1242,6 +1242,15 @@ const Discover = (() => {
     const d = new Date(iso); if (isNaN(d.getTime())) return '';
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Oslo' });
   }
+  // Tracklist (ei linje per spor frå «Edit text») — synleg for ALLE (gjester, innlogga, eigar).
+  function _wwlTracks(st) {
+    const lines = String(st.tracklist || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    if (!lines.length) return '';
+    return `<div class="wwl-tracklist" style="margin:.5rem 0 .7rem;padding:.6rem .9rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+      <div style="font-weight:800;font-size:.8rem;margin:0 0 .3rem;color:var(--text)">Track list</div>
+      <ol style="margin:0;padding-left:1.3rem;line-height:1.65;font-size:.85rem;color:var(--text2)">${lines.map(l => `<li>${_lcEsc(l)}</li>`).join('')}</ol>
+    </div>`;
+  }
   function _wwlCard(st) {
     _wwlSets[st.id] = st;
     const id = _lcEsc(st.id);
@@ -1260,6 +1269,7 @@ const Discover = (() => {
             ${st.display_name ? `<span class="wwl-dj">${_lcEsc(st.display_name)}</span>` : ''}
           </div>
           ${st.track_title ? `<div class="wwl-public-text">${_lcEsc(st.track_title)}</div>` : ''}
+          ${_wwlTracks(st)}
           <div class="wwl-seek" id="wwl-seek-${id}">
           <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlPreview('${id}', this.value)" onchange="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
           <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st._dur || st.duration_sec)}</span>
@@ -1276,6 +1286,7 @@ const Discover = (() => {
         <div class="wwl-body">
           <div class="wwl-name">${_lcEsc(st.display_name || 'Live set')}</div>
           <div class="wwl-text">${_lcEsc(st.track_title || '')}</div>
+          ${_wwlTracks(st)}
           <div class="wwl-meta">${_lcEsc(_wwlFmtDate(st.ended_at))}${mins ? ' · <span class="wwl-dur">' + mins + '</span>' : ''}${st.room === 'upload' ? ' · upload' : ''}</div>
           <div class="wwl-url" style="font-size:.75rem;margin:.15rem 0 .4rem;word-break:break-all"><a href="${_lcEsc(_wwlUrl(st))}" target="_blank" rel="noopener noreferrer" style="color:var(--text2)">${_lcEsc(_wwlUrl(st))}</a></div>
           <div class="wwl-seek" id="wwl-seek-${id}">

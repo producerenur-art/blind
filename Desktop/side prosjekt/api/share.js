@@ -106,13 +106,13 @@ module.exports = async (req, res) => {
     try {
       const base = process.env.SUPABASE_URL || 'https://qefdyxpyjwpohsmmmksf.supabase.co';
       const anon = 'sb_publishable_JEV-NS9FGZ_KpSvQTPwlZg_LlyVy_eS';
-      const r = await fetch(`${base}/rest/v1/live_sets?${wwlM ? 'wwl_no=eq.' + wwlM[1] : slugM && !/^set_/i.test(d) ? 'id=like.set_*' + slugM[1].toLowerCase() + '&order=created_at.desc' : 'id=eq.' + encodeURIComponent(d)}&select=id,display_name,track_title,cover_url,audio_url&limit=1`,
+      const r = await fetch(`${base}/rest/v1/live_sets?${wwlM ? 'wwl_no=eq.' + wwlM[1] : slugM && !/^set_/i.test(d) ? 'id=like.set_*' + slugM[1].toLowerCase() + '&order=created_at.desc' : 'id=eq.' + encodeURIComponent(d)}&select=id,display_name,track_title,cover_url,audio_url,tracklist&limit=1`,
         { headers: { apikey: anon, Authorization: `Bearer ${anon}` } });
       const rows = r.ok ? await r.json() : [];
       const row = rows && rows[0];
       if (!row && slugM && !wwlM) { isSet = false; p = decodePayload(d) || {}; }   // slug-liknande men ikkje eit sett → gammal nyttelast-lenke
       if (row && row.id) shareKey = row.id;
-      if (row) p = { k: 'audio', t: row.display_name, a: row.track_title, i: row.cover_url, m: row.audio_url, mt: mimeFromUrl(row.audio_url) };
+      if (row) p = { k: 'audio', t: row.display_name, a: row.track_title, i: row.cover_url, m: row.audio_url, mt: mimeFromUrl(row.audio_url), tl: row.tracklist };
     } catch (_) { /* fall tilbake til generisk side */ }
   } else {
     p = decodePayload(d) || {};
@@ -137,6 +137,12 @@ module.exports = async (req, res) => {
     : (kind === 'link'
         ? (artist ? `${artist} · Shared via SiriusFM` : 'Shared via SiriusFM — social platform for electronic music.')
         : (artist ? `${artist} · Listen on SiriusFM` : 'Listen on SiriusFM — social platform for electronic music.'));
+  // Tracklist (eigar skriv ei linje per spor i «Edit text») — vist for alle på den delte sida.
+  const tracksHtml = (() => {
+    const lines = String(p.tl || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean).slice(0, 200);
+    if (!lines.length) return '';
+    return `<div class="tl"><div class="tl-h">Track list</div><ol>${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ol></div>`;
+  })();
   const fullTitle = artist ? `${title} — ${artist}` : title;
   const profileUrl = isSet ? `${SITE}/#/discover` : (username ? `${SITE}/#/u/${encodeURIComponent(username)}` : SITE + '/');
   // ?v=<versjon> (frå st.updated_at) gjer at Facebook/X hentar NYTT bilde/tekst etter ei redigering
@@ -272,7 +278,10 @@ ${tags.join('\n')}
   .media-free { aspect-ratio:auto; object-fit:contain; height:auto; }
   .audio { width:100%; max-width:400px; margin:1rem auto 0; display:block; }
   h1 { font-size:1.35rem; margin:1.1rem 0 .2rem; }
-  .artist { color:#b6c6d6; margin:0 0 1.4rem; }
+  .artist { color:#b6c6d6; margin:0 0 1.4rem; white-space:pre-line; }
+  .tl { text-align:left; margin:0 0 1.4rem; padding:.9rem 1.1rem; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
+  .tl-h { font-weight:800; font-size:.9rem; margin:0 0 .5rem; color:#cfe8ff; }
+  .tl ol { margin:0; padding-left:1.4rem; line-height:1.75; font-size:.92rem; color:#9fd8fd; }
   .cta { display:inline-flex; align-items:center; gap:.5rem; text-decoration:none; color:#fff; font-weight:700; padding:.8rem 1.5rem; border-radius:999px;
          background:linear-gradient(135deg,#0ea5e9,var(--blueD)); border:1.5px solid var(--blue); box-shadow:0 0 22px rgba(125,211,252,.38), 0 8px 24px rgba(37,99,235,.35); }
   .cta:hover { filter:brightness(1.1); }
@@ -337,6 +346,7 @@ ${tags.join('\n')}
       ${player}
       <h1>${esc(title)}</h1>
       ${artist ? `<p class="artist">${esc(artist)}</p>` : '<div style="height:.6rem"></div>'}
+      ${tracksHtml}
       ${(kind === 'link' && extLink)
         ? `<a class="cta" href="${esc(extLink)}" target="_blank" rel="noopener">▶ Open link</a>
       <div class="foot"><a class="plain" href="${esc(profileUrl)}">See profile on SiriusFM</a></div>`
