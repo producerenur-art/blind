@@ -58,6 +58,12 @@ const LiveBroadcast = (() => {
     const m = /a=rtpmap:(\d+) opus\/48000\/2/i.exec(sdp);
     if (!m) return sdp;
     const pt = m[1];
+    // Audio-NACK: Chrome/Safari forhandlar IKKJE «nack» for Opus av seg sjølv (berre transport-cc), så tapte pakkar vart
+    // aldri sendt på nytt — kun FEC, som ikkje rekk over korte tapsrunder (målt 11.10: 303 pakkar tapt i ei runde → 15 % hakk,
+    // jitter-buffer 0,8 → 2,9 s). Med «nack» ber lytteren om kun dei manglande pakkane att innan bufferet går tomt.
+    if (!new RegExp('a=rtcp-fb:' + pt + ' nack(\\s|\\r|\\n|$)').test(sdp)) {
+      sdp = sdp.replace(new RegExp('(a=rtpmap:' + pt + ' opus/48000/2[^\\r\\n]*)'), '$1\r\na=rtcp-fb:' + pt + ' nack');
+    }
     const want = 'stereo=1;sprop-stereo=1;maxaveragebitrate=128000;maxplaybackrate=48000;useinbandfec=1;usedtx=0;cbr=0';
     const re = new RegExp('(a=fmtp:' + pt + ' )([^\\r\\n]*)');
     if (re.test(sdp)) {
