@@ -1414,10 +1414,25 @@ const Radio = (() => {
   const IS_TOUCH_MOBILE = typeof navigator !== 'undefined' &&
     (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') ||
      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
-  window._sfmNoWebAudio = IS_TOUCH_MOBILE;
+  // Kompatibilitetsmodus (2026-10-10): laptop der Web Audio-utgangen er stum mens <audio>/YouTube spelar fint.
+  // ?nowebaudio=1 (hugsast i localStorage) gir same direkte <audio>-veg som mobil; ?nowebaudio=0 skrur av igjen.
+  const FORCE_NO_WEBAUDIO = (() => {
+    try {
+      const q = (location.search || '') + (location.hash || '');
+      if (/[?&]nowebaudio=1/.test(q)) localStorage.setItem('sfm_no_webaudio', '1');
+      else if (/[?&]nowebaudio=0/.test(q)) localStorage.removeItem('sfm_no_webaudio');
+      return localStorage.getItem('sfm_no_webaudio') === '1';
+    } catch (e) { return false; }
+  })();
+  // 2026-10-10: Web Audio-kjeda ga STILLE ut på laptop for brukar (Chrome+Safari, alle kanalar, YouTube OK) mens
+  // mobil (direkte <audio>) fungerte. Direkte avspeling er derfor standard overalt; ?nowebaudio=0 slår Web Audio
+  // (visualizer-data) på igjen. Pris: canvas-visualiseringane får ikkje lyddata, same som mobil.
+  const _WA_OPTIN = (() => { try { return localStorage.getItem('sfm_webaudio') === '1' || /[?&]nowebaudio=0/.test((location.search||'')+(location.hash||'')); } catch (e) { return false; } })();
+  const NO_WEBAUDIO = IS_TOUCH_MOBILE || FORCE_NO_WEBAUDIO || !_WA_OPTIN;
+  window._sfmNoWebAudio = NO_WEBAUDIO;
 
   function initAudioContext() {
-    if (IS_TOUCH_MOBILE) return;
+    if (NO_WEBAUDIO) return;
     // Prefer shared context created by Player
     if (window._radioAnalyser) {
       audioCtx = window._radioCtx;
