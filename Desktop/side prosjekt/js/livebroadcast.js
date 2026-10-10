@@ -43,6 +43,15 @@ const LiveBroadcast = (() => {
   }
   loadIce();
 
+  const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // Mobil-lyttar (5G-jitter, Safari utan jitterBufferTarget): svaret ber DJ-en sende 40 ms-pakkar (halvparten
+  // så mange pakkar/s, mindre header-overhead) — DJ-en sender dessutan 96 kbps til mobil i staden for 128.
+  function mobileAnswer(sdp) {
+    if (!sdp || /a=ptime:/i.test(sdp)) return sdp;
+    const m = /a=rtpmap:\d+ opus\/48000\/2[^\r\n]*/i.exec(sdp);
+    return m ? sdp.replace(m[0], m[0] + '\r\na=ptime:40') : sdp;
+  }
+
   // Opus for MUSIKK: stereo + høg bitrate + FEC, utan DTX. WebRTC-standarden er tale (mono, ~32 kbps) → tynn/hakkete lyd.
   function tuneOpus(sdp) {
     if (!sdp) return sdp;
@@ -142,7 +151,7 @@ const LiveBroadcast = (() => {
     const sig = (event, payload) => ch.send({ type: 'broadcast', event, payload });
     const sigTo = (to, data) => sig('signal', { to, from: id, data });
 
-    async function addListener(listenerId, audioOnly) {
+    async function addListener(listenerId, audioOnly, mobile) {
       if (peers.has(listenerId)) return;
       await loadIce();
       if (peers.has(listenerId)) return;
@@ -167,12 +176,12 @@ const LiveBroadcast = (() => {
       const offer = await pc.createOffer();
       offer.sdp = tuneOpus(offer.sdp);
       await pc.setLocalDescription(offer);
-      setAudioBitrate(pc, 128000);
+      setAudioBitrate(pc, mobile ? 96000 : 128000);
       sigTo(listenerId, { type: 'offer', sdp: pc.localDescription });
       log('Sent offer to ' + listenerId);
     }
 
-    ch.on('broadcast', { event: 'hello' }, ({ payload }) => { if (payload.room === room) addListener(payload.from, !!payload.audioOnly); })
+    ch.on('broadcast', { event: 'hello' }, ({ payload }) => { if (payload.room === room) addListener(payload.from, !!payload.audioOnly, !!payload.mobile); })
       .on('broadcast', { event: 'bye' }, ({ payload }) => { const pc = peers.get(payload.from); if (pc) { pc.close(); peers.delete(payload.from); count(); } })
       .on('broadcast', { event: 'stats' }, ({ payload }) => {
         if (!payload || payload.room !== room || !peers.has(payload.from)) return;
@@ -193,11 +202,25 @@ const LiveBroadcast = (() => {
         if (status === 'SUBSCRIBED') sig('dj-online', { room, from: id });  // be eksisterende lyttere melde seg
       });
 
+    // Oppsummering til DJ-loggen kvar 30. s: kor mange lyttarar rapporterer, kor mange hakkar, og den verste.
+    // (Enkeltvarsel «⚠» kjem berre når éin lyttar går over grensa — dette viser heile biletet, også at alt er greitt.)
+    const sumTimer = setInterval(() => {
+      const fresh = [...lstats.values()].filter(x => peers.has(x.from) && Date.now() - x.at < 25000);
+      const connected = [...peers.values()].filter(p => p.connectionState === 'connected').length;
+      if (!connected) return;
+      const bad = fresh.filter(x => x.concealedPct > 3 || x.lossPct > 2);
+      const worst = fresh.slice().sort((x, y) => y.concealedPct - x.concealedPct)[0];
+      log('📊 ' + connected + ' lyttar(e), ' + fresh.length + ' med måling (' + fresh.filter(x => x.mobile).length + ' mobil): '
+        + (bad.length ? bad.length + ' hakkar' : 'ingen hakkar')
+        + (worst ? ' · verst ' + (worst.mobile ? 'mobil' : 'PC') + ' hakk ' + worst.concealedPct + '%, jitter ' + worst.jitterMs + ' ms, ' + worst.route : ''));
+    }, 30000);
+
     return {
       id,
       get listeners() { return [...peers.values()].filter(p => p.connectionState === 'connected').length; },
       get listenerStats() { return [...lstats.values()].filter(x => peers.has(x.from)); },
       stop() {
+        clearInterval(sumTimer);
         peers.forEach(p => p.close()); peers.clear();
         try { sig('dj-offline', { room, from: id }); } catch (e) {}
         client.removeChannel(ch);
@@ -217,7 +240,7 @@ const LiveBroadcast = (() => {
 
     ch.on('broadcast', { event: 'dj-online' }, ({ payload }) => {
         if (payload.room !== room) return;
-        djId = payload.from; sig('hello', { room, from: id, audioOnly: !!audioOnly }); log('DJ online — requesting stream');
+        djId = payload.from; sig('hello', { room, from: id, audioOnly: !!audioOnly, mobile: isMobile() }); log('DJ online — requesting stream');
       })
       .on('broadcast', { event: 'dj-offline' }, () => { onState && onState('dj-offline'); })
       .on('broadcast', { event: 'signal' }, async ({ payload }) => {
@@ -244,7 +267,7 @@ const LiveBroadcast = (() => {
           try {
             await pc.setRemoteDescription(d.sdp);
             const ans = await pc.createAnswer();
-            ans.sdp = tuneOpus(ans.sdp);
+            ans.sdp = tuneOpus(ans.sdp); if (isMobile()) ans.sdp = mobileAnswer(ans.sdp);
             await pc.setLocalDescription(ans);
             sigTo(djId, { type: 'answer', sdp: pc.localDescription });
           } catch (e) { log('answer error: ' + e.message); }
@@ -252,7 +275,7 @@ const LiveBroadcast = (() => {
       })
       .subscribe(status => {
         log('Signaling: ' + status);
-        if (status === 'SUBSCRIBED') sig('hello', { room, from: id, audioOnly: !!audioOnly });  // DJ kan alt være online
+        if (status === 'SUBSCRIBED') sig('hello', { room, from: id, audioOnly: !!audioOnly, mobile: isMobile() });  // DJ kan alt være online
       });
 
     return {

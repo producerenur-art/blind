@@ -1839,6 +1839,7 @@ const Radio = (() => {
     if (!muted) {
       const audio = getAudio();
       if (audio) audio.volume = v;
+      try { if (_liveDuckNodes && _liveDuckNodes.vol) _liveDuckNodes.vol.gain.value = v; } catch (e) {}
     }
     const volBar = document.getElementById('volume-bar');
     if (volBar) volBar.value = Math.round(v * 100);
@@ -1909,6 +1910,7 @@ const Radio = (() => {
       muted = true;
       audio.volume = 0;
     }
+    try { if (_liveDuckNodes && _liveDuckNodes.vol) _liveDuckNodes.vol.gain.value = muted ? 0 : volume; } catch (e) {}
     const icon = muted ? '🔇' : '🔊';
     document.querySelectorAll('.station-vol-btn').forEach(b => {
       if (b.title === 'Mute / Unmute') b.textContent = icon;
@@ -3900,6 +3902,44 @@ const Radio = (() => {
     _playLocalClip(_nextLiveOutro(), resume, LIVE_FADE_MS);
   }
 
+  // «Trykk for å høre»: nettlesarar (iOS Safari, Chrome, desktop-Safari) held lyd tilbake til ein brukargest,
+  // og audio.play() kan lykkast mens Web Audio-konteksten står «suspended» (stille, utan feilmelding/toast).
+  // Utan dette såg lyttaren «LIVE» men høyrde ingenting (rapportert 2026-10-10). Mens ei sending/mix pågår og
+  // lyden ikkje faktisk går, ligg ein stor, vedvarande knapp på skjermen; kva som helst trykk/tast låser opp.
+  let _unlockEl = null, _unlockTimer = null, _unlockMiss = 0;
+  function _liveAudible() {
+    const a = getAudio(); const ctx = window._radioCtx || audioCtx;
+    return !!a && !a.paused && !(ctx && ctx.state === 'suspended');
+  }
+  function _unlockLiveAudio() {
+    if (!_liveTakeover) return;
+    const a = getAudio(); const ctx = window._radioCtx || audioCtx;
+    try { if (ctx && ctx.state === 'suspended') ctx.resume(); } catch (e) {}
+    try { const pr = a && a.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {}
+    setTimeout(() => { if (_liveAudible()) _hideLiveUnlock(); }, 400);
+  }
+  function _hideLiveUnlock() { if (_unlockEl) { try { _unlockEl.remove(); } catch (e) {} _unlockEl = null; } }
+  function _showLiveUnlock() {
+    if (_unlockEl || !document.body) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = '🔊 Tap to hear the live broadcast';
+    b.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:100000;padding:16px 26px;border:0;border-radius:999px;background:#e5484d;color:#fff;font:600 17px system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.5);cursor:pointer;max-width:90vw';
+    b.addEventListener('click', e => { e.stopPropagation(); _unlockLiveAudio(); });
+    document.body.appendChild(b);
+    _unlockEl = b;
+  }
+  function _watchLiveUnlock() {
+    if (_unlockTimer) return;
+    const gesture = () => { if (_liveTakeover && !_liveAudible()) _unlockLiveAudio(); };
+    ['click', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, gesture, true));
+    _unlockTimer = setInterval(() => {
+      if (!_liveTakeover) { _hideLiveUnlock(); _unlockMiss = 0; return; }
+      if (_liveAudible()) { _unlockMiss = 0; _hideLiveUnlock(); return; }
+      if (++_unlockMiss >= 2) _showLiveUnlock();   // 2 sek stille på rad — ikkje blink under oppkopling
+    }, 1000);
+  }
+
   function enterLiveTakeover(presenterName, skipAnnouncement) {
     if (_liveTakeover) { _renderLiveBadge(presenterName); return; }   // alt i gang — berre oppdater namnet
     const audio  = getAudio();
@@ -3930,6 +3970,7 @@ const Radio = (() => {
     _liveTakeover = true;
     if (IS_TOUCH_MOBILE) { try { applyVisQuality(document.getElementById('radio-vis-video')); } catch (e) {} }
     _renderLiveBadge(presenterName);
+    _watchLiveUnlock();
     if (bar) { bar.classList.remove('hidden', 'idle'); bar.classList.add('radio-mode'); }
     document.getElementById('radio-idle')?.classList.add('hidden');
 
@@ -3998,8 +4039,10 @@ const Radio = (() => {
   function _teardownLiveDuck() {
     if (!_liveDuckNodes) return;
     try { _liveDuckNodes.source.disconnect(); } catch (e) {}
+    try { if (_liveDuckNodes.sink) { _liveDuckNodes.sink.pause(); _liveDuckNodes.sink.srcObject = null; } } catch (e) {}
     try { _liveDuckNodes.compressor.disconnect(); } catch (e) {}
     try { _liveDuckNodes.gain.disconnect(); } catch (e) {}
+    try { if (_liveDuckNodes.vol) _liveDuckNodes.vol.disconnect(); } catch (e) {}
     _liveDuckNodes = null;
   }
   function _duckLiveStream(mediaStream) {
@@ -4020,7 +4063,25 @@ const Radio = (() => {
       source.connect(compressor);
       compressor.connect(gain);
       gain.connect(dest);
-      _liveDuckNodes = { source, compressor, gain };
+      // Chrome/Safari leverer IKKJE lyd frå ein fjern WebRTC-straum via createMediaStreamSource med mindre
+      // straumen OGSÅ er kopla til eit spelande medieelement (gammal Chromium-feil) — utan dette: full stillhet.
+      // Eit demppa, usynleg element held straumen «trekt»; sjølve lyden går gjennom Web Audio-kjeda.
+      let sink = null;
+      try { sink = new Audio(); sink.muted = true; sink.srcObject = mediaStream; const sp = sink.play(); if (sp && sp.catch) sp.catch(() => {}); } catch (e) { sink = null; }
+      _liveDuckNodes = { source, compressor, gain, vol: null, sink };
+      // DESKTOP-LYDFIKS (2026-10-10): #audio-engine er kapra av createMediaElementSource (initAudioContext), og eit
+      // element med MediaStream som srcObject gir STILLE ut av ei slik kjelde (målt i Chrome; Safari tilsvarande) —
+      // difor ingen jingel-/live-lyd på laptop, berre på mobil (ingen Web Audio der). Signalet går derfor
+      // DIREKTE frå duck-kjeda inn i same analyser→utgang-kjede, med eigen volum-node som følgjer volumslideren.
+      // Elementet får framleis dest.stream, så alt som sjekkar audio.paused/play-tilstand oppfører seg uendra.
+      const an = window._radioAnalyser;
+      if (window._radioSource && an && window._radioCtx === ctx) {
+        const vol = ctx.createGain();
+        vol.gain.value = muted ? 0 : volume;
+        gain.connect(vol);
+        vol.connect(an);
+        _liveDuckNodes.vol = vol;
+      }
       return dest.stream;
     } catch (e) {
       console.warn('[Radio] kunne ikkje dempe direktesendinga automatisk:', e.message || e);
