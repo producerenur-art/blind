@@ -11589,3 +11589,5 @@ body.edge-idle #fc-dock, body.edge-idle #fc-launch { opacity: 0; transform: tran
 .chl-link { display: inline-block; padding: 0.55rem 1.1rem; border-radius: 999px; font-weight: 700; font-size: 0.9rem; color: #e0f2fe; text-decoration: none; background: rgba(125, 211, 252, 0.12); border: 1px solid rgba(125, 211, 252, 0.5); }
 .chl-link:hover { background: rgba(125, 211, 252, 0.22); }
 @media (max-width: 640px) { .chl-row { grid-template-columns: 5.2rem 1fr auto; font-size: 0.9rem; padding: 0.45rem 0.5rem; } }
+
+.chl-gap { margin-top: 0.6rem; border-top: 2px solid rgba(125, 211, 252, 0.35) !important; padding-top: 0.75rem; }

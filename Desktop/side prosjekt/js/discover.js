@@ -1096,7 +1096,7 @@ const Discover = (() => {
   }
   function renderChlorophilLive() {
     const now = Date.now();
-    const slots = _chlorophilSlots(now, 6);
+    const slots = _chlorophilSlots(now, 12);   // 12 = dei 6 neste + dei 6 etter (brukarønske 11.10.2026)
     if (!slots.length) return '';
     const fmtWd = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long' });
     const fmtDate = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', day: 'numeric', month: 'long' });
@@ -1105,7 +1105,7 @@ const Discover = (() => {
     const tz = ms => (fmtTz.formatToParts(ms).find(p => p.type === 'timeZoneName') || {}).value || '';
     const rows = slots.map((ms, i) => {
       const live = now >= ms && now < ms + CHLOROPHIL_WINDOW_MS;
-      return `<div class="chl-row${i === 0 ? ' chl-next' : ''}${live ? ' chl-live' : ''}">
+      return `<div class="chl-row${i === 0 ? ' chl-next' : ''}${live ? ' chl-live' : ''}${i === 6 ? ' chl-gap' : ''}">
             <span class="chl-day">${fmtWd.format(ms)}</span>
             <span class="chl-date">${fmtDate.format(ms)}</span>
             <span class="chl-time">${live ? '<em class="chl-badge">Live now</em>' : ''}${fmtClock.format(ms)} <small>${tz(ms)}</small></span>
