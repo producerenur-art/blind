@@ -354,7 +354,7 @@ ${tags.join('\n')}
     </div>
     <div class="card">
       ${player}
-      <h1>${esc(title)}</h1>
+      <h1>${escLink(title)}</h1>
       ${artist ? `<p class="artist">${escLink(artist)}</p>` : '<div style="height:.6rem"></div>'}
       ${tracksHtml}
       ${(kind === 'link' && extLink)

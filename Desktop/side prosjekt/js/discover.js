@@ -1268,7 +1268,7 @@ const Discover = (() => {
             <button class="btn btn-ghost" onclick="Discover.wwlStop('${id}')">■ Stop</button>
             <label class="wwl-vol" title="Volume" style="display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--text2)">🔈<input type="range" class="wwl-vol-in" min="0" max="${_wwlVolMax()}" step="1" value="${_wwlVolNow()}" oninput="Discover.wwlVol(this.value)" style="width:110px" aria-label="Volume"></label>
             <button class="btn btn-ghost" onclick="Discover.wwlCopy('${id}')">📋 Copy link</button>
-            ${st.display_name ? `<span class="wwl-dj">${_lcEsc(st.display_name)}</span>` : ''}
+            ${st.display_name ? `<span class="wwl-dj">${_lcLink(st.display_name)}</span>` : ''}
           </div>
           ${st.track_title ? `<div class="wwl-public-text">${_lcLink(st.track_title)}</div>` : ''}
           ${_wwlTracks(st)}
@@ -1286,7 +1286,7 @@ const Discover = (() => {
       <div class="wwl-card" id="wwl-${id}">
         <div class="wwl-art">${art}</div>
         <div class="wwl-body">
-          <div class="wwl-name">${_lcEsc(st.display_name || 'Live set')}</div>
+          <div class="wwl-name">${st.display_name ? _lcLink(st.display_name) : 'Live set'}</div>
           <div class="wwl-text">${_lcLink(st.track_title || '')}</div>
           ${_wwlTracks(st)}
           <div class="wwl-meta">${_lcEsc(_wwlFmtDate(st.ended_at))}${mins ? ' · <span class="wwl-dur">' + mins + '</span>' : ''}${st.room === 'upload' ? ' · upload' : ''}</div>
