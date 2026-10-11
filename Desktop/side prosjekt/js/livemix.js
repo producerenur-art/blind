@@ -964,7 +964,7 @@ const LiveMix = (() => {
     // {namn}» på BROADCASTERENS EIGEN fane også — reint visuelt, kobler
     // ALDRI til lyden der (det er nettopp isBroadcastingHere()-sjekken i
     // js/liveGlobal.js som hindrar sjølv-ekko).
-    getZenSet: () => { try { const cur = Auth.current(); return ((CONFIG.isFreeLiveEmail(cur) || _isOwnerJingleUser(cur)) && typeof _bc.zenSet === 'number') ? _bc.zenSet : -1; } catch (e) { return -1; } },
+    getZenSet: () => { try { const cur = Auth.current(); if (_isOwnerJingleUser(cur)) return 3; return (CONFIG.isFreeLiveEmail(cur) && typeof _bc.zenSet === 'number') ? _bc.zenSet : -1; } catch (e) { return -1; } },   // eigar: ALLTID sett 3 (live-intro.mp3 inn og ut), uavhengig av _bc.zenSet
     getBroadcastPresenterName: () => (_bc.dj ? (_bc.presenterName || '') : ''),
     getBroadcastTrackTitle: () => (_bc.dj ? (_bc.trackTitle || '') : ''),
     getBroadcastLinkUrl: () => (_bc.dj ? (_bc.linkUrl || '') : ''),
