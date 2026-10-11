@@ -8,6 +8,7 @@ const { cleanArticles } = require('./_strip');
 const { SHOWS } = require('../js/shows.js');
 const { FESTIVALS } = require('../js/world.js');
 const SpecialShows = require('../js/specialShows.js');
+const ChlorophilLive = require('../js/chlorophilLive.js');
 const { SCHEDULE: RADIO247_SCHEDULE, pickStationId: r247PickStationId, stationName: r247StationName } = require('../js/radio247.js');
 
 // Kanonisk nettadresse for ALLE e-postlenker (aktivering, tilbakestilling, kjøp).
@@ -704,6 +705,25 @@ function liveNowHtml(name, siteUrl, unsubscribeUrl, data) {
   const releaseRows   = releases.map(a => articleRow(a, magUrl)).join('');
   const eventRows     = events.map(eventRow).join('');
 
+  // Chlorophil — live: dei 12 neste sendingane (js/chlorophilLive.js, same kjelde som Discover-kortet).
+  const chlorophilRows = ChlorophilLive.slots(Date.now(), 12).map(ms => {
+    const d = ChlorophilLive.describe(ms);
+    return `<tr>
+      <td style="padding:0.5rem 0.75rem;border-top:1px solid rgba(255,255,255,0.06);color:#fff;font-weight:700;font-size:0.9rem">${escHtml(d.weekday)}</td>
+      <td style="padding:0.5rem 0.75rem;border-top:1px solid rgba(255,255,255,0.06);color:#e2e8f0;font-size:0.9rem">${escHtml(d.date)}</td>
+      <td style="padding:0.5rem 0.75rem;border-top:1px solid rgba(255,255,255,0.06);text-align:right;white-space:nowrap;color:#7dd3fc;font-weight:700;font-size:0.9rem">${escHtml(d.clock)} ${escHtml(d.tz)}</td>
+    </tr>`;
+  }).join('');
+  const chlorophilBlock = chlorophilRows ? `
+      <div style="border:1px solid rgba(125,211,252,0.35);border-radius:12px;padding:1rem 1rem 0.9rem;margin:0 0 1.5rem;background:rgba(125,211,252,0.06)">
+        <p style="margin:0 0 0.2rem;color:#7dd3fc;font-size:0.7rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;text-align:center">Live Broadcast</p>
+        <h3 style="margin:0 0 0.2rem;color:#fff;font-size:1.15rem;text-align:center">Chlorophil — live on SiriusFM</h3>
+        <p style="margin:0 0 0.75rem;color:#c7d2fe;font-size:0.85rem;text-align:center">Weekly · first broadcast Monday 12 October, then every Sunday</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">${chlorophilRows}</table>
+        <p style="margin:0.75rem 0 0.6rem;color:#94a3b8;font-size:0.8rem;text-align:center">Norwegian time · 22:00 in Chlorophil's time zone</p>
+        <div style="text-align:center"><a href="${escHtml(ChlorophilLive.LINK_URL)}" style="display:inline-block;color:#e0f2fe;text-decoration:none;padding:0.5rem 1.1rem;border-radius:999px;font-weight:700;font-size:0.85rem;border:1px solid rgba(125,211,252,0.5)">♪ ${escHtml(ChlorophilLive.LINK_LABEL)}</a></div>
+      </div>` : '';
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -725,6 +745,7 @@ function liveNowHtml(name, siteUrl, unsubscribeUrl, data) {
       </div>
       <p style="color:#64748b;font-size:0.82rem;text-align:center;margin:0 0 0.5rem">or paste this into your browser: <a href="${base}" style="color:#7c3aed;text-decoration:none">${base}</a></p>
 
+      ${chlorophilBlock}
       ${section('🔴 Playing right now', 'Pick a channel and it starts instantly — no account needed.', stationRows, 'Open the radio →', radioUrl, '#4ade80')}
       ${section('📅 Radio shows coming up', 'Your weekly programme — hosted shows on the SiriusFM schedule.', showRows, 'See the full schedule →', showsUrl, '#7dd3fc')}
       ${section('💿 New releases', 'Albums, EPs and tracks we\'re featuring right now.', releaseRows, 'Read the magazine →', magUrl, '#4ade80')}

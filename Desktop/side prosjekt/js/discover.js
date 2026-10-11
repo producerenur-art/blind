@@ -1077,22 +1077,10 @@ const Discover = (() => {
   // Tekst → escapa HTML med klikkbare lenker (https://… og www.…) — for alle: gjester og innlogga.
   function _lcLink(t) { const v = String(t == null ? '' : t); return (window.LinkPreview && LinkPreview.linkify) ? LinkPreview.linkify(v).html : _lcEsc(v); }
   function _lcEsc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
-  // «Chlorophil — live»: faste direktesendingar (ikkje ferdig mix). Brukarønske 11.10.2026:
-  // første sending mandag 12.10, deretter KVAR veke, éin dag (søndagar frå 18.10 — inkluderer 25.10 og 8.11).
-  // Tid = 17:00Z = 22:00 hos Chlorophil (UTC+5, ingen sommartid) → 19:00 norsk tid til 24.10, 18:00 frå 25.10.
-  // Alle tider er UTC-ISO; norsk tid blir rekna ut av nettlesaren (Europe/Oslo).
-  const CHLOROPHIL_FIXED = ['2026-10-12T17:00:00Z'];
-  const CHLOROPHIL_WEEKLY_FROM = '2026-10-18T17:00:00Z';   // søndag; deretter +7 dagar
-  const CHLOROPHIL_WINDOW_MS = 4 * 3600 * 1000;           // «Live now»-vindauge etter start
+  // «Chlorophil — live»: planen ligg i js/chlorophilLive.js (delt med abonnent-e-posten i api/send-email.js).
+  const CHLOROPHIL_WINDOW_MS = (typeof ChlorophilLive !== 'undefined') ? ChlorophilLive.WINDOW_MS : 4 * 3600 * 1000;
   function _chlorophilSlots(nowMs, count) {
-    const out = [];
-    CHLOROPHIL_FIXED.forEach(iso => { if (Date.parse(iso) + CHLOROPHIL_WINDOW_MS > nowMs) out.push(Date.parse(iso)); });
-    let t = Date.parse(CHLOROPHIL_WEEKLY_FROM);
-    while (out.length < count && out.length < 200) {
-      if (t + CHLOROPHIL_WINDOW_MS > nowMs) out.push(t);
-      t += 7 * 24 * 3600 * 1000;
-    }
-    return out.slice(0, count);
+    return (typeof ChlorophilLive !== 'undefined') ? ChlorophilLive.slots(nowMs, count) : [];
   }
   function renderChlorophilLive() {
     const now = Date.now();
