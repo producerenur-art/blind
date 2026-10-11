@@ -11571,3 +11571,21 @@ body.edge-idle #fc-dock, body.edge-idle #fc-launch { opacity: 0; transform: tran
   font-weight: 600;
 }
 .sc-cmt-guestname::placeholder { color: rgba(0,0,0,0.65); }
+
+/* Chlorophil — live-kort (Discover): ryddig liste med lesbart bakteppe */
+.chl-ad { background: rgba(8, 12, 24, 0.66); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.chl-sub { margin: 0 0 0.9rem; font-size: 0.92rem; font-weight: 600; color: #c7d2fe; }
+.chl-list { max-width: 460px; margin: 0 auto; text-align: left; }
+.chl-row { display: grid; grid-template-columns: 6.2rem 1fr auto; align-items: baseline; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 10px; font-size: 0.98rem; }
+.chl-row + .chl-row { border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.chl-day { font-weight: 700; color: #e0f2fe; }
+.chl-date { color: #f1f5f9; }
+.chl-time { font-weight: 800; color: #fff; white-space: nowrap; }
+.chl-time small { font-weight: 600; font-size: 0.72rem; color: #93c5fd; letter-spacing: 0.04em; }
+.chl-next { background: rgba(125, 211, 252, 0.14); border: 1px solid rgba(125, 211, 252, 0.45); }
+.chl-live { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.6); }
+.chl-badge { font-style: normal; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; background: #ef4444; color: #fff; padding: 0.12rem 0.45rem; border-radius: 999px; margin-right: 0.5rem; }
+.chl-note { margin: 0.8rem 0 0.9rem; font-size: 0.85rem; color: #cbd5e1; }
+.chl-link { display: inline-block; padding: 0.55rem 1.1rem; border-radius: 999px; font-weight: 700; font-size: 0.9rem; color: #e0f2fe; text-decoration: none; background: rgba(125, 211, 252, 0.12); border: 1px solid rgba(125, 211, 252, 0.5); }
+.chl-link:hover { background: rgba(125, 211, 252, 0.22); }
+@media (max-width: 640px) { .chl-row { grid-template-columns: 5.2rem 1fr auto; font-size: 0.9rem; padding: 0.45rem 0.5rem; } }

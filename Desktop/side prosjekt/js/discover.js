@@ -1098,21 +1098,28 @@ const Discover = (() => {
     const now = Date.now();
     const slots = _chlorophilSlots(now, 6);
     if (!slots.length) return '';
-    const fmtDay = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long' });
-    const fmtClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit', hour12: false, timeZoneName: 'short' });
-    const lines = slots.map(ms => {
+    const fmtWd = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long' });
+    const fmtDate = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', day: 'numeric', month: 'long' });
+    const fmtClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit', hour12: false });
+    const fmtTz = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', timeZoneName: 'short' });
+    const tz = ms => (fmtTz.formatToParts(ms).find(p => p.type === 'timeZoneName') || {}).value || '';
+    const rows = slots.map((ms, i) => {
       const live = now >= ms && now < ms + CHLOROPHIL_WINDOW_MS;
-      return `${fmtDay.format(ms)} · ${fmtClock.format(ms)}${live ? ' · <strong>Live now</strong>' : ''}`;
-    });
+      return `<div class="chl-row${i === 0 ? ' chl-next' : ''}${live ? ' chl-live' : ''}">
+            <span class="chl-day">${fmtWd.format(ms)}</span>
+            <span class="chl-date">${fmtDate.format(ms)}</span>
+            <span class="chl-time">${live ? '<em class="chl-badge">Live now</em>' : ''}${fmtClock.format(ms)} <small>${tz(ms)}</small></span>
+          </div>`;
+    }).join('');
     return `
-        <div class="lc-ad" id="chl-ad">
+        <div class="lc-ad chl-ad" id="chl-ad">
           <div class="lc-ad-tag">Live Broadcast</div>
           <h2 class="lc-ad-title">Chlorophil — live on SiriusFM</h2>
-          <p class="lc-ad-on">Weekly — first broadcast Monday 12 October, then every Sunday</p>
-          <p class="lc-ad-lines">${lines.join('<br>')}</p>
-          <p class="lc-ad-note">Norwegian time · 22:00 in Chlorophil's time zone</p>
+          <p class="chl-sub">Weekly · first broadcast Monday 12 October, then every Sunday</p>
+          <div class="chl-list">${rows}</div>
+          <p class="chl-note">Norwegian time · 22:00 in Chlorophil's time zone</p>
           <div class="lc-ad-actions">
-            <a class="lc-ad-link" href="https://synchronos-recordings.bandcamp.com/album/subspace-garden-ep-24-bit" target="_blank" rel="noopener noreferrer">synchronos-recordings.bandcamp.com/album/subspace-garden-ep-24-bit</a>
+            <a class="chl-link" href="https://synchronos-recordings.bandcamp.com/album/subspace-garden-ep-24-bit" target="_blank" rel="noopener noreferrer">♪ Subspace Garden EP · Synchronos Recordings</a>
           </div>
         </div>`;
   }
