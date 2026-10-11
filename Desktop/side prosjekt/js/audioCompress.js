@@ -179,6 +179,13 @@ const AudioCompress = (() => {
     return { channels, rate, head, packets };
   }
 
+  // Gi nettleseren pust UTAN setTimeout: bakgrunnsfaner struper timere til 1/s (og 1/min etter 5 min), som gjer lang
+  // koding uendeleg treg. MessageChannel blir ikkje struppa.
+  const _mc = (typeof MessageChannel !== 'undefined') ? new MessageChannel() : null;
+  let _mcRes = [];
+  if (_mc) _mc.port1.onmessage = () => { const r = _mcRes; _mcRes = []; r.forEach(f => f()); };
+  function yieldNow() { return _mc ? new Promise(r => { _mcRes.push(r); _mc.port2.postMessage(0); }) : new Promise(r => setTimeout(r, 0)); }
+
   // WebM/Opus → MP3 strøymande (WebCodecs AudioDecoder + lamejs): minnebruken er uavhengig av lengda, så ei
   // 74-min-sending (45 MB WebM) krasjar ikkje slik decodeAudioData ville (1,7 GB flyttal). Returnerer null om
   // fila ikkje er WebM/Opus eller nettlesaren manglar AudioDecoder — då tek vanleg toMp3 over.
@@ -226,10 +233,16 @@ const AudioCompress = (() => {
     for (let i = 0; i < total; i++) {
       if (decErr) throw decErr;
       dec.decode(new EncodedAudioChunk({ type: 'key', timestamp: i * 20000, data: w.packets[i] }));
-      if (i % 200 === 0) {
-        while (dec.decodeQueueSize > 100) await new Promise(r => setTimeout(r, 5));
-        if (onProgress) onProgress(i / total);
-        await new Promise(r => setTimeout(r, 0));
+      if (i % 50 === 0) {
+        // Kø-grense: vent på 'dequeue' (ikkje timer) til dekoderen har tatt unna; reserve-timer om hendinga uteblir.
+        while (dec.decodeQueueSize > 100) {
+          await new Promise(res => {
+            let t = null; const h = () => { dec.removeEventListener('dequeue', h); if (t) clearTimeout(t); res(); };
+            dec.addEventListener('dequeue', h); t = setTimeout(h, 1000);
+          });
+        }
+        if (i % 200 === 0 && onProgress) onProgress(i / total);
+        await yieldNow();
       }
     }
     await dec.flush();
@@ -282,7 +295,7 @@ const AudioCompress = (() => {
       const chunk = await src.read(start, READ); if (!chunk) break;
       feed(rs.push(chunk));
       if (onProgress) onProgress(Math.min(1, (start + READ) / src.totalFrames));
-      if (i % 4 === 0) await new Promise(r => setTimeout(r, 0));   // la nettlesaren puste
+      if (i % 4 === 0) await yieldNow();   // la nettlesaren puste
     }
     const tail = rs.flush(); if (tail) feed(tail);
     const end = enc.flush(); if (end.length) parts.push(new Uint8Array(end));
