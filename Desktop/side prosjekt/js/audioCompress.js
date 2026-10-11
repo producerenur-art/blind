@@ -145,6 +145,101 @@ const AudioCompress = (() => {
     return new File(parts, name, { type: 'audio/ogg' });
   }
 
+  // ── Minimal WebM-demuxer (kun Opus-lyd, som MediaRecorder lagar). Treng ikkje heile fila dekoda i minnet. ──
+  function parseWebmOpus(buf) {
+    const u8 = new Uint8Array(buf), dv = new DataView(buf), len = u8.length;
+    const MASTER = new Set([0x18538067, 0x1654AE6B, 0xAE, 0xE1, 0x1F43B675, 0xA0]);   // Segment, Tracks, TrackEntry, Audio, Cluster, BlockGroup
+    let p = 0, channels = 2, rate = 48000, head = null; const packets = [];
+    function vint(keepMarker) {
+      if (p >= len) return -1;
+      const b = u8[p]; let n = 1, mask = 0x80;
+      while (n <= 8 && !(b & mask)) { n++; mask >>= 1; }
+      if (n > 8 || p + n > len) return -1;
+      let v = keepMarker ? b : (b & (mask - 1)), allOnes = (b & (mask - 1)) === mask - 1;
+      for (let i = 1; i < n; i++) { const x = u8[p + i]; v = v * 256 + x; if (x !== 0xff) allOnes = false; }
+      p += n;
+      return (!keepMarker && allOnes) ? Infinity : v;   // ukjend storleik
+    }
+    while (p < len) {
+      const id = vint(true); if (id < 0) break;
+      const size = vint(false); if (size < 0) break;
+      if (MASTER.has(id)) continue;                        // gå rett inn i barna
+      const end = size === Infinity ? len : Math.min(len, p + size);
+      if (id === 0x63A2 && !head) head = u8.slice(p, end);                         // CodecPrivate (OpusHead)
+      else if (id === 0x9F && end - p === 1) channels = u8[p];                     // Channels
+      else if (id === 0xB5) { if (end - p === 8) rate = dv.getFloat64(p); else if (end - p === 4) rate = dv.getFloat32(p); }   // SamplingFrequency
+      else if (id === 0xA3 || id === 0xA1) {                                       // SimpleBlock / Block
+        let q = p; const b = u8[q]; let n = 1, m = 0x80; while (n <= 8 && !(b & m)) { n++; m >>= 1; }
+        q += n + 2;                                         // spor-nr (vint) + 16-bit tid
+        const flags = u8[q++];
+        if ((flags & 0x06) === 0 && q < end) packets.push(u8.subarray(q, end));    // ingen lacing
+      }
+      p = end;
+    }
+    return { channels, rate, head, packets };
+  }
+
+  // WebM/Opus → MP3 strøymande (WebCodecs AudioDecoder + lamejs): minnebruken er uavhengig av lengda, så ei
+  // 74-min-sending (45 MB WebM) krasjar ikkje slik decodeAudioData ville (1,7 GB flyttal). Returnerer null om
+  // fila ikkje er WebM/Opus eller nettlesaren manglar AudioDecoder — då tek vanleg toMp3 over.
+  async function webmToMp3(file, lame, onProgress, maxBytes) {
+    if (typeof AudioDecoder === 'undefined' || typeof EncodedAudioChunk === 'undefined') return null;
+    const buf = await file.arrayBuffer();
+    const h = new Uint8Array(buf, 0, 4);
+    if (!(h[0] === 0x1a && h[1] === 0x45 && h[2] === 0xdf && h[3] === 0xa3)) return null;
+    const w = parseWebmOpus(buf);
+    if (!w.packets.length) return null;
+    // Varigheit frå Opus TOC-byten (rammelengd × rammer per pakke) → bitrate som held seg under maxBytes (maks 320 kbps).
+    const toc = w.packets[0][0], cfgN = toc >> 3, c = toc & 3;
+    const frameMs = cfgN < 12 ? [10, 20, 40, 60][cfgN % 4] : cfgN < 16 ? [10, 20][cfgN % 2] : [2.5, 5, 10, 20][cfgN % 4];
+    const nFr = c === 0 ? 1 : (c === 3 ? ((w.packets[0][1] || 1) & 0x3f) : 2);
+    const durSec = w.packets.length * frameMs * nFr / 1000;
+    const fit = Math.floor((maxBytes || 1e12) * 8 * 0.97 / Math.max(1, durSec) / 1000);
+    const kbps = [320, 256, 224, 192, 160, 128, 112, 96, 80, 64, 48].find(b => b <= fit) || 48;
+    const ch = (w.channels === 1 || kbps < 80) ? 1 : 2, rate = 48000, parts = [];
+    const enc = new lame.Mp3Encoder(ch, rate, kbps);
+    const cfg = { codec: 'opus', sampleRate: rate, numberOfChannels: w.channels || 2 };
+    if (w.head) cfg.description = w.head;
+    const sup = await AudioDecoder.isConfigSupported(cfg).catch(() => null);
+    if (!sup || !sup.supported) return null;
+    let decErr = null, done = 0;
+    const toI16 = f => { const o = new Int16Array(f.length); for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); o[i] = v < 0 ? v * 32768 : v * 32767; } return o; };
+    const dec = new AudioDecoder({
+      output: ad => {
+        try {
+          const n = ad.numberOfFrames, chs = ad.numberOfChannels, pl = [];
+          for (let c = 0; c < Math.min(2, chs); c++) { const a = new Float32Array(n); ad.copyTo(a, { planeIndex: c, format: 'f32-planar' }); pl.push(a); }
+          const L = toI16(pl[0]), R = pl[1] ? toI16(pl[1]) : L;
+          let M = L; if (ch === 1 && pl[1]) { M = new Int16Array(n); for (let i = 0; i < n; i++) M[i] = (L[i] + R[i]) >> 1; }
+          for (let s0 = 0; s0 < n; s0 += 1152 * 20) {
+            const e = Math.min(n, s0 + 1152 * 20);
+            const out = ch === 1 ? enc.encodeBuffer(M.subarray(s0, e)) : enc.encodeBuffer(L.subarray(s0, e), R.subarray(s0, e));
+            if (out.length) parts.push(new Uint8Array(out));
+          }
+        } catch (e) { decErr = decErr || e; }
+        try { ad.close(); } catch (e) {}
+      },
+      error: e => { decErr = decErr || e; },
+    });
+    dec.configure(cfg);
+    const total = w.packets.length;
+    for (let i = 0; i < total; i++) {
+      if (decErr) throw decErr;
+      dec.decode(new EncodedAudioChunk({ type: 'key', timestamp: i * 20000, data: w.packets[i] }));
+      if (i % 200 === 0) {
+        while (dec.decodeQueueSize > 100) await new Promise(r => setTimeout(r, 5));
+        if (onProgress) onProgress(i / total);
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+    await dec.flush();
+    try { dec.close(); } catch (e) {}
+    if (decErr) throw decErr;
+    const end = enc.flush(); if (end.length) parts.push(new Uint8Array(end));
+    if (onProgress) onProgress(1);
+    return new File(parts, (file.name || 'audio').replace(/\.[^.]+$/, '') + '.mp3', { type: 'audio/mpeg' });
+  }
+
   // MP3 (lamejs) — spelast overalt, òg på iPhone/iPad der Ogg/Opus og webm ikkje fungerer.
   const LAME_URL = 'https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js';
   function loadLame() {
@@ -159,10 +254,16 @@ const AudioCompress = (() => {
   /** Pakk `file` til MP3-File under maxBytes (CBR 64–128 kbps). onProgress(0..1). */
   async function toMp3(file, { maxBytes = 45e6, onProgress } = {}) {
     const lame = await loadLame();
+    // WebM/Opus (live-opptak): strøymande dekoding — lang lyd treng ikkje plass til heile PCM-en i minnet.
+    if (!/wav/i.test(file.type || '')) {
+      let viaWebm = null;
+      try { viaWebm = await webmToMp3(file, lame, onProgress, maxBytes); } catch (e) { console.warn('[AudioCompress] strøymande WebM→MP3 feila, prøver vanleg dekoding:', e.message || e); }
+      if (viaWebm) return viaWebm;
+    }
     const src = (await openWav(file)) || (await openDecoded(file));
     const duration = src.totalFrames / src.sampleRate;
     const fit = Math.floor(maxBytes * 8 * 0.97 / Math.max(1, duration) / 1000);
-    const kbps = [128, 112, 96, 80, 64, 48].find(b => b <= fit) || 48;
+    const kbps = [320, 256, 224, 192, 160, 128, 112, 96, 80, 64, 48].find(b => b <= fit) || 48;
     const ch = kbps < 80 ? 1 : src.channels, rate = [32000, 44100, 48000].includes(src.sampleRate) ? src.sampleRate : 44100;
     const enc = new lame.Mp3Encoder(ch, rate, kbps), rs = makeResampler(src.sampleRate, src.channels, rate), parts = [];
     const toI16 = f => { const o = new Int16Array(f.length); for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); o[i] = v < 0 ? v * 32768 : v * 32767; } return o; };

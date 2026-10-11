@@ -1485,7 +1485,7 @@ const Discover = (() => {
       rawDownload();
     } finally { _wwlDlBusy = false; }
   }
-  // Last ned opptaket som MP3 (128 kbps, KUN admin — same tilgang som «Download»). Brukar AudioCompress.toMp3 (lamejs).
+  // Last ned opptaket som MP3 (320 kbps, KUN admin — same tilgang som «Download»). Brukar AudioCompress.toMp3 (lamejs).
   async function wwlDownloadMp3(id) {
     const st = _wwlSets[id]; if (!st || !st.audio_url || !_wwlIsAdmin()) return;
     const toast = (m, t) => { if (typeof App !== 'undefined') App.toast(m, t || 'info'); };
@@ -1499,7 +1499,7 @@ const Discover = (() => {
       const blob = await r.blob();
       let last = -1;
       const f = await AudioCompress.toMp3(new File([blob], 'live-set', { type: blob.type || 'audio/webm' }), {
-        maxBytes: 1e9,   // alltid 128 kbps
+        maxBytes: 1e9,   // beste kvalitet: 320 kbps CBR stereo
         onProgress: p => { const pct = Math.floor(p * 10) * 10; if (pct !== last && pct > 0 && pct < 100) { last = pct; toast('Encoding MP3… ' + pct + '%'); } },
       });
       const u = URL.createObjectURL(f);
