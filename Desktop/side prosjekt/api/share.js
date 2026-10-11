@@ -49,6 +49,15 @@ function esc(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// Som esc(), men gjer http(s)://… og www.… om til klikkbare lenker (opnar i ny fane).
+// Teksten blir escapa FØRST; mønsteret tillèt ikkje <, >, ", ' (&amp; er ok) så ingenting kan bryte ut av href.
+function escLink(s) {
+  return esc(s).replace(/\b((?:https?:\/\/|www\.)(?:[^\s&<>"']|&amp;)*(?:[^\s&<>"'.,;:!?)\]]|&amp;))/gi, (m) => {
+    const href = /^www\./i.test(m) ? 'https://' + m : m;
+    return `<a class="plain" href="${href}" target="_blank" rel="noopener noreferrer">${m}</a>`;
+  });
+}
+
 function decodePayload(d) {
   if (!d || typeof d !== 'string') return null;
   try {
@@ -141,7 +150,7 @@ module.exports = async (req, res) => {
   const tracksHtml = (() => {
     const lines = String(p.tl || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean).slice(0, 200);
     if (!lines.length) return '';
-    return `<div class="tl"><div class="tl-h">Track list</div><div class="tl-l">${lines.map(l => `<div>${esc(l)}</div>`).join('')}</div></div>`;
+    return `<div class="tl"><div class="tl-h">Track list</div><div class="tl-l">${lines.map(l => `<div>${escLink(l)}</div>`).join('')}</div></div>`;
   })();
   const fullTitle = artist ? `${title} — ${artist}` : title;
   const profileUrl = isSet ? `${SITE}/#/discover` : (username ? `${SITE}/#/u/${encodeURIComponent(username)}` : SITE + '/');
@@ -289,6 +298,7 @@ ${tags.join('\n')}
   .cta-dl { background:rgba(125,211,252,.10); box-shadow:none; color:var(--text); }
   .foot { margin-top:1.2rem; font-size:.78rem; color:#6f8aa0; }
   a.plain { color:var(--blue); text-decoration:none; }
+  .artist a.plain, .tl-l a.plain { text-decoration:underline; word-break:break-all; }
   /* Kommentarar */
   .cm { margin-top:2.2rem; padding:1.1rem 1.1rem 1.2rem; border-radius:18px; text-align:left; background:rgba(10,14,24,.72);
         backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid rgba(125,211,252,.22); }
@@ -345,7 +355,7 @@ ${tags.join('\n')}
     <div class="card">
       ${player}
       <h1>${esc(title)}</h1>
-      ${artist ? `<p class="artist">${esc(artist)}</p>` : '<div style="height:.6rem"></div>'}
+      ${artist ? `<p class="artist">${escLink(artist)}</p>` : '<div style="height:.6rem"></div>'}
       ${tracksHtml}
       ${(kind === 'link' && extLink)
         ? `<a class="cta" href="${esc(extLink)}" target="_blank" rel="noopener">▶ Open link</a>
