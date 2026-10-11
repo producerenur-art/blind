@@ -1077,6 +1077,43 @@ const Discover = (() => {
   // Tekst → escapa HTML med klikkbare lenker (https://… og www.…) — for alle: gjester og innlogga.
   function _lcLink(t) { const v = String(t == null ? '' : t); return (window.LinkPreview && LinkPreview.linkify) ? LinkPreview.linkify(v).html : _lcEsc(v); }
   function _lcEsc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+  // «Chlorophil — live»: faste direktesendingar (ikkje ferdig mix). Brukarønske 11.10.2026:
+  // 12.10, 25.10, 8.11, 22.11 (annakvar veke), deretter kvar veke (søndagar frå 6.12).
+  // Tid = 17:00Z = 22:00 hos Chlorophil (UTC+5, ingen sommartid) → 19:00 norsk tid til 24.10, 18:00 frå 25.10.
+  // Alle tider er UTC-ISO; norsk tid blir rekna ut av nettlesaren (Europe/Oslo).
+  const CHLOROPHIL_FIXED = ['2026-10-12T17:00:00Z', '2026-10-25T17:00:00Z', '2026-11-08T17:00:00Z', '2026-11-22T17:00:00Z'];
+  const CHLOROPHIL_WEEKLY_FROM = '2026-12-06T17:00:00Z';   // søndag; deretter +7 dagar
+  const CHLOROPHIL_WINDOW_MS = 4 * 3600 * 1000;           // «Live now»-vindauge etter start
+  function _chlorophilSlots(nowMs, count) {
+    const out = [];
+    CHLOROPHIL_FIXED.forEach(iso => { if (Date.parse(iso) + CHLOROPHIL_WINDOW_MS > nowMs) out.push(Date.parse(iso)); });
+    let t = Date.parse(CHLOROPHIL_WEEKLY_FROM);
+    while (out.length < count && out.length < 200) {
+      if (t + CHLOROPHIL_WINDOW_MS > nowMs) out.push(t);
+      t += 7 * 24 * 3600 * 1000;
+    }
+    return out.slice(0, count);
+  }
+  function renderChlorophilLive() {
+    const now = Date.now();
+    const slots = _chlorophilSlots(now, 6);
+    if (!slots.length) return '';
+    const fmtDay = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long' });
+    const fmtClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit', hour12: false, timeZoneName: 'short' });
+    const lines = slots.map(ms => {
+      const live = now >= ms && now < ms + CHLOROPHIL_WINDOW_MS;
+      return `${fmtDay.format(ms)} · ${fmtClock.format(ms)}${live ? ' · <strong>Live now</strong>' : ''}`;
+    });
+    return `
+        <div class="lc-ad" id="chl-ad">
+          <div class="lc-ad-tag">Live Broadcast</div>
+          <h2 class="lc-ad-title">Chlorophil — live on SiriusFM</h2>
+          <p class="lc-ad-on">Every second week through November, then weekly from December</p>
+          <p class="lc-ad-lines">${lines.join('<br>')}</p>
+          <p class="lc-ad-note">Norwegian time · 22:00 in Chlorophil's time zone</p>
+        </div>`;
+  }
+
   function renderLemonchillAd() {
     const show = (typeof SpecialShows !== 'undefined' && SpecialShows.SHOWS && SpecialShows.SHOWS[0]) || null;
     if (!show) return '';
@@ -1888,6 +1925,7 @@ const Discover = (() => {
           </div>
         </div>
 
+        ${renderChlorophilLive()}
         ${renderLemonchillAd()}
 
         <!-- MUSIC TAB -->
