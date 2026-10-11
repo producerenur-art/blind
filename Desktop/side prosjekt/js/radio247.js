@@ -28,7 +28,9 @@ const Radio247 = (() => {
   // kommentaren ved stasjonen sitt tidlegare oppslag i js/radio.js STATIONS.
   // 'modular-station' fjerna 27.09.2026 — utløpt SSL-sertifikat, sjå
   // kommentaren ved stasjonen sitt tidlegare oppslag i js/radio.js STATIONS.
-  const DARK_DRONE_IDS  = ['ambient-abyss', 'dark-city-signal', 'systrum-ssr1', 'indiebeat-ambient'];
+  // 'ambient-abyss' fjerna frå hjulet 11.10.2026 — broadcast.shoutstream.co.uk:8068 gir connection
+  // refused (stadfesta curl, både http og https); stasjonen står framleis i STATIONS i js/radio.js.
+  const DARK_DRONE_IDS  = ['dark-city-signal', 'systrum-ssr1', 'indiebeat-ambient'];
   const PSYCHILL_IDS    = ['ambientpsy-1fm', 'multihuman', 'diceradio-psybient', 'paradisehunter-chillout'];
   // smoothchill (icy-genre: Soul) og anon-fm (icy-genre inkluderer rock) fjerna
   // 20.09.2026 — live ICY-metadata stadfesta ikkje-elektronisk innhald,
@@ -244,9 +246,17 @@ const Radio247 = (() => {
     const block = currentBlock();
     // Same blokk først; finst ingen annan der (t.d. ei blokk med berre éin stasjon), ta ein frå nabo-blokka
     // eller, om nødvendig, kva som helst i hjulet — 24/7 skal aldri stoppe.
-    let alt = (block.stationIds || []).find(id => id !== deadId)
-      || (nextBlock().stationIds || []).find(id => id !== deadId)
-      || [].concat(...SCHEDULE.map(b => b.stationIds)).find(id => id !== deadId);
+    // Hopp over stasjonar som alt er markerte daude denne økta (StreamFix.isDead), elles kunne to daude
+    // stasjonar sende 24/7 fram og tilbake. Finst ingen levande att, fall tilbake til første ≠ deadId.
+    const _alive = id => {
+      try {
+        const s = (Radio.stations || []).find(x => x.id === id);
+        return !(s && typeof StreamFix !== 'undefined' && StreamFix.isDead(s.url));
+      } catch (_) { return true; }
+    };
+    const _cands = [].concat(block.stationIds || [], nextBlock().stationIds || [], ...SCHEDULE.map(b => b.stationIds))
+      .filter(id => id !== deadId);
+    let alt = _cands.find(_alive) || _cands[0];
     if (!alt) return false;
     _lastStationId = alt;
     const doSwitch = () => {

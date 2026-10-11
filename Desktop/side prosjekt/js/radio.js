@@ -1589,6 +1589,7 @@ const Radio = (() => {
   const STALL_AFTER_MS_FAST = 10000, STALL_AFTER_MS_SLOW = 18000;
   const RECONNECT_MAX = 4;   // 6 på tregt nett, sjå _tryAutoReconnect
   const RECONNECT_WINDOW_MS = 10 * 60 * 1000;
+  let _r247FailHops = 0;   // 24/7: tal hopp på rad pga. daude stasjonar (nullstilt når ein stasjon spelar)
   let _lastCurrentTime = -1;
   let _lastProgressTime = 0;
   let _reconnectCount = 0;
@@ -1834,6 +1835,7 @@ const Radio = (() => {
       settled = true;
       isPlaying = true;
       _reconnectCount = 0;   // ekte avspeling i gang att → nullstill auto-reconnect-budsjettet
+      _r247FailHops = 0;     // 24/7: ein stasjon svarte → nullstill hopp-budsjettet
       // Brukarønske 23.09.2026: nokre strøymar (t.d. Ambient Mann) er
       // mastra/streama høgare enn resten av katalogen — station.gain (0-1,
       // valfri, default 1) trimmar akkurat DEN stasjonen ned mot same
@@ -1857,6 +1859,14 @@ const Radio = (() => {
       settled = true;
       console.warn('Stream error:', url, why);
       if (!timedOut) StreamFix.markDead(url);   // treg oppkobling alene = ikkje daud straum
+      // 24/7 Cycle skal ALDRI bli ståande stoppa fordi éin stasjon er nede (11.10.2026: Ambient Abyss
+      // gav «connection refused» rett ved play → «Stopped»). Hopp til neste levande stasjon i blokka;
+      // maks 6 hopp på rad så ein heil daud blokk ikkje looper i det uendelege.
+      if (!timedOut && !_liveTakeover && _r247FailHops < 6 && typeof Radio247 !== 'undefined' &&
+          Radio247.isActive && Radio247.isActive() && Radio247.skipDeadStation) {
+        _r247FailHops++;
+        if (Radio247.skipDeadStation(info.id, { noBridge: true })) return;
+      }
       isPlaying = false;
       updatePlayBtn(false);
       updateNowPlayingStatus(false);
