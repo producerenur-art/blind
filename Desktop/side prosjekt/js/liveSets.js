@@ -60,7 +60,8 @@ const LiveSets = (() => {
       const db = await _db();
       await _tx(db, ['chunks', 'meta'], 'readwrite', t => {
         t.objectStore('chunks').add({ setId: cur.id, blob, at: Date.now(), seq });
-        t.objectStore('meta').put({ id: cur.id, user: cur.user, isOwner: cur.isOwner, startedAt: cur.startedAt, lastAt: Date.now(), mime: cur.mime, head: cur.head || null, seq });
+        t.objectStore('meta').put({ id: cur.id, user: cur.user, isOwner: cur.isOwner, startedAt: cur.startedAt, lastAt: Date.now(), mime: cur.mime, head: cur.head || null, seq,
+          displayName: cur.displayName || '', room: cur.room || '', trackTitle: cur.trackTitle || '', linkUrl: cur.linkUrl || '' });
       });
       db.close();
     } catch (e) { /* buffer er berre ekstra sikring */ }
@@ -101,7 +102,7 @@ const LiveSets = (() => {
         db.close(); db = null;
         const blobs = (chunks || []).sort((a, b) => (a.seq != null && b.seq != null) ? a.seq - b.seq : a.at - b.at).map(c => c.blob);
         if (m.head && blobs.length && !(await _hasEbml(blobs[0]))) blobs.unshift(m.head);   // første bit mangla → set på lagra WebM-hovud
-        const ok = !blobs.length || await _finalize({ id: m.id, user: m.user, isOwner: m.isOwner, startedAt: m.startedAt, mime: m.mime },
+        const ok = !blobs.length || await _finalize({ id: m.id, user: m.user, isOwner: m.isOwner, startedAt: m.startedAt, mime: m.mime, displayName: m.displayName, room: m.room, trackTitle: m.trackTitle, linkUrl: m.linkUrl },
           new Blob(blobs, { type: m.mime || 'audio/webm' }), Math.round(((m.lastAt || Date.now()) - m.startedAt) / 1000), true);
         if (ok) await _clearBuffer(m.id);
         try { db = await _db(); } catch (e) { return; }
@@ -120,23 +121,17 @@ const LiveSets = (() => {
 
   // Start rad + opptak. stream = utgåande MediaStream (med lydspor).
   async function begin({ stream, displayName, room, isOwner, trackTitle, linkUrl }) {
-    if (_cur) return;
+    // Ei tidlegare sending som aldri fekk Stop (straumen daua, fana overlevde) må avsluttast og lagrast først —
+    // elles ville denne nye sendinga bli sitjande utan opptak.
+    if (_cur) { try { await end({ trackTitle: _cur.trackTitle, linkUrl: _cur.linkUrl }); } catch (e) {} }
     const me = _me();
-    const cur = { id: _id(), user: (me && me.username) || '', isOwner: !!isOwner, startedAt: Date.now(), rec: null, chunks: [], mime: '' };
+    const cur = { id: _id(), user: (me && me.username) || '', isOwner: !!isOwner, startedAt: Date.now(), rec: null, chunks: [], mime: '',
+      displayName: displayName || '', room: room || '', trackTitle: trackTitle || '', linkUrl: linkUrl || '' };
     _cur = cur;
     // Hald eit Web Lock så lenge sendinga går: andre fanar sin recover() ser då at settet er i live bruk og let det vere.
     try { if (navigator.locks) navigator.locks.request('sirius-liveset-' + cur.id, () => new Promise(res => { cur.lockRelease = res; })); } catch (e) {}
-    const c = _client();
-    if (c) {
-      try {
-        const { error } = await c.rpc('start_live_set', {
-          p_id: cur.id, p_username: cur.user, p_display_name: displayName || '', p_room: room || '',
-          p_is_owner: cur.isOwner, p_secret: cur.isOwner ? _secret() : null,
-          p_track_title: trackTitle || '', p_link_url: linkUrl || '',
-        });
-        if (error) console.warn('[LiveSets] start feila:', error.message);
-      } catch (e) { console.warn('[LiveSets] start feila:', e.message || e); }
-    }
+    // Opptaket startar FØRST (synkront) — nettverkskallet under kan henge eller feile utan at ein einaste bit går tapt.
+    let recOk = false;
     try {
       const audioTracks = stream && stream.getAudioTracks ? stream.getAudioTracks() : [];
       const mime = _pickMime();
@@ -145,8 +140,30 @@ const LiveSets = (() => {
         cur.rec = new MediaRecorder(new MediaStream(audioTracks), mime ? { mimeType: mime, audioBitsPerSecond: 80000 } : undefined);
         cur.rec.ondataavailable = e => { if (e.data && e.data.size) { cur.chunks.push(e.data); _enqueueSave(cur, e.data); } };
         cur.rec.start(5000);
+        recOk = true;
       }
     } catch (e) { console.warn('[LiveSets] opptak kunne ikkje startast:', e.message || e); }
+    if (!recOk) _toast('Warning: the recording could NOT start for this broadcast (no audio track / recorder unavailable). The broadcast itself is not affected.', 'error', 10000);
+    cur.rowReady = _ensureRow(cur);
+  }
+
+  // Opprett arkivrada (idempotent: on conflict do nothing). Prøver fleire gonger; kalla og på nytt ved avslutning.
+  async function _ensureRow(cur) {
+    const c = _client();
+    if (!c) return false;
+    for (let i = 0; i < 4; i++) {
+      try {
+        const { error } = await c.rpc('start_live_set', {
+          p_id: cur.id, p_username: cur.user, p_display_name: cur.displayName || '', p_room: cur.room || '',
+          p_is_owner: cur.isOwner, p_secret: cur.isOwner ? _secret() : null,
+          p_track_title: cur.trackTitle || '', p_link_url: cur.linkUrl || '',
+        });
+        if (!error) return true;
+        console.warn('[LiveSets] start feila:', error.message);
+      } catch (e) { console.warn('[LiveSets] start feila:', e.message || e); }
+      await new Promise(r => setTimeout(r, 2000 * (i + 1)));
+    }
+    return false;
   }
 
   // Stopp opptak, last opp, avslutt rada. Kalla FØR lydsporet blir stoppa.
@@ -176,19 +193,29 @@ const LiveSets = (() => {
     let audioUrl = null;
     if (blob && blob.size > 2000 && typeof SC_Storage !== 'undefined' && SC_Storage.isConfigured()) {
       _toast(recovered ? 'Recovering your unfinished live set…' : 'Saving your set to the archive…', 'info', 5000);
-      try {
-        const ext = /mp4/.test(blob.type) ? 'm4a' : 'webm';
-        const file = new File([blob], 'live-set.' + ext, { type: blob.type });
-        audioUrl = (await SC_Storage.upload(file, { prefix: 'live-sets' })).url;
-      } catch (e) { _toast('Recording upload failed: ' + (e.message || e), 'error', 6000); return false; }
+      const ext = /mp4/.test(blob.type) ? 'm4a' : 'webm';
+      const file = new File([blob], 'live-set.' + ext, { type: blob.type });
+      let lastErr = null;
+      for (let i = 0; i < 3 && !audioUrl; i++) {
+        try { audioUrl = (await SC_Storage.upload(file, { prefix: 'live-sets' })).url; }
+        catch (e) { lastErr = e; await new Promise(r => setTimeout(r, 3000 * (i + 1))); }
+      }
+      if (!audioUrl) { _toast('Recording upload failed: ' + ((lastErr && lastErr.message) || lastErr) + ' — your set is kept safely in this browser and will be retried next time the site is opened.', 'error', 9000); return false; }
     }
     const c = _client();
     if (!c) return false;
+    // Rada MÅ finnast før finish (finish gjer ingenting/feilar utan) — opprett ho no om start-kallet aldri gjekk gjennom.
+    if (!(await _ensureRow(cur))) { _toast('Could not reach the archive to save your set — it is kept in this browser and will be retried.', 'error', 9000); return false; }
     try {
-      const { error } = await c.rpc('finish_live_set', {
-        p_id: cur.id, p_username: cur.user, p_secret: cur.isOwner ? _secret() : null,
-        p_audio_url: audioUrl, p_duration_sec: durationSec,
-      });
+      let error = null;
+      for (let i = 0; i < 3; i++) {
+        ({ error } = await c.rpc('finish_live_set', {
+          p_id: cur.id, p_username: cur.user, p_secret: cur.isOwner ? _secret() : null,
+          p_audio_url: audioUrl, p_duration_sec: durationSec,
+        }));
+        if (!error) break;
+        await new Promise(r => setTimeout(r, 2000 * (i + 1)));
+      }
       if (error) { console.warn('[LiveSets] finish feila:', error.message); return false; }
       if (extra.trackTitle || extra.linkUrl) {
         await c.rpc('update_live_set', { p_id: cur.id, p_username: cur.user, p_secret: cur.isOwner ? _secret() : null,
