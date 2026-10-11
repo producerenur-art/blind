@@ -1440,7 +1440,7 @@ const Discover = (() => {
     const st = _wwlSets[id]; if (!st || !st.audio_url || !_wwlIsAdmin()) return;
     if (_wwlDlBusy) { if (typeof App !== 'undefined') App.toast('Already preparing a WAV — wait for it to finish…', 'info'); return; }
     const ext0 = ((st.audio_url.split('?')[0].match(/\.([a-z0-9]{2,4})$/i) || [])[1] || 'mp3').toLowerCase();
-    const base = ((st.display_name || 'live-set') + ' - ' + (st.track_title || '').split('\n')[0]).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+    const base = [(st.display_name || 'live-set'), (st.track_title || '').split('\n')[0].trim()].filter(Boolean).join(' - ').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
     const save = (href, name) => { const a = document.createElement('a'); a.href = href; a.download = name; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); };
     const toast = (m, t) => { if (typeof App !== 'undefined') App.toast(m, t || 'info'); };
     // Reserve: originalfila direkte til disk (Supabase ?download= gir Content-Disposition: attachment)
@@ -1491,7 +1491,7 @@ const Discover = (() => {
     const toast = (m, t) => { if (typeof App !== 'undefined') App.toast(m, t || 'info'); };
     if (_wwlDlBusy) { toast('Already preparing a download — wait for it to finish…', 'info'); return; }
     if (typeof AudioCompress === 'undefined' || !AudioCompress.toMp3) { toast('MP3 encoder not available', 'error'); return; }
-    const base = ((st.display_name || 'live-set') + ' - ' + (st.track_title || '').split('\n')[0]).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+    const base = [(st.display_name || 'live-set'), (st.track_title || '').split('\n')[0].trim()].filter(Boolean).join(' - ').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
     // Synleg panel nede til høgre (toasts forsvinn): fremdrift, så «Save MP3»-knapp du klikkar sjølv — ei automatisk
     // nedlasting etter minutt-lang koding kan blokkerast av nettlesaren.
     let panel = document.getElementById('wwl-mp3-panel');
