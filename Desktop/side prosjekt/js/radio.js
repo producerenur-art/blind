@@ -2162,7 +2162,8 @@ const Radio = (() => {
     if (desc) {
       const link = /^https?:\/\//i.test(info.link || '')
         ? ` <a href="${escHtml(info.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Link</a>` : '';
-      desc.innerHTML = (info.title ? escHtml(info.title) : 'Live broadcast right now') + link;
+      const _noVis = _liveLite || /chlorophil/i.test(info.presenter || '');   // visuals er av under Chlorophil sine sendingar (live-lite)
+      desc.innerHTML = (info.title ? escHtml(info.title) : ('Live broadcast right now' + (_noVis ? ' - Visuals off when Chlorophil live' : ''))) + link;
     }
     if (next) next.hidden = true;
     if (st) st.textContent = 'LIVE';
