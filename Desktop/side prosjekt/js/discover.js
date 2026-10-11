@@ -1492,21 +1492,33 @@ const Discover = (() => {
     if (_wwlDlBusy) { toast('Already preparing a download — wait for it to finish…', 'info'); return; }
     if (typeof AudioCompress === 'undefined' || !AudioCompress.toMp3) { toast('MP3 encoder not available', 'error'); return; }
     const base = ((st.display_name || 'live-set') + ' - ' + (st.track_title || '').split('\n')[0]).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+    // Synleg panel nede til høgre (toasts forsvinn): fremdrift, så «Save MP3»-knapp du klikkar sjølv — ei automatisk
+    // nedlasting etter minutt-lang koding kan blokkerast av nettlesaren.
+    let panel = document.getElementById('wwl-mp3-panel');
+    if (panel) panel.remove();
+    panel = document.createElement('div'); panel.id = 'wwl-mp3-panel';
+    panel.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:100000;max-width:340px;padding:14px 16px;border-radius:14px;background:#0f172a;color:#e5edf7;border:1px solid rgba(125,211,252,.5);box-shadow:0 10px 30px rgba(0,0,0,.5);font:14px/1.4 system-ui,sans-serif';
+    const setPanel = (html) => { panel.innerHTML = html + '<div style="margin-top:8px"><button type="button" onclick="document.getElementById(\'wwl-mp3-panel\').remove()" style="background:none;border:0;color:#94a3b8;cursor:pointer;font:inherit;padding:0">Close</button></div>'; };
+    document.body.appendChild(panel);
+    const nm = _lcEsc(base);
+    setPanel('<b>MP3 download</b><br>' + nm + '<br>Downloading the recording…');
     _wwlDlBusy = true;
     try {
-      toast('Preparing MP3… (long recordings take a few minutes)');
       const r = await fetch(st.audio_url); if (!r.ok) throw new Error('HTTP ' + r.status);
       const blob = await r.blob();
-      let last = -1;
+      setPanel('<b>MP3 download</b><br>' + nm + '<br>Encoding MP3… 0%<br><span style="color:#94a3b8;font-size:12px">Keep this tab open — long sets take several minutes.</span>');
       const f = await AudioCompress.toMp3(new File([blob], 'live-set', { type: blob.type || 'audio/webm' }), {
         maxBytes: 1e9,   // beste kvalitet: 320 kbps CBR stereo
-        onProgress: p => { const pct = Math.floor(p * 10) * 10; if (pct !== last && pct > 0 && pct < 100) { last = pct; toast('Encoding MP3… ' + pct + '%'); } },
+        onProgress: p => { const el = panel.isConnected; if (!el) return; setPanel('<b>MP3 download</b><br>' + nm + '<br>Encoding MP3… ' + Math.floor(p * 100) + '%<br><span style="color:#94a3b8;font-size:12px">Keep this tab open — long sets take several minutes.</span>'); },
       });
       const u = URL.createObjectURL(f);
-      const a = document.createElement('a'); a.href = u; a.download = base + '.mp3'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
-      toast('MP3 saved ✓', 'success');
-      setTimeout(() => URL.revokeObjectURL(u), 120000);
+      const fname = base + '.mp3', mb = (f.size / 1048576).toFixed(1);
+      setPanel('<b>MP3 ready ✓</b> (' + mb + ' MB)<br>' + nm + '<br><a id="wwl-mp3-save" href="' + u + '" download="' + _lcEsc(fname) + '" style="display:inline-block;margin-top:8px;padding:8px 14px;border-radius:999px;background:#38bdf8;color:#04121f;font-weight:700;text-decoration:none">⬇ Save MP3</a>');
+      try { const a = document.getElementById('wwl-mp3-save'); if (a) a.click(); } catch (e) {}   // prøv automatisk; knappen er reserven
+      toast('MP3 ready — click “Save MP3” if the download did not start', 'success');
+      setTimeout(() => URL.revokeObjectURL(u), 30 * 60 * 1000);
     } catch (e) {
+      setPanel('<b>MP3 failed</b><br>' + nm + '<br>' + _lcEsc(String((e && e.message) || e)));
       toast('Could not create MP3: ' + (e.message || e), 'error');
     } finally { _wwlDlBusy = false; }
   }
