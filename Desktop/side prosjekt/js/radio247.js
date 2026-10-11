@@ -74,6 +74,19 @@ const Radio247 = (() => {
     { start: 23, end: 24, genre: 'goa',         label: 'Psytrance / Goa',      stationIds: GOA_IDS },
   ];
 
+  // Bekreftede partnar-slottar (js/shows.js: babaganousha-radio / babaganousha-labs,
+  // annonsert offentleg av Babaganousha). Går FØR døgnhjulet over: slik at «SiriusFM
+  // relayar Babaganousha» faktisk skjer i 24-Hour Cycle, ikkje berre som eit ON AIR-kort
+  // på /shows. 11.10.2026: Babaganousha melde at søndagen 07–10 ikkje spelte stasjonen
+  // hans — hjulet er uavhengig av Shows og hadde Psybient/Ambient der. Tid = Europe/Oslo
+  // (same som Berlin, så «CET» hos dei = same klokke). Berre éin stasjon per slot.
+  // `index` ≥ PARTNER_BASE så _tick() ser byte inn/ut av slotten som blokkgrense.
+  const PARTNER_BASE = 100;
+  const PARTNER_SLOTS = [
+    { day: 0, start: 7, end: 10, genre: 'goa', label: 'Babaganousha Radio', stationIds: ['babaganousha'] },
+    { day: 3, start: 3, end: 6,  genre: 'goa', label: 'Babaganousha Labs',  stationIds: ['babaganousha-labs'] },
+  ];
+
   let _active = false;
   let _lastBlockIndex = -1;
   let _lastStationId = null;
@@ -101,15 +114,32 @@ const Radio247 = (() => {
     return String(Math.floor(h) % 24).padStart(2, '0') + ':00';
   }
 
+  // 0 = søndag … 6 = laurdag, i norsk kalendertid.
+  function _osloWeekday() {
+    const w = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'short' }).format(new Date());
+    return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(w);
+  }
+
   function currentBlock() {
     const now = _osloHourDecimal();
+    const day = _osloWeekday();
+    const pi = PARTNER_SLOTS.findIndex(p => p.day === day && now >= p.start && now < p.end);
+    if (pi >= 0) {
+      const p = PARTNER_SLOTS[pi];
+      return { ...p, index: PARTNER_BASE + pi, partner: true, untilLabel: _fmtHour(p.end) };
+    }
     const i = _blockIndexAt(now);
-    return { ...SCHEDULE[i], index: i, untilLabel: _fmtHour(SCHEDULE[i].end) };
+    const b = SCHEDULE[i];
+    // Startar ein partnar-slot før denne blokka sluttar, er det den som er «Next up».
+    const up = PARTNER_SLOTS.find(p => p.day === day && p.start > now && p.start <= b.end);
+    return { ...b, index: i, upcomingPartner: up || null, untilLabel: _fmtHour(up ? up.start : b.end) };
   }
 
   function nextBlock() {
-    const i = currentBlock().index;
-    return { ...SCHEDULE[(i + 1) % SCHEDULE.length] };
+    const cur = currentBlock();
+    if (cur.upcomingPartner) return { ...cur.upcomingPartner };
+    if (cur.partner) return { ...SCHEDULE[_blockIndexAt(cur.end % 24)] };
+    return { ...SCHEDULE[(cur.index + 1) % SCHEDULE.length] };
   }
 
   // Dagsnummer i norsk kalendertid — endrar seg ved midnatt Oslo-tid, same
