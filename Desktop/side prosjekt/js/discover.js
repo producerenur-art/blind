@@ -1111,6 +1111,9 @@ const Discover = (() => {
           <p class="lc-ad-on">Every second week through November, then weekly from December</p>
           <p class="lc-ad-lines">${lines.join('<br>')}</p>
           <p class="lc-ad-note">Norwegian time · 22:00 in Chlorophil's time zone</p>
+          <div class="lc-ad-actions">
+            <a class="lc-ad-link" href="https://synchronos-recordings.bandcamp.com/album/subspace-garden-ep-24-bit" target="_blank" rel="noopener noreferrer">synchronos-recordings.bandcamp.com/album/subspace-garden-ep-24-bit</a>
+          </div>
         </div>`;
   }
 
