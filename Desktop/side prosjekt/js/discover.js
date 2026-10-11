@@ -1337,7 +1337,7 @@ const Discover = (() => {
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlCopy('${id}')">📋 Copy link</button>
             <a class="btn btn-ghost btn-sm" href="#/live-archive/${id}">Open →</a>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlDownload('${id}')">⬇ Download</button>
-            <button class="btn btn-ghost btn-sm" onclick="Discover.wwlDownloadMp3('${id}')">⬇ MP3</button>
+            <button class="btn btn-ghost btn-sm" onclick="Discover.wwlDownloadMp3('${id}')">⬇ MP3 download</button>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlEdit('${id}')">✏️ Edit text</button>
             <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wwl-img-${id}').click()">🖼 ${st.cover_url ? 'Replace image' : 'Add image'}</button>
             <input type="file" id="wwl-img-${id}" accept="image/*" style="display:none" onchange="Discover.wwlSetImage('${id}',this)">
