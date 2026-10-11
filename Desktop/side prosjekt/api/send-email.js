@@ -515,6 +515,41 @@ function specialShowHtml(name, siteUrl, unsubscribeUrl, show, kind, total) {
 </html>`;
 }
 
+// «Chlorophil live i dag»-påminning (cron: api/special-reminder.js). Éi e-post per sending, samme dag;
+// «Next» viser dei to neste (den første er 7 dagar etter denne = «7 dagar før»-varselet).
+function chlorophilReminderHtml(name, siteUrl, unsubscribeUrl, slotMs) {
+  const base = (siteUrl || '').replace(/\/$/, '');
+  const d = ChlorophilLive.describe(slotMs);
+  const next = ChlorophilLive.slots(slotMs + 1, 2).map(ms => ChlorophilLive.describe(ms));
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0f0f1a;font-family:'Inter',Arial,sans-serif">
+  <div style="max-width:560px;margin:2rem auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(125,211,252,0.35)">
+    <div style="background:linear-gradient(135deg,#0ea5e9,#2563eb);padding:2rem;text-align:center">
+      <p style="color:rgba(255,255,255,0.85);margin:0 0 0.4rem;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase">Live Broadcast · Today</p>
+      <h1 style="color:#fff;margin:0;font-size:1.65rem;font-weight:800">Chlorophil — live on SiriusFM</h1>
+    </div>
+    <div style="padding:2rem;color:#e2e8f0">
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1rem">Hi ${escHtml(name)}! Chlorophil plays live on SiriusFM today.</p>
+      <p style="margin:0 0 0.25rem;font-size:1.15rem;font-weight:800;color:#fff">${escHtml(d.weekday)} ${escHtml(d.date)} · ${escHtml(d.clock)} ${escHtml(d.tz)}</p>
+      <p style="margin:0 0 1.25rem;color:#94a3b8;font-size:0.85rem">Norwegian time · 22:00 in Chlorophil's time zone</p>
+      ${next.length ? `<p style="margin:0 0 0.35rem;color:#a5b4fc;font-weight:700;font-size:0.9rem">Next broadcasts</p>
+      <p style="margin:0 0 1.25rem;color:#e2e8f0;font-size:0.95rem;line-height:1.7">${next.map(n => `${escHtml(n.weekday)} ${escHtml(n.date)} · ${escHtml(n.clock)} ${escHtml(n.tz)}`).join('<br>')}</p>` : ''}
+      <p style="margin:0 0 1rem"><a href="${escHtml(ChlorophilLive.LINK_URL)}" style="color:#c4b5fd">♪ ${escHtml(ChlorophilLive.LINK_LABEL)}</a></p>
+      <div style="text-align:center;margin:1.5rem 0 0.5rem">
+        <a href="${base}/#/discover" style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;text-decoration:none;padding:0.875rem 2rem;border-radius:8px;font-weight:700">Open SiriusFM →</a>
+      </div>
+    </div>
+    <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
+      <p style="color:#475569;font-size:0.75rem;margin:0 0 0.4rem">© ${new Date().getFullYear()} SiriusFM</p>
+      <a href="${unsubscribeUrl}" style="color:#64748b;font-size:0.72rem">Unsubscribe from 24-Hour Cycle emails</a>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 function osloClock(now) {
   try {
     const parts = new Intl.DateTimeFormat('en-GB', {
@@ -1138,6 +1173,21 @@ module.exports = async (req, res) => {
     subject = kind === 2 ? `🔴 Today: ${show.artist} live on SiriusFM` : `🌘 ${show.artist} is coming to SiriusFM`;
     const unsubUrl = `${siteUrl}/api/radio247-unsubscribe?email=${encodeURIComponent(toEmail)}`;
     html = specialShowHtml(toName, siteUrl, unsubUrl, show, kind, show.reminderOffsetsHours.length);
+  } else if (type === 'chlorophil_reminder') {
+    // Berre cron (api/special-reminder.js) — krev CRON_SECRET.
+    const secret = process.env.CRON_SECRET;
+    if (!secret || req.headers['authorization'] !== `Bearer ${secret}`) return res.status(401).json({ error: 'Unauthorized' });
+    if (await isRadio247Unsubscribed(toEmail)) return res.status(200).json({ success: true, skipped: 'unsubscribed' });
+    const slotMs = Number(req.body?.slotMs);
+    // Må vere ei ekte, kommande sending frå planen (aldri fritekst), og innan 24 timar.
+    if (!Number.isFinite(slotMs) || ChlorophilLive.slots(slotMs - 1, 1)[0] !== slotMs
+        || slotMs < Date.now() || slotMs - Date.now() > 24 * 3600 * 1000) {
+      return res.status(400).json({ error: 'Unknown or out-of-window broadcast' });
+    }
+    const dd = ChlorophilLive.describe(slotMs);
+    subject = `🔴 Today: Chlorophil live on SiriusFM — ${dd.clock} ${dd.tz}`;
+    const unsubUrl = `${siteUrl}/api/radio247-unsubscribe?email=${encodeURIComponent(toEmail)}`;
+    html = chlorophilReminderHtml(toName, siteUrl, unsubUrl, slotMs);
   } else if (type === 'radio247_digest') {
     if (await isRadio247Unsubscribed(toEmail)) {
       return res.status(200).json({ success: true, skipped: 'unsubscribed' });

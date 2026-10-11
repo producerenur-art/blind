@@ -7,10 +7,15 @@
 // berre éin gong. Ein køyring sender maks ÉN påminning (den eldste ikkje-sendte som
 // er forfalt), så ein missa cron aldri gir to e-postar på rad.
 //
+// Chlorophil (js/chlorophilLive.js, brukarønske 11.10.2026): ÉI påminning per sending, SAMME DAG
+// ved 09:00Z-cronen (sendinga er kl 17:00Z). «7 dagar før» er den førre sendedagen (kvar sending
+// er 7 dagar etter den førre) og står som «Next» i same e-post — aldri to e-postar i veka.
+// Logg: special_reminder_log (show_id 'chlorophil-live', kind = UTC-dagnummer for sendinga).
 // Køyring: Vercel-cron (dagleg 09:00Z), eller manuelt med  x-cron-secret: <CRON_SECRET>.
 // Tørrkøyring (sender ingenting): ?dry=1
 const { createClient } = require('@supabase/supabase-js');
 const SpecialShows = require('../js/specialShows.js');
+const ChlorophilLive = require('../js/chlorophilLive.js');
 
 const BATCH_SIZE = 8, BATCH_PAUSE = 1100;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -51,7 +56,21 @@ module.exports = async (req, res) => {
       }
       if (due) break;
     }
+    // Chlorophil: sendinga som går i dag (UTC), ikkje starta enno, og ikkje allereie varsla.
+    if (!due) {
+      const slotMs = ChlorophilLive.slots(now, 1)[0];
+      const dayNo = slotMs ? Math.floor(slotMs / 86400000) : null;
+      if (slotMs && slotMs > now && dayNo === Math.floor(now / 86400000)) {
+        const { data: lg, error: lgErr } = await db.from('special_reminder_log').select('kind').eq('show_id', 'chlorophil-live').eq('kind', dayNo);
+        if (lgErr) return res.status(503).json({ error: 'special_reminder_log missing — run migration 0034', detail: lgErr.message });
+        if (!lg || !lg.length) due = { chl: true, slotMs, kind: dayNo };
+      }
+    }
     if (!due) return res.status(200).json({ ok: true, sent: 0, reason: 'nothing due (or first broadcast already started)' });
+    const showId = due.chl ? 'chlorophil-live' : due.show.id;
+    const payloadFor = email => due.chl
+      ? { type: 'chlorophil_reminder', toEmail: email, toName: 'there', slotMs: due.slotMs }
+      : { type: 'special_show_reminder', toEmail: email, toName: 'there', showId: due.show.id, kind: due.kind };
 
     const recipients = [];
     for (let from = 0; ; from += 500) {
@@ -61,10 +80,12 @@ module.exports = async (req, res) => {
       for (const r of (data || [])) { const e = String(r.email || '').trim().toLowerCase(); if (e) recipients.push(e); }
       if (!data || data.length < 500) break;
     }
-    if (dry) return res.status(200).json({ ok: true, dryRun: true, show: due.show.id, reminder: due.kind + 1, of: due.show.reminderOffsetsHours.length, wouldSend: recipients.length });
+    if (dry) return res.status(200).json(due.chl
+      ? { ok: true, dryRun: true, show: showId, slot: new Date(due.slotMs).toISOString(), wouldSend: recipients.length }
+      : { ok: true, dryRun: true, show: due.show.id, reminder: due.kind + 1, of: due.show.reminderOffsetsHours.length, wouldSend: recipients.length });
 
     // Logg FØRST (unngår dobbelutsending om to køyringar overlappar), oppdater tal etterpå.
-    const ins = await db.from('special_reminder_log').insert({ show_id: due.show.id, kind: due.kind, sent: 0 });
+    const ins = await db.from('special_reminder_log').insert({ show_id: showId, kind: due.kind, sent: 0 });
     if (ins.error) return res.status(200).json({ ok: true, sent: 0, reason: 'already logged' });
 
     let sent = 0, skipped = 0, failed = 0;
@@ -75,7 +96,7 @@ module.exports = async (req, res) => {
           const resp = await fetch(`${siteUrl}/api/send-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.CRON_SECRET}` },
-            body: JSON.stringify({ type: 'special_show_reminder', toEmail: email, toName: 'there', showId: due.show.id, kind: due.kind }),
+            body: JSON.stringify(payloadFor(email)),
           });
           const body = await resp.json().catch(() => ({}));
           if (!resp.ok) return 'failed';
@@ -85,8 +106,8 @@ module.exports = async (req, res) => {
       for (const x of results) { if (x === 'sent') sent++; else if (x === 'skipped') skipped++; else failed++; }
       if (i + BATCH_SIZE < recipients.length) await sleep(BATCH_PAUSE);
     }
-    await db.from('special_reminder_log').update({ sent }).eq('show_id', due.show.id).eq('kind', due.kind);
-    return res.status(200).json({ ok: true, show: due.show.id, reminder: due.kind + 1, total: recipients.length, sent, skipped, failed });
+    await db.from('special_reminder_log').update({ sent }).eq('show_id', showId).eq('kind', due.kind);
+    return res.status(200).json({ ok: true, show: showId, reminder: due.chl ? undefined : due.kind + 1, total: recipients.length, sent, skipped, failed });
   } catch (e) {
     console.error('special-reminder error:', e && e.message ? e.message : e);
     return res.status(500).json({ error: 'Could not send the reminders' });
