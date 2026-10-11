@@ -481,6 +481,21 @@ const Radio = (() => {
   ];
   const _ZEN_RE = /\u200B(\u200C{1,4})\u200B/;
   let _liveZenSet = -1;   // gjeld sendinga som pågår
+  // «Live-lite» (brukarønske 2026-10-11): BERRE under sendingar frå kontoane i CONFIG.FREE_LIVE_EMAILS
+  // (shinichizen@gmail.com, zen-sett 0-2). Visuals-video/canvas og blur blir skrudd av så nettlesaren har
+  // CPU/GPU til lyden; alt kjem tilbake når sendinga sluttar. Andre DJ-ar og eigaren (sett 3) er uberørt.
+  let _liveLite = false;
+  function _setLiveLite(on) {
+    on = !!on;
+    if (_liveLite === on) return;
+    _liveLite = on;
+    try { document.documentElement.classList.toggle('sfm-live-lite', on); } catch (e) {}
+    try {
+      applyVisQuality(document.getElementById('radio-vis-video'));   // pause/play etter _liveLite
+      if (on) stopVisualizer();
+      else if (currentStation && isPlaying && window._radioMode) startVisualizer();
+    } catch (e) {}
+  }
   function _splitZen(name) {
     const s = String(name || '');
     const m = _ZEN_RE.exec(s);
@@ -3406,7 +3421,7 @@ const Radio = (() => {
   function applyVisQuality(frame) {
     postYtCommand(frame, 'setPlaybackQuality', [_visQuality()]);
     // Mobil under direktesending: pause bakgrunnsvideoen (YouTube-dekoding + animasjon tek CPU frå lyden).
-    const pauseForLive = _liveTakeover && IS_TOUCH_MOBILE;
+    const pauseForLive = _liveLite || (_liveTakeover && IS_TOUCH_MOBILE);
     postYtCommand(frame, (_visStallLevel >= 2 || pauseForLive) ? 'pauseVideo' : 'playVideo');
   }
   // Lyden hakkar (waiting/stalled): 2 hendingar på 30 s → lågaste videokvalitet; 4 → pause videoen.
@@ -4145,7 +4160,7 @@ const Radio = (() => {
 
   function enterLiveTakeover(presenterRaw, skipAnnouncement) {
     const _z = _splitZen(presenterRaw), presenterName = _z.name;
-    if (_liveTakeover) { if (_z.set >= 0) _liveZenSet = _z.set; _renderLiveBadge(presenterName); return; }   // alt i gang — berre oppdater namnet
+    if (_liveTakeover) { if (_z.set >= 0) _liveZenSet = _z.set; _setLiveLite(_z.set >= 0 && _z.set <= 2); _renderLiveBadge(presenterName); return; }   // alt i gang — berre oppdater namnet
     _liveZenSet = _z.set;   // ny sending: -1 (ingen) for alle andre enn shinichizen, så settet aldri lekk over til andre DJ-ar/mixar
     const audio  = getAudio();
     const title  = document.getElementById('player-title');
@@ -4173,6 +4188,7 @@ const Radio = (() => {
     isPlaying = false;
     window._radioMode = false;
     _liveTakeover = true;
+    _setLiveLite(_z.set >= 0 && _z.set <= 2);   // berre shinichizen (zen-sett 0-2)
     if (IS_TOUCH_MOBILE) { try { applyVisQuality(document.getElementById('radio-vis-video')); } catch (e) {} }
     _renderLiveBadge(presenterName);
     _watchLiveUnlock();
@@ -4384,6 +4400,7 @@ const Radio = (() => {
     if (audio) { try { audio.pause(); } catch (e) {} try { audio.removeAttribute('src'); audio.load(); } catch (e) {} }
     _special = null; _liveSpecialLabel = '';
     _liveTakeover = false; _liveAnnouncementPlaying = false; _pendingLiveStream = null; _preLive = null;
+    _setLiveLite(false);
     _teardownLiveDuck();
     // Brukaren har valt noko anna → forlèt 24/7-modus òg (elles hoppar miksen inn att ved neste tikk).
     try { window.Radio247?.notifyManualPlay?.(); } catch (e) {}
@@ -4407,6 +4424,7 @@ const Radio = (() => {
     const specialOutroAd = wasSpecial && _special.show && _special.show.preRollAd;
     _special = null; _liveSpecialLabel = '';
     _liveTakeover = false;
+    _setLiveLite(false);
     if (IS_TOUCH_MOBILE) { try { applyVisQuality(document.getElementById('radio-vis-video')); } catch (e) {} }
     _liveAnnouncementPlaying = false;
     syncLiveHero();   // hero-boksen tilbake frå live-visning
@@ -4490,7 +4508,7 @@ const Radio = (() => {
     playSearchResult, saveSearchResult, onSearchInput, onSearchKey, aiSearch,
     toggleAiChat, sendAiMessage, onAiKeydown,
     setAsFavorite, openEmbed, closeEmbed, stopForMusicPlayer,
-    enterLiveTakeover, exitLiveTakeover, attachLiveStream, setLivePresenterName, isLiveTakeoverActive, getLivePresenterName,
+    enterLiveTakeover, exitLiveTakeover, setLiveLite: _setLiveLite, attachLiveStream, setLivePresenterName, isLiveTakeoverActive, getLivePresenterName,
     setLiveTrackTitle, getLiveTrackTitle, setLiveLinkUrl, getLiveLinkUrl, syncLiveHero,
     startSpecialShow, isSpecialActive, getLiveLabel, leaveSpecial: () => { if (_special) _leaveSpecialQuiet(); },
     pauseForOwnBroadcast, resumeForOwnBroadcast,

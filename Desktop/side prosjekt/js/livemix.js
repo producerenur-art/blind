@@ -685,6 +685,12 @@ const LiveMix = (() => {
       });
       _bcSetLive(true);
       _djFlag(true);
+      // Live-lite (brukarønske 2026-10-11): berre kontoane i CONFIG.FREE_LIVE_EMAILS (shinichizen) — skru av
+      // visuals/blur på SENDARENS fane mens sendinga går, så Chrome ikkje tek CPU/GPU frå lyd-fangsten.
+      try {
+        const _cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
+        if (typeof CONFIG !== 'undefined' && CONFIG.isFreeLiveEmail && CONFIG.isFreeLiveEmail(_cur)) window.Radio?.setLiveLite?.(true);
+      } catch (e) {}
       _bcLog('You are LIVE in room "' + room + '" (' + (vTrack ? (_bc.visual === 'camera' ? 'camera' : 'image') : 'audio only') + '). Play in your DJ software.');
       // Publiser til den globale statusen SIST, etter at sendingen faktisk er i gang
       // — så ingen besøkende byttes over til et rom som ennå ikke sender noe.
@@ -732,6 +738,7 @@ const LiveMix = (() => {
     if (_bc.ctx) { try { _bc.ctx.close(); } catch (e) {} _bc.ctx = null; }
     _bc.analL = _bc.analR = null; _bc.canvas = null;
     _bcSetLive(false);
+    try { window.Radio?.setLiveLite?.(false); } catch (e) {}   // visuals tilbake
     const c = _byId('bc-count'); if (c) c.textContent = '0';
     _bcLog('Stopped.');
     try { window.Radio247?.refresh?.(); } catch (e) {}
