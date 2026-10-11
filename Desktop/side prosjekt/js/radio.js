@@ -475,8 +475,11 @@ const Radio = (() => {
     { intro: JINGLE_BASE + 'zen-1-intro.mp3', outro: JINGLE_BASE + 'zen-1-outro.mp3' },
     { intro: JINGLE_BASE + 'zen-2-intro.mp3', outro: JINGLE_BASE + 'zen-2-outro.mp3' },
     { intro: JINGLE_BASE + 'zen-3.mp3',       outro: JINGLE_BASE + 'zen-3.mp3' },
+    // Sett 3 = eigar (producerenur@gmail.com, brukarønske 2026-10-11): «Welcome to SiriusFM Live — now.» (live-intro.mp3)
+    // FØR og ETTER sendinga, ingen namne-annonse, ingen tilfeldig jingel. Vert aldri rotert (js/livemix.js _zenSet()).
+    { intro: LIVE_INTRO, outro: LIVE_INTRO },
   ];
-  const _ZEN_RE = /\u200B(\u200C{1,3})\u200B/;
+  const _ZEN_RE = /\u200B(\u200C{1,4})\u200B/;
   let _liveZenSet = -1;   // gjeld sendinga som pågår
   function _splitZen(name) {
     const s = String(name || '');

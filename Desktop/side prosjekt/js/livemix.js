@@ -251,9 +251,15 @@ const LiveMix = (() => {
   // 2026-10-11): 3 sett som rullerer éitt per sending. Lyttarane ser aldri e-posten, så settnummeret
   // (0-2) blir sendt som eit usynleg merke bak presentatørnamnet (nulbreidde teikn) — js/radio.js les og
   // fjernar det. Nytt sett berre ved fyrste publisering av ei sending (heartbeatTimer ikkje sett enno).
+  const OWNER_JINGLE_EMAILS = ['producerenur@gmail.com'];
+  function _isOwnerJingleUser(user) {
+    try { return !!user && OWNER_JINGLE_EMAILS.includes(String(user.email || '').toLowerCase().trim()); } catch (e) { return false; }
+  }
   function _zenSet() {
     try {
       const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
+      // Eigar (producerenur@gmail.com): fast sett 3 = live-intro.mp3 inn og ut (brukarønske 2026-10-11) — aldri rotert.
+      if (_isOwnerJingleUser(cur)) { _bc.zenSet = 3; return 3; }
       if (!(typeof CONFIG !== 'undefined' && CONFIG.isFreeLiveEmail && CONFIG.isFreeLiveEmail(cur))) { _bc.zenSet = null; return -1; }
       if (_bc.zenSet == null) {
         let n = -1;
@@ -958,7 +964,7 @@ const LiveMix = (() => {
     // {namn}» på BROADCASTERENS EIGEN fane også — reint visuelt, kobler
     // ALDRI til lyden der (det er nettopp isBroadcastingHere()-sjekken i
     // js/liveGlobal.js som hindrar sjølv-ekko).
-    getZenSet: () => { try { const cur = Auth.current(); return (CONFIG.isFreeLiveEmail(cur) && typeof _bc.zenSet === 'number') ? _bc.zenSet : -1; } catch (e) { return -1; } },
+    getZenSet: () => { try { const cur = Auth.current(); return ((CONFIG.isFreeLiveEmail(cur) || _isOwnerJingleUser(cur)) && typeof _bc.zenSet === 'number') ? _bc.zenSet : -1; } catch (e) { return -1; } },
     getBroadcastPresenterName: () => (_bc.dj ? (_bc.presenterName || '') : ''),
     getBroadcastTrackTitle: () => (_bc.dj ? (_bc.trackTitle || '') : ''),
     getBroadcastLinkUrl: () => (_bc.dj ? (_bc.linkUrl || '') : ''),
