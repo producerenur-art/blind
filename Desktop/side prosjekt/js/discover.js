@@ -1337,6 +1337,7 @@ const Discover = (() => {
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlCopy('${id}')">📋 Copy link</button>
             <a class="btn btn-ghost btn-sm" href="#/live-archive/${id}">Open →</a>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlDownload('${id}')">⬇ Download</button>
+            <button class="btn btn-ghost btn-sm" onclick="Discover.wwlDownloadMp3('${id}')">⬇ MP3</button>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlEdit('${id}')">✏️ Edit text</button>
             <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wwl-img-${id}').click()">🖼 ${st.cover_url ? 'Replace image' : 'Add image'}</button>
             <input type="file" id="wwl-img-${id}" accept="image/*" style="display:none" onchange="Discover.wwlSetImage('${id}',this)">
@@ -1482,6 +1483,31 @@ const Discover = (() => {
     } catch (e) {
       toast('Could not convert to WAV — downloading original file', 'error');
       rawDownload();
+    } finally { _wwlDlBusy = false; }
+  }
+  // Last ned opptaket som MP3 (128 kbps, KUN admin — same tilgang som «Download»). Brukar AudioCompress.toMp3 (lamejs).
+  async function wwlDownloadMp3(id) {
+    const st = _wwlSets[id]; if (!st || !st.audio_url || !_wwlIsAdmin()) return;
+    const toast = (m, t) => { if (typeof App !== 'undefined') App.toast(m, t || 'info'); };
+    if (_wwlDlBusy) { toast('Already preparing a download — wait for it to finish…', 'info'); return; }
+    if (typeof AudioCompress === 'undefined' || !AudioCompress.toMp3) { toast('MP3 encoder not available', 'error'); return; }
+    const base = ((st.display_name || 'live-set') + ' - ' + (st.track_title || '').split('\n')[0]).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+    _wwlDlBusy = true;
+    try {
+      toast('Preparing MP3… (long recordings take a few minutes)');
+      const r = await fetch(st.audio_url); if (!r.ok) throw new Error('HTTP ' + r.status);
+      const blob = await r.blob();
+      let last = -1;
+      const f = await AudioCompress.toMp3(new File([blob], 'live-set', { type: blob.type || 'audio/webm' }), {
+        maxBytes: 1e9,   // alltid 128 kbps
+        onProgress: p => { const pct = Math.floor(p * 10) * 10; if (pct !== last && pct > 0 && pct < 100) { last = pct; toast('Encoding MP3… ' + pct + '%'); } },
+      });
+      const u = URL.createObjectURL(f);
+      const a = document.createElement('a'); a.href = u; a.download = base + '.mp3'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+      toast('MP3 saved ✓', 'success');
+      setTimeout(() => URL.revokeObjectURL(u), 120000);
+    } catch (e) {
+      toast('Could not create MP3: ' + (e.message || e), 'error');
     } finally { _wwlDlBusy = false; }
   }
   function wwlEdit(id) {
@@ -4574,7 +4600,7 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlUndo, wwlTrashForget, wwlEdit, wwlSave, wwlReplaceAudio, wwlUploadToggle, wwlUploadSubmit, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek, wwlPreview,
+    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlDownloadMp3, wwlUndo, wwlTrashForget, wwlEdit, wwlSave, wwlReplaceAudio, wwlUploadToggle, wwlUploadSubmit, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek, wwlPreview,
     showLemonchillAbout,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,
