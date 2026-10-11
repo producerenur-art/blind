@@ -1078,11 +1078,11 @@ const Discover = (() => {
   function _lcLink(t) { const v = String(t == null ? '' : t); return (window.LinkPreview && LinkPreview.linkify) ? LinkPreview.linkify(v).html : _lcEsc(v); }
   function _lcEsc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
   // «Chlorophil — live»: faste direktesendingar (ikkje ferdig mix). Brukarønske 11.10.2026:
-  // 12.10, 25.10, 8.11, 22.11 (annakvar veke), deretter kvar veke (søndagar frå 6.12).
+  // første sending mandag 12.10, deretter KVAR veke, éin dag (søndagar frå 18.10 — inkluderer 25.10 og 8.11).
   // Tid = 17:00Z = 22:00 hos Chlorophil (UTC+5, ingen sommartid) → 19:00 norsk tid til 24.10, 18:00 frå 25.10.
   // Alle tider er UTC-ISO; norsk tid blir rekna ut av nettlesaren (Europe/Oslo).
-  const CHLOROPHIL_FIXED = ['2026-10-12T17:00:00Z', '2026-10-25T17:00:00Z', '2026-11-08T17:00:00Z', '2026-11-22T17:00:00Z'];
-  const CHLOROPHIL_WEEKLY_FROM = '2026-12-06T17:00:00Z';   // søndag; deretter +7 dagar
+  const CHLOROPHIL_FIXED = ['2026-10-12T17:00:00Z'];
+  const CHLOROPHIL_WEEKLY_FROM = '2026-10-18T17:00:00Z';   // søndag; deretter +7 dagar
   const CHLOROPHIL_WINDOW_MS = 4 * 3600 * 1000;           // «Live now»-vindauge etter start
   function _chlorophilSlots(nowMs, count) {
     const out = [];
@@ -1108,7 +1108,7 @@ const Discover = (() => {
         <div class="lc-ad" id="chl-ad">
           <div class="lc-ad-tag">Live Broadcast</div>
           <h2 class="lc-ad-title">Chlorophil — live on SiriusFM</h2>
-          <p class="lc-ad-on">Every second week through November, then weekly from December</p>
+          <p class="lc-ad-on">Weekly — first broadcast Monday 12 October, then every Sunday</p>
           <p class="lc-ad-lines">${lines.join('<br>')}</p>
           <p class="lc-ad-note">Norwegian time · 22:00 in Chlorophil's time zone</p>
           <div class="lc-ad-actions">
