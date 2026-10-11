@@ -1342,8 +1342,8 @@ const Discover = (() => {
   async function _loadWhatWentLive() {
     const box = document.getElementById('disc-wwl');
     if (!box || typeof LiveSets === 'undefined' || !LiveSets.list) return;
-    const adm = _wwlIsAdmin();   // admin ser ALLE opptak (for opprydding); andre ser dei 4 nyaste
-    let sets = []; try { sets = await LiveSets.list(adm ? 200 : 60); } catch (_) {}
+    const adm = _wwlIsAdmin();   // ALLE (òg gjester) ser alle opptak/opplastingar (brukarønske 11.10.2026); berre admin ser redigering
+    let sets = []; try { sets = await LiveSets.list(200); } catch (_) {}
     sets = (sets || []).filter(x => x && x.audio_url);
     // Brukarønske 05.10.2026: Dj Arcturia Genetics (what-went-live-1) skal stå synleg no og
     // framover — festa først, uansett kor mange nyare opptak (Lemonchill m.fl.) som kjem til.
@@ -1354,10 +1354,12 @@ const Discover = (() => {
     document.getElementById('disc-wwl').innerHTML = `
       <div class="wwl-head">What went live</div>
       ${adm ? '<div style="margin:.2rem 0 .6rem"><button class="btn btn-ghost btn-sm" onclick="Discover.wwlUploadToggle()">⬆ Uploads (not live)</button></div><div id="wwl-upl"></div>' : ''}
-      <div class="wwl-list">${sets.slice(0, adm ? 200 : 4).map(_wwlCard).join('')}</div>
+      <div class="wwl-list">${sets.slice(0, 200).map(_wwlCard).join('')}</div>
       <div id="wwl-trash-box">${_wwlTrashHtml()}</div>`;
     _wwlBindAudio(); _wwlTick();
-    _wwlProbeDurations(sets);
+    // Lengda måles for dei 20 første straks, resten litt etter (ikkje 200 samtidige metadata-hentingar på mobil).
+    _wwlProbeDurations(sets.slice(0, 20));
+    if (sets.length > 20) setTimeout(() => _wwlProbeDurations(sets.slice(20)), 4000);
   }
   function wwlPlay(id) {
     const st = _wwlSets[id]; if (!st || typeof Player === 'undefined') return;
