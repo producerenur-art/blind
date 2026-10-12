@@ -1209,14 +1209,13 @@ const Discover = (() => {
   }
   function _wwlUrl(st) {
     // Kort delingslenke (ikkje den lange base64-lenka): serveren slår opp opptaket og lagar forhandsvisning med bildet.
-    const v = st.updated_at ? Date.parse(st.updated_at) : 0;
     const slug = (typeof LiveSets !== 'undefined' && LiveSets.shareSlug) ? LiveSets.shareSlug(st) : st.id;
     // DJ-lenke (brukarønske 2026-10-12): NYASTE sett til ein DJ får /what-went-live-<namn> (namnet frå «Edit text»,
     // berre a-z0-9, t.d. ambientmann / chlorophil). Eldre sett held fast nummerlenke (stabil, peikar alltid på same sett).
     const sl = _wwlSlug(st.display_name);
-    if (sl && _wwlNewest[sl] === st.id) return 'https://www.siriusfm.no/what-went-live-' + sl + (v ? '?v=' + v.toString(36) : '');
-    if (st.wwl_no) return 'https://www.siriusfm.no/what-went-live-' + st.wwl_no + (v ? '?v=' + v.toString(36) : '');   // fast nummer (migrasjon 0038)
-    return 'https://www.siriusfm.no/s/' + encodeURIComponent(slug) + (v ? '?v=' + v.toString(36) : '');
+    if (sl && _wwlNewest[sl] === st.id) return 'https://www.siriusfm.no/what-went-live-' + sl;
+    if (st.wwl_no) return 'https://www.siriusfm.no/what-went-live-' + st.wwl_no;   // fast nummer (migrasjon 0038)
+    return 'https://www.siriusfm.no/s/' + encodeURIComponent(slug);
   }
   // Minutt-peikar/spolelinje i kortet: viser mm:ss / total og lar deg hoppe til ein posisjon medan opptaket speler.
   function _wwlClock(sec) {
