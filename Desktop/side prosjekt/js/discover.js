@@ -1205,7 +1205,7 @@ const Discover = (() => {
   const _wwlNewest = {};   // slug → id på nyaste sett (fylt i _loadWhatWentLive)
   const _WWL_SLUG_ALIAS = { djarcturiagenetics: 'djarcturiangenetics', djarctruriagenetics: 'djarcturiangenetics', djarcturuangenetics: 'djarcturiangenetics', arcturiangenetics: 'djarcturiangenetics', arcturiagenetics: 'djarcturiangenetics' };
   function _wwlSlug(name) {
-    const x = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    let x = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
     x = _WWL_SLUG_ALIAS[x] || x;   // kjende skrivemåtar → éin fast DJ-lenke (hald lik lista i api/share.js)
     return /^[a-z]/.test(x) ? x.slice(0, 60) : '';   // må starte med bokstav (ikkje kollidere med nummerlenker)
   }
