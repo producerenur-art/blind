@@ -1199,7 +1199,7 @@ const Discover = (() => {
   function _wwlIsAdmin() {
     try {
       const me = Auth.current();
-      return !!me && (WWL_ADMIN_EMAILS.includes(String(me.email || '').toLowerCase().trim()) || (typeof CONFIG !== 'undefined' && CONFIG.isAdminEmail(me)));
+      return !!me && (WWL_ADMIN_EMAILS.includes(String(me.email || '').toLowerCase().trim()) || (typeof CONFIG !== 'undefined' && (CONFIG.isAdminEmail(me) || (CONFIG.isDiscoverEditor && CONFIG.isDiscoverEditor(me)))));
     } catch (_) { return false; }
   }
   function _wwlUrl(st) {

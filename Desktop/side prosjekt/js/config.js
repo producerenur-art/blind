@@ -45,6 +45,15 @@ const CONFIG = {
     catch (_) { return false; }
   },
 
+  // Discover-redigering (2026-10-12): kontoar som får SAMME knappar som eigaren under Discover →
+  // «What went live» (bytt bilete/lyd, Edit text, Delete, MP3 download, opplasting, deling). Gjeld BERRE
+  // opptaksarkivet (js/discover.js + js/liveSets.js) — ingen moderering/admin ellers (det er ADMIN_EMAILS).
+  DISCOVER_EDITOR_EMAILS: ['shinichizen@gmail.com'],
+  isDiscoverEditor(user) {
+    try { return !!user && this.DISCOVER_EDITOR_EMAILS.includes(String(user.email || '').toLowerCase().trim()); }
+    catch (_) { return false; }
+  },
+
   // Fri live-sending UTAN admin-rettar (2026-10-07): desse kontoane kan gå live når dei vil —
   // ingen booking, ingen godkjenning frå eigar, ingen tidsvindauge (js/livemix.js canGoLive()).
   // Får IKKJE moderering/rediger-rett (det er ADMIN_EMAILS). Samanlikning er små bokstavar/trimma.
