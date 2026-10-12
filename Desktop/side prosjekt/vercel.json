@@ -7,6 +7,10 @@
     {
       "source": "/what-went-live-:n(\\d+)",
       "destination": "/api/share?d=wwl-:n"
+    },
+    {
+      "source": "/what-went-live-:slug([a-z][a-z0-9-]*)",
+      "destination": "/api/share?d=wwlname-:slug"
     }
   ],
   "crons": [

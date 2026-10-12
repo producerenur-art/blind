@@ -1202,10 +1202,19 @@ const Discover = (() => {
       return !!me && (WWL_ADMIN_EMAILS.includes(String(me.email || '').toLowerCase().trim()) || (typeof CONFIG !== 'undefined' && (CONFIG.isAdminEmail(me) || (CONFIG.isDiscoverEditor && CONFIG.isDiscoverEditor(me)))));
     } catch (_) { return false; }
   }
+  const _wwlNewest = {};   // slug → id på nyaste sett (fylt i _loadWhatWentLive)
+  function _wwlSlug(name) {
+    const x = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    return /^[a-z]/.test(x) ? x.slice(0, 60) : '';   // må starte med bokstav (ikkje kollidere med nummerlenker)
+  }
   function _wwlUrl(st) {
     // Kort delingslenke (ikkje den lange base64-lenka): serveren slår opp opptaket og lagar forhandsvisning med bildet.
     const v = st.updated_at ? Date.parse(st.updated_at) : 0;
     const slug = (typeof LiveSets !== 'undefined' && LiveSets.shareSlug) ? LiveSets.shareSlug(st) : st.id;
+    // DJ-lenke (brukarønske 2026-10-12): NYASTE sett til ein DJ får /what-went-live-<namn> (namnet frå «Edit text»,
+    // berre a-z0-9, t.d. ambientmann / chlorophil). Eldre sett held fast nummerlenke (stabil, peikar alltid på same sett).
+    const sl = _wwlSlug(st.display_name);
+    if (sl && _wwlNewest[sl] === st.id) return 'https://www.siriusfm.no/what-went-live-' + sl + (v ? '?v=' + v.toString(36) : '');
     if (st.wwl_no) return 'https://www.siriusfm.no/what-went-live-' + st.wwl_no + (v ? '?v=' + v.toString(36) : '');   // fast nummer (migrasjon 0038)
     return 'https://www.siriusfm.no/s/' + encodeURIComponent(slug) + (v ? '?v=' + v.toString(36) : '');
   }
@@ -1381,6 +1390,8 @@ const Discover = (() => {
     const adm = _wwlIsAdmin();   // ALLE (òg gjester) ser alle opptak/opplastingar (brukarønske 11.10.2026); berre admin ser redigering
     let sets = []; try { sets = await LiveSets.list(200); } catch (_) {}
     sets = (sets || []).filter(x => x && x.audio_url);
+    Object.keys(_wwlNewest).forEach(k => delete _wwlNewest[k]);
+    { const _best = {}; sets.forEach(x => { if (!x.ended_at) return; const sl = _wwlSlug(x.display_name); if (!sl) return; const t = Date.parse(x.ended_at) || 0; if (!(sl in _best) || t > _best[sl]) { _best[sl] = t; _wwlNewest[sl] = x.id; } }); }
     // Brukarønske 05.10.2026: Dj Arcturia Genetics (what-went-live-1) skal stå synleg no og
     // framover — festa først, uansett kor mange nyare opptak (Lemonchill m.fl.) som kjem til.
     const _pin = sets.find(x => Number(x.wwl_no) === 1);

@@ -92,6 +92,7 @@ module.exports = async (req, res) => {
   let shareKey = String(d || '').slice(0, 180);   // nøkkel for kommentarar på delesida
   const slugM = /^[a-z0-9][a-z0-9-]{0,40}-([a-z0-9]{6})$/i.exec(d);
   const wwlM = /^wwl-(\d{1,6})$/i.exec(d);   // /what-went-live-<nr> (fast nummer, kolonna live_sets.wwl_no)
+  const wwlN = /^wwlname-([a-z][a-z0-9-]{0,60})$/i.exec(d);   // /what-went-live-<dj-namn> → DJ-ens NYASTE sett (namnet i «Edit text», berre a-z0-9)
   // Kort levande lenke for ein brukar-opplasta song: /s/mus_<id> (tabellen music_tracks, speila av js/musicsync.js).
   // Slår opp via den offentlege RPC-en list_music_tracks (same som Discover) — cover/lyd/tekst er alltid ferske.
   const trkM = /^(?:mus|m)_[a-z0-9_]{6,60}$/i.test(d);
@@ -109,16 +110,21 @@ module.exports = async (req, res) => {
     p = trkRow
       ? { k: 'audio', t: trkRow.title, a: trkRow.artist, i: trkRow.coverUrl || trkRow.avatarUrl, m: trkRow.audioUrl, mt: mimeFromUrl(trkRow.audioUrl), u: trkRow.username, dsc: trkRow.description }
       : {};
-  } else if (/^set_[a-z0-9]{6,40}$/i.test(d) || wwlM || slugM) {
+  } else if (/^set_[a-z0-9]{6,40}$/i.test(d) || wwlM || wwlN || slugM) {
     isSet = true;
     p = {};
     try {
       const base = process.env.SUPABASE_URL || 'https://qefdyxpyjwpohsmmmksf.supabase.co';
       const anon = 'sb_publishable_JEV-NS9FGZ_KpSvQTPwlZg_LlyVy_eS';
-      const r = await fetch(`${base}/rest/v1/live_sets?${wwlM ? 'wwl_no=eq.' + wwlM[1] : slugM && !/^set_/i.test(d) ? 'id=like.set_*' + slugM[1].toLowerCase() + '&order=created_at.desc' : 'id=eq.' + encodeURIComponent(d)}&select=id,display_name,track_title,cover_url,audio_url,tracklist&limit=1`,
+      const _slugify = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const _sel = 'select=id,display_name,track_title,cover_url,audio_url,tracklist';
+      const _q = wwlN ? `ended_at=not.is.null&audio_url=neq.&order=ended_at.desc&${_sel}&limit=300`
+        : `${wwlM ? 'wwl_no=eq.' + wwlM[1] : slugM && !/^set_/i.test(d) ? 'id=like.set_*' + slugM[1].toLowerCase() + '&order=created_at.desc' : 'id=eq.' + encodeURIComponent(d)}&${_sel}&limit=1`;
+      const r = await fetch(`${base}/rest/v1/live_sets?${_q}`,
         { headers: { apikey: anon, Authorization: `Bearer ${anon}` } });
       const rows = r.ok ? await r.json() : [];
-      const row = rows && rows[0];
+      const _want = wwlN ? _slugify(wwlN[1]) : '';
+      const row = wwlN ? (Array.isArray(rows) ? rows.find(x => x && _want && _slugify(x.display_name) === _want) : null) : (rows && rows[0]);
       if (!row && slugM && !wwlM) { isSet = false; p = decodePayload(d) || {}; }   // slug-liknande men ikkje eit sett → gammal nyttelast-lenke
       if (row && row.id) shareKey = row.id;
       if (row) p = { k: 'audio', t: row.display_name, a: row.track_title, i: row.cover_url, m: row.audio_url, mt: mimeFromUrl(row.audio_url), tl: row.tracklist };
@@ -157,7 +163,7 @@ module.exports = async (req, res) => {
   // ?v=<versjon> (frå st.updated_at) gjer at Facebook/X hentar NYTT bilde/tekst etter ei redigering
   // (dei mellomlagrar forhandsvisninga per URL i ~30 dagar, og bruker og:url som nøkkel).
   const ver = /^[a-z0-9]{1,12}$/i.test(String((req.query && req.query.v) || '')) ? String(req.query.v) : '';
-  const canonical = (wwlM ? `${SITE}/what-went-live-${wwlM[1]}` : `${SITE}/s/${encodeURIComponent(d || '')}`) + (ver ? '?v=' + ver : '');
+  const canonical = (wwlN ? `${SITE}/what-went-live-${wwlN[1].toLowerCase()}` : wwlM ? `${SITE}/what-went-live-${wwlM[1]}` : `${SITE}/s/${encodeURIComponent(d || '')}`) + (ver ? '?v=' + ver : '');
 
   // Build the head OG/Twitter tags. Video pages advertise og:video (inline
   // playback in the feed) + og:image poster; audio pages use a large image card.
