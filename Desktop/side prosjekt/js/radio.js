@@ -3503,7 +3503,24 @@ const Radio = (() => {
     if (v > 0) { postYtCommand(frame, 'unMute'); postYtCommand(frame, 'setVolume', [v]); }
     else postYtCommand(frame, 'mute');
   }
+  // Under ALLE live-sendingar (eigar live, Lemonchill/spesialprogram) er videolyden utilgjengeleg (brukarønske 20.10.2026):
+  // kontrollen forsvinn, videoen blir mutet att, og ved slutten kjem kontrollen tilbake (lydlaus til glidebrytaren røres).
+  const _visLive = () => !!(_liveTakeover || _special);
+  let _visVolWasLive = false;
+  function _visVolLiveSync() {
+    const live = _visLive();
+    if (live && !_visVolWasLive) {
+      _visVolWasLive = true;
+      document.getElementById('vis-vol')?.classList.add('vis-vol-gone');
+      if (_visVolTouched) { postYtCommand(document.getElementById('radio-vis-video'), 'mute'); _visVolTouched = false; }
+    } else if (!live && _visVolWasLive) {
+      _visVolWasLive = false;
+      if (visVideoLoaded) updateVisVolumeUI(visVideoLoaded);
+    }
+  }
+  if (typeof document !== 'undefined') setInterval(_visVolLiveSync, 1000);
   function setVisVolume(val) {
+    if (_visLive()) return;
     const v = Math.max(0, Math.min(100, Number(val) || 0));
     try { localStorage.setItem(VIS_VOL_KEY, String(v)); } catch (_) {}
     _visVolTouched = true;
@@ -3523,7 +3540,7 @@ const Radio = (() => {
     const el = document.getElementById('vis-vol');
     if (!el) return;
     let user = null; try { user = typeof Auth !== 'undefined' ? Auth.current() : null; } catch (_) {}
-    const ok = !!user && VIS_SOUND_IDS.has(id);
+    const ok = !!user && VIS_SOUND_IDS.has(id) && !_visLive();
     el.classList.toggle('vis-vol-gone', !ok);
     if (!ok) return;
     const inp = document.getElementById('vis-vol-in'); if (inp) inp.value = _visVolStored();
