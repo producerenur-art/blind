@@ -9,7 +9,7 @@
 //   • Manuelt: POST /api/radio247-digest med header  x-cron-secret: <CRON_SECRET>
 //   • Tørrkøyring (sender ingenting, berre tel):  ?dry=1
 const { createClient } = require('@supabase/supabase-js');
-const { SCHEDULE } = require('../js/radio247.js');
+const { scheduleFor } = require('../js/radio247.js');
 
 const BATCH_SIZE  = 8;
 const BATCH_PAUSE = 1100;
@@ -64,7 +64,7 @@ module.exports = async (req, res) => {
       if (!data || data.length < PAGE) break;
     }
 
-    if (dry) return res.status(200).json({ ok: true, dryRun: true, wouldSend: recipients.length, blocks: SCHEDULE.length });
+    if (dry) return res.status(200).json({ ok: true, dryRun: true, wouldSend: recipients.length, blocks: scheduleFor().length });
 
     let sent = 0, skipped = 0, failed = 0;
     for (let i = 0; i < recipients.length; i += BATCH_SIZE) {

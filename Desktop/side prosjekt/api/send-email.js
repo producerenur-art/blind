@@ -9,7 +9,7 @@ const { SHOWS } = require('../js/shows.js');
 const { FESTIVALS } = require('../js/world.js');
 const SpecialShows = require('../js/specialShows.js');
 const ChlorophilLive = require('../js/chlorophilLive.js');
-const { SCHEDULE: RADIO247_SCHEDULE, pickStationId: r247PickStationId, stationName: r247StationName } = require('../js/radio247.js');
+const { scheduleFor: radio247ScheduleFor, pickStationId: r247PickStationId, stationName: r247StationName } = require('../js/radio247.js');
 
 // Kanonisk nettadresse for ALLE e-postlenker (aktivering, tilbakestilling, kjøp).
 // Brukes som standard slik at lenkene alltid peker til det offisielle domenet —
@@ -459,6 +459,7 @@ function radio247Rows(SCHEDULE) {
 function radio247Html(name, siteUrl, unsubscribeUrl, SCHEDULE) {
   const base = (siteUrl || '').replace(/\/$/, '');
   const radioUrl = `${base}/#/radio`;
+  const dayName = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long' }).format(new Date());
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -466,10 +467,10 @@ function radio247Html(name, siteUrl, unsubscribeUrl, SCHEDULE) {
   <div style="max-width:560px;margin:2rem auto;background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(168,85,247,0.3)">
     <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:2rem;text-align:center">
       <h1 style="color:#fff;margin:0;font-size:1.75rem;font-weight:800;letter-spacing:-0.5px">🌘 24-Hour Cycle</h1>
-      <p style="color:rgba(255,255,255,0.85);margin:0.4rem 0 0;font-size:0.9rem">Today's schedule on SiriusFM</p>
+      <p style="color:rgba(255,255,255,0.85);margin:0.4rem 0 0;font-size:0.9rem">${dayName}'s schedule on SiriusFM</p>
     </div>
     <div style="padding:2rem;color:#e2e8f0">
-      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1rem">Hi ${escHtml(name)}! Here's today's genre wheel — deep and dark in the early hours, building up to a peak at night, then winding back down. All times are Norwegian time (CET/CEST).</p>
+      <p style="color:#94a3b8;line-height:1.6;margin:0 0 1rem">Hi ${escHtml(name)}! Here's the genre wheel for ${dayName} — the genre order is different every day of the week, with pure psytrance some evenings. All times are Norwegian time (CET/CEST).</p>
       <table style="width:100%;border-collapse:collapse;margin:0 0 1.25rem">${radio247Rows(SCHEDULE)}</table>
       <div style="text-align:center;margin:1.5rem 0 0.5rem">
         <a href="${radioUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;padding:0.875rem 2rem;border-radius:8px;font-weight:700;font-size:1rem">▶ Listen now</a>
@@ -1208,7 +1209,7 @@ module.exports = async (req, res) => {
     }
     subject = "🌘 Today's 24-Hour Cycle schedule — SiriusFM";
     const unsubUrl = req.body?.unsubscribeUrl || `${siteUrl}/api/radio247-unsubscribe?email=${encodeURIComponent(toEmail)}`;
-    html = radio247Html(toName, siteUrl, unsubUrl, RADIO247_SCHEDULE);
+    html = radio247Html(toName, siteUrl, unsubUrl, radio247ScheduleFor());
   } else if (type === 'live_started') {
     // Øyeblikkelig "vi er live no"-varsel — api/live-start-notify.js. Same
     // avmeldingsregel som resten av nyhetsbrevet.

@@ -62,17 +62,32 @@ const Radio247 = (() => {
     'uzic-techno': 'UZIC Techno Minimal', 'remember-vip-techno': 'Remember VIP Techno',
   };
 
-  const SCHEDULE = [
-    { start: 0,  end: 1,  genre: 'goa',         label: 'Psytrance / Goa',      stationIds: GOA_IDS },
-    { start: 1,  end: 3,  genre: 'progressive', label: 'Progressive',          stationIds: PROGRESSIVE_IDS },
-    { start: 3,  end: 6,  genre: 'dark-drone',  label: 'Dark Drone',           stationIds: DARK_DRONE_IDS },
-    { start: 6,  end: 12, genre: 'psychill',    label: 'Psybient / Ambient',   stationIds: PSYCHILL_IDS },
-    { start: 12, end: 16, genre: 'chillout',    label: 'Downtempo / Psychill', stationIds: CHILLOUT_IDS },
-    { start: 16, end: 18, genre: 'progressive', label: 'Progressive',          stationIds: PROGRESSIVE_IDS },
-    { start: 18, end: 20, genre: 'goa',         label: 'Psytrance / Goa',      stationIds: GOA_IDS },
-    { start: 20, end: 23, genre: 'techno',      label: 'Techno Underground',   stationIds: TECHNO_IDS },
-    { start: 23, end: 24, genre: 'goa',         label: 'Psytrance / Goa',      stationIds: GOA_IDS },
-  ];
+  // Ukeplan (brukarønske 20.10.2026): kvar vekedag har EI EGEN rekkjefølgje av sjangrar, så hjulet
+  // ikkje er likt frå dag til dag. Nokre dagar/kveldar er EDM/house (Progressive/Techno) heilt borte
+  // og erstatta av reint psytrance. Kvar dag må dekke 0–24 utan hol; startimen er unik per dag
+  // (fase for stasjonsrotasjonen, sjå _pickStationId). 0 = søndag … 6 = laurdag (Europe/Oslo).
+  const _B = {
+    goa:   { genre: 'goa',         label: 'Psytrance / Goa',      stationIds: GOA_IDS },
+    psy:   { genre: 'goa',         label: 'Psytrance',            stationIds: GOA_IDS },
+    prog:  { genre: 'progressive', label: 'Progressive',          stationIds: PROGRESSIVE_IDS },
+    dark:  { genre: 'dark-drone',  label: 'Dark Drone',           stationIds: DARK_DRONE_IDS },
+    psych: { genre: 'psychill',    label: 'Psybient / Ambient',   stationIds: PSYCHILL_IDS },
+    chill: { genre: 'chillout',    label: 'Downtempo / Psychill', stationIds: CHILLOUT_IDS },
+    tech:  { genre: 'techno',      label: 'Techno Underground',   stationIds: TECHNO_IDS },
+  };
+  const _mk = rows => rows.map(([start, end, k]) => ({ start, end, ..._B[k] }));
+  const WEEK = {
+    1: _mk([[0,1,'goa'],[1,3,'prog'],[3,6,'dark'],[6,12,'psych'],[12,16,'chill'],[16,18,'prog'],[18,20,'goa'],[20,23,'tech'],[23,24,'goa']]),
+    2: _mk([[0,2,'psy'],[2,5,'dark'],[5,11,'psych'],[11,15,'chill'],[15,18,'psy'],[18,20,'prog'],[20,23,'psy'],[23,24,'dark']]),
+    3: _mk([[0,1,'tech'],[1,3,'prog'],[3,6,'dark'],[6,12,'psych'],[12,15,'chill'],[15,18,'goa'],[18,20,'psy'],[20,22,'prog'],[22,24,'goa']]),
+    4: _mk([[0,2,'goa'],[2,4,'dark'],[4,10,'psych'],[10,14,'chill'],[14,17,'psy'],[17,20,'goa'],[20,24,'psy']]),
+    5: _mk([[0,2,'psy'],[2,3,'tech'],[3,6,'dark'],[6,11,'psych'],[11,15,'chill'],[15,18,'prog'],[18,21,'psy'],[21,23,'tech'],[23,24,'goa']]),
+    6: _mk([[0,1,'goa'],[1,3,'prog'],[3,6,'dark'],[6,12,'psych'],[12,16,'chill'],[16,18,'psy'],[18,20,'goa'],[20,24,'psy']]),
+    0: _mk([[0,1,'psy'],[1,4,'dark'],[4,12,'psych'],[12,16,'chill'],[16,18,'psy'],[18,20,'prog'],[20,22,'psy'],[22,24,'chill']]),
+  };
+  // Dagens plan (eller ein gitt vekedag) — bruk ALLTID denne, aldri ei fast liste.
+  const _sched = day => WEEK[day === undefined ? _osloWeekday() : day];
+
 
   // Bekreftede partnar-slottar (js/shows.js: babaganousha-radio / babaganousha-labs,
   // annonsert offentleg av Babaganousha). Går FØR døgnhjulet over: slik at «SiriusFM
@@ -102,12 +117,13 @@ const Radio247 = (() => {
     return h + m / 60;
   }
 
-  function _blockIndexAt(hourDecimal) {
-    for (let i = 0; i < SCHEDULE.length; i++) {
-      const b = SCHEDULE[i];
+  function _blockIndexAt(hourDecimal, day) {
+    const S = _sched(day);
+    for (let i = 0; i < S.length; i++) {
+      const b = S[i];
       if (hourDecimal >= b.start && hourDecimal < b.end) return i;
     }
-    return SCHEDULE.length - 1; // skal aldri treffast — 0–24 er dekt over
+    return S.length - 1; // skal aldri treffast — 0–24 er dekt over
   }
 
   function _fmtHour(h) {
@@ -129,7 +145,7 @@ const Radio247 = (() => {
       return { ...p, index: PARTNER_BASE + pi, partner: true, untilLabel: _fmtHour(p.end) };
     }
     const i = _blockIndexAt(now);
-    const b = SCHEDULE[i];
+    const b = _sched(day)[i];
     // Startar ein partnar-slot før denne blokka sluttar, er det den som er «Next up».
     const up = PARTNER_SLOTS.find(p => p.day === day && p.start > now && p.start <= b.end);
     return { ...b, index: i, upcomingPartner: up || null, untilLabel: _fmtHour(up ? up.start : b.end) };
@@ -138,8 +154,10 @@ const Radio247 = (() => {
   function nextBlock() {
     const cur = currentBlock();
     if (cur.upcomingPartner) return { ...cur.upcomingPartner };
-    if (cur.partner) return { ...SCHEDULE[_blockIndexAt(cur.end % 24)] };
-    return { ...SCHEDULE[(cur.index + 1) % SCHEDULE.length] };
+    const S = _sched();
+    if (cur.partner) return { ...S[_blockIndexAt(cur.end % 24)] };
+    if (cur.index + 1 >= S.length) return { ..._sched((_osloWeekday() + 1) % 7)[0] };   // over midnatt → morgondagens første blokk
+    return { ...S[cur.index + 1] };
   }
 
   // Dagsnummer i norsk kalendertid — endrar seg ved midnatt Oslo-tid, same
@@ -284,7 +302,7 @@ const Radio247 = (() => {
         return !(s && typeof StreamFix !== 'undefined' && StreamFix.isDead(s.url));
       } catch (_) { return true; }
     };
-    const _cands = [].concat(block.stationIds || [], nextBlock().stationIds || [], ...SCHEDULE.map(b => b.stationIds))
+    const _cands = [].concat(block.stationIds || [], nextBlock().stationIds || [], ...Object.values(WEEK).flat().map(b => b.stationIds))
       .filter(id => id !== deadId);
     let alt = _cands.find(_alive) || _cands[0];
     if (!alt) return false;
@@ -339,15 +357,15 @@ const Radio247 = (() => {
   // sjølve "veke"-planen for denne kanalen, ikkje del av per-dag-tabellen
   // lenger nede på /shows).
   function scheduleTableHtml() {
-    const now = currentBlock().index;
+    const cb = currentBlock(), now = cb.partner ? -1 : cb.index;
     return `<table class="r247-schedule-table" onclick="event.stopPropagation()">
-      ${SCHEDULE.map((b, i) => `
+      ${_sched().map((b, i) => `
         <tr class="${i === now ? 'r247-schedule-now' : ''}">
           <td>${_fmtHour(b.start)}–${_fmtHour(b.end)}</td>
           <td>${_escHtml(b.label)}</td>
         </tr>`).join('')}
     </table>
-    <div class="r247-schedule-note" onclick="event.stopPropagation()">↻ Repeats daily — 23:00–00:00 loops straight back into 00:00–01:00</div>`;
+    <div class="r247-schedule-note" onclick="event.stopPropagation()">↻ Today's schedule — the genre order changes every day of the week</div>`;
   }
 
   // "Arkiv" for den sjangeren som spelar NO: kva ekte stasjon som var på
@@ -558,7 +576,9 @@ const Radio247 = (() => {
     // "24-Hour Cycle"-kortet oppdaterer «Now:»-linja med det same i staden
     // for å vente til neste naturlege ompteikning (minutt-tick/sidebytte).
     refresh: () => { _rerenderHost(); try { if (typeof Radio !== 'undefined' && Radio.syncLiveHero) Radio.syncLiveHero(); } catch (_) {} },
-    get schedule() { return SCHEDULE; },
+    get schedule() { return _sched(); },
+    scheduleFor: day => _sched(day),
+    get week() { return WEEK; },
     // Eksponert for server-side gjenbruk (sjå module.exports under) — ikkje
     // meint for UI-kode, som allereie har currentBlock()/archiveHtml().
     pickStationId: _pickStationId,
@@ -572,5 +592,5 @@ if (typeof document !== 'undefined') Radio247.init();
 // kan vise den ekte stasjonen bak kvar blokk — same reknestykke/namn som
 // arkiv-visninga på /radio, ikkje ein separat kopi av utrekninga.
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { SCHEDULE: Radio247.schedule, pickStationId: Radio247.pickStationId, stationName: Radio247.stationName };
+  module.exports = { get SCHEDULE() { return Radio247.schedule; }, scheduleFor: Radio247.scheduleFor, WEEK: Radio247.week, pickStationId: Radio247.pickStationId, stationName: Radio247.stationName };
 }
