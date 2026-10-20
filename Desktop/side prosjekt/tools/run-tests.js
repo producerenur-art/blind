@@ -34,6 +34,7 @@ const TESTS = [
   'test-auth-server.js',
   'test-unsubscribe.js',
   'test-live-reminder.js',
+  'test-purchase-mail.js',
 ];
 
 const results = [];

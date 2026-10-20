@@ -3,6 +3,7 @@
 const Stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const mail = require('./_purchase-mail');
 
 function supa() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -14,6 +15,44 @@ function rawBody(req) {
     req.on('end', () => resolve(Buffer.concat(chunks)));
     req.on('error', reject);
   });
+}
+
+
+// E-post til kjøparen etter eit betalt kjøp, med info om kva dei skal gjere vidare (api/_purchase-mail.js).
+// Feil her skal ALDRI få webhooken til å svare 5xx (Stripe ville sendt hendinga på nytt) — berre logg.
+// Pro-abonnement har eigen kvitteringsmail (js/payment.js → api/send-email.js) og blir hoppa over her.
+async function mailAfterPurchase(db, s) {
+  const md = s.metadata || {};
+  const kind = md.product === 'upload-hours' ? 'hours' : (md.productId ? 'song' : null);
+  if (!kind) return;
+  const username = md.username || md.buyerUsername || '';
+  let acc = null;
+  if (username) {
+    const r = await db.from('accounts').select('email, display_name').eq('username', username).maybeSingle();
+    acc = r && r.data;
+  }
+  const to = (acc && acc.email) || (s.customer_details && s.customer_details.email) || '';
+  if (!to) return;
+  const name = (acc && acc.display_name) || username || 'there';
+  const siteUrl = (process.env.SITE_URL || 'https://www.siriusfm.no').replace(/\/$/, '');
+  const amountKr = (s.amount_total || 0) / 100;
+  const orderRef = s.id ? String(s.id).slice(-10).toUpperCase() : '';
+  if (kind === 'hours') {
+    const hours = Math.max(1, parseInt(md.hours, 10) || 1);
+    await mail.send({
+      to, subject: `Receipt — ${hours} extra upload hour${hours > 1 ? 's' : ''} on SiriusFM 🎛️`,
+      html: mail.hoursHtml({ name, djName: name, hours, amountKr, orderRef, siteUrl }),
+      idempotencyKey: 'purchase-' + s.id,
+    });
+  } else {
+    let prod = null;
+    try { const r = await db.from('products').select('title, artist').eq('id', md.productId).maybeSingle(); prod = r && r.data; } catch (_) {}
+    await mail.send({
+      to, subject: `Your song is ready — ${(prod && prod.title) || 'SiriusFM purchase'} 🎶`,
+      html: mail.songHtml({ name, title: prod && prod.title, artist: prod && prod.artist, amountKr, orderRef, siteUrl }),
+      idempotencyKey: 'purchase-' + s.id,
+    });
+  }
 }
 
 module.exports = async (req, res) => {
@@ -43,6 +82,7 @@ module.exports = async (req, res) => {
         const patch = { status: 'paid', stripe_payment_intent: s.payment_intent || null };
         if (s.metadata?.purchaseId) await db.from('purchases').update(patch).eq('id', s.metadata.purchaseId);
         else if (s.id)             await db.from('purchases').update(patch).eq('stripe_session_id', s.id);
+        try { await mailAfterPurchase(db, s); } catch (e) { console.error('Purchase email failed:', e.message); }
         break;
       }
       case 'account.updated': {

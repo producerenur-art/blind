@@ -218,6 +218,14 @@ function purchaseHtml(name, siteUrl, planKey, orderRef) {
       <p style="color:#fff;font-weight:700;font-size:0.95rem;margin:0 0 0.5rem">This is what you have unlocked:</p>
       <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem">${benefits}</table>
 
+      <p style="color:#fff;font-weight:700;font-size:0.95rem;margin:0 0 0.5rem">What to do now:</p>
+      <ol style="color:#cbd5e1;font-size:0.9rem;line-height:1.7;margin:0 0 1.5rem;padding-left:1.25rem">
+        <li>Log in to SiriusFM and open <b>My page</b>. Your <b>Pro badge</b> shows on your profile.</li>
+        <li>Upload a DJ mix longer than 3 hours (up to 20 hours) with <b>Upload DJ Mix</b>. It is published under your DJ name.</li>
+        <li><b>Optional:</b> add the song names afterwards under <b>Edit</b> on the mix, one song per line.</li>
+        <li>Choose whether each mix is <b>public or private</b>.</li>
+        <li>To manage or cancel, open <b>Settings</b> any time.</li>
+      </ol>
       <div style="text-align:center;margin:0 0 1.5rem">
         <a href="${siteUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;text-decoration:none;padding:0.875rem 2rem;border-radius:8px;font-weight:700;font-size:1rem">Go to SiriusFM</a>
       </div>

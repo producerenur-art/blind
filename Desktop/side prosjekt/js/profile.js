@@ -2501,6 +2501,16 @@ const Profile = (() => {
     }
   }
 
+  // Bekreftelsesmail (DJ-namn + valfri songliste) når eit sett OVER 3 t er lasta opp — krev kjøp/Pro, så vanlege mixar gir ingen mail.
+  // Fire-and-forget: opplastinga er ferdig uansett om mailen feilar.
+  function notifyMixUploaded(current, title, duration, tracklist) {
+    try {
+      if (!current || !current.sessionToken || !(duration > FREE_MIX_MAX_SECONDS)) return;
+      fetch('/api/mix-uploaded', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken: current.sessionToken, title, durationSec: Math.round(duration), tracklist: tracklist || [] }) }).catch(() => {});
+    } catch (_) {}
+  }
+
   async function uploadMix(files) {
     const current = Auth.current();
     if (!current) return;
@@ -2555,6 +2565,7 @@ const Profile = (() => {
       current.mixIds = [...(current.mixIds || []), id];
       Auth.updateUser(current.username, { mixIds: current.mixIds });
       consumeMixCredit(current, duration);
+      notifyMixUploaded(current, titleRaw, duration, meta.tracklist);
       if (progressEl) {
         row.innerHTML = `${Icon('check-circle')} ${file.name}`;
         if (shared) {
@@ -2726,6 +2737,7 @@ const Profile = (() => {
     current.mixIds = [...(current.mixIds || []), id];
     Auth.updateUser(current.username, { mixIds: current.mixIds });
     consumeMixCredit(current, _umDuration);
+    notifyMixUploaded(current, title, _umDuration, meta.tracklist);
     App.closeModal();
     App.toast(shared ? 'Mix uploaded! 🎛️🌐 Tap 🔗 on the mix to share it further.' : 'Mix uploaded! 🎛️', 'success');
     _refreshMixViews(current);
