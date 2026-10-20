@@ -11601,3 +11601,14 @@ html.sfm-live-lite #radio-canvas { visibility: hidden !important; }
 html.sfm-live-lite *,
 html.sfm-live-lite *::before,
 html.sfm-live-lite *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+
+/* Videovolum (20.10.2026): blå glidebrytar over visuals, berre innlogga + tegnefilm/NASA. Skjules ved musestopp. */
+.vis-vol { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); z-index: 6; display: flex; align-items: center; gap: .5rem;
+  padding: .45rem .7rem; border-radius: 999px; background: rgba(8,12,28,.55); backdrop-filter: blur(6px); border: 1px solid rgba(59,130,246,.45);
+  opacity: 1; transition: opacity .35s ease; pointer-events: auto; }
+.vis-vol.vis-vol-idle { opacity: 0; pointer-events: none; }
+.vis-vol.vis-vol-gone, html.sfm-live-lite .vis-vol { display: none; }
+.vis-vol-ico { font-size: 1rem; line-height: 1; }
+.vis-vol input[type=range] { -webkit-appearance: none; appearance: none; width: 140px; height: 6px; border-radius: 999px; background: rgba(59,130,246,.35); outline: none; cursor: pointer; }
+.vis-vol input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #3b82f6; border: 2px solid #fff; box-shadow: 0 0 8px rgba(59,130,246,.8); }
+.vis-vol input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #3b82f6; border: 2px solid #fff; }

@@ -1332,6 +1332,12 @@ const Radio = (() => {
                  Lyden kommer alltid fra radioen — denne iframen er kun visuell. -->
             <iframe id="radio-vis-video" title="Cosmos video (muted)" allow="autoplay; encrypted-media" frameborder="0"></iframe>
             <div class="radio-vis-credit" id="radio-vis-credit" hidden></div>
+            <!-- Volumkontroll for videoens EIGEN lyd (20.10.2026): kun innlogga, kun tegnefilm + Allies of Humanity
+                 (sjå VIS_SOUND_IDS). Alle andre visuals er framleis lydlause (mute=1). Skjules ved musestopp. -->
+            <div class="vis-vol vis-vol-gone" id="vis-vol" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+              <span class="vis-vol-ico" id="vis-vol-ico">🔊</span>
+              <input type="range" id="vis-vol-in" min="0" max="100" step="1" value="0" aria-label="Video volume" oninput="Radio.setVisVolume(this.value)">
+            </div>
             <div class="radio-vis-overlay" id="radio-idle">
               <div class="radio-idle-text">
                 <div style="font-size:3rem;margin-bottom:0.5rem">${Icon('radio')}</div>
@@ -3174,12 +3180,12 @@ const Radio = (() => {
       emoji: '🦆', label: 'Donald Classics', group: 'special',
       // AV (26.09.2026): alle 14 er 480p 4:3 → blir uskarpe/pikselerte når dei fyller heile flata. Slå på att ved å byte til «_cestDay() % 9 === 0».
       when: () => false, rot: () => Math.floor(_cestDay() / 9) },
-    // Looney Tunes (WB Kids/Warner Classics, 15 klipp, alle sjekka 20.10.2026: embeddbare, ikkje Shorts, ingen duplikat): BERRE torsdagar (CEST),
+    // Looney Tunes (WB Kids/Warner Classics, 15 klipp, alle sjekka 20.10.2026: embeddbare, ikkje Shorts, ingen duplikat): BERRE søndagar (CEST; flytta frå torsdag 20.10.2026),
     // startklippet byter kvar time. Lydlaus som alt anna (mute=1 i visVideoSrc). 5TzZUjcydtE sist så knappen ikkje kolliderer med pin-plassen.
     { mode: 'video_looney', ids: ['_mHcWWOa3aI','Fg_KxhW8-PY','-gd9D76ifCA','DuXwFlL8Usk','hGhJ7TTyisw','NYCzCADT3yM','JE4xmxXAfyY','KUwZP4dA6MU','3vLHelBuTRM','8JuVMoGj6fE','ksswcJwry9I','F_ETvHtwA10','3dqra_9FKCM','a7To0-PEZOs','5TzZUjcydtE'],
       long: { '-gd9D76ifCA': 27629, 'KUwZP4dA6MU': 43199, '3vLHelBuTRM': 37187 },
       emoji: '🐰', label: 'Looney Tunes', group: 'special',
-      when: () => _cestDate().getUTCDay() === 4, rot: () => Math.floor(Date.now() / 3600000) },
+      when: () => _cestDate().getUTCDay() === 0, rot: () => Math.floor(Date.now() / 3600000) },
     // History-kanalen «Alien Encounters» (hovudkanal, sjeldan): éin dag i månaden (den 15.).
     { mode: 'video_aliens', ids: ['zNZHTlRFD6E'], emoji: '👽', label: 'Alien Encounters', group: 'special',
       when: () => _cestDate().getUTCDate() === 15, rot: () => 0 },
@@ -3480,6 +3486,57 @@ const Radio = (() => {
   let _visPlIdx = -1, _visPlLen = 0;   // posisjon i YouTube-avspelingslista (nullstilles ved ny video)
   // Hvilken video-ID iframen viser nå (for å unngå unødig reload ved re-vis).
   let visVideoLoaded = null;
+  // ── Videolyd (brukarønske 20.10.2026) ──────────────────────────────────────
+  // Berre tegnefilm (Looney Tunes, Donald/Goofy, Happy Tree Friends) får
+  // volumkontroll + Allies of Humanity (video_allies; nye lenkjer i den lista får volum automatisk). NASA/ISS er IKKJE med (brukarønske 20.10.2026), og berre for innlogga. ALT anna i visuals-raden er framleis lydlaust (mute=1).
+  // Videoen startar alltid lydlaus (autoplay-regel); lyden går på først når brukaren rører glidebrytaren.
+  const VIS_SOUND_IDS = new Set([].concat(
+    LOONEY_IDS, WEEKLY_SPECIAL_IDS,
+    ...SPECIAL_SETS.filter(v => /^video_(donald|looney|allies)/.test(v.mode)).map(v => v.ids),
+    AI_VISUAL_PIN_POOL.filter(v => /Donald|Goofy|Looney/.test(v.label)).map(v => v.id)));
+  const VIS_VOL_KEY = 'siriusfm_vis_vol';
+  let _visVolTouched = false, _visVolHideT = null;
+  function _visVolStored() { try { const v = parseInt(localStorage.getItem(VIS_VOL_KEY), 10); return isNaN(v) ? 50 : Math.max(0, Math.min(100, v)); } catch (_) { return 50; } }
+  function _visVolApply(v) {
+    const frame = document.getElementById('radio-vis-video');
+    if (!frame) return;
+    if (v > 0) { postYtCommand(frame, 'unMute'); postYtCommand(frame, 'setVolume', [v]); }
+    else postYtCommand(frame, 'mute');
+  }
+  function setVisVolume(val) {
+    const v = Math.max(0, Math.min(100, Number(val) || 0));
+    try { localStorage.setItem(VIS_VOL_KEY, String(v)); } catch (_) {}
+    _visVolTouched = true;
+    _visVolApply(v);
+    const ico = document.getElementById('vis-vol-ico'); if (ico) ico.textContent = v === 0 ? '🔇' : v < 50 ? '🔉' : '🔊';
+    visVolPoke();
+  }
+  // Vis kontrollen og skjul ho att etter 2,5 s utan musebevegelse.
+  function visVolPoke() {
+    const el = document.getElementById('vis-vol');
+    if (!el || el.classList.contains('vis-vol-gone')) return;
+    el.classList.remove('vis-vol-idle');
+    clearTimeout(_visVolHideT);
+    _visVolHideT = setTimeout(() => el.classList.add('vis-vol-idle'), 2500);
+  }
+  function updateVisVolumeUI(id) {
+    const el = document.getElementById('vis-vol');
+    if (!el) return;
+    let user = null; try { user = typeof Auth !== 'undefined' ? Auth.current() : null; } catch (_) {}
+    const ok = !!user && VIS_SOUND_IDS.has(id);
+    el.classList.toggle('vis-vol-gone', !ok);
+    if (!ok) return;
+    const inp = document.getElementById('vis-vol-in'); if (inp) inp.value = _visVolStored();
+    const wrap = document.getElementById('radio-vis-wrap');
+    if (wrap && !wrap._volBound) {
+      wrap._volBound = true;
+      ['mousemove', 'touchstart', 'pointerdown'].forEach(ev => wrap.addEventListener(ev, visVolPoke, { passive: true }));
+    }
+    visVolPoke();
+    // Ny video i same økt etter at brukaren alt har slått på lyd: bruk same volum att.
+    if (_visVolTouched) [900, 2200, 4000].forEach(ms => setTimeout(() => { if (visVideoLoaded === id) _visVolApply(_visVolStored()); }, ms));
+  }
+
   function showVisVideo(mode) {
     const frame = document.getElementById('radio-vis-video');
     if (!frame) return;
@@ -3499,6 +3556,7 @@ const Radio = (() => {
     forceVisRepaint(frame);   // mal den nye videoen med en gang (ikke først ved muse-hover)
     document.getElementById('radio-idle')?.classList.add('hidden');
     updateVisCredit(mode);
+    updateVisVolumeUI(id);
   }
   // Liten kreditering nederst i videoen: hvilken YouTube-kanal klippet er fra.
   // Kun AI-hentede visuals har kanalnavn (fra /api/visuals-fresh) — klassikerne
@@ -3527,6 +3585,7 @@ const Radio = (() => {
     });
   }
   function hideVisVideo() {
+    document.getElementById('vis-vol')?.classList.add('vis-vol-gone');
     const frame = document.getElementById('radio-vis-video');
     if (!frame) return;
     frame.classList.remove('active');
@@ -4510,7 +4569,7 @@ const Radio = (() => {
 
   return {
     render, playStation, playCustom, togglePlay, stopRadio, playUrl, fetchStations, focusCategory,
-    setVolume, volumeUp, volumeDown, toggleMute, setVisMode, setVisSize, exitVisFull, visZoomIn, visZoomOut, addCustomStream, removeCustom,
+    setVolume, volumeUp, volumeDown, toggleMute, setVisVolume, setVisMode, setVisSize, exitVisFull, visZoomIn, visZoomOut, addCustomStream, removeCustom,
     setVisColor, setVisColorAuto, setVisSpeed, toggleVisTune,
     playSearchResult, saveSearchResult, onSearchInput, onSearchKey, aiSearch,
     toggleAiChat, sendAiMessage, onAiKeydown,
