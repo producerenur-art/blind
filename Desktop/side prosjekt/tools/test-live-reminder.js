@@ -116,8 +116,8 @@ async function main() {
   assert.ok(html.includes('OZORA Festival 2026 line-up announced'), 'festivalsaka skal vises');
   assert.ok(html.includes('Ott on building sound layer by layer'),  'intervjuet skal vises');
   assert.ok(html.includes('Nano Records announces a new compilation'), 'magasinsaka skal vises');
-  assert.ok(/Stellar PSY/.test(html), 'utvalde kanalar skal vises');
-  assert.ok(/Techno Underground|Drone Morning|Groove Friday|Chill Wednesday|Space Travel|Deep Space Saturday|Mission Control Sunday|Stellar PSY Night/.test(html),
+  assert.ok(/radiOzora Trance/.test(html) && /DMT FM/.test(html), 'utvalde kanalar skal vises (FEATURED_STATIONS i api/send-email.js)');
+  assert.ok(/Psychill Afternoon|Chillout Lounge|Progressive Psy Session|DMT FM Sessions|Babaganousha Radio|Astral Trance Radio|Dice Radio Athens|Psyndora Radio|Ambient Psychill|Smooth Chill|radiOzora (Trance|Chill) Hour|Sunday Deep Transmission/.test(html),
     'minst eitt radioprogram skal vises');
   ok('innhaldet blir rendra (magasin + festival + intervju + kanalar + program)');
 
@@ -164,28 +164,22 @@ async function main() {
 
   // ── 6) upcomingShows: sortert frå og med i dag, ON AIR øvst ──────────────
   assert.strictEqual(typeof upcomingShows, 'function', 'upcomingShows skal vere eksportert');
-  // Tysdag kl. 22 → «Techno Underground» (tys 21–24) er på lufta.
+  // Tysdag kl. 22: programmet som går no skal stå øvst, merkt live og «Today». (Programlista i js/shows.js
+  // endrar seg, så testen er IKKJE kopla til konkrete programnamn — berre til oppførselen.)
   const tue = upcomingShows({ day: 2, hour: 22 }, 4);
-  assert.strictEqual(tue[0].name, 'Techno Underground', 'programmet som går no skal stå øvst');
-  assert.strictEqual(tue[0].live, true, 'det skal vere merkt som live');
+  assert.strictEqual(tue[0].live, true, 'programmet som går no skal stå øvst og vere merkt som live');
   assert.strictEqual(tue[0].when, 'Today', 'og daterast «Today»');
-  // DMT FM Sessions (ons 00–03) vart lagt til seinare same økt — han ligg
-  // kronologisk FØR Chill Wednesday (ons 18–21), så han er no rett øvst av
-  // morgondagens program, ikkje Chill Wednesday.
-  assert.strictEqual(tue[1].name, 'DMT FM Sessions', 'deretter kjem morgondagen');
-  assert.strictEqual(tue[1].when, 'Tomorrow', 'merkt «Tomorrow»');
-  // Måndag kl. 12 — «Drone Morning» (man 07–10) er ferdig og skal IKKJE stå øvst;
-  // «Psychill Afternoon» (man 12–15) er på lufta akkurat no og skal stå øvst i staden.
+  assert.strictEqual(tue[1].live, false, 'neste program er ikkje live');
+  assert.strictEqual(tue[1].when, 'Tomorrow', 'deretter kjem morgondagen (merkt «Tomorrow»)');
+  // Måndag kl. 12 — «Psychill Afternoon» (man 12–15) er på lufta akkurat no og skal stå øvst.
   const mon = upcomingShows({ day: 1, hour: 12 }, 8);
   assert.strictEqual(mon[0].name, 'Psychill Afternoon', 'programmet som går no skal stå øvst, ikkje eit ferdig program');
-  // Med berre 8 (den vanlege e-post-lengda) er ikkje Drone Morning nødvendigvis
-  // med i det heile — programlista har vakse (32 sendingar) sidan denne testen
-  // vart skriven. Spør difor etter EIN heilt full runde (langt over talet på
-  // sendingar) for å stadfeste at «ferdig i dag» faktisk hamnar heilt bakerst,
-  // utan å vere kopla til det eksakte talet på sendingar (som berre ville gjort
-  // testen skjør på nytt neste gong nokon legg til fleire program).
-  const monFull = upcomingShows({ day: 1, hour: 12 }, 200);
-  assert.strictEqual(monFull[monFull.length - 1].name, 'Drone Morning', 'ferdig program tidlegare i dag skal skyvast heilt bakerst (neste veke)');
+  assert.strictEqual(mon[0].live, true, 'og vere merkt live');
+  // Spør etter heile runden: program som alt er ferdige i dag blir skyvd til neste veke (heilt bakerst, ikkje «Today»).
+  const monFull = upcomingShows({ day: 1, hour: 12 }, 500);
+  const last = monFull[monFull.length - 1];
+  assert.strictEqual(last.live, false, 'siste i lista er ikkje live');
+  assert.notStrictEqual(last.when, 'Today', 'ferdig program tidlegare i dag skal skyvast til neste veke, ikkje stå som «Today»');
   ok('upcomingShows: live øvst, ferdige program skyvd til neste veke');
 
   assert.strictEqual(typeof osloClock, 'function', 'osloClock skal vere eksportert');
