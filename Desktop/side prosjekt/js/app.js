@@ -2263,7 +2263,7 @@ const App = (() => {
       renderNav();
       if (window.Notify) Notify.pushLocal({
         id: 'welcome_' + username, from: 'soundcore', fromDisplay: 'SoundCore',
-        type: 'welcome', text: `Welcome to SoundCore, ${displayName || username}! Add friends, upload your first track, and explore Discover to get started.`,
+        type: 'welcome', text: `Welcome to SiriusFM, ${displayName || username}! Add friends, upload your first track, and explore Discover to get started.`,
         link: '#/discover',
       });
       toast(`Account created! Welcome, ${displayName || username}! ${Icon('party')}`, 'success');
@@ -2410,7 +2410,7 @@ const App = (() => {
     renderNav();
     if (window.Notify) Notify.pushLocal({
       id: 'welcome_' + result.user.username, from: 'soundcore', fromDisplay: 'SoundCore',
-      type: 'welcome', text: `Welcome to SoundCore, ${result.user.displayName}! Add friends, upload your first track, and explore Discover to get started.`,
+      type: 'welcome', text: `Welcome to SiriusFM, ${result.user.displayName}! Add friends, upload your first track, and explore Discover to get started.`,
       link: '#/discover',
     });
     toast(`Account activated! Logging you in … ${Icon('party')}`, 'success');
