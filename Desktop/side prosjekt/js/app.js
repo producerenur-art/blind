@@ -2262,7 +2262,7 @@ const App = (() => {
       localStorage.setItem('pv_session', JSON.stringify({ username, ts: Date.now() }));
       renderNav();
       if (window.Notify) Notify.pushLocal({
-        id: 'welcome_' + username, from: 'soundcore', fromDisplay: 'SoundCore',
+        id: 'welcome_' + username, from: 'soundcore', fromDisplay: 'SiriusFM',
         type: 'welcome', text: `Welcome to SiriusFM, ${displayName || username}! Add friends, upload your first track, and explore Discover to get started.`,
         link: '#/discover',
       });
@@ -2409,7 +2409,7 @@ const App = (() => {
     localStorage.setItem('pv_session', JSON.stringify({ username: result.user.username, ts: Date.now() }));
     renderNav();
     if (window.Notify) Notify.pushLocal({
-      id: 'welcome_' + result.user.username, from: 'soundcore', fromDisplay: 'SoundCore',
+      id: 'welcome_' + result.user.username, from: 'soundcore', fromDisplay: 'SiriusFM',
       type: 'welcome', text: `Welcome to SiriusFM, ${result.user.displayName}! Add friends, upload your first track, and explore Discover to get started.`,
       link: '#/discover',
     });
