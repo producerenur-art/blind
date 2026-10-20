@@ -119,6 +119,7 @@
       <li>Close everything you do not need (browser tabs, other music apps, video calls). A busy computer is the most common cause of stuttering.</li>
       <li>Use a <strong>cable connection</strong> to your router if you can. Wi-Fi works but is less stable for a long set.</li>
       <li>Turn off sound effects and notifications on your computer so they never end up in the broadcast.</li>
+      <li><strong>Turn off power saving</strong> and plug in the charger. See <a href="#power">Power saving</a> below.</li>
     </ol>
 
     <h2 id="mac">A. Mac — software loopback</h2>
@@ -163,6 +164,36 @@
       <li>Set the level so the loudest peaks stay clearly below clipping, around −6 dB on the <strong>Sent (L)/(R)</strong> meter. If it is clipping, lower the interface gain, not just the volume in your player.</li>
     </ol>
 
+    <h2 id="power">Power saving — keep Chrome and your computer awake</h2>
+    <p>A long set can be cut off or turn choppy if the computer saves power. Do this <strong>before every broadcast</strong>.</p>
+    <div class="card">
+      <h3 style="margin-top:0">In Chrome</h3>
+      <ol>
+        <li>Open <strong>Settings → Performance</strong>.</li>
+        <li>Turn <strong>Memory Saver</strong> off, or keep it on and add <code>www.siriusfm.no</code> under <strong>Always keep these sites active</strong>. Memory Saver can put a background tab to sleep, and a sleeping tab stops sending your sound.</li>
+        <li>Turn <strong>Energy Saver</strong> off for the broadcast. It slows down tabs and video when the battery is low or the laptop is unplugged.</li>
+        <li>Keep the SiriusFM tab <strong>open in its own window</strong>. Do not minimise it, and do not put another window in full screen on top of it.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">On a Mac</h3>
+      <ol>
+        <li><strong>Plug in the power adapter.</strong> A set on battery power is the most common reason for dropouts.</li>
+        <li>System Settings → <strong>Battery</strong> → turn <strong>Low Power Mode</strong> off.</li>
+        <li>Make sure the Mac does not sleep: in System Settings → <strong>Lock Screen</strong>, set <em>Turn display off on power adapter</em> to a long time, and in Battery → Options tick <em>Prevent automatic sleeping on power adapter when the display is off</em>.</li>
+        <li>Quick alternative: open <strong>Terminal</strong> and run <code>caffeinate -dims</code>. The Mac stays awake until you close the window or press Ctrl+C.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">On a Windows PC</h3>
+      <ol>
+        <li><strong>Plug in the charger.</strong></li>
+        <li>Settings → System → <strong>Power &amp; battery</strong>: set <em>Power mode</em> to <strong>Best performance</strong> and turn <strong>Battery saver</strong> off.</li>
+        <li>Under <em>Screen, sleep &amp; hibernate timeouts</em> set <strong>Sleep</strong> to <strong>Never</strong> while plugged in. The screen may turn off, but the computer must not sleep.</li>
+      </ol>
+    </div>
+    <p class="muted">Remember to put your settings back to normal after the set if you want to save battery again.</p>
+
     <h2>Where to set the master output in popular DJ software</h2>
     <p class="muted">Menu names change between versions. Look for the audio or sound settings and set the <strong>master / main output</strong> to the virtual device (routes A and B), or leave it on your hardware (route C).</p>
     <table>
@@ -193,6 +224,7 @@
       <tr><td>CABLE or BlackHole is missing from the input list</td><td>Restart the computer after installing. Then click <em>Grant access</em> again and allow the microphone in the browser</td></tr>
       <tr><td>Sound is pumped or sounds artificial</td><td>Browser sound processing is on, or the level is clipping. Lower the gain</td></tr>
       <tr><td>Stuttering or dropouts</td><td>Overloaded computer or weak connection. Close other programs, use a cable, and try a larger audio buffer in the DJ software</td></tr>
+      <tr><td>Sound stops or turns choppy after a while, especially when the SiriusFM tab is in the background or the laptop is on battery</td><td>Chrome Memory Saver or Energy Saver, Low Power Mode, or sleep. See <a href="#power">Power saving</a></td></tr>
       <tr><td>It goes silent halfway through</td><td>The audio device was changed while live. Stop and start the broadcast again</td></tr>
       <tr><td>You hear an echo</td><td>Another SiriusFM tab or the player is still playing. Mute it</td></tr>
     </table>
