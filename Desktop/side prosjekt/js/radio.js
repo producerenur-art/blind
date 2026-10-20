@@ -237,13 +237,6 @@ const Radio = (() => {
     // DARK AMBIENT / DRONE  ▼ botn av 24-Hour Cycle-hjulet
     // ════════════════════════════════════════════
     {
-      id: 'ambient-abyss', cat: 'Dark Ambient / Drone',
-      name: 'Ambient Abyss Broadcasting',
-      url:  'https://broadcast.shoutstream.co.uk:8068/stream',
-      emoji: '🌑', color: '#6366f1',
-      desc: 'Deep atmospheric ambient — UK 🇬🇧',
-    },
-    {
       id: 'dark-city-signal', cat: 'Dark Ambient / Drone',
       name: 'Dark City Signal',
       url:  'https://audiostream.hkprime.com/stream',

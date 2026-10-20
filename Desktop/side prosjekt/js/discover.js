@@ -1348,6 +1348,8 @@ const Discover = (() => {
             <a class="btn btn-ghost btn-sm" href="#/live-archive/${id}">Open →</a>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlDownload('${id}')">⬇ Download</button>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlDownloadMp3('${id}')">⬇ MP3 download</button>
+            <button class="btn btn-ghost btn-sm" onclick="Discover.wwlMove('${id}',-1)" title="Move up" aria-label="Move up">▲</button>
+            <button class="btn btn-ghost btn-sm" onclick="Discover.wwlMove('${id}',1)" title="Move down" aria-label="Move down">▼</button>
             <button class="btn btn-ghost btn-sm" onclick="Discover.wwlEdit('${id}')">✏️ Edit text</button>
             <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wwl-img-${id}').click()">🖼 ${st.cover_url ? 'Replace image' : 'Add image'}</button>
             <input type="file" id="wwl-img-${id}" accept="image/*" style="display:none" onchange="Discover.wwlSetImage('${id}',this)">
@@ -1395,8 +1397,13 @@ const Discover = (() => {
     { const _best = {}; sets.forEach(x => { if (!x.ended_at) return; const sl = _wwlSlug(x.display_name); if (!sl) return; const t = Date.parse(x.ended_at) || 0; if (!(sl in _best) || t > _best[sl]) { _best[sl] = t; _wwlNewest[sl] = x.id; } }); }
     // Brukarønske 05.10.2026: Dj Arcturia Genetics (what-went-live-1) skal stå synleg no og
     // framover — festa først, uansett kor mange nyare opptak (Lemonchill m.fl.) som kjem til.
-    const _pin = sets.find(x => Number(x.wwl_no) === 1);
-    if (_pin) sets = [_pin].concat(sets.filter(x => x !== _pin));
+    // Admin-bestemt rekkefølgje (sort_order, migrasjon 0039) går føre festinga og datoen. Utan sort_order: som før.
+    if (sets.some(x => x.sort_order != null)) {
+      sets = sets.slice().sort((a, b) => ((a.sort_order == null ? 1e9 : a.sort_order) - (b.sort_order == null ? 1e9 : b.sort_order)) || ((Date.parse(b.ended_at) || 0) - (Date.parse(a.ended_at) || 0)));
+    } else {
+      const _pin = sets.find(x => Number(x.wwl_no) === 1);
+      if (_pin) sets = [_pin].concat(sets.filter(x => x !== _pin));
+    }
     _refreshActivityFeed(sets.filter(x => x.room !== 'upload').slice(0, 6));   // opplastinger (ikkje live) skal ikkje stå som «went live»  // «Live activity» skal òg vise desse, ikkje berre «What went live»
     if (!sets.length || !document.getElementById('disc-wwl')) return;
     document.getElementById('disc-wwl').innerHTML = `
@@ -1579,16 +1586,34 @@ const Discover = (() => {
     try {
       const res = await SC_Storage.upload(await _wwlShrinkImage(f), { prefix: 'live-sets-covers' });
       const ok = await LiveSets.update(id, { coverUrl: res.url });
-      if (ok) { st.cover_url = res.url; st.updated_at = new Date().toISOString(); const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); if (typeof App !== 'undefined') App.toast('Image saved.', 'success'); }
-      else if (typeof App !== 'undefined') App.toast('Could not save the image.', 'error');
+      if (ok) { st.cover_url = res.url; st.updated_at = new Date().toISOString(); _wwlRerender(st); if (typeof App !== 'undefined') App.toast('Image saved.', 'success'); }
+      else if (typeof App !== 'undefined') App.toast('Could not save the image: ' + (LiveSets.update.lastError || 'unknown error'), 'error', 8000);
     } catch (e) { if (typeof App !== 'undefined') App.toast('Upload failed: ' + (e.message || e), 'error'); }
     input.value = '';
   }
   async function wwlRemoveImage(id) {
     const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
     const ok = await LiveSets.update(id, { coverUrl: '' });
-    if (ok) { st.cover_url = ''; st.updated_at = new Date().toISOString(); const c = document.getElementById('wwl-' + id); if (c) c.outerHTML = _wwlCard(st); }
-    else if (typeof App !== 'undefined') App.toast('Could not remove the image.', 'error');
+    if (ok) { st.cover_url = ''; st.updated_at = new Date().toISOString(); _wwlRerender(st); }
+    else if (typeof App !== 'undefined') App.toast('Could not remove the image: ' + (LiveSets.update.lastError || 'unknown error'), 'error', 8000);
+  }
+  // Teikn eitt kort på nytt på plass (behald redigeringsboksen/kommentarar via full kortgenerering).
+  function _wwlRerender(st) { const c = document.getElementById('wwl-' + st.id); if (c) c.outerHTML = _wwlCard(st); _wwlTick(); }
+  // Flytt eit kort opp (-1) eller ned (+1) og lagre rekkefølgja (berre admin).
+  async function wwlMove(id, dir) {
+    if (!_wwlIsAdmin()) return;
+    const list = document.querySelector('#disc-wwl .wwl-list'); const card = document.getElementById('wwl-' + id);
+    if (!list || !card) return;
+    const other = dir < 0 ? card.previousElementSibling : card.nextElementSibling;
+    if (!other || !other.classList.contains('wwl-card')) return;
+    if (dir < 0) list.insertBefore(card, other); else list.insertBefore(other, card);
+    const ids = Array.from(list.querySelectorAll(':scope > .wwl-card')).map(el => el.id.replace(/^wwl-/, ''));
+    const ok = await LiveSets.reorder(ids);
+    if (ok) { ids.forEach((x, i) => { if (_wwlSets[x]) _wwlSets[x].sort_order = i + 1; }); if (typeof App !== 'undefined') App.toast('Order saved.', 'success', 1800); }
+    else {
+      if (dir < 0) list.insertBefore(other, card); else list.insertBefore(card, other);   // angre flyttinga i visninga
+      if (typeof App !== 'undefined') App.toast('Could not save the order: ' + (LiveSets.reorder.lastError || 'unknown error') + (/PGRST202|reorder_live_sets/.test(LiveSets.reorder.lastError || '') ? ' (run migration 0039 first)' : ''), 'error', 9000);
+    }
   }
   async function wwlReplaceAudio(id, input) {
     const st = _wwlSets[id]; const f = input && input.files && input.files[0];
@@ -1597,8 +1622,19 @@ const Discover = (() => {
     try {
       const { res } = await _wwlUploadAudio(f);
       const ok = await LiveSets.update(id, { audioUrl: res.url });
-      if (ok) { st.audio_url = res.url; st.updated_at = new Date().toISOString(); if (typeof App !== 'undefined') App.toast('Audio replaced.', 'success'); }
-      else if (typeof App !== 'undefined') App.toast('Could not save the new audio.', 'error');
+      if (ok) {
+        // Verifiser at databasen faktisk har den nye fila, og tøm gamal lengde/spelestatus så kortet viser den nye lyden.
+        let saved = true; try { const row = await LiveSets.get(id); saved = !row || row.audio_url === res.url; } catch (_) {}
+        if (!saved) { if (typeof App !== 'undefined') App.toast('The new audio was uploaded but not saved to the set. Try again.', 'error', 8000); }
+        else {
+          wwlStop(id);
+          st.audio_url = res.url; st.updated_at = new Date().toISOString(); delete st._dur;
+          try { st.duration_sec = (await _wwlAudioDuration(f)) || st.duration_sec; } catch (_) {}
+          _wwlRerender(st); _wwlProbeDurations([st]);
+          if (typeof App !== 'undefined') App.toast('Audio replaced.', 'success');
+        }
+      }
+      else if (typeof App !== 'undefined') App.toast('Could not save the new audio: ' + (LiveSets.update.lastError || 'unknown error'), 'error', 8000);
     } catch (e) { if (typeof App !== 'undefined') App.toast('Upload failed: ' + (e.message || e), 'error', 8000); }
     _wwlProg(null);
     input.value = '';
@@ -4623,7 +4659,7 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlDownloadMp3, wwlUndo, wwlTrashForget, wwlEdit, wwlSave, wwlReplaceAudio, wwlUploadToggle, wwlUploadSubmit, wwlDelete, wwlSetImage, wwlRemoveImage, wwlZoom, wwlSeek, wwlPreview,
+    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlDownloadMp3, wwlUndo, wwlTrashForget, wwlEdit, wwlSave, wwlReplaceAudio, wwlUploadToggle, wwlUploadSubmit, wwlDelete, wwlSetImage, wwlRemoveImage, wwlMove, wwlZoom, wwlSeek, wwlPreview,
     showLemonchillAbout,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,

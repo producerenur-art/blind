@@ -257,6 +257,18 @@ const LiveSets = (() => {
       p_tracklist: fields.tracklist ?? null,
     });
     if (error) console.warn('[LiveSets] update feila:', error.message);
+    update.lastError = error ? (error.message || String(error)) : '';   // lar kallaren vise den ekte feilen i staden for «Could not save»
+    return !error;
+  }
+
+  // Admin: lagre rekkefølgja i «What went live». ids = alle set-id-ar i ønska rekkefølgje (først = øverst).
+  // Krev migrasjon 0039 (kolonna sort_order + reorder_live_sets). Rører ikkje opptak, bilete eller lyd.
+  async function reorder(ids) {
+    const c = _client(); const me = _me();
+    if (!c || !me || !_isAdmin(me) || !Array.isArray(ids) || !ids.length) return false;
+    const { error } = await c.rpc('reorder_live_sets', { p_ids: ids, p_secret: _secret() });
+    if (error) console.warn('[LiveSets] reorder feila:', error.message);
+    reorder.lastError = error ? (error.message || String(error)) : '';
     return !error;
   }
 
@@ -314,7 +326,7 @@ const LiveSets = (() => {
     return (room || 'set') + '-' + suf;
   }
 
-  return { begin, end, list, get, canEdit, update, remove, restore, addUpload, recover, shareSlug };
+  return { begin, end, list, get, canEdit, update, reorder, remove, restore, addUpload, recover, shareSlug };
 })();
 
 if (typeof window !== 'undefined') window.LiveSets = LiveSets;
