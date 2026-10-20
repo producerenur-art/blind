@@ -3174,6 +3174,12 @@ const Radio = (() => {
       emoji: '🦆', label: 'Donald Classics', group: 'special',
       // AV (26.09.2026): alle 14 er 480p 4:3 → blir uskarpe/pikselerte når dei fyller heile flata. Slå på att ved å byte til «_cestDay() % 9 === 0».
       when: () => false, rot: () => Math.floor(_cestDay() / 9) },
+    // Looney Tunes (WB Kids/Warner Classics, 15 klipp, alle sjekka 20.10.2026: embeddbare, ikkje Shorts, ingen duplikat): BERRE torsdagar (CEST),
+    // startklippet byter kvar time. Lydlaus som alt anna (mute=1 i visVideoSrc). 5TzZUjcydtE sist så knappen ikkje kolliderer med pin-plassen.
+    { mode: 'video_looney', ids: ['_mHcWWOa3aI','Fg_KxhW8-PY','-gd9D76ifCA','DuXwFlL8Usk','hGhJ7TTyisw','NYCzCADT3yM','JE4xmxXAfyY','KUwZP4dA6MU','3vLHelBuTRM','8JuVMoGj6fE','ksswcJwry9I','F_ETvHtwA10','3dqra_9FKCM','a7To0-PEZOs','5TzZUjcydtE'],
+      long: { '-gd9D76ifCA': 27629, 'KUwZP4dA6MU': 43199, '3vLHelBuTRM': 37187 },
+      emoji: '🐰', label: 'Looney Tunes', group: 'special',
+      when: () => _cestDate().getUTCDay() === 4, rot: () => Math.floor(Date.now() / 3600000) },
     // History-kanalen «Alien Encounters» (hovudkanal, sjeldan): éin dag i månaden (den 15.).
     { mode: 'video_aliens', ids: ['zNZHTlRFD6E'], emoji: '👽', label: 'Alien Encounters', group: 'special',
       when: () => _cestDate().getUTCDate() === 15, rot: () => 0 },
@@ -3359,6 +3365,9 @@ const Radio = (() => {
   const isVideoMode = m =>
     Object.prototype.hasOwnProperty.call(VIS_VIDEOS, m) ||
     Object.prototype.hasOwnProperty.call(AI_VIDEOS, m);
+  // Looney Tunes (WB Kids, alle sjekka 20.10.2026: embeddbare, ikkje Shorts, 18–63 min): éi video på pin-plassen
+  // gjentok seg — no ei spelliste av 8 klipp, startklipp roterer med dag og time (som HTF).
+  const LOONEY_IDS = ['5TzZUjcydtE','55vUaKiBMi8','oJ-_QPV1GCs','Q9zzfH3UgDE','TllPSDlcb3E','V0SjTbu9ymY','q2ODyRspX1g','wLteTCq0X9k'];
   function visVideoSrc(id) {
     // Ingen loop (brukarønske 26.09.2026): ei video/liste går éin gong, så byter _visAdvanceOnEnd til neste.
     // Spesialar med fleire klipp = ekte YouTube-avspelingsliste (playlist-param), rotert så startklippet
@@ -3369,6 +3378,10 @@ const Radio = (() => {
       const r = sset.rot() % sset.ids.length, list = sset.ids.slice(r).concat(sset.ids.slice(0, r));
       first = list[0]; rest = list.slice(1).join(',');
       if (sset.long && sset.long[first]) startAt = (sset.rot() * 7919 % Math.max(1, sset.long[first] - 1200));
+    } else if (LOONEY_IDS.includes(id)) {
+      const r = (Math.floor(Date.now() / 86400000) + new Date().getUTCHours()) % LOONEY_IDS.length;
+      const list = LOONEY_IDS.slice(r).concat(LOONEY_IDS.slice(0, r));
+      first = list[0]; rest = list.slice(1).join(',');
     } else if (id === WEEKLY_SPECIAL.id) {
       // Startklippet roterer med uke OG time (brukarønske 08.10.2026: same HTF-video kvar torsdag).
       const days = Math.floor(Date.now() / 86400000), n = WEEKLY_SPECIAL_IDS.length;
