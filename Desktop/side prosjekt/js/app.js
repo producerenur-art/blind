@@ -7,7 +7,8 @@ const App = (() => {
     if (!container) return;
     const t = document.createElement('div');
     t.className = `toast toast-${type}`;
-    t.textContent = msg;
+    // Mange kall legg ved ${Icon(...)} (SVG-streng); toast viser tekst, så fjern markup i staden for å vise rå <svg>-kode.
+    t.textContent = String(msg).replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/\s+$/, '');
     container.appendChild(t);
     setTimeout(() => t.remove(), duration);
   }
