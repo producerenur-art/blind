@@ -173,7 +173,7 @@ const Payment = (() => {
         const res = await fetch('/api/cancel-subscription', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ subscriptionId: subId }),
+          body:    JSON.stringify({ subscriptionId: subId, sessionToken: current.sessionToken || null }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Cancellation failed');
@@ -230,7 +230,7 @@ const Payment = (() => {
       const res = await fetch('/api/cancel-subscription', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ subscriptionId: subId, reactivate: true }),
+        body:    JSON.stringify({ subscriptionId: subId, reactivate: true, sessionToken: current.sessionToken || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not resume');
