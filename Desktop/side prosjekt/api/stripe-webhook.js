@@ -82,6 +82,11 @@ module.exports = async (req, res) => {
         const patch = { status: 'paid', stripe_payment_intent: s.payment_intent || null };
         if (s.metadata?.purchaseId) await db.from('purchases').update(patch).eq('id', s.metadata.purchaseId);
         else if (s.id)             await db.from('purchases').update(patch).eq('stripe_session_id', s.id);
+        // Kjøp av ekstra opplastingstimer gir rett til å spele live utan manuell godkjenning (api/live-apply.js).
+        if (s.metadata?.product === 'upload-hours' && s.metadata?.username) {
+          try { await db.from('live_access').upsert({ username: s.metadata.username, source: 'upload-hours', stripe_session_id: s.id }, { onConflict: 'stripe_session_id' }); }
+          catch (e) { console.error('live_access failed:', e.message); }
+        }
         try { await mailAfterPurchase(db, s); } catch (e) { console.error('Purchase email failed:', e.message); }
         break;
       }

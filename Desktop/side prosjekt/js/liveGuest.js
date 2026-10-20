@@ -155,14 +155,25 @@ const LiveGuest = (() => {
       if (typeof App !== 'undefined') App.toast('This feature requires cloud storage to be set up (Supabase).', 'error', 5000);
       return;
     }
-    const id = await LiveBroadcastSync.submitRequest({
+    // Server først: har du kjøpt (Pro eller ekstra timer) blir forespørselen godkjent automatisk, utan eigar.
+    let id = null, auto = false;
+    if (cur.sessionToken) {
+      try {
+        const r = await fetch('/api/live-apply', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionToken: cur.sessionToken, displayName: name, message: msg, requestedStart: slot, requestedHours: _hours }) });
+        const d = await r.json().catch(() => ({}));
+        if (r.ok && d.id) { id = d.id; auto = !!d.autoApproved; }
+        else if (d && d.error === 'schedule_required') { if (typeof App !== 'undefined') App.toast('Pick a specific broadcast time.', 'error', 4500); return; }
+      } catch (_) {}
+    }
+    if (!id) id = await LiveBroadcastSync.submitRequest({   // reserve: som før (ventar på godkjenning)
       username: cur.username, email: cur.email || '', displayName: name, message: msg,
       requestedStart: slot, requestedHours: _hours,
     });
     if (!id) { if (typeof App !== 'undefined') App.toast('Could not send the request. Please try again.', 'error'); return; }
     if (typeof App !== 'undefined') {
       App.closeModal();
-      App.toast(trusted ? 'Scheduled! No approval needed — you can go live from ~10 min before your time.' : 'Request sent! You\'ll be notified once the owner responds.', 'success', 5000);
+      App.toast((trusted || auto) ? 'Scheduled! No approval needed — you can go live from ~10 min before your time.' : 'Request sent! You\'ll be notified once the owner responds.', 'success', 5000);
     }
     location.hash = '#/go-live/mine';
   }

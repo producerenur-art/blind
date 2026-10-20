@@ -35,6 +35,7 @@ function activationHtml(name, url, siteUrl) {
     'Private / public visibility',
     'Pro badge on your profile',
     'Unlimited storage + priority support',
+    'Go live on SiriusFM — no approval needed',
   ];
 
   const featRow = (emoji, title, desc) =>
@@ -224,6 +225,7 @@ function purchaseHtml(name, siteUrl, planKey, orderRef) {
         <li>Upload a DJ mix longer than 3 hours (up to 20 hours) with <b>Upload DJ Mix</b>. It is published under your DJ name.</li>
         <li><b>Optional:</b> add the song names afterwards under <b>Edit</b> on the mix, one song per line.</li>
         <li>Choose whether each mix is <b>public or private</b>.</li>
+        <li><b>Go live:</b> choose <b>Apply to go live</b> in the More menu and pick a time. Your request is approved automatically, no one has to approve it.</li>
         <li>To manage or cancel, open <b>Settings</b> any time.</li>
       </ol>
       <div style="background:#12121f;border:1px solid rgba(124,58,237,0.35);border-radius:12px;padding:1rem 1.25rem;margin:0 0 1.5rem">

@@ -108,6 +108,7 @@ const Payment = (() => {
     'DJ mixes over 3 hours (up to 20 h)',
     'Private / public visibility on mixes',
     'Pro badge on your profile',
+    'Go live on SiriusFM — no approval needed',
     'Unlimited storage',
     'Priority support',
   ];

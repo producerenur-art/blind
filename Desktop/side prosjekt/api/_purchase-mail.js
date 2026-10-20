@@ -39,7 +39,7 @@ const steps = list => `<p style="color:#fff;font-weight:700;font-size:0.95rem;ma
 const button = (href, label) => `<div style="text-align:center;margin:0 0 1.5rem"><a href="${esc(href)}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;text-decoration:none;padding:0.875rem 2rem;border-radius:8px;font-weight:700;font-size:0.95rem">${esc(label)}</a></div>`;
 const liveTip = siteUrl => `<div style="background:#12121f;border:1px solid rgba(124,58,237,0.35);border-radius:12px;padding:1rem 1.25rem;margin:0 0 1.5rem">
     <p style="color:#fff;font-weight:700;font-size:0.95rem;margin:0 0 0.4rem">Want to play live as well?</p>
-    <p style="color:#94a3b8;font-size:0.88rem;line-height:1.6;margin:0">Request a slot with <b>Apply to go live</b> in the More menu. Our setup guide covers Mac, Windows PC and any DJ gear (controllers, mixers, CDJs):
+    <p style="color:#94a3b8;font-size:0.88rem;line-height:1.6;margin:0">Your purchase includes going live: request a slot with <b>Apply to go live</b> in the More menu and it is approved automatically. Our setup guide covers Mac, Windows PC and any DJ gear (controllers, mixers, CDJs):
     <a href="${esc(siteUrl)}/live-setup-guide.html" style="color:#38bdf8">${esc(siteUrl.replace(/^https?:\/\//, ''))}/live-setup-guide.html</a></p></div>`;
 const kr = n => `${Math.round(Number(n) || 0).toLocaleString('en-US').replace(/,/g, ' ')} kr`;
 

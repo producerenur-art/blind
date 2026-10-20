@@ -68,7 +68,7 @@ module.exports = async (req, res) => {
           currency: 'nok',
           product_data: {
             name: `SiriusFM Pro — ${p.label}`,
-            description: 'Pro: DJ mixes over 3 hours, private/public visibility, Pro badge and unlimited storage',
+            description: 'Pro: DJ mixes over 3 hours, private/public visibility, Pro badge, unlimited storage and live broadcasts without approval',
             images: [],
           },
           unit_amount: p.amount,
