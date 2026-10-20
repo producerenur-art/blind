@@ -90,83 +90,113 @@
         <img src="/assets/icon-192.png" alt="SiriusFM">
         <span>SiriusFM</span>
       </div>
-      <h1>Live Broadcast Setup Guide <span class="badge ok">Verified 20 Sep 2026</span></h1>
-      <div class="updated">How to go live on SiriusFM with a Traktor Kontrol S2 — equipment, one-time setup and the routine to follow every session.</div>
+      <h1>Go live on SiriusFM <span class="badge ok">Mac + Traktor verified 20 Sep 2026</span></h1>
+      <div class="updated">A setup guide for Mac, Windows PC and any DJ gear — controller, mixer, CDJs or just software.</div>
     </header>
 
-    <p>SiriusFM's live broadcast runs on <strong>WebRTC</strong> straight from your browser —
-      there is no separate broadcasting app or server upload involved. Your DJ mixer's audio
-      output is captured by the browser as a microphone-style input and sent directly to
-      listeners in real time. This guide documents the exact gear and routing that has been
-      tested end-to-end and confirmed working.</p>
+    <p>SiriusFM's live broadcast runs on <strong>WebRTC</strong> straight from your browser — there is no separate
+      broadcasting app (BUTT, OBS, Icecast) to install. The browser takes your <strong>mixed master signal</strong> as an
+      audio input, just like a microphone, and sends it to listeners in real time. So every setup comes down to
+      one thing: <strong>get your DJ mix into the computer as an audio input</strong>, then pick that input on the live page.</p>
 
-    <h2>1. Equipment that works</h2>
     <div class="card">
+      <h3 style="margin-top:0">Which route is yours?</h3>
       <table>
-        <tr><th>Role</th><th>Device / software</th><th>Notes</th></tr>
-        <tr><td>DJ controller</td><td>Native Instruments <strong>Traktor Kontrol S2</strong> (MK2)</td><td>Also works with Traktor Pro / Traktor Play running the mix</td></tr>
-        <tr><td>DJ software</td><td><strong>Traktor Pro 4</strong></td><td>Handles the actual mixing; has no built-in Icecast broadcasting, which is why the loopback step below is required</td></tr>
-        <tr><td>Virtual audio loopback</td><td><strong>BlackHole 2ch</strong> (free, 0 kr)</td><td>Lets the browser "hear" what Traktor is playing. Direct download: <code>https://existential.audio/downloads/BlackHole2ch-&lt;version&gt;.pkg</code> (no Homebrew, no account needed)</td></tr>
-        <tr><td>macOS routing</td><td><strong>Multi-Output Device</strong> (Audio MIDI Setup)</td><td>Combines the Traktor Kontrol S2 MK2 output + BlackHole 2ch into one device, both at <strong>44.1&nbsp;kHz</strong></td></tr>
-        <tr><td>Browser</td><td><strong>Chrome</strong> (or any modern Chromium/WebRTC-capable browser)</td><td>Captures BlackHole 2ch via <code>getUserMedia</code> and streams it via WebRTC (Supabase Realtime signaling)</td></tr>
-        <tr><td>Network</td><td>HTTPS + a stable internet connection</td><td>siriusfm.no already serves HTTPS, required for WebRTC's secure-context rule</td></tr>
+        <tr><th>Your gear</th><th>Route</th></tr>
+        <tr><td>DJ software on a <strong>Mac</strong> (Traktor, Serato, rekordbox, VirtualDJ, Mixxx …), with or without a controller</td><td><a href="#mac">A. Mac — software loopback</a> <span class="muted">(verified with Traktor)</span></td></tr>
+        <tr><td>DJ software on a <strong>Windows PC</strong>, with or without a controller</td><td><a href="#pc">B. Windows PC — software loopback</a></td></tr>
+        <tr><td>A <strong>mixer with a USB sound card</strong> (Pioneer DJM, Allen &amp; Heath Xone, Rane, Denon Prime …)</td><td><a href="#hardware">C. Hardware — the mixer is the input</a></td></tr>
+        <tr><td><strong>CDJs / standalone players / turntables / hardware synths</strong> through any mixer</td><td><a href="#hardware">C. Hardware — audio interface line-in</a></td></tr>
       </table>
+      <p class="muted" style="margin:0">Routes A and B only copy your computer's audio. Route C sends the mixer's own master output, so it works with any
+      source that goes through the mixer.</p>
     </div>
 
-    <h3>Signal path</h3>
-    <p class="card muted" style="font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13.5px; line-height:1.9">
-      Traktor Pro 4&nbsp;→&nbsp;macOS "Multi-Output Device" (Traktor Kontrol S2 MK2&nbsp;+&nbsp;BlackHole&nbsp;2ch, 44.1&nbsp;kHz)<br>
-      → Chrome captures BlackHole 2ch (<code>echoCancellation/noiseSuppression/autoGainControl: false</code>, stereo)<br>
-      → WebRTC peer connection (Supabase Realtime signaling) → listeners' browsers
-    </p>
-    <p class="muted">This is a different architecture from Ambient Mann's setup (Traktor → BUTT → Icecast/AzuraCast server). SiriusFM needs no separate broadcasting app or streaming server — everything happens in the browser.</p>
-
-    <h2>2. One-time setup (do this once, not every session)</h2>
+    <h2>Before you start (all routes)</h2>
     <ol>
-      <li>Install <strong>BlackHole 2ch</strong> (free virtual audio driver) from the link above.</li>
-      <li>Open <strong>Audio MIDI Setup</strong> (macOS) → click <strong>+</strong> → <strong>Create Multi-Output Device</strong>.</li>
-      <li>In the new Multi-Output Device, check both <strong>Traktor Kontrol S2 MK2</strong> and <strong>BlackHole 2ch</strong>.</li>
-      <li>Set the sample rate to <strong>44.1 kHz</strong> for the Multi-Output Device (not 48 kHz — a mismatch here can cause silent or distorted capture).</li>
+      <li>Use <strong>Chrome</strong> (or another Chromium browser like Edge). The page must be <code>https://www.siriusfm.no</code>.</li>
+      <li>Log in and request your slot with <strong>Apply to go live</strong> in the <em>More</em> menu. You can start about 10 minutes before your approved time. Trusted broadcasters only pick a time.</li>
+      <li>Close everything you do not need (browser tabs, other music apps, video calls). A busy computer is the most common cause of stuttering.</li>
+      <li>Use a <strong>cable connection</strong> to your router if you can. Wi-Fi works but is less stable for a long set.</li>
+      <li>Turn off sound effects and notifications on your computer so they never end up in the broadcast.</li>
     </ol>
 
-    <h2>3. The routine — do this every time you go live</h2>
+    <h2 id="mac">A. Mac — software loopback</h2>
+    <p class="muted">Verified end-to-end with Traktor Pro 4 + Traktor Kontrol S2 MK2. Other DJ software works the same way: send its <em>master output</em> to the Multi-Output Device.</p>
+    <h3>One-time setup</h3>
     <ol>
-      <li><strong>System Settings → Sound → Output</strong> → select <strong>Multi-Output Device</strong>, and confirm the <strong>mute</strong> checkbox is <em>not</em> ticked. macOS remembers mute state per device separately, and BlackHole 2ch has repeatedly shown up muted again after switching devices — check this every time.</li>
-      <li><strong>Traktor → Preferences → Audio Setup</strong> → Audio Device = <strong>Multi-Output Device</strong> (not BlackHole alone, not the S2 MK2 alone — either one leaves a silent gap somewhere in the chain).</li>
-      <li><strong>Traktor → Preferences → Output Routing</strong> → set <strong>Mixing Mode = Internal</strong> (not External — External never sends a fully mixed signal to Output Master, even when the routing looks correct) → Output Master L/R = <strong>1: Multi-Output Device L / 2: Multi-Output Device R</strong>.</li>
-      <li>Play in Traktor and confirm you can actually <strong>hear</strong> the mix yourself (through the S2's headphone output) before continuing.</li>
-      <li>On SiriusFM, click <strong>"Grant access"</strong> (reload the page first with <code>⌘R</code> if a stale session is stuck) → confirm <strong>BlackHole 2ch (Virtual)</strong> is selected in the "Audio input" dropdown → click <strong>"Go live"</strong>.</li>
-      <li>Check that <strong>Sent (L)/(R)</strong> shows real dB values (e.g. −68 dB), not <code>−∞ dB</code> — that confirms audio is actually being captured and sent.</li>
+      <li>Install <strong>BlackHole 2ch</strong> (free) from <a href="https://existential.audio/blackhole/" target="_blank" rel="noopener">existential.audio/blackhole</a>.</li>
+      <li>Open <strong>Audio MIDI Setup</strong> → click <strong>+</strong> → <strong>Create Multi-Output Device</strong>.</li>
+      <li>Tick both your <strong>controller / headphone output</strong> (or your Mac speakers) and <strong>BlackHole 2ch</strong>.</li>
+      <li>Set the sample rate to <strong>44.1 kHz</strong> on the Multi-Output Device. A mismatch can give silent or distorted sound.</li>
     </ol>
+    <h3>Every time you go live</h3>
+    <ol>
+      <li>System Settings → Sound → Output → <strong>Multi-Output Device</strong>. Make sure mute is not ticked.</li>
+      <li>In your DJ software, set the audio device / master output to the <strong>Multi-Output Device</strong>. In Traktor: Preferences → Audio Setup → Audio Device, and Output Routing → Mixing Mode <strong>Internal</strong>, Output Master L/R = Multi-Output Device L/R.</li>
+      <li>Play something and confirm you can hear it yourself.</li>
+      <li>On SiriusFM click <strong>Grant access</strong>, pick <strong>BlackHole 2ch</strong> under <em>Audio input</em>, then <strong>Go live</strong>.</li>
+      <li>Check that <strong>Sent (L)/(R)</strong> shows real dB values (for example −20 dB), not −∞ dB.</li>
+    </ol>
+
+    <h2 id="pc">B. Windows PC — software loopback</h2>
+    <p class="muted">This is the standard Windows method. The SiriusFM team has not tested it on every setup, so run the dB-meter check below before your real set.</p>
+    <h3>One-time setup</h3>
+    <ol>
+      <li>Install <strong>VB-CABLE Virtual Audio Cable</strong> (free) from <a href="https://vb-audio.com/Cable/" target="_blank" rel="noopener">vb-audio.com/Cable</a>, then restart the PC. It adds a virtual device called <em>CABLE Input</em> (playback) and <em>CABLE Output</em> (recording).</li>
+      <li>Prefer more control? <a href="https://vb-audio.com/Voicemeeter/" target="_blank" rel="noopener">Voicemeeter</a> (also free) can send the same mix to the broadcast and to your headphones at the same time.</li>
+    </ol>
+    <h3>Every time you go live</h3>
+    <ol>
+      <li>In your DJ software, set the <strong>master output</strong> to <strong>CABLE Input (VB-Audio Virtual Cable)</strong>. Use the <em>WASAPI</em> or <em>DirectSound</em> device type if your software offers it. Some programs only use ASIO for their own controller, and then you need Voicemeeter to bridge it.</li>
+      <li>To hear yourself, either send the <strong>headphone / cue output</strong> to your controller's sound card, or in Windows Sound settings → <em>Recording</em> → <em>CABLE Output</em> → Properties → <em>Listen</em> → tick <em>Listen to this device</em> and choose your speakers (this adds a small delay).</li>
+      <li>On SiriusFM click <strong>Grant access</strong>, pick <strong>CABLE Output (VB-Audio Virtual Cable)</strong> under <em>Audio input</em>, then <strong>Go live</strong>.</li>
+      <li>Check that <strong>Sent (L)/(R)</strong> shows real dB values, not −∞ dB.</li>
+    </ol>
+
+    <h2 id="hardware">C. Hardware — the mixer or interface is the input</h2>
+    <p class="muted">Works on both Mac and PC, and needs no virtual cable. It is also the route for CDJs, turntables and standalone gear.</p>
+    <ol>
+      <li><strong>Mixer with a USB sound card</strong> (for example Pioneer DJM, Allen &amp; Heath Xone, Rane, Denon Prime): connect it by USB and open its settings utility. Choose the <strong>master (or record) signal</strong> as the USB output. The computer now sees the mixer as an audio input.</li>
+      <li><strong>Any other mixer or controller</strong>: take the <strong>REC OUT</strong> or <strong>MASTER OUT</strong> and plug it into the <strong>line input</strong> of a USB audio interface (Focusrite, Behringer UCA202, Audient and similar). Use the line input, not the microphone input.</li>
+      <li>On SiriusFM click <strong>Grant access</strong>, pick the mixer or interface under <em>Audio input</em>, then <strong>Go live</strong>.</li>
+      <li>Set the level so the loudest peaks stay clearly below clipping, around −6 dB on the <strong>Sent (L)/(R)</strong> meter. If it is clipping, lower the interface gain, not just the volume in your player.</li>
+    </ol>
+
+    <h2>Where to set the master output in popular DJ software</h2>
+    <p class="muted">Menu names change between versions. Look for the audio or sound settings and set the <strong>master / main output</strong> to the virtual device (routes A and B), or leave it on your hardware (route C).</p>
+    <table>
+      <tr><th>Software</th><th>Look for</th></tr>
+      <tr><td>Traktor Pro / Play</td><td>Preferences → Audio Setup and Output Routing (Mixing Mode Internal)</td></tr>
+      <tr><td>Serato DJ</td><td>Setup → Audio (output / master)</td></tr>
+      <tr><td>rekordbox</td><td>Preferences → Audio (output device, master out)</td></tr>
+      <tr><td>VirtualDJ</td><td>Settings → Sound Setup (Master output)</td></tr>
+      <tr><td>Mixxx</td><td>Preferences → Sound Hardware (Master)</td></tr>
+      <tr><td>Ableton Live / Cubase and other DAWs</td><td>Audio preferences → output device</td></tr>
+    </table>
 
     <div class="card warn">
-      <h3>⚠ Known pitfalls</h3>
+      <h3>⚠ Pitfalls</h3>
       <ul>
-        <li><strong>Never change your macOS audio device while a session is already live.</strong> Switching devices mid-broadcast silently breaks audio capture — no error message, just silence, even though the WebRTC connection still shows "LIVE". Always fully stop the broadcast (or reload with <code>⌘R</code>) before changing any audio device setting, then start again.</li>
-        <li><strong>Reinstalling the BlackHole driver breaks the existing Multi-Output Device.</strong> The new driver gets a new internal reference, so the old Multi-Output Device shows a ghost "disconnected device" row in Audio MIDI Setup. Fix: delete the Multi-Output Device entirely and rebuild it (re-check BlackHole 2ch + S2 MK2) after any BlackHole reinstall.</li>
-        <li><strong>DSP must be off on the capture side.</strong> If the browser applies echo cancellation, noise suppression or auto gain control to the captured signal, it will audibly damage the music. SiriusFM's capture path already disables these — don't override it with different browser flags/extensions.</li>
-        <li>Accidentally enabling <strong>VoiceOver</strong> (<code>⌘F5</code> is easy to hit by mistake) changes how clicks/navigation behave system-wide — check the top-left menu bar for a "VoiceOver" indicator if clicks suddenly stop landing correctly. Turn it off again with <code>⌘F5</code>.</li>
+        <li><strong>Never switch your audio device while you are live.</strong> It breaks capture silently: the page still says LIVE but the sound is gone. Stop the broadcast (or reload the page) first.</li>
+        <li><strong>Mac:</strong> reinstalling BlackHole breaks the Multi-Output Device. Delete it and build it again.</li>
+        <li><strong>No browser sound processing.</strong> SiriusFM already turns off echo cancellation, noise suppression and auto gain. Do not add browser extensions that change the microphone.</li>
+        <li><strong>Mute other SiriusFM tabs and the SiriusFM player</strong> while you broadcast. Otherwise you hear an echo.</li>
       </ul>
     </div>
 
-    <div class="card bad">
-      <h3>✕ Not required / don't do this</h3>
-      <ul>
-        <li>No separate broadcasting app (BUTT, OBS, Icecast client) is needed for SiriusFM — that architecture belongs to a different, unrelated project. SiriusFM streams straight from the browser via WebRTC.</li>
-        <li>Don't route BlackHole alone or the S2 MK2 alone into Traktor's Audio Setup — only the combined Multi-Output Device carries both monitoring and the browser capture correctly.</li>
-        <li>Homebrew is not required (and isn't supported on Intel Macs any more) — use the direct BlackHole <code>.pkg</code> download instead.</li>
-      </ul>
-    </div>
-
-    <h2>4. Quick troubleshooting checklist</h2>
+    <h2>Troubleshooting</h2>
     <table>
       <tr><th>Symptom</th><th>Likely cause</th></tr>
-      <tr><td>Sent (L)/(R) shows <code>−∞ dB</code></td><td>BlackHole 2ch muted in System Settings, or wrong input selected in the "Grant access" dialog</td></tr>
-      <tr><td>You hear nothing, but Traktor's meters move</td><td>Audio Device in Traktor isn't set to the Multi-Output Device</td></tr>
-      <tr><td>Audio sounds pumped/gated or artificial</td><td>Browser DSP (echo cancellation / noise suppression / AGC) is active on the captured input</td></tr>
-      <tr><td>Everything looks connected but goes silent mid-session</td><td>The macOS output device was switched while already live — stop and restart the broadcast</td></tr>
-      <tr><td>Clicks stop registering correctly</td><td>VoiceOver was toggled on by accident (<code>⌘F5</code>)</td></tr>
+      <tr><td>Sent (L)/(R) shows −∞ dB</td><td>Wrong <em>Audio input</em> chosen, the virtual device is muted (Mac), or your DJ software is not sending to the virtual device or mixer</td></tr>
+      <tr><td>You hear nothing, but the DJ software's meters move</td><td>The software output is not set to the Multi-Output Device (Mac), or the headphone output is not set (PC)</td></tr>
+      <tr><td>CABLE or BlackHole is missing from the input list</td><td>Restart the computer after installing. Then click <em>Grant access</em> again and allow the microphone in the browser</td></tr>
+      <tr><td>Sound is pumped or sounds artificial</td><td>Browser sound processing is on, or the level is clipping. Lower the gain</td></tr>
+      <tr><td>Stuttering or dropouts</td><td>Overloaded computer or weak connection. Close other programs, use a cable, and try a larger audio buffer in the DJ software</td></tr>
+      <tr><td>It goes silent halfway through</td><td>The audio device was changed while live. Stop and start the broadcast again</td></tr>
+      <tr><td>You hear an echo</td><td>Another SiriusFM tab or the player is still playing. Mute it</td></tr>
     </table>
+    <p>Still stuck? Write to <a href="mailto:post@siriusfm.no">post@siriusfm.no</a> and say which computer, DJ software and mixer or controller you use.</p>
 
     <footer>
       Questions about going live on SiriusFM? Contact <a href="mailto:post@siriusfm.no">post@siriusfm.no</a>.

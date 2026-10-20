@@ -116,6 +116,7 @@ const LiveGuest = (() => {
             ? 'You\'re on the trusted broadcaster list — no owner approval needed. You still have to pick a specific broadcast time below.'
             : 'Send a request to broadcast live on SiriusFM. The owner approves or rejects before you can go live — you won\'t get access until the request is approved.'}
         </p>
+        <p style="font-size:0.85rem;margin:0 0 1rem"><a href="/live-setup-guide.html" target="_blank" rel="noopener" style="color:#38bdf8">📘 Setup guide for Mac, PC and any DJ gear</a></p>
         <label for="lg-name" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Artist/station name</label>
         <input id="lg-name" value="${_esc(cur.displayName || cur.username)}" placeholder="Shown to listeners" style="${inp};margin:0 0 1rem">
         <label for="lg-slot" style="display:block;font-weight:700;font-size:0.85rem;margin:0 0 0.35rem">Preferred broadcast time${trusted ? ' (required)' : ''}</label>
@@ -364,6 +365,7 @@ const LiveGuest = (() => {
           <select id="lg-dev" ${live ? 'disabled' : ''} style="${inp};flex:1">${live ? '' : '<option>Click "Grant access" first…</option>'}</select>
           <button class="btn btn-ghost" id="lg-perm" onclick="LiveGuest.bcPerm()" ${live ? 'disabled' : ''}>Grant access</button>
         </div>
+        <p style="font-size:0.8rem;margin:-0.4rem 0 1rem;color:var(--text2)">Not sure what to pick? <a href="/live-setup-guide.html" target="_blank" rel="noopener" style="color:#38bdf8">Open the setup guide</a> (Mac, Windows PC, controllers, mixers and CDJs).</p>
         <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin:0 0 1.1rem">
           <button class="btn btn-primary" id="lg-go" onclick="LiveGuest.bcGo()" ${live ? 'disabled' : ''}>📡 Go live</button>
           <button class="btn" id="lg-stop" onclick="LiveGuest.bcStop()" ${live ? '' : 'disabled'} style="background:#ef4444;color:#fff">■ Stop</button>

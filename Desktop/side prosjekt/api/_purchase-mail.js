@@ -37,6 +37,10 @@ const row = (l, v, strong) => `<tr><td style="padding:0.55rem 0;color:#94a3b8;fo
 const steps = list => `<p style="color:#fff;font-weight:700;font-size:0.95rem;margin:0 0 0.5rem">What to do now:</p>
   <ol style="color:#cbd5e1;font-size:0.9rem;line-height:1.7;margin:0 0 1.5rem;padding-left:1.25rem">${list.map(s => `<li>${s}</li>`).join('')}</ol>`;
 const button = (href, label) => `<div style="text-align:center;margin:0 0 1.5rem"><a href="${esc(href)}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;text-decoration:none;padding:0.875rem 2rem;border-radius:8px;font-weight:700;font-size:0.95rem">${esc(label)}</a></div>`;
+const liveTip = siteUrl => `<div style="background:#12121f;border:1px solid rgba(124,58,237,0.35);border-radius:12px;padding:1rem 1.25rem;margin:0 0 1.5rem">
+    <p style="color:#fff;font-weight:700;font-size:0.95rem;margin:0 0 0.4rem">Want to play live as well?</p>
+    <p style="color:#94a3b8;font-size:0.88rem;line-height:1.6;margin:0">Request a slot with <b>Apply to go live</b> in the More menu. Our setup guide covers Mac, Windows PC and any DJ gear (controllers, mixers, CDJs):
+    <a href="${esc(siteUrl)}/live-setup-guide.html" style="color:#38bdf8">${esc(siteUrl.replace(/^https?:\/\//, ''))}/live-setup-guide.html</a></p></div>`;
 const kr = n => `${Math.round(Number(n) || 0).toLocaleString('en-US').replace(/,/g, ' ')} kr`;
 
 // Kjøp av ekstra opplastingstimer (60 kr/time) — ein DJ som vil laste opp ein mix over 3 timar.
@@ -60,6 +64,7 @@ function hoursHtml({ name, djName, hours, amountKr, orderRef, siteUrl }) {
       `<b>Optional:</b> add the song names afterwards. Open the mix, choose <b>Edit</b> and write the tracklist, one song per line. Listeners can then see what you played.`,
       `The extra time covers <b>one</b> mix. It is used up when that mix is uploaded, so if you want to upload another long mix you can buy more time.`,
     ])}
+    ${liveTip(siteUrl)}
     ${button(`${siteUrl}/#/minside`, 'Go to My page')}
     ${p('If the upload does not start, check that the file is shorter than your new limit and that the page stays open until it reaches 100 %.', 'font-size:0.82rem;color:#64748b;margin:0')}`);
 }
@@ -98,6 +103,7 @@ function mixUploadedHtml({ name, djName, title, durationText, tracklist, siteUrl
       row('Set', esc(title || 'DJ mix')) +
       (durationText ? row('Length', esc(durationText)) : ''))}
     ${tl}
+    ${liveTip(siteUrl)}
     ${button(`${siteUrl}/#/minside`, 'Open My page')}`);
 }
 
@@ -112,4 +118,4 @@ async function send({ to, subject, html, idempotencyKey }) {
   return { id: data && data.id };
 }
 
-module.exports = { hoursHtml, songHtml, mixUploadedHtml, send, esc };
+module.exports = { hoursHtml, songHtml, mixUploadedHtml, liveTip, send, esc };

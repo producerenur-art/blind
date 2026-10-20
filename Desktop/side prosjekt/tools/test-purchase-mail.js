@@ -39,7 +39,8 @@ const ok = m => console.log('  \x1b[32m✓\x1b[0m ' + m);
   assert.ok(!/undefined|NaN|\[object/.test(m.html), 'ingen «undefined» i mailen');
   assert.ok(/180 kr/.test(m.html), 'beløp: 180 kr');
   assert.strictEqual(m.opts.idempotencyKey, 'purchase-cs_live_ABCDEFGHIJ123', 'idempotens-nøkkel mot dobbeltsending');
-  ok('timar-kjøp: mail til kjøpar med DJ-namn, kreditt, steg og valfri songliste');
+  assert.ok(m.html.includes('/live-setup-guide.html') && /Want to play live/.test(m.html), 'oppskrift for live (Mac/PC/DJ-utstyr) er lenka');
+  ok('timar-kjøp: mail til kjøpar med DJ-namn, kreditt, steg og valfri songliste + live-oppskrift');
   // 2) Sang i marknadsplassen
   sent.length = 0; currentEvent = ev({ metadata: { buyerUsername: 'anna', productId: 'p1', purchaseId: '9' } });
   r = await post(hook); assert.strictEqual(r.c, 200); assert.strictEqual(sent.length, 1);
