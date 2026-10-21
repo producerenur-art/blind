@@ -3200,7 +3200,7 @@ const Radio = (() => {
     // The Allies of Humanity (hovudkanal, sjeldan): éin dag i veka (måndag), med engelsk teksting.
     { mode: 'video_allies', captions: true, emoji: '🌌', label: 'Allies of Humanity', group: 'special',
       ids: ['c7yf9GuqpZ0','rXRgafThM4w','a6OZKDaK7vw','ICmJrCg6_3g','bizvepPuFnQ','caDTrYyYilQ','z_zaoxDeuNQ','BEkhRQb5VEQ','u4qtOxMd2D4','uNmWE3wevSw','MJ_IVdeLboc','Evbs2JDZiKs','TEAWNdpfiGg','riWkWBkT8AM','jzWX6bn9sTo','Z-iKQZMa0XM','PepfZwjYwfI','g_qSc64spfA','p-IFCRXD64c','i5elaH3VcsI','0xGYtG9lryo','BjC1O5bFGog','01MAsI3zghQ','-CIY1uBvL-A','h8dFkyBu1YU','ksgV6h6RwHo','9z3YUpOsEgA','ijBj2eewJIo','u42sByUhlcQ','-duvWk33Oxw'],
-      when: () => _cestDay() % 7 === 4, rot: () => Math.floor(_cestDay() / 7) * 7 },
+      when: () => _cestDay() % 7 === 4, rot: () => Math.floor(_cestDay() / 7) * 7 + _cestDate().getUTCHours() },   // 21.10.2026: + time, elles same startklipp heile måndagen (30 klipp ≥ 24 timar → ulikt kvar time)
   ];
   SPECIAL_SETS.forEach(v => { v.id = v.ids[0]; VIS_VIDEOS[v.mode] = v.id; });
 
@@ -3248,8 +3248,17 @@ const Radio = (() => {
     const idx = ((aiVisualPinSlot() % pool.length) + pool.length) % pool.length;
     return pool[idx];
   }
+  // Brukarønske 21.10.2026: tegnefilm-knappar (dei med volumkontroll) skal berre vere oppe EIN time av døgnet,
+  // ikkje kvar time i 14 dagar. Timen er fast for kvar video og dag, men flyttar seg frå dag til dag.
+  function _cartoonHourOfDay(id) {
+    let h = 7; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return (h + Math.floor(Date.now() / 86400000) * 5) % 24;
+  }
   function applyAiVisualPin(list) {
     const p = currentAiVisualPin();
+    if (/Donald|Goofy|Looney/.test(p.label) && new Date().getUTCHours() !== _cartoonHourOfDay(p.id)) {
+      return (Array.isArray(list) ? list : []).filter(it => it && it.id !== p.id);   // tegnefilm-pin: ikkje oppe denne timen
+    }
     const pin = { id: p.id, emoji: p.emoji, label: p.label, group: 'pin' };
     // Ikke la den samme videoen også dukke opp på en av de roterende plassene.
     const arr = (Array.isArray(list) ? list : []).filter(it => it && it.id !== pin.id);
