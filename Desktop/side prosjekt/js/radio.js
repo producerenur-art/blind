@@ -3193,7 +3193,7 @@ const Radio = (() => {
     { mode: 'video_looney', ids: ['_mHcWWOa3aI','Fg_KxhW8-PY','-gd9D76ifCA','DuXwFlL8Usk','hGhJ7TTyisw','NYCzCADT3yM','JE4xmxXAfyY','KUwZP4dA6MU','3vLHelBuTRM','8JuVMoGj6fE','ksswcJwry9I','F_ETvHtwA10','3dqra_9FKCM','a7To0-PEZOs','5TzZUjcydtE'],
       long: { '-gd9D76ifCA': 27629, 'KUwZP4dA6MU': 43199, '3vLHelBuTRM': 37187 },
       emoji: '🐰', label: 'Looney Tunes', group: 'special',
-      when: () => _cestDate().getUTCDay() === 0, rot: () => Math.floor(_cestDay() / 7) * 7 + _cestDate().getUTCHours() },
+      when: () => _cestDate().getUTCDay() === 0 && _cestDate().getUTCHours() < 15, rot: () => Math.floor(_cestDay() / 7) * 7 + _cestDate().getUTCHours() },   // 21.10.2026: berre dei 15 første timane (CEST) — 15 klipp, kvart startklipp maks éin gong per dag
     // History-kanalen «Alien Encounters» (hovudkanal, sjeldan): éin dag i månaden (den 15.).
     { mode: 'video_aliens', ids: ['zNZHTlRFD6E'], emoji: '👽', label: 'Alien Encounters', group: 'special',
       when: () => _cestDate().getUTCDate() === 15, rot: () => 0 },
@@ -3369,7 +3369,8 @@ const Radio = (() => {
     if (cur && !pinned.some(it => it && it.id === cur.id)) pinned.unshift(cur);
     // Sjeldan spesial-slot (sjå WEEKLY_SPECIAL over): kjem KUN til på sin faste
     // dag, som ein ekstra knapp — påverkar ikkje resten av rotasjonen elles.
-    if ((isWeeklySpecialDay() || isHtfSaturdayEveningCest()) && !pinned.some(it => it && it.id === WEEKLY_SPECIAL.id)) {
+    if (((isWeeklySpecialDay() && new Date().getUTCHours() < WEEKLY_SPECIAL_IDS.length) || isHtfSaturdayEveningCest()) &&   // 21.10.2026: HTF-dagen berre dei første 18 timane (18 klipp → kvart startklipp maks éin gong per dag)
+        !pinned.some(it => it && it.id === WEEKLY_SPECIAL.id)) {
       pinned.push(WEEKLY_SPECIAL);
     }
     // Same for den 8-dagars spesialen (sjå EIGHT_DAY_SPECIAL over).
