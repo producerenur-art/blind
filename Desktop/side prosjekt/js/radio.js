@@ -791,6 +791,11 @@ const Radio = (() => {
     { url: JINGLE_BASE + 'reklame-sirius.m4a?v=20260926',  shiftMs: 2 * HOUR_MS },  // «reklame sirius» (2:37)
     { url: JINGLE_BASE + 'reklame-2-sirius-v2.m4a?v=20260927', shiftMs: 4 * HOUR_MS }, // «reklame 2 sirius» v2, Facebook-linja klipt bort 27.09 (1:16)
   ];
+  // Brukarønske 2026-10-21: 12 korte Siren-reklamar (8–13 s, ElevenLabs) rullerer med dei tre over i
+  // same reklameslottar (ingen eigne klokkeslett). Slot nr. n (talt frå UTC-epoken, tre per 7-timarsrunde)
+  // spelar AD_POOL[n % lengda] — same klipp for alle lyttarar, aldri same klipp to gonger på rad.
+  const SIREN_ADS = Array.from({ length: 12 }, (_, i) => JINGLE_BASE + 'reklame-siren-' + String(i + 1).padStart(2, '0') + '.mp3?v=20261021');
+  const AD_POOL = ADS.map(a => a.url).concat(SIREN_ADS);
 
   // Brukarønske 2026-09-26: reklamar (og krisereklamen under) kuttar inn med 230 ms ut-/inn-toning.
   const AD_FADE_MS = 230;
@@ -820,9 +825,12 @@ const Radio = (() => {
   function _scheduleAd(ad, slotMs, offsetMs) {
     slotMs = slotMs || AD_SLOT_MS; offsetMs = offsetMs || AD_SLOT_OFFSET_MS;
     const now = Date.now();
-    const nextAt = Math.ceil((now - offsetMs - ad.shiftMs) / slotMs) * slotMs + offsetMs + ad.shiftMs;
-    _preloadAt(ad.url, nextAt);
-    setTimeout(() => { _playAdAlone(ad.url); _scheduleAd(ad, slotMs, offsetMs); }, Math.max(1000, nextAt - now));
+    const round = Math.ceil((now - offsetMs - ad.shiftMs) / slotMs);
+    const nextAt = round * slotMs + offsetMs + ad.shiftMs;
+    const n = round * ADS.length + ADS.indexOf(ad);      // løpenummer i tid: slot 0,1,2 i runde k = 3k, 3k+1, 3k+2
+    const url = AD_POOL[((n % AD_POOL.length) + AD_POOL.length) % AD_POOL.length];
+    _preloadAt(url, nextAt);
+    setTimeout(() => { _playAdAlone(url); _scheduleAd(ad, slotMs, offsetMs); }, Math.max(1000, nextAt - now));
   }
   if (typeof document !== 'undefined') ADS.forEach(a => _scheduleAd(a));
 
@@ -3181,11 +3189,11 @@ const Radio = (() => {
       // AV (26.09.2026): alle 14 er 480p 4:3 → blir uskarpe/pikselerte når dei fyller heile flata. Slå på att ved å byte til «_cestDay() % 9 === 0».
       when: () => false, rot: () => Math.floor(_cestDay() / 9) },
     // Looney Tunes (WB Kids/Warner Classics, 15 klipp, alle sjekka 20.10.2026: embeddbare, ikkje Shorts, ingen duplikat): BERRE søndagar (CEST; flytta frå torsdag 20.10.2026),
-    // startklippet byter kvar time. Lydlaus som alt anna (mute=1 i visVideoSrc). 5TzZUjcydtE sist så knappen ikkje kolliderer med pin-plassen.
+    // startklippet byter kvar time og er ULIKT same time neste søndag (uke*7 + time; 7 og 15 er innbyrdes primtal). Lydlaus som alt anna (mute=1 i visVideoSrc). 5TzZUjcydtE sist så knappen ikkje kolliderer med pin-plassen.
     { mode: 'video_looney', ids: ['_mHcWWOa3aI','Fg_KxhW8-PY','-gd9D76ifCA','DuXwFlL8Usk','hGhJ7TTyisw','NYCzCADT3yM','JE4xmxXAfyY','KUwZP4dA6MU','3vLHelBuTRM','8JuVMoGj6fE','ksswcJwry9I','F_ETvHtwA10','3dqra_9FKCM','a7To0-PEZOs','5TzZUjcydtE'],
       long: { '-gd9D76ifCA': 27629, 'KUwZP4dA6MU': 43199, '3vLHelBuTRM': 37187 },
       emoji: '🐰', label: 'Looney Tunes', group: 'special',
-      when: () => _cestDate().getUTCDay() === 0, rot: () => Math.floor(Date.now() / 3600000) },
+      when: () => _cestDate().getUTCDay() === 0, rot: () => Math.floor(_cestDay() / 7) * 7 + _cestDate().getUTCHours() },
     // History-kanalen «Alien Encounters» (hovudkanal, sjeldan): éin dag i månaden (den 15.).
     { mode: 'video_aliens', ids: ['zNZHTlRFD6E'], emoji: '👽', label: 'Alien Encounters', group: 'special',
       when: () => _cestDate().getUTCDate() === 15, rot: () => 0 },
@@ -3500,9 +3508,32 @@ const Radio = (() => {
   function _visVolApply(v) {
     const frame = document.getElementById('radio-vis-video');
     if (!frame) return;
-    if (v > 0) { postYtCommand(frame, 'unMute'); postYtCommand(frame, 'setVolume', [v]); }
-    else postYtCommand(frame, 'mute');
+    const send = () => {
+      try { frame.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (_) {}   // spilleren ignorerer kommandoar utan handtrykk
+      if (v > 0) { postYtCommand(frame, 'unMute'); postYtCommand(frame, 'setVolume', [v]); postYtCommand(frame, 'playVideo'); }
+      else postYtCommand(frame, 'mute');
+    };
+    send();
+    [250, 800].forEach(ms => setTimeout(() => { if (document.getElementById('radio-vis-video') === frame) send(); }, ms));   // første kommando kan bli sluppen
+    _visDuckSet(v > 0);
   }
+  // Brukarønske 21.10.2026: når videolyden (tegnefilm/Allies) er på, dempast radioen (òg i 24/7 Cycle);
+  // når videolyden er nede/av toner radioen tilbake. Berre desse videoane har volumkontroll, så berre dei dempar.
+  const VIS_DUCK = 0.12;
+  let _visDucked = false;
+  function _visDuckSet(on) {
+    if (on === _visDucked) return;
+    _visDucked = on;
+    const a = getAudio();
+    if (!a || muted || _liveTakeover || _special) return;
+    _fadeVolume(a, on ? volume * VIS_DUCK : volume, 500);
+  }
+  // Andre delar av radioen (stasjonsbyte i 24/7, setVolume) sett audio.volume tilbake — hald dempinga oppe.
+  if (typeof document !== 'undefined') setInterval(() => {
+    if (!_visDucked || _jingleBusy || muted || _fadeTimer || _liveTakeover || _special) return;
+    const a = getAudio();
+    if (a && a.volume > volume * VIS_DUCK + 0.02) a.volume = volume * VIS_DUCK;
+  }, 250);
   // Under ALLE live-sendingar (eigar live, Lemonchill/spesialprogram) er videolyden utilgjengeleg (brukarønske 20.10.2026):
   // kontrollen forsvinn, videoen blir mutet att, og ved slutten kjem kontrollen tilbake (lydlaus til glidebrytaren røres).
   const _visLive = () => !!(_liveTakeover || _special);
@@ -3513,6 +3544,7 @@ const Radio = (() => {
       _visVolWasLive = true;
       document.getElementById('vis-vol')?.classList.add('vis-vol-gone');
       if (_visVolTouched) { postYtCommand(document.getElementById('radio-vis-video'), 'mute'); _visVolTouched = false; }
+      _visDucked = false;   // live-overtakinga styrer lyden sjølv
     } else if (!live && _visVolWasLive) {
       _visVolWasLive = false;
       if (visVideoLoaded) updateVisVolumeUI(visVideoLoaded);
@@ -3542,8 +3574,9 @@ const Radio = (() => {
     let user = null; try { user = typeof Auth !== 'undefined' ? Auth.current() : null; } catch (_) {}
     const ok = !!user && VIS_SOUND_IDS.has(id) && !_visLive();
     el.classList.toggle('vis-vol-gone', !ok);
-    if (!ok) return;
+    if (!ok) { _visDuckSet(false); return; }
     const inp = document.getElementById('vis-vol-in'); if (inp) inp.value = _visVolStored();
+    const ico = document.getElementById('vis-vol-ico'); if (ico) { const sv = _visVolStored(); ico.textContent = sv === 0 ? '🔇' : sv < 50 ? '🔉' : '🔊'; }
     const wrap = document.getElementById('radio-vis-wrap');
     if (wrap && !wrap._volBound) {
       wrap._volBound = true;
@@ -3603,6 +3636,7 @@ const Radio = (() => {
   }
   function hideVisVideo() {
     document.getElementById('vis-vol')?.classList.add('vis-vol-gone');
+    _visDuckSet(false);
     const frame = document.getElementById('radio-vis-video');
     if (!frame) return;
     frame.classList.remove('active');
