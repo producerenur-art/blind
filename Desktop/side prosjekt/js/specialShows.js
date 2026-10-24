@@ -57,7 +57,7 @@ const SpecialShows = (() => {
       introJingle: 'assets/jingles/live-ambientmann.mp3',
       outroJingle: 'assets/jingles/live-ambientmann.mp3',
       // AAC 96 kbps frå «Amb ient Mann Dark drone AM SIDEN.wav» (Skrivebord), 41 MB (< Storage-grensa ~50 MB).
-      audioUrl: 'https://qefdyxpyjwpohsmmmksf.supabase.co/storage/v1/object/public/soundcore-media/special-mixes/ambientmann-dark-drone-001.m4a',
+      audioUrl: 'https://qefdyxpyjwpohsmmmksf.supabase.co/storage/v1/object/public/soundcore-media/special-mixes/Amb%20ient%20Mann%20Dark%20drone%20AM%20SIDEN.m4a',
       durationSec: 3405,
       linkUrl: 'https://www.ambientmann.com',
       // Fire fredagar kl 22:00 norsk tid (CET, UTC+1 etter 25.10) = 21:00Z. 56 min 45 s → ferdig ca. 22:57.
