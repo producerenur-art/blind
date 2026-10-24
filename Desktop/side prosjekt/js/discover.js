@@ -1084,7 +1084,7 @@ const Discover = (() => {
   }
   function renderChlorophilLive() {
     const now = Date.now();
-    const slots = _chlorophilSlots(now, 12);   // 12 = dei 6 neste + dei 6 etter (brukarønske 11.10.2026)
+    const slots = (typeof ChlorophilLive !== 'undefined') ? ChlorophilLive.batch(now, 4) : [];   // 4 om gongen: når dei 4 er over kjem neste 4 (brukarønske 24.10.2026)
     if (!slots.length) return '';
     const fmtWd = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long' });
     const fmtDate = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', day: 'numeric', month: 'long' });
@@ -1093,7 +1093,9 @@ const Discover = (() => {
     const tz = ms => (fmtTz.formatToParts(ms).find(p => p.type === 'timeZoneName') || {}).value || '';
     const rows = slots.map((ms, i) => {
       const live = now >= ms && now < ms + CHLOROPHIL_WINDOW_MS;
-      return `<div class="chl-row${i === 0 ? ' chl-next' : ''}${live ? ' chl-live' : ''}${i === 6 ? ' chl-gap' : ''}">
+      const past = now >= ms + CHLOROPHIL_WINDOW_MS;
+      const nextIdx = slots.findIndex(t => now < t + CHLOROPHIL_WINDOW_MS);
+      return `<div class="chl-row${i === nextIdx ? ' chl-next' : ''}${live ? ' chl-live' : ''}"${past ? ' style="opacity:.4"' : ''}>
             <span class="chl-day">${fmtWd.format(ms)}</span>
             <span class="chl-date">${fmtDate.format(ms)}</span>
             <span class="chl-time">${live ? '<em class="chl-badge">Live now</em>' : ''}${fmtClock.format(ms)} <small>${tz(ms)}</small></span>
@@ -1182,6 +1184,10 @@ const Discover = (() => {
           <p class="lc-ad-lines">${lines.map(_lcEsc).join('<br>')}</p>
           <p class="lc-ad-note">Norwegian time · once a week, four Saturdays</p>
           <p class="lc-ad-note">${_lcEsc(show.about || '')}</p>
+          <div class="lc-ad-actions">
+            <a class="lc-ad-link" href="https://soundcloud.com/dimday78/2026-10-24_13h21m51?utm_id=97758_v0_s00_e0_tv2_a1dennhbag7xz3" target="_blank" rel="noopener noreferrer">Dim Day on SoundCloud</a>
+            <a class="lc-ad-link" href="https://www.deepphase.net/dim-day" target="_blank" rel="noopener noreferrer">Dim Day on deep-phase</a>
+          </div>
         </div>`;
   }
 

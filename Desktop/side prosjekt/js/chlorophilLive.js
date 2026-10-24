@@ -41,6 +41,15 @@ const ChlorophilLive = (() => {
     return ALL.filter(t => t + WINDOW_MS > nowMs).slice(0, count);
   }
 
+  // Fast gruppe på `size` sendingar (brukarønske 24.10.2026: 4 om gongen). Gruppa gjeld til ALLE i ho er over
+  // (inkl. «live now»-vindauget); då kjem dei neste `size`. Passerte i gruppa blir med (for dimming).
+  function batch(nowMs, size) {
+    const first = ALL.findIndex(t => t + WINDOW_MS > nowMs);
+    if (first < 0) return [];
+    const start = Math.floor(first / size) * size;
+    return ALL.slice(start, start + size);
+  }
+
   // Engelsk visning i norsk tid: { weekday, date, clock, tz, ms }
   const _wd = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long' });
   const _dt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', day: 'numeric', month: 'long' });
@@ -51,7 +60,7 @@ const ChlorophilLive = (() => {
     return { ms, weekday: _wd.format(ms), date: _dt.format(ms), clock: _ck.format(ms), tz };
   }
 
-  return { slots, describe, WINDOW_MS, LINK_URL, LINK_LABEL };
+  return { slots, batch, describe, WINDOW_MS, LINK_URL, LINK_LABEL };
 })();
 
 if (typeof window !== 'undefined') window.ChlorophilLive = ChlorophilLive;
