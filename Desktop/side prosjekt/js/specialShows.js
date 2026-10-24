@@ -56,6 +56,7 @@ const SpecialShows = (() => {
       // (i staden for LIVE_INTRO / jingle-a som Lemonchill bruker). Ingen reklame.
       introJingle: 'assets/jingles/live-ambientmann.mp3',
       outroJingle: 'assets/jingles/live-ambientmann.mp3',
+      prerollMs: 9000,   // jingelen (4,4 s) startar ~9 s før sendestart i staden for 30 s (ingen reklame → ellers ~25 s stille)
       // AAC 96 kbps frå «Amb ient Mann Dark drone AM SIDEN.wav» (Skrivebord), 41 MB (< Storage-grensa ~50 MB).
       audioUrl: 'https://qefdyxpyjwpohsmmmksf.supabase.co/storage/v1/object/public/soundcore-media/special-mixes/Amb%20ient%20Mann%20Dark%20drone%20AM%20SIDEN.m4a',
       durationSec: 3405,

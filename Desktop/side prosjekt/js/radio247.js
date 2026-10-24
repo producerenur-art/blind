@@ -518,10 +518,12 @@ const Radio247 = (() => {
     if (!_specialTestDone && _specialTestRequested()) {
       _specialTestDone = true;
       const _m = location.search.match(/[?&]showtest=([a-z0-9-]+)/);   // ?showtest=ambientmann-dark-drone-001 (generalprøve); ?lemonchilltest=1 = Lemonchill
-      Radio.startSpecialShow((_m && SpecialShows.byId(_m[1])) || SpecialShows.SHOWS[0], Date.now() + 32000);
+      const _sh = (_m && SpecialShows.byId(_m[1])) || SpecialShows.SHOWS[0];
+      Radio.startSpecialShow(_sh, Date.now() + (_sh.prerollMs ? _sh.prerollMs + 2000 : 32000));
       return;
     }
     const act = SpecialShows.activeAt(Date.now() + SPECIAL_PREROLL_MS);
+    if (act && act.show.prerollMs && act.startMs - Date.now() > act.show.prerollMs) return;   // vent til show-ets eigen forspelstid (kortare enn 30 s)
     if (act) Radio.startSpecialShow(act.show, act.startMs);
   }
 
