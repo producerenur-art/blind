@@ -1103,9 +1103,9 @@ const Discover = (() => {
         <div class="lc-ad chl-ad" id="chl-ad">
           <div class="lc-ad-tag">Live Broadcast</div>
           <h2 class="lc-ad-title">Chlorophil — live on SiriusFM</h2>
-          <p class="chl-sub">Weekly · first broadcast Monday 12 October, then every Sunday</p>
+          <p class="chl-sub">Weekly · every Sunday</p>
           <div class="chl-list">${rows}</div>
-          <p class="chl-note">Norwegian time · 22:00 in Chlorophil's time zone</p>
+          <p class="chl-note">Norwegian time</p>
           <div class="lc-ad-actions">
             <a class="chl-link" href="https://synchronos-recordings.bandcamp.com/album/subspace-garden-ep-24-bit" target="_blank" rel="noopener noreferrer">♪ Subspace Garden EP · Synchronos Recordings</a>
           </div>
@@ -1156,7 +1156,33 @@ const Discover = (() => {
           ${allAired && tracks ? `<details class="lc-ad-tracks"><summary>Tracklist</summary><ol>${tracks}</ol></details>` : ''}
         </div>
         ${_ddFirst ? '' : renderDarkDroneAd()}
+        ${renderDimDayAd()}
         <div id="disc-wwl"></div>`;
+  }
+
+  // ── Dim Day (astrodim78, resident) — 4 laurdagar frå 31.10.2026 (brukarønske 24.10.2026) ──
+  function renderDimDayAd() {
+    const show = (typeof SpecialShows !== 'undefined' && SpecialShows.byId) ? SpecialShows.byId('dimday-001') : null;
+    if (!show) return '';
+    const lastEnd = Date.parse(show.slots[show.slots.length - 1]) + show.durationSec * 1000;
+    if (Date.now() >= lastEnd) return '';
+    const fmtDay = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long' });
+    const fmtClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit', hour12: false });
+    const fmtTz = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', timeZoneName: 'short' });
+    const lines = show.slots.map(iso => {
+      const st = new Date(iso), en = new Date(st.getTime() + Math.ceil(show.durationSec / 60) * 60000);
+      const tz = (fmtTz.formatToParts(st).find(p => p.type === 'timeZoneName') || {}).value || '';
+      return `${fmtDay.format(st)} ${fmtClock.format(st)}–${fmtClock.format(en)} ${tz}`;
+    });
+    return `
+        <div class="lc-ad" id="dimday-ad">
+          <div class="lc-ad-tag">Live Broadcast · Resident</div>
+          <h2 class="lc-ad-title">Welcome to — ${_lcEsc(show.artist)} on SiriusFM</h2>
+          <p class="lc-ad-on">Airing on the SiriusFM 24/7 Cycle</p>
+          <p class="lc-ad-lines">${lines.map(_lcEsc).join('<br>')}</p>
+          <p class="lc-ad-note">Norwegian time · once a week, four Saturdays</p>
+          <p class="lc-ad-note">${_lcEsc(show.about || '')}</p>
+        </div>`;
   }
 
   // ── Ambient Mann «Dark Drone»-serien (brukarønske 24.10.2026) ───────────────────────

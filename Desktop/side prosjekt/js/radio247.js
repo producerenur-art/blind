@@ -525,8 +525,9 @@ const Radio247 = (() => {
     // Førehandslast show-jinglane ~2 min før sendestart (tregt nett: jingelen skal starte med éin gong, aldri sakke etter og krasje med miksen).
     const nx = SpecialShows.nextAfter(Date.now());
     if (nx && nx.startMs - Date.now() < 120000 && Radio.preloadClip) { [nx.show.introJingle, nx.show.outroJingle, nx.show.preRollAd].forEach(u => { if (u) Radio.preloadClip(u); }); }
-    const act = SpecialShows.activeAt(Date.now() + SPECIAL_PREROLL_MS);
-    if (act && act.show.prerollMs && act.startMs - Date.now() > act.show.prerollMs) return;   // vent til show-ets eigen forspelstid (kortare enn 30 s)
+    // Sjå lenger fram enn 30 s så show med lang forspelsjingel (Dim Day: 72 s) også blir fanga opp i tide.
+    const act = SpecialShows.activeAt(Date.now() + Math.max(SPECIAL_PREROLL_MS, ...SpecialShows.SHOWS.map(s => s.prerollMs || 0)));
+    if (act && act.startMs - Date.now() > (act.show.prerollMs || SPECIAL_PREROLL_MS)) return;   // vent til show-ets eigen forspelstid (kortare/lengre enn 30 s)
     if (act) Radio.startSpecialShow(act.show, act.startMs);
   }
 

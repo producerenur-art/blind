@@ -72,6 +72,30 @@ const SpecialShows = (() => {
       tracklist: [],
       about: 'A long, slow dark drone mix — one continuous hour of deep sub-bass, shifting overtones and ritual atmosphere from Ambient Mann. Best heard in the dark, on a proper sound system or good headphones.',
     },
+    {
+      id: 'dimday-001',
+      artist: 'Dim Day',
+      title: 'Dim Day — resident set for SiriusFM',
+      liveLabel: 'Dim Day on air',
+      // Brukarønske 24.10.2026: eigen «Dim Day»-jingel (70 s) både INN og UT av sendinga, ingen reklame.
+      introJingle: 'assets/jingles/live-dimday.mp3',
+      outroJingle: 'assets/jingles/live-dimday.mp3',
+      prerollMs: 72000,   // jingelen er 70,5 s → startar ~72 s før sendestart så han er ferdig når settet går
+      // AAC 96 kbps av «Dim Day 1 for siriusfm live.mp3» (53:44). MÅ lastast opp til Supabase før deploy.
+      audioUrl: 'https://qefdyxpyjwpohsmmmksf.supabase.co/storage/v1/object/public/soundcore-media/special-mixes/dim-day-001.m4a',
+      durationSec: 3224,
+      linkUrl: '',
+      // Fire laurdagar kl 21:00 CET (UTC+1, brukaren sitt ord 24.10.2026) = 20:00Z, 31.10–21.11.2026.
+      slots: [
+        '2026-10-31T20:00:00Z',
+        '2026-11-07T20:00:00Z',
+        '2026-11-14T20:00:00Z',
+        '2026-11-21T20:00:00Z',
+      ],
+      reminderOffsetsHours: [],
+      tracklist: [],
+      about: 'Resident set by Dim Day — live from Greece on the SiriusFM 24/7 Cycle.',
+    },
   ];
 
   const ms = iso => new Date(iso).getTime();
