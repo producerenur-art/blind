@@ -39,7 +39,7 @@ const CONFIG = {
   // Gratis Pro-tilgang UTAN admin-rettar (2026-09-24): kontoar her får alt gratis (Pro) — men IKKJE
   // moderering, gå-live-utan-booking eller rediger-rett (det er ADMIN_EMAILS). Brukast av js/auth.js
   // Auth.current(). Samanlikning er små bokstavar/trimma, same som ADMIN_EMAILS.
-  FREE_PRO_EMAILS: ['kalifer@hotmail.fr'],
+  FREE_PRO_EMAILS: ['kalifer@hotmail.fr', 'astrodim78@gmail.com'],
   isFreeProEmail(user) {
     try { return !!user && this.FREE_PRO_EMAILS.includes(String(user.email || '').toLowerCase().trim()); }
     catch (_) { return false; }
