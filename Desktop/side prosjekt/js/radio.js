@@ -4638,7 +4638,7 @@ const Radio = (() => {
     setAsFavorite, openEmbed, closeEmbed, stopForMusicPlayer,
     enterLiveTakeover, exitLiveTakeover, setLiveLite: _setLiveLite, attachLiveStream, setLivePresenterName, isLiveTakeoverActive, getLivePresenterName,
     setLiveTrackTitle, getLiveTrackTitle, setLiveLinkUrl, getLiveLinkUrl, syncLiveHero,
-    startSpecialShow, isSpecialActive, getLiveLabel, leaveSpecial: () => { if (_special) _leaveSpecialQuiet(); },
+    preloadClip: _preloadClip, startSpecialShow, isSpecialActive, getLiveLabel, leaveSpecial: () => { if (_special) _leaveSpecialQuiet(); },
     pauseForOwnBroadcast, resumeForOwnBroadcast,
     playLocalClip: _playLocalClip,
     // Delt "opptatt"-flagg for Radio247 (js/radio247.js) sin overgangsjingle
