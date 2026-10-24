@@ -1135,7 +1135,11 @@ const Discover = (() => {
     const mins = Math.round(show.durationSec / 60);
     const tracks = (show.tracklist || []).map(t => `<li>${_lcEsc(t)}</li>`).join('');
     setTimeout(_loadWhatWentLive, 0);   // container #disc-wwl finst når innerHTML er sett
+    // Rekkjefølgje: Dark Drone-kortet over Lemonchill FØRST når Lemonchill sin siste sending er ferdig (24.10.2026 21:02 CEST);
+    // fram til då står Lemonchill øverst og Dark Drone rett under.
+    const _ddFirst = Date.now() >= lastSlotEnd;
     return `
+        ${_ddFirst ? renderDarkDroneAd() : ''}
         <div class="lc-ad" id="lc-ad">
           <div class="lc-ad-tag">Live Broadcast / Podcast</div>
           <h2 class="lc-ad-title">Welcome to — ${_lcEsc(show.artist)} on SiriusFM</h2>
@@ -1151,7 +1155,7 @@ const Discover = (() => {
           </div>
           ${allAired && tracks ? `<details class="lc-ad-tracks"><summary>Tracklist</summary><ol>${tracks}</ol></details>` : ''}
         </div>
-        ${renderDarkDroneAd()}
+        ${_ddFirst ? '' : renderDarkDroneAd()}
         <div id="disc-wwl"></div>`;
   }
 
