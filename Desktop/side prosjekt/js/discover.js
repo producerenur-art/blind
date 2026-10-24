@@ -2077,6 +2077,7 @@ const Discover = (() => {
           </div>
         </div>
 
+        ${renderChlorophilLive()}
         ${renderLemonchillAd()}
 
         <!-- MUSIC TAB -->
