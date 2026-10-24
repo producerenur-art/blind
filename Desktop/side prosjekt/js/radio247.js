@@ -506,7 +506,7 @@ const Radio247 = (() => {
   let _specialTestDone = false;
   function _specialTestRequested() {
     try {
-      return /[?&]lemonchilltest=1(&|$)/.test(location.search) && typeof CONFIG !== 'undefined' && CONFIG.isAdminEmail(Auth.current());
+      return /[?&](lemonchill|show)test=(1|[a-z0-9-]+)(&|$)/.test(location.search) && typeof CONFIG !== 'undefined' && CONFIG.isAdminEmail(Auth.current());
     } catch (_) { return false; }
   }
   function _specialTick() {
@@ -517,7 +517,8 @@ const Radio247 = (() => {
     // sendinga — talet må matche SPECIAL_PREROLL_MS så kjeda rekk å spele ferdig i tide).
     if (!_specialTestDone && _specialTestRequested()) {
       _specialTestDone = true;
-      Radio.startSpecialShow(SpecialShows.SHOWS[0], Date.now() + 32000);
+      const _m = location.search.match(/[?&]showtest=([a-z0-9-]+)/);   // ?showtest=ambientmann-dark-drone-001 (generalprøve); ?lemonchilltest=1 = Lemonchill
+      Radio.startSpecialShow((_m && SpecialShows.byId(_m[1])) || SpecialShows.SHOWS[0], Date.now() + 32000);
       return;
     }
     const act = SpecialShows.activeAt(Date.now() + SPECIAL_PREROLL_MS);

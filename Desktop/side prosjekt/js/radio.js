@@ -4341,7 +4341,7 @@ const Radio = (() => {
     // «siriusfm live now»-jingelen skal spele rett før settet startar).
     if (_special) {
       const ad = _special.show && _special.show.preRollAd;
-      const playLiveIntroThenStart = () => _playLocalClip(LIVE_INTRO, finishAnnouncement, LIVE_FADE_MS);
+      const playLiveIntroThenStart = () => _playLocalClip((_special.show && _special.show.introJingle) || LIVE_INTRO, finishAnnouncement, LIVE_FADE_MS);   // introJingle = eiga «live now»-jingel (Ambient Mann)
       if (ad) _playLocalClip(ad, playLiveIntroThenStart, LIVE_FADE_MS);
       else playLiveIntroThenStart();
       return;
@@ -4549,6 +4549,7 @@ const Radio = (() => {
     const zenForThis = (!wasSpecial && _liveZenSet >= 0) ? ZEN_SETS[_liveZenSet] : null;
     _liveZenSet = -1;   // alltid nullstilt ved slutt, uansett type sending
     const specialOutroAd = wasSpecial && _special.show && _special.show.preRollAd;
+    const specialOutroJingle = (wasSpecial && _special.show && _special.show.outroJingle) || JINGLES.a;
     _special = null; _liveSpecialLabel = '';
     _liveTakeover = false;
     _setLiveLite(false);
@@ -4618,7 +4619,7 @@ const Radio = (() => {
     // Lemonchill (show.preRollAd) får reklamen sin EIN gong til rett etter outro-jingelen,
     // på alle 4 sendingane (brukarønske 29.09.2026) — same reklame som spelte i forkant.
     if (wasSpecial) {
-      _playLocalClip(JINGLES.a, () => {
+      _playLocalClip(specialOutroJingle, () => {
         if (specialOutroAd) _playLocalClip(specialOutroAd, resumePrevious, LIVE_FADE_MS);
         else resumePrevious();
       }, LIVE_FADE_MS);

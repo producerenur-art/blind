@@ -1151,7 +1151,39 @@ const Discover = (() => {
           </div>
           ${allAired && tracks ? `<details class="lc-ad-tracks"><summary>Tracklist</summary><ol>${tracks}</ol></details>` : ''}
         </div>
+        ${renderDarkDroneAd()}
         <div id="disc-wwl"></div>`;
+  }
+
+  // ── Ambient Mann «Dark Drone»-serien (brukarønske 24.10.2026) ───────────────────────
+  // Same kortspråk som Lemonchill (.lc-ad), eigen show frå js/specialShows.js. Kortet står
+  // fram til siste sending er over — då overtek arkivposten under «What went live»
+  // (tools/publish-special-set.js, published_at = siste slot + varigheit).
+  function renderDarkDroneAd() {
+    const show = (typeof SpecialShows !== 'undefined' && SpecialShows.byId) ? SpecialShows.byId('ambientmann-dark-drone-001') : null;
+    if (!show) return '';
+    const lastEnd = Date.parse(show.slots[show.slots.length - 1]) + show.durationSec * 1000;
+    if (Date.now() >= lastEnd) return '';
+    const fmtDay = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long' });
+    const fmtClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit', hour12: false });
+    const fmtTz = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', timeZoneName: 'short' });
+    const lines = show.slots.map(iso => {
+      const st = new Date(iso), en = new Date(st.getTime() + Math.ceil(show.durationSec / 60) * 60000);
+      const tz = (fmtTz.formatToParts(st).find(p => p.type === 'timeZoneName') || {}).value || '';
+      return `${fmtDay.format(st)} ${fmtClock.format(st)}–${fmtClock.format(en)} ${tz}`;
+    });
+    return `
+        <div class="lc-ad" id="dd-ad">
+          <div class="lc-ad-tag">Live Broadcast / Podcast · Dark Drone</div>
+          <h2 class="lc-ad-title">Welcome to — ${_lcEsc(show.artist)} on SiriusFM</h2>
+          <p class="lc-ad-on">Dark Drone · airing on the SiriusFM 24/7 Cycle</p>
+          <p class="lc-ad-lines">${lines.map(_lcEsc).join('<br>')}</p>
+          <p class="lc-ad-note">Norwegian time (CET) · once a week, four Fridays</p>
+          <p class="lc-ad-note">${_lcEsc(show.about || '')}</p>
+          <div class="lc-ad-actions">
+            <a class="lc-ad-link" href="${_lcEsc(show.linkUrl)}" target="_blank" rel="noopener noreferrer">ambientmann.com</a>
+          </div>
+        </div>`;
   }
 
   // «About Lemonchill»-panel — same visuelle språk som det globale «About

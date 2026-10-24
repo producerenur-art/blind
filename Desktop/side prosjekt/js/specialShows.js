@@ -47,6 +47,30 @@ const SpecialShows = (() => {
         'Journey Through an Electric Garden (Outro)',
       ],
     },
+    {
+      id: 'ambientmann-dark-drone-001',
+      artist: 'Ambient Mann',
+      title: 'Dark Drone — a long mix by Ambient Mann',
+      liveLabel: 'Ambient Mann on air',
+      // Brukarønske 24.10.2026: «live now Ambient Mann»-jingelen både INN og UT av sendinga
+      // (i staden for LIVE_INTRO / jingle-a som Lemonchill bruker). Ingen reklame.
+      introJingle: 'assets/jingles/live-ambientmann.mp3',
+      outroJingle: 'assets/jingles/live-ambientmann.mp3',
+      // AAC 96 kbps frå «Amb ient Mann Dark drone AM SIDEN.wav» (Skrivebord), 41 MB (< Storage-grensa ~50 MB).
+      audioUrl: 'https://qefdyxpyjwpohsmmmksf.supabase.co/storage/v1/object/public/soundcore-media/special-mixes/ambientmann-dark-drone-001.m4a',
+      durationSec: 3405,
+      linkUrl: 'https://www.ambientmann.com',
+      // Fire fredagar kl 22:00 norsk tid (CET, UTC+1 etter 25.10) = 21:00Z. 56 min 45 s → ferdig ca. 22:57.
+      slots: [
+        '2026-10-30T21:00:00Z',
+        '2026-11-06T21:00:00Z',
+        '2026-11-13T21:00:00Z',
+        '2026-11-20T21:00:00Z',
+      ],
+      reminderOffsetsHours: [],   // ingen e-postvarsel (ikkje bedt om)
+      tracklist: [],
+      about: 'A long, slow dark drone mix — one continuous hour of deep sub-bass, shifting overtones and ritual atmosphere from Ambient Mann. Best heard in the dark, on a proper sound system or good headphones.',
+    },
   ];
 
   const ms = iso => new Date(iso).getTime();
