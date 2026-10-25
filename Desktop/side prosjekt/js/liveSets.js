@@ -9,6 +9,7 @@ const LiveSets = (() => {
   function _secret() { return (typeof CONFIG !== 'undefined' && CONFIG.LIVE_BROADCAST_SECRET) || ''; }
   function _me() { return (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null; }
   function _isAdmin(me) { return !!(me && typeof CONFIG !== 'undefined' && ((CONFIG.isAdminEmail && CONFIG.isAdminEmail(me)) || (CONFIG.isDiscoverEditor && CONFIG.isDiscoverEditor(me)))); }
+  function _isOwnerAcct(me) { return !!(me && String(me.email || '').toLowerCase().trim() === 'producerenur@gmail.com'); }   // kun eigaren: skjul/vis, rekkefølgje, admin-liste
   function _toast(m, t, ms) { if (typeof App !== 'undefined' && App.toast) App.toast(m, t || 'info', ms || 4000); }
   function _id() { return 'set_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 
@@ -264,7 +265,7 @@ const LiveSets = (() => {
   // Admin: alle ferdige sett INKLUDERT skjulte (migrasjon 0041). Faller tilbake til vanleg liste om RPC-en manglar.
   async function listAdmin(limit) {
     const c = _client(); const me = _me();
-    if (!c || !me || !_isAdmin(me)) return list(limit);
+    if (!c || !me || !_isOwnerAcct(me)) return list(limit);
     const { data, error } = await c.rpc('list_live_sets_admin', { p_secret: _secret(), p_limit: limit || 300 });
     if (error) { listAdmin.lastError = error.message || String(error); return list(limit); }
     listAdmin.lastError = '';
@@ -273,7 +274,7 @@ const LiveSets = (() => {
   // Admin: skjul (true) / vis (false) eit sett for publikum (migrasjon 0041).
   async function setHidden(id, hidden) {
     const c = _client(); const me = _me();
-    if (!c || !me || !_isAdmin(me)) return false;
+    if (!c || !me || !_isOwnerAcct(me)) return false;
     const { error } = await c.rpc('set_live_set_hidden', { p_id: id, p_hidden: !!hidden, p_secret: _secret() });
     if (error) console.warn('[LiveSets] hide feila:', error.message);
     setHidden.lastError = error ? (error.message || String(error)) : '';
@@ -284,7 +285,7 @@ const LiveSets = (() => {
   // Krev migrasjon 0039 (kolonna sort_order + reorder_live_sets). Rører ikkje opptak, bilete eller lyd.
   async function reorder(ids) {
     const c = _client(); const me = _me();
-    if (!c || !me || !_isAdmin(me) || !Array.isArray(ids) || !ids.length) return false;
+    if (!c || !me || !_isOwnerAcct(me) || !Array.isArray(ids) || !ids.length) return false;
     const { error } = await c.rpc('reorder_live_sets', { p_ids: ids, p_secret: _secret() });
     if (error) console.warn('[LiveSets] reorder feila:', error.message);
     reorder.lastError = error ? (error.message || String(error)) : '';

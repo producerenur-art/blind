@@ -1271,13 +1271,16 @@ const Discover = (() => {
   const _wwlSets = {};
   // KUN innlogga admin (producerenur@gmail.com og constant8@gmail.com) ser redigering/deling/sletting osv.
   // (2026-09-25). Alle andre ser Play/Stopp/Share + DJ-namn/tekst.
-  const WWL_ADMIN_EMAILS = ['producerenur@gmail.com', 'constant8@gmail.com'];
+  const WWL_ADMIN_EMAILS = ['producerenur@gmail.com'];
   function _wwlIsAdmin() {
+    // Brukarkrav 25.10.2026: redigering/skjuling/flytting/sletting/bytte av fil+bilete KUN for producerenur@gmail.com (ikkje andre admin-e-postar).
     try {
       const me = Auth.current();
-      return !!me && (WWL_ADMIN_EMAILS.includes(String(me.email || '').toLowerCase().trim()) || (typeof CONFIG !== 'undefined' && (CONFIG.isAdminEmail(me) || (CONFIG.isDiscoverEditor && CONFIG.isDiscoverEditor(me)))));
+      return !!me && WWL_ADMIN_EMAILS.includes(String(me.email || '').toLowerCase().trim());
     } catch (_) { return false; }
   }
+  // Innlogga (ikkje gjest): får ⬇ Download i tillegg til Play/Stop/Copy link. Gjester får ikkje nedlasting.
+  function _wwlIsLoggedIn() { try { return !!Auth.current(); } catch (_) { return false; } }
   const _wwlNewest = {};   // slug → id på nyaste sett (fylt i _loadWhatWentLive)
   const _WWL_SLUG_ALIAS = { djarcturiagenetics: 'djarcturiangenetics', djarctruriagenetics: 'djarcturiangenetics', djarcturuangenetics: 'djarcturiangenetics', arcturiangenetics: 'djarcturiangenetics', arcturiagenetics: 'djarcturiangenetics' };
   function _wwlSlug(name) {
@@ -1389,6 +1392,7 @@ const Discover = (() => {
             <button class="btn btn-ghost" onclick="Discover.wwlStop('${id}')">■ Stop</button>
             <label class="wwl-vol" title="Volume" style="display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--text2)">🔈<input type="range" class="wwl-vol-in" min="0" max="${_wwlVolMax()}" step="1" value="${_wwlVolNow()}" oninput="Discover.wwlVol(this.value)" style="width:110px" aria-label="Volume"></label>
             <button class="btn btn-ghost" onclick="Discover.wwlCopy('${id}')">📋 Copy link</button>
+            ${_wwlIsLoggedIn() ? `<button class="btn btn-ghost" onclick="Discover.wwlDownload('${id}')">⬇ Download</button><button class="btn btn-ghost" onclick="Discover.wwlDownloadMp3('${id}')">⬇ MP3 download</button>` : ''}
             ${st.display_name ? `<span class="wwl-dj">${_lcLink(st.display_name)}</span>` : ''}
           </div>
           ${st.track_title ? `<div class="wwl-public-text">${_lcLink(st.track_title)}</div>` : ''}
@@ -1531,10 +1535,10 @@ const Discover = (() => {
     try { await navigator.clipboard.writeText(url); if (typeof App !== 'undefined') App.toast('Link copied 📋', 'success'); }
     catch (_) { window.prompt('Copy this link:', url); }
   }
-  // Last ned opptaket (KUN admin).
+  // Last ned opptaket (innlogga brukarar; ikkje gjester).
   let _wwlDlBusy = false;
   async function wwlDownload(id) {
-    const st = _wwlSets[id]; if (!st || !st.audio_url || !_wwlIsAdmin()) return;
+    const st = _wwlSets[id]; if (!st || !st.audio_url || !_wwlIsLoggedIn()) return;
     if (_wwlDlBusy) { if (typeof App !== 'undefined') App.toast('Already preparing a WAV — wait for it to finish…', 'info'); return; }
     const ext0 = ((st.audio_url.split('?')[0].match(/\.([a-z0-9]{2,4})$/i) || [])[1] || 'mp3').toLowerCase();
     const base = [(st.display_name || 'live-set'), (st.track_title || '').split('\n')[0].trim()].filter(Boolean).join(' - ').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
@@ -1582,9 +1586,9 @@ const Discover = (() => {
       rawDownload();
     } finally { _wwlDlBusy = false; }
   }
-  // Last ned opptaket som MP3 (320 kbps, KUN admin — same tilgang som «Download»). Brukar AudioCompress.toMp3 (lamejs).
+  // Last ned opptaket som MP3 (320 kbps, innlogga — same tilgang som «Download»). Brukar AudioCompress.toMp3 (lamejs).
   async function wwlDownloadMp3(id) {
-    const st = _wwlSets[id]; if (!st || !st.audio_url || !_wwlIsAdmin()) return;
+    const st = _wwlSets[id]; if (!st || !st.audio_url || !_wwlIsLoggedIn()) return;
     const toast = (m, t) => { if (typeof App !== 'undefined') App.toast(m, t || 'info'); };
     if (_wwlDlBusy) { toast('Already preparing a download — wait for it to finish…', 'info'); return; }
     if (typeof AudioCompress === 'undefined' || !AudioCompress.toMp3) { toast('MP3 encoder not available', 'error'); return; }
