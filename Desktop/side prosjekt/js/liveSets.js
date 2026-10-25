@@ -261,6 +261,25 @@ const LiveSets = (() => {
     return !error;
   }
 
+  // Admin: alle ferdige sett INKLUDERT skjulte (migrasjon 0041). Faller tilbake til vanleg liste om RPC-en manglar.
+  async function listAdmin(limit) {
+    const c = _client(); const me = _me();
+    if (!c || !me || !_isAdmin(me)) return list(limit);
+    const { data, error } = await c.rpc('list_live_sets_admin', { p_secret: _secret(), p_limit: limit || 300 });
+    if (error) { listAdmin.lastError = error.message || String(error); return list(limit); }
+    listAdmin.lastError = '';
+    return data || [];
+  }
+  // Admin: skjul (true) / vis (false) eit sett for publikum (migrasjon 0041).
+  async function setHidden(id, hidden) {
+    const c = _client(); const me = _me();
+    if (!c || !me || !_isAdmin(me)) return false;
+    const { error } = await c.rpc('set_live_set_hidden', { p_id: id, p_hidden: !!hidden, p_secret: _secret() });
+    if (error) console.warn('[LiveSets] hide feila:', error.message);
+    setHidden.lastError = error ? (error.message || String(error)) : '';
+    return !error;
+  }
+
   // Admin: lagre rekkefølgja i «What went live». ids = alle set-id-ar i ønska rekkefølgje (først = øverst).
   // Krev migrasjon 0039 (kolonna sort_order + reorder_live_sets). Rører ikkje opptak, bilete eller lyd.
   async function reorder(ids) {
@@ -326,7 +345,7 @@ const LiveSets = (() => {
     return (room || 'set') + '-' + suf;
   }
 
-  return { begin, end, list, get, canEdit, update, reorder, remove, restore, addUpload, recover, shareSlug };
+  return { begin, end, list, listAdmin, setHidden, get, canEdit, update, reorder, remove, restore, addUpload, recover, shareSlug };
 })();
 
 if (typeof window !== 'undefined') window.LiveSets = LiveSets;

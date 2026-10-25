@@ -1281,7 +1281,7 @@ const Discover = (() => {
   const _wwlNewest = {};   // slug → id på nyaste sett (fylt i _loadWhatWentLive)
   const _WWL_SLUG_ALIAS = { djarcturiagenetics: 'djarcturiangenetics', djarctruriagenetics: 'djarcturiangenetics', djarcturuangenetics: 'djarcturiangenetics', arcturiangenetics: 'djarcturiangenetics', arcturiagenetics: 'djarcturiangenetics' };
   function _wwlSlug(name) {
-    let x = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    let x = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/(?<=[a-z])\d+$/, '');   // «Spectrum 002»/«… Genetics 001» → same DJ-lenke (sluttnummer droppes)
     x = _WWL_SLUG_ALIAS[x] || x;   // kjende skrivemåtar → éin fast DJ-lenke (hald lik lista i api/share.js)
     return /^[a-z]/.test(x) ? x.slice(0, 60) : '';   // må starte med bokstav (ikkje kollidere med nummerlenker)
   }
@@ -1404,9 +1404,10 @@ const Discover = (() => {
     const art = st.cover_url ? `<img src="${_lcEsc(st.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="Discover.wwlZoom('${id}')">` : '<span style="font-size:2rem">🎧</span>';
     const mins = (st._dur || st.duration_sec) ? _wwlClock(st._dur || st.duration_sec) : '';
     return `
-      <div class="wwl-card" id="wwl-${id}">
+      <div class="wwl-card" id="wwl-${id}"${st.hidden ? ' style="opacity:.6;outline:1px dashed #f59e0b"' : ''}>
         <div class="wwl-art">${art}</div>
         <div class="wwl-body">
+          ${st.hidden ? '<div style="font-size:.75rem;font-weight:800;color:#f59e0b;margin-bottom:.2rem">🙈 Hidden from public</div>' : ''}
           <div class="wwl-name">${st.display_name ? _lcLink(st.display_name) : 'Live set'}</div>
           <div class="wwl-text">${_lcLink(st.track_title || '')}</div>
           ${_wwlTracks(st)}
@@ -1432,6 +1433,7 @@ const Discover = (() => {
             ${st.cover_url ? `<button class="btn btn-ghost btn-sm" onclick="Discover.wwlRemoveImage('${id}')">Remove image</button>` : ''}
             <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wwl-file-${id}').click()">🎵 Replace audio</button>
             <input type="file" id="wwl-file-${id}" accept="audio/*" style="display:none" onchange="Discover.wwlReplaceAudio('${id}',this)">
+            <button class="btn btn-ghost btn-sm" onclick="Discover.wwlHide('${id}')">${st.hidden ? '👁 Unhide for public' : '🙈 Hide for public'}</button>
             <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="Discover.wwlDelete('${id}')">🗑 Delete</button>
           </div>
           <div class="wwl-edit" id="wwl-edit-${id}"></div>
@@ -1467,7 +1469,7 @@ const Discover = (() => {
     const box = document.getElementById('disc-wwl');
     if (!box || typeof LiveSets === 'undefined' || !LiveSets.list) return;
     const adm = _wwlIsAdmin();   // ALLE (òg gjester) ser alle opptak/opplastingar (brukarønske 11.10.2026); berre admin ser redigering
-    let sets = []; try { sets = await LiveSets.list(200); } catch (_) {}
+    let sets = []; try { sets = await (adm && LiveSets.listAdmin ? LiveSets.listAdmin(300) : LiveSets.list(200)); } catch (_) {}
     sets = (sets || []).filter(x => x && x.audio_url);
     Object.keys(_wwlNewest).forEach(k => delete _wwlNewest[k]);
     { const _best = {}; sets.forEach(x => { if (!x.ended_at) return; const sl = _wwlSlug(x.display_name); if (!sl) return; const t = Date.parse(x.ended_at) || 0; if (!(sl in _best) || t > _best[sl]) { _best[sl] = t; _wwlNewest[sl] = x.id; } }); }
@@ -1480,7 +1482,7 @@ const Discover = (() => {
       const _pin = sets.find(x => Number(x.wwl_no) === 1);
       if (_pin) sets = [_pin].concat(sets.filter(x => x !== _pin));
     }
-    _refreshActivityFeed(sets.filter(x => x.room !== 'upload').slice(0, 6));   // opplastinger (ikkje live) skal ikkje stå som «went live»  // «Live activity» skal òg vise desse, ikkje berre «What went live»
+    _refreshActivityFeed(sets.filter(x => x.room !== 'upload' && !x.hidden).slice(0, 6));   // opplastinger (ikkje live) skal ikkje stå som «went live»  // «Live activity» skal òg vise desse, ikkje berre «What went live»
     if (!sets.length || !document.getElementById('disc-wwl')) return;
     document.getElementById('disc-wwl').innerHTML = `
       <div class="wwl-head">What went live</div>
@@ -1795,6 +1797,17 @@ const Discover = (() => {
       const box = g('wwl-upl'); if (box) box.innerHTML = '';
       _loadWhatWentLive();
     } catch (e) { _wwlProg(null); toast('Upload failed: ' + (e.message || e), 'error', 9000); if (btn) btn.disabled = false; }
+  }
+  // Skjul/vis for publikum (KUN admin, sjekka i databasen via hemmelegheita). Krev migrasjon 0041.
+  async function wwlHide(id) {
+    const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
+    const want = !st.hidden;
+    const ok = await LiveSets.setHidden(id, want);
+    if (!ok) { if (typeof App !== 'undefined') App.toast('Could not ' + (want ? 'hide' : 'unhide') + ': ' + (LiveSets.setHidden.lastError || 'unknown error') + (/PGRST202|set_live_set_hidden|hidden/.test(LiveSets.setHidden.lastError || '') ? ' (run migration 0041 first)' : ''), 'error', 9000); return; }
+    st.hidden = want;
+    const c = document.getElementById('wwl-' + id);
+    if (c) { const t = document.createElement('div'); t.innerHTML = _wwlCard(st); const n = t.firstElementChild; if (n) c.replaceWith(n); }
+    if (typeof App !== 'undefined') App.toast(want ? 'Hidden from public — only admins see it now' : 'Visible to everyone again', 'success');
   }
   async function wwlDelete(id) {
     const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
@@ -4735,7 +4748,7 @@ const Discover = (() => {
 
   return {
     render, setGenre, setRole, switchTab, switchSubTab,
-    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlDownloadMp3, wwlUndo, wwlTrashForget, wwlEdit, wwlSave, wwlReplaceAudio, wwlUploadToggle, wwlUploadSubmit, wwlDelete, wwlSetImage, wwlRemoveImage, wwlMove, wwlZoom, wwlSeek, wwlPreview,
+    wwlPlay, wwlStop, wwlVol, wwlCopy, wwlDownload, wwlDownloadMp3, wwlUndo, wwlTrashForget, wwlEdit, wwlSave, wwlReplaceAudio, wwlUploadToggle, wwlUploadSubmit, wwlDelete, wwlHide, wwlSetImage, wwlRemoveImage, wwlMove, wwlZoom, wwlSeek, wwlPreview,
     showLemonchillAbout,
     playTrack, wishlist, uploadDiscTrack, onUploadFileChange, onCoverFileChange,
     loadAllTracks,
