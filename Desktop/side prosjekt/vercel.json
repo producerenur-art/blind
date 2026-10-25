@@ -1,4 +1,16 @@
 {
+  "redirects": [
+    {
+      "source": "/dimday",
+      "destination": "https://www.deepphase.net/dim-day",
+      "permanent": false
+    },
+    {
+      "source": "/dim-day",
+      "destination": "https://www.deepphase.net/dim-day",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/s/:data",

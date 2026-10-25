@@ -13,7 +13,9 @@ const secret = process.env.LIVE_BROADCAST_SECRET || (cfg.match(/LIVE_BROADCAST_S
 const dry = process.argv.includes('--dry');
 
 (async () => {
+  const only = (process.argv.find(a => a.startsWith('--id=')) || '').slice(5);   // --id=lemonchill-001 → kun den
   for (const show of SpecialShows.SHOWS) {
+    if (only && show.id !== only) continue;
     // Arkivposten skal FØRST bli synleg etter SISTE sending (brukarønske 29.09.2026,
     // endra frå «etter FYRSTE» — miksen speler 4x, arkivet skal ikkje dukke opp
     // før heile serien er ferdig).
@@ -23,9 +25,9 @@ const dry = process.argv.includes('--dry');
     const fmt = d => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
     const body = {
       p_secret: secret, p_id: 'set_special_' + show.id, p_display_name: show.title,
-      p_track_title: 'Aired live on the SiriusFM 24-Hour Cycle · ' + (show.slots.length > 1 ? fmt(first) + ' – ' + fmt(last) : fmt(first)),
+      p_track_title: 'Aired live on the SiriusFM 24-Hour Cycle · ' + (show.slots.length > 1 ? fmt(first) + ' –' : fmt(first)),
       p_audio_url: show.audioUrl, p_duration_sec: show.durationSec,
-      p_tracklist: show.tracklist.map((t, i) => (i + 1) + '. ' + t).join('\n'),
+      p_tracklist: show.tracklist.map((t, i) => (i + 1) + '. ' + t).join('\n') + ((show.extraLinks || []).length ? '\n\n' + [show.linkUrl].concat(show.extraLinks || []).filter(Boolean).join('\n') : ''),
       p_published_at: publishedAt, p_link_url: show.linkUrl || '',
     };
     if (dry) { console.log('DRY', show.id, 'publishes at', publishedAt, '→', body.p_display_name); continue; }

@@ -11415,7 +11415,7 @@ a .sfm, .section-title .sfm, h1 .sfm, h2 .sfm, h3 .sfm { -webkit-text-fill-color
 .lc-ad-link { color: #7dd3fc; font-weight: 600; text-decoration: none; }
 .lc-ad-link:hover { text-decoration: underline; }
 .lc-ad-tracks { margin-top: 0.9rem; text-align: left; max-width: 520px; margin-left: auto; margin-right: auto; font-size: 0.85rem; color: var(--text2); }
-.lc-ad-tracks summary { cursor: pointer; text-align: center; font-weight: 600; }
+.lc-ad-play { background: linear-gradient(135deg, #38bdf8, #2563eb); color: #fff; }.lc-ad-tracks summary { cursor: pointer; text-align: center; font-weight: 600; }
 .lc-ad-tracks ol { margin: 0.5rem 0 0; padding-left: 1.4rem; }
 @media (max-width: 640px) { .lc-ad { margin: 1rem 16px 0; padding: 1rem; } .lc-ad-title { font-size: 1.15rem; } }
 .lc-ad-on { margin: 0 0 0.5rem; font-size: 0.95rem; font-weight: 700; color: #a5b4fc; }

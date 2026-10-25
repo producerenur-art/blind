@@ -159,7 +159,8 @@ module.exports = async (req, res) => {
     if (!lines.length) return '';
     return `<div class="tl"><div class="tl-h">Track list</div><div class="tl-l">${lines.map(l => `<div>${escLink(l)}</div>`).join('')}</div></div>`;
   })();
-  const fullTitle = artist ? `${title} — ${artist}` : title;
+  // Live-sett: «artist» er «Aired live … · <dato>» og står alt i beskrivelsen — ikkje gjenta datoen i tittelen.
+  const fullTitle = artist && !isSet ? `${title} — ${artist}` : title;
   const profileUrl = isSet ? `${SITE}/#/discover` : (username ? `${SITE}/#/u/${encodeURIComponent(username)}` : SITE + '/');
   // ?v=<versjon> (frå st.updated_at) gjer at Facebook/X hentar NYTT bilde/tekst etter ei redigering
   // (dei mellomlagrar forhandsvisninga per URL i ~30 dagar, og bruker og:url som nøkkel).

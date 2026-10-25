@@ -194,12 +194,54 @@ const Social = (() => {
     CommentSync.push(targetKey, c);
   }
 
+  // ── Varig utboks: kommentar skal ALDRI forsvinne ved hard refresh ─────────
+  // Kommentarar låg berre i minnet + Gun (localStorage:false) til sky-push
+  // lykkast; feila push (nettverk/kald Supabase) = kommentar vekk etter reload.
+  // Vi lagrar difor kvar ny kommentar lokalt til skyen har bekrefta han, viser
+  // han frå utboksen ved sidelasting, og prøver på nytt til det lykkast.
+  const OUTBOX_KEY = 'sc_cmt_outbox';
+  function _outbox() {
+    try { return JSON.parse(localStorage.getItem(OUTBOX_KEY) || '{}') || {}; } catch { return {}; }
+  }
+  function _outboxSave(o) { try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(o)); } catch {} }
+  function _outboxAdd(targetKey, c) {
+    const o = _outbox(); o[c.id] = { t: targetKey, c }; _outboxSave(o);
+  }
+  function _outboxDone(id) {
+    const o = _outbox(); if (o[id]) { delete o[id]; _outboxSave(o); }
+  }
+  let _flushing = false;
+  async function flushOutbox() {
+    if (_flushing || !window.CommentSync || !CommentSync._enabled()) return;
+    const o = _outbox(); const ids = Object.keys(o);
+    if (!ids.length) return;
+    _flushing = true;
+    try {
+      for (const id of ids) {
+        if (await CommentSync.push(o[id].t, o[id].c)) _outboxDone(id);
+      }
+    } finally { _flushing = false; }
+  }
+  // Legg utboks-kommentarar for denne tråden inn i lista (synlege med ein gong etter reload).
+  function _restoreOutbox(targetKey) {
+    const o = _outbox(); const store = _comments[targetKey] = _comments[targetKey] || {};
+    for (const id in o) {
+      if (o[id].t === targetKey && !store[id] && !_deleted.has(id)) store[id] = { ...o[id].c };
+    }
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', flushOutbox);
+    setTimeout(flushOutbox, 3000);
+    setInterval(flushOutbox, 30000);
+  }
+
   function subComments(targetKey) {
     if (_cSub.has(targetKey) || !window.SC) return;
     const g = SC.gun();
     if (!g) return;                 // Gun.js ikke lastet — ikke marker som abonnert, så vi kan prøve igjen
     _cSub.add(targetKey);
     _comments[targetKey] = _comments[targetKey] || {};
+    _restoreOutbox(targetKey);
     const ref = g.get(SC.NS.comments).get(targetKey);
     if (!ref || typeof ref.map !== 'function') return;
     const isProfile = targetKey.indexOf('profile:') === 0;
@@ -267,7 +309,7 @@ const Social = (() => {
     if (!window.CommentSync || !CommentSync._enabled() || _remoteHydrating) return;
     _remoteHydrating = true;
     try {
-      const rows = await CommentSync.list(400);
+      const rows = await CommentSync.list(1000);
       const touched = new Set();
       for (const c of rows) {
         if (!c || !c.id || !c._target || _deleted.has(c.id)) continue;
@@ -508,7 +550,8 @@ const Social = (() => {
     const store = _comments[targetKey] = _comments[targetKey] || {};
     if (!store[c.id]) { store[c.id] = { ...c }; renderComments(targetKey); }
     // … og speil til den varige, delte sky-lista så andre einingar ser han.
-    if (window.CommentSync) CommentSync.push(targetKey, c);
+    _outboxAdd(targetKey, c);
+    if (window.CommentSync) CommentSync.push(targetKey, c).then(ok => { if (ok) _outboxDone(c.id); });
     if (inp) inp.value = '';
     clearCommentMedia(targetKey);
     hideEmoji(targetKey);
@@ -541,6 +584,7 @@ const Social = (() => {
     const isWallOwner = pm && pm[1] === u.username;
     if (c.author !== u.username && !isWallOwner && !isWwlAdmin(targetKey, u)) return;
     try { if (c._k) SC.gun().get(SC.NS.comments).get(targetKey).get(c._k).put(null); } catch {}
+    _outboxDone(id);
     _deleted.add(id);                                  // hindra at sky-polling legg han inn att
     if (window.CommentSync) CommentSync.remove(id, c.author);   // fjern frå varig sky-liste
     delete store[id];

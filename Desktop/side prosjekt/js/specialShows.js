@@ -23,6 +23,8 @@ const SpecialShows = (() => {
       durationSec: 3712,
       // Vist som lenke på arkivposten (Live Archive) FØRST etter at miksen har gått på lufta.
       linkUrl: 'https://lemonchill.bandcamp.com/album/minifuse',
+      // Ekstra lenker nedst i tracklisten på delingssida/arkivet.
+      extraLinks: ['https://www.discogs.com/artist/1272926-Lemonchill'],
       slots: [
         '2026-10-03T18:00:00Z',
         '2026-10-10T18:00:00Z',

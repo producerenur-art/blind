@@ -1139,9 +1139,7 @@ const Discover = (() => {
     setTimeout(_loadWhatWentLive, 0);   // container #disc-wwl finst når innerHTML er sett
     // Rekkjefølgje: Dark Drone-kortet over Lemonchill FØRST når Lemonchill sin siste sending er ferdig (24.10.2026 21:02 CEST);
     // fram til då står Lemonchill øverst og Dark Drone rett under.
-    const _ddFirst = Date.now() >= lastSlotEnd;
-    return `
-        ${_ddFirst ? renderDarkDroneAd() : ''}
+    const lcCard = `
         <div class="lc-ad" id="lc-ad">
           <div class="lc-ad-tag">Live Broadcast / Podcast</div>
           <h2 class="lc-ad-title">Welcome to — ${_lcEsc(show.artist)} on SiriusFM</h2>
@@ -1156,9 +1154,21 @@ const Discover = (() => {
             <button class="btn btn-ghost btn-sm" onclick="Discover.showLemonchillAbout()">About Lemonchill</button>
           </div>
           ${allAired && tracks ? `<details class="lc-ad-tracks"><summary>Tracklist</summary><ol>${tracks}</ol></details>` : ''}
-        </div>
-        ${_ddFirst ? '' : renderDarkDroneAd()}
-        ${renderDimDayAd()}
+        </div>`;
+    // Timeplan (brukarønske 25.10.2026): alle sendekort står i rekkjefølgje etter NESTE sending —
+    // Chlorophil (direkte), Ambient Mann, Dim Day; Lemonchill (alle 4 spelt) til slutt.
+    const _now = Date.now();
+    const _next = sh => { const s = sh && sh.slots.find(x => Date.parse(x) + sh.durationSec * 1000 > _now); return s ? Date.parse(s) : Infinity; };
+    const _byId = id => (typeof SpecialShows !== 'undefined' && SpecialShows.byId) ? SpecialShows.byId(id) : null;
+    const _chl = (typeof ChlorophilLive !== 'undefined') ? ChlorophilLive.slots(_now, 1)[0] : undefined;
+    const cards = [
+      { t: _chl == null ? Infinity : _chl, html: renderChlorophilLive() },
+      { t: _next(_byId('ambientmann-dark-drone-001')), html: renderDarkDroneAd() },
+      { t: _next(_byId('dimday-001')), html: renderDimDayAd() },
+      { t: _next(show), html: lcCard },
+    ].sort((x, y) => x.t - y.t);
+    return `
+        ${cards.map(c => c.html).join('')}
         <div id="disc-wwl"></div>`;
   }
 
@@ -1212,13 +1222,11 @@ const Discover = (() => {
         <div class="lc-ad" id="dd-ad">
           <div class="lc-ad-tag">Live Broadcast / Podcast · Dark Drone</div>
           <h2 class="lc-ad-title">Welcome to — ${_lcEsc(show.artist)} on SiriusFM</h2>
-          <p class="lc-ad-on">Dark Drone · airing on the SiriusFM 24/7 Cycle</p>
+          <p class="lc-ad-on">Airing on the SiriusFM 24/7 Cycle</p>
           <p class="lc-ad-lines">${lines.map(_lcEsc).join('<br>')}</p>
           <p class="lc-ad-note">Norwegian time (CET) · once a week, four Fridays</p>
+          <p class="lc-ad-note"><a class="lc-ad-link" href="${_lcEsc(show.linkUrl)}" target="_blank" rel="noopener noreferrer">${_lcEsc(show.linkUrl)}</a></p>
           <p class="lc-ad-note">${_lcEsc(show.about || '')}</p>
-          <div class="lc-ad-actions">
-            <a class="lc-ad-link" href="${_lcEsc(show.linkUrl)}" target="_blank" rel="noopener noreferrer">ambientmann.com</a>
-          </div>
         </div>`;
   }
 
@@ -2077,7 +2085,6 @@ const Discover = (() => {
           </div>
         </div>
 
-        ${renderChlorophilLive()}
         ${renderLemonchillAd()}
 
         <!-- MUSIC TAB -->
