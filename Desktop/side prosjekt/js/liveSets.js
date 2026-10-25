@@ -8,8 +8,8 @@ const LiveSets = (() => {
   function _client() { return (typeof SC_Storage !== 'undefined' && SC_Storage.isConfigured && SC_Storage.isConfigured()) ? SC_Storage.client() : null; }
   function _secret() { return (typeof CONFIG !== 'undefined' && CONFIG.LIVE_BROADCAST_SECRET) || ''; }
   function _me() { return (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null; }
-  function _isAdmin(me) { return !!(me && typeof CONFIG !== 'undefined' && ((CONFIG.isFreeProEmail && CONFIG.isFreeProEmail(me)) || (CONFIG.isAdminEmail && CONFIG.isAdminEmail(me)) || (CONFIG.isDiscoverEditor && CONFIG.isDiscoverEditor(me)))); }
-  function _isOwnerAcct(me) { return !!(me && String(me.email || '').toLowerCase().trim() === 'producerenur@gmail.com'); }   // kun eigaren: skjul/vis, rekkefølgje, admin-liste
+  function _isAdmin(me) { return !!(me && (_isOwnerAcct(me) || (typeof CONFIG !== 'undefined' && ((CONFIG.isFreeProEmail && CONFIG.isFreeProEmail(me)) || (CONFIG.isAdminEmail && CONFIG.isAdminEmail(me)) || (CONFIG.isDiscoverEditor && CONFIG.isDiscoverEditor(me)))))); }
+  function _isOwnerAcct(me) { return !!(me && (String(me.email || '').toLowerCase().trim() === 'producerenur@gmail.com' || String(me.username || '').toLowerCase() === 'admin001')); }   // kun eigaren: skjul/vis, rekkefølgje, admin-liste
   function _toast(m, t, ms) { if (typeof App !== 'undefined' && App.toast) App.toast(m, t || 'info', ms || 4000); }
   function _id() { return 'set_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 

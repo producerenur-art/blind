@@ -1276,7 +1276,7 @@ const Discover = (() => {
     // Brukarkrav 25.10.2026: redigering/skjuling/flytting/sletting/bytte av fil+bilete KUN for producerenur@gmail.com (ikkje andre admin-e-postar).
     try {
       const me = Auth.current();
-      return !!me && WWL_ADMIN_EMAILS.includes(String(me.email || '').toLowerCase().trim());
+      return !!me && (WWL_ADMIN_EMAILS.includes(String(me.email || '').toLowerCase().trim()) || String(me.username || '').toLowerCase() === 'admin001');   // eigar-kontoen = producerenur@gmail.com = brukarnamn Admin001 (e-posten manglar av og til i den lokale sesjonen)
     } catch (_) { return false; }
   }
   // Alle (òg gjester) får ⬇ Download + tekst + eiga lenke; berre eigaren får redigeringsknappar.
@@ -1289,7 +1289,7 @@ const Discover = (() => {
     if (_wwlIsAdmin()) return true;
     try {
       const me = Auth.current(); if (!me) return false;
-      return !!(CONFIG.isAdminEmail(me) || (CONFIG.isFreeProEmail && CONFIG.isFreeProEmail(me)) || (CONFIG.isDiscoverEditor && CONFIG.isDiscoverEditor(me)));
+      return !!(_wwlIsAdmin() || CONFIG.isAdminEmail(me) || (CONFIG.isFreeProEmail && CONFIG.isFreeProEmail(me)) || (CONFIG.isDiscoverEditor && CONFIG.isDiscoverEditor(me)));
     } catch (_) { return false; }
   }
   function _wwlEditorBtns(st, id) {
