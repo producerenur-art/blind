@@ -1281,6 +1281,29 @@ const Discover = (() => {
   }
   // Alle (òg gjester) får ⬇ Download + tekst + eiga lenke; berre eigaren får redigeringsknappar.
   function _wwlIsLoggedIn() { return true; }   // 25.10.2026: Download er open for ALLE (òg gjester); redigering er framleis berre eigar
+  // Redigerarar (CONFIG.DISCOVER_EDITOR_EMAILS: Chlorophil, Dim Day): kan redigere SINE EIGNE sett (tekst, bilete, byte lydfil) når dei er innlogga.
+  // Eigaren (producerenur@gmail.com) kan redigere ALT. Flytte/skjule/slette er berre eigaren.
+  const _WWL_EDITOR_PREFIX = { 'shinichizen@gmail.com': 'chlorophil', 'astrodim78@gmail.com': 'dimday' };
+  function _wwlCanEditSet(st) {
+    if (!st) return false;
+    if (_wwlIsAdmin()) return true;
+    try {
+      const me = Auth.current(); if (!me) return false;
+      const em = String(me.email || '').toLowerCase().trim();
+      if (!(CONFIG.isDiscoverEditor && CONFIG.isDiscoverEditor(me))) return false;
+      const pre = _WWL_EDITOR_PREFIX[em];
+      const own = st.owner_username && String(st.owner_username).toLowerCase() === String(me.username || '').toLowerCase();
+      return !!own || (!!pre && _wwlSlug(st.display_name).indexOf(pre) === 0);
+    } catch (_) { return false; }
+  }
+  function _wwlEditorBtns(st, id) {
+    return `<button class="btn btn-ghost" onclick="Discover.wwlEdit('${id}')">✏️ Edit text</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('wwl-img-${id}').click()">🖼 ${st.cover_url ? 'Replace image' : 'Add image'}</button>
+            <input type="file" id="wwl-img-${id}" accept="image/*" style="display:none" onchange="Discover.wwlSetImage('${id}',this)">
+            ${st.cover_url ? `<button class="btn btn-ghost" onclick="Discover.wwlRemoveImage('${id}')">Remove image</button>` : ''}
+            <button class="btn btn-ghost" onclick="document.getElementById('wwl-file-${id}').click()">🎵 Replace audio</button>
+            <input type="file" id="wwl-file-${id}" accept="audio/*" style="display:none" onchange="Discover.wwlReplaceAudio('${id}',this)">`;
+  }
   const _wwlNewest = {};   // slug → id på nyaste sett (fylt i _loadWhatWentLive)
   const _WWL_SLUG_ALIAS = { djarcturiagenetics: 'djarcturiangenetics', djarctruriagenetics: 'djarcturiangenetics', djarcturuangenetics: 'djarcturiangenetics', arcturiangenetics: 'djarcturiangenetics', arcturiagenetics: 'djarcturiangenetics' };
   function _wwlSlug(name) {
@@ -1393,8 +1416,10 @@ const Discover = (() => {
             <label class="wwl-vol" title="Volume" style="display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--text2)">🔈<input type="range" class="wwl-vol-in" min="0" max="${_wwlVolMax()}" step="1" value="${_wwlVolNow()}" oninput="Discover.wwlVol(this.value)" style="width:110px" aria-label="Volume"></label>
             <button class="btn btn-ghost" onclick="Discover.wwlCopy('${id}')">📋 Copy link</button>
             ${_wwlIsLoggedIn() ? `<button class="btn btn-ghost" onclick="Discover.wwlDownload('${id}')">⬇ Download</button><button class="btn btn-ghost" onclick="Discover.wwlDownloadMp3('${id}')">⬇ MP3 download</button>` : ''}
+            ${_wwlCanEditSet(st) ? _wwlEditorBtns(st, id) : ''}
             ${st.display_name ? `<span class="wwl-dj">${_lcLink(st.display_name)}</span>` : ''}
           </div>
+          ${_wwlCanEditSet(st) ? `<div class="wwl-edit" id="wwl-edit-${id}"></div>` : ''}
           ${st.track_title ? `<div class="wwl-public-text">${_lcLink(st.track_title)}</div>` : ''}
           ${_wwlTracks(st)}
           <div class="wwl-url" style="font-size:.75rem;margin:.15rem 0 .4rem;word-break:break-all"><a href="${_lcEsc(_wwlUrl(st))}" target="_blank" rel="noopener noreferrer" style="color:var(--text2)">${_lcEsc(_wwlUrl(st))}</a></div>
@@ -1626,7 +1651,7 @@ const Discover = (() => {
   }
   function wwlEdit(id) {
     const st = _wwlSets[id], box = document.getElementById('wwl-edit-' + id);
-    if (!st || !box || !_wwlIsAdmin()) return;     // KUN admin
+    if (!st || !box || !_wwlCanEditSet(st)) return;     // eigar eller eigen-sett-redigerar
     const inp = 'width:100%;box-sizing:border-box;padding:0.55rem 0.7rem;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--text);font:inherit;margin:0.25rem 0 0.6rem';
     box.innerHTML = `
       <label style="font-size:0.8rem;color:var(--text2)">Name</label>
@@ -1663,7 +1688,7 @@ const Discover = (() => {
   }
   async function wwlSetImage(id, input) {
     const st = _wwlSets[id]; const f = input && input.files && input.files[0];
-    if (!st || !f || !_wwlIsAdmin()) return;   // KUN admin
+    if (!st || !f || !_wwlCanEditSet(st)) return;
     if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) { if (typeof App !== 'undefined') App.toast('Cloud storage is not set up.', 'error'); return; }
     if (typeof App !== 'undefined') App.toast('Uploading image…', 'info', 4000);
     try {
@@ -1675,7 +1700,7 @@ const Discover = (() => {
     input.value = '';
   }
   async function wwlRemoveImage(id) {
-    const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
+    const st = _wwlSets[id]; if (!st || !_wwlCanEditSet(st)) return;
     const ok = await LiveSets.update(id, { coverUrl: '' });
     if (ok) { st.cover_url = ''; st.updated_at = new Date().toISOString(); _wwlRerender(st); }
     else if (typeof App !== 'undefined') App.toast('Could not remove the image: ' + (LiveSets.update.lastError || 'unknown error'), 'error', 8000);
@@ -1700,7 +1725,7 @@ const Discover = (() => {
   }
   async function wwlReplaceAudio(id, input) {
     const st = _wwlSets[id]; const f = input && input.files && input.files[0];
-    if (!st || !f || !_wwlIsAdmin()) return;
+    if (!st || !f || !_wwlCanEditSet(st)) return;
     if (typeof SC_Storage === 'undefined' || !SC_Storage.isConfigured || !SC_Storage.isConfigured()) { if (typeof App !== 'undefined') App.toast('Cloud storage is not set up.', 'error'); return; }
     try {
       const { res } = await _wwlUploadAudio(f);
@@ -1847,7 +1872,7 @@ const Discover = (() => {
     else if (typeof App !== 'undefined') App.toast('Could not undo — run migration 0037_restore_live_set.sql in Supabase first.', 'error', 8000);
   }
   async function wwlSave(id) {
-    const st = _wwlSets[id]; if (!st || !_wwlIsAdmin()) return;
+    const st = _wwlSets[id]; if (!st || !_wwlCanEditSet(st)) return;
     const name = (document.getElementById('wwl-n-' + id) || {}).value || '';
     const text = (document.getElementById('wwl-t-' + id) || {}).value || '';
     const tracklist = (document.getElementById('wwl-tl-' + id) || {}).value || '';

@@ -48,7 +48,7 @@ const CONFIG = {
   // Discover-redigering (2026-10-12): kontoar som får SAMME knappar som eigaren under Discover →
   // «What went live» (bytt bilete/lyd, Edit text, Delete, MP3 download, opplasting, deling). Gjeld BERRE
   // opptaksarkivet (js/discover.js + js/liveSets.js) — ingen moderering/admin ellers (det er ADMIN_EMAILS).
-  DISCOVER_EDITOR_EMAILS: ['shinichizen@gmail.com'],
+  DISCOVER_EDITOR_EMAILS: ['shinichizen@gmail.com', 'astrodim78@gmail.com'],
   isDiscoverEditor(user) {
     try { return !!user && this.DISCOVER_EDITOR_EMAILS.includes(String(user.email || '').toLowerCase().trim()); }
     catch (_) { return false; }
