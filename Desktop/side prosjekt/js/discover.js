@@ -1279,8 +1279,8 @@ const Discover = (() => {
       return !!me && WWL_ADMIN_EMAILS.includes(String(me.email || '').toLowerCase().trim());
     } catch (_) { return false; }
   }
-  // Innlogga (ikkje gjest): får ⬇ Download i tillegg til Play/Stop/Copy link. Gjester får ikkje nedlasting.
-  function _wwlIsLoggedIn() { try { return !!Auth.current(); } catch (_) { return false; } }
+  // Alle (òg gjester) får ⬇ Download + tekst + eiga lenke; berre eigaren får redigeringsknappar.
+  function _wwlIsLoggedIn() { return true; }   // 25.10.2026: Download er open for ALLE (òg gjester); redigering er framleis berre eigar
   const _wwlNewest = {};   // slug → id på nyaste sett (fylt i _loadWhatWentLive)
   const _WWL_SLUG_ALIAS = { djarcturiagenetics: 'djarcturiangenetics', djarctruriagenetics: 'djarcturiangenetics', djarcturuangenetics: 'djarcturiangenetics', arcturiangenetics: 'djarcturiangenetics', arcturiagenetics: 'djarcturiangenetics' };
   function _wwlSlug(name) {
@@ -1397,6 +1397,7 @@ const Discover = (() => {
           </div>
           ${st.track_title ? `<div class="wwl-public-text">${_lcLink(st.track_title)}</div>` : ''}
           ${_wwlTracks(st)}
+          <div class="wwl-url" style="font-size:.75rem;margin:.15rem 0 .4rem;word-break:break-all"><a href="${_lcEsc(_wwlUrl(st))}" target="_blank" rel="noopener noreferrer" style="color:var(--text2)">${_lcEsc(_wwlUrl(st))}</a></div>
           <div class="wwl-seek" id="wwl-seek-${id}">
           <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlPreview('${id}', this.value)" onchange="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
           <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st._dur || st.duration_sec)}</span>

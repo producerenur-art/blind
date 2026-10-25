@@ -244,8 +244,8 @@ const LiveSets = (() => {
   function canEdit(set) {
     const me = _me();
     if (!me || !set) return false;
-    if (_isAdmin(me)) return true;
-    return !!set.owner_username && String(set.owner_username).toLowerCase() === String(me.username || '').toLowerCase();
+    // Brukarkrav 25.10.2026: ALLE sett (òg live-sett frå andre kontoar) kan KUN redigerast av producerenur@gmail.com.
+    return _isOwnerAcct(me);
   }
 
   async function update(id, fields) {
