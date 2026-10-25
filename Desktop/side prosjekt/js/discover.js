@@ -1281,19 +1281,15 @@ const Discover = (() => {
   }
   // Alle (òg gjester) får ⬇ Download + tekst + eiga lenke; berre eigaren får redigeringsknappar.
   function _wwlIsLoggedIn() { return true; }   // 25.10.2026: Download er open for ALLE (òg gjester); redigering er framleis berre eigar
-  // Redigerarar (CONFIG.DISCOVER_EDITOR_EMAILS: Chlorophil, Dim Day): kan redigere SINE EIGNE sett (tekst, bilete, byte lydfil) når dei er innlogga.
-  // Eigaren (producerenur@gmail.com) kan redigere ALT. Flytte/skjule/slette er berre eigaren.
-  const _WWL_EDITOR_PREFIX = { 'shinichizen@gmail.com': 'chlorophil', 'astrodim78@gmail.com': 'dimday' };
+  // Brukarkrav 25.10.2026: ALLE administratorar og gratis-kontoar (ADMIN_EMAILS, FREE_PRO_EMAILS, DISCOVER_EDITOR_EMAILS) kan redigere ALLE sett:
+  // Edit text (+ tracklist), bilete (byt/fjern), Replace audio, Download. Flytte/skjule/slette er berre eigaren (producerenur@gmail.com).
+  // Gjester ser berre Play/Stop/Copy link/Download/MP3 download og kommentarfelt.
   function _wwlCanEditSet(st) {
     if (!st) return false;
     if (_wwlIsAdmin()) return true;
     try {
       const me = Auth.current(); if (!me) return false;
-      const em = String(me.email || '').toLowerCase().trim();
-      if (!(CONFIG.isDiscoverEditor && CONFIG.isDiscoverEditor(me))) return false;
-      const pre = _WWL_EDITOR_PREFIX[em];
-      const own = st.owner_username && String(st.owner_username).toLowerCase() === String(me.username || '').toLowerCase();
-      return !!own || (!!pre && _wwlSlug(st.display_name).indexOf(pre) === 0);
+      return !!(CONFIG.isAdminEmail(me) || (CONFIG.isFreeProEmail && CONFIG.isFreeProEmail(me)) || (CONFIG.isDiscoverEditor && CONFIG.isDiscoverEditor(me)));
     } catch (_) { return false; }
   }
   function _wwlEditorBtns(st, id) {
