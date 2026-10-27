@@ -118,7 +118,7 @@ module.exports = async (req, res) => {
       const anon = 'sb_publishable_JEV-NS9FGZ_KpSvQTPwlZg_LlyVy_eS';
       const _ALIAS = { djarcturiagenetics: 'djarcturiangenetics', djarctruriagenetics: 'djarcturiangenetics', djarcturuangenetics: 'djarcturiangenetics', arcturiangenetics: 'djarcturiangenetics', arcturiagenetics: 'djarcturiangenetics' };   // hald lik lista i js/discover.js
       const _slugify = (x) => { const y = String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/(?<=[a-z])\d+$/, ''); return _ALIAS[y] || y; };
-      const _sel = 'select=id,display_name,track_title,cover_url,audio_url,tracklist';
+      const _sel = 'select=id,display_name,track_title,cover_url,audio_url,tracklist,link_url';
       const _q = wwlN ? `ended_at=not.is.null&audio_url=neq.&order=ended_at.desc&${_sel}&limit=300`
         : `${wwlM ? 'wwl_no=eq.' + wwlM[1] : slugM && !/^set_/i.test(d) ? 'id=like.set_*' + slugM[1].toLowerCase() + '&order=created_at.desc' : 'id=eq.' + encodeURIComponent(d)}&${_sel}&limit=1`;
       const r = await fetch(`${base}/rest/v1/live_sets?${_q}`,
@@ -144,12 +144,12 @@ module.exports = async (req, res) => {
                 meta = Array.isArray(mj) && mj[0] ? mj[0] : null;
               } catch (_) { /* bruk konfigen */ }
             }
-            p = { k: 'audio', t: _sh.title, a: 'Airing on the SiriusFM 24/7 Cycle', i: (meta && meta.cover_url) || _sh.coverUrl, dsc: _sh.about || '' };
+            p = { k: 'audio', t: _sh.title, a: 'Airing on the SiriusFM 24/7 Cycle', i: (meta && meta.cover_url) || _sh.coverUrl, dsc: _sh.about || '', l: _sh.linkUrl || '' };
           }
         } catch (_) { /* generisk side */ }
       }
       if (row && row.id) shareKey = row.id;
-      if (row) p = { k: 'audio', t: row.display_name, a: row.track_title, i: row.cover_url, m: row.audio_url, mt: mimeFromUrl(row.audio_url), tl: row.tracklist };
+      if (row) p = { k: 'audio', t: row.display_name, a: row.track_title, i: row.cover_url, m: row.audio_url, mt: mimeFromUrl(row.audio_url), tl: row.tracklist, l: row.link_url || '' };
     } catch (_) { /* fall tilbake til generisk side */ }
   } else {
     p = decodePayload(d) || {};
@@ -385,6 +385,7 @@ ${tags.join('\n')}
       ${player}
       <h1>${escLink(title)}</h1>
       ${artist ? `<p class="artist">${escLink(artist)}</p>` : '<div style="height:.6rem"></div>'}
+      ${(extLink && kind !== 'link') ? `<p class="artist"><a class="plain" href="${esc(extLink)}" target="_blank" rel="noopener">${esc(extLink.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''))}</a></p>` : ''}
       ${tracksHtml}
       ${(kind === 'link' && extLink)
         ? `<a class="cta" href="${esc(extLink)}" target="_blank" rel="noopener">▶ Open link</a>
