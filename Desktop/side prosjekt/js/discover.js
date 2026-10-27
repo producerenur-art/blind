@@ -1408,7 +1408,7 @@ const Discover = (() => {
     const id = _lcEsc(st.id);
     // Offentleg (gjester og vanlege brukarar): berre Play og Stopp — inga tekst, ingen deling, ingen redigering.
     if (!_wwlIsAdmin()) {
-      const pubImg = st.cover_url ? `<div class="wwl-art wwl-art-public" style="cursor:zoom-in" onclick="Discover.wwlZoom('${id}')"><img src="${_lcEsc(st.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover"></div>` : '';
+      const pubImg = st.cover_url ? `<div class="wwl-art wwl-art-public" style="cursor:zoom-in" onclick="Discover.wwlZoom('${id}')"><img src="${_lcEsc(st.cover_url)}" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover"></div>` : '';
       return `
       <div class="wwl-card wwl-card-public" id="wwl-${id}">
         ${pubImg}
@@ -1434,7 +1434,7 @@ const Discover = (() => {
         </div>
       </div>`;
     }
-    const art = st.cover_url ? `<img src="${_lcEsc(st.cover_url)}" alt="" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="Discover.wwlZoom('${id}')">` : '<span style="font-size:2rem">🎧</span>';
+    const art = st.cover_url ? `<img src="${_lcEsc(st.cover_url)}" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="Discover.wwlZoom('${id}')">` : '<span style="font-size:2rem">🎧</span>';
     const mins = (st._dur || st.duration_sec) ? _wwlClock(st._dur || st.duration_sec) : '';
     return `
       <div class="wwl-card" id="wwl-${id}"${st.hidden ? ' style="opacity:.6;outline:1px dashed #f59e0b"' : ''}>
@@ -1690,6 +1690,8 @@ const Discover = (() => {
       return new File([blob], (f.name || 'cover').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
     } catch (_) { return f; }
   }
+  // Varm opp forhandsbildet (Facebook/X) med ein gong omslaget er sett, så det alltid er ferdig laga før nokon deler lenka.
+  function _wwlWarmOg(url) { try { if (url) fetch('/api/share?cover=' + encodeURIComponent(url), { cache: 'no-store' }).catch(() => {}); } catch (_) {} }
   async function wwlSetImage(id, input) {
     const st = _wwlSets[id]; const f = input && input.files && input.files[0];
     if (!st || !f || !_wwlCanEditSet(st)) return;
@@ -1698,7 +1700,7 @@ const Discover = (() => {
     try {
       const res = await SC_Storage.upload(await _wwlShrinkImage(f), { prefix: 'live-sets-covers' });
       const ok = await LiveSets.update(id, { coverUrl: res.url });
-      if (ok) { st.cover_url = res.url; st.updated_at = new Date().toISOString(); _wwlRerender(st); if (typeof App !== 'undefined') App.toast('Image saved.', 'success'); }
+      if (ok) { st.cover_url = res.url; st.updated_at = new Date().toISOString(); _wwlWarmOg(res.url); _wwlRerender(st); if (typeof App !== 'undefined') App.toast('Image saved.', 'success'); }
       else if (typeof App !== 'undefined') App.toast('Could not save the image: ' + (LiveSets.update.lastError || 'unknown error'), 'error', 8000);
     } catch (e) { if (typeof App !== 'undefined') App.toast('Upload failed: ' + (e.message || e), 'error'); }
     input.value = '';
@@ -1827,6 +1829,7 @@ const Discover = (() => {
       const dur = await _wwlAudioDuration(up);
       const ok = await LiveSets.addUpload({ displayName: name, trackTitle: text, coverUrl: cover, audioUrl: res.url, durationSec: dur, isLive: live });
       if (!ok) throw new Error('Saved the file but could not create the entry (database function missing?)');
+      _wwlWarmOg(cover);
       toast('Uploaded — it is now visible to everyone.', 'success', 7000);
       const box = g('wwl-upl'); if (box) box.innerHTML = '';
       _loadWhatWentLive();

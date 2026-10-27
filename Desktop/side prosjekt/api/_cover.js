@@ -3,6 +3,34 @@
 // kuttar kvadratiske bilete til bredformat. Her: første ramme, heile coveret midt i, uskarp/mørkna
 // utviding på sidene. Berre bilete frå vårt eige Supabase-lager (ikkje ein open bilde-proxy).
 const sharp = require('sharp');
+const crypto = require('crypto');
+
+// Ferdig-laga forhandsbilete blir lagra i lageret (og-cache/<hash av kjelde-URL>.jpg) første gong dei blir laga, og
+// levert derifrå etterpå. Då er bildet alltid klart før Facebook spør (dei gir opp raskt), og eit nytt bilete
+// (ny URL etter «Replace image») får automatisk ny nøkkel. Feil her skal aldri øydeleggje svaret — vi lagar då bildet som før.
+const CACHE_DIR = 'og-cache';
+function cacheUrl(key) { return `${process.env.SUPABASE_URL || 'https://qefdyxpyjwpohsmmmksf.supabase.co'}/storage/v1/object/public/soundcore-media/${CACHE_DIR}/${key}.jpg`; }
+async function cacheGet(key) {
+  try {
+    const r = await fetch(cacheUrl(key), { signal: AbortSignal.timeout(2500) });
+    return r.ok ? Buffer.from(await r.arrayBuffer()) : null;
+  } catch (_) { return null; }
+}
+async function cachePut(key, buf) {
+  const sk = process.env.SUPABASE_SERVICE_ROLE_KEY; if (!sk) return;
+  try {
+    const base = process.env.SUPABASE_URL || 'https://qefdyxpyjwpohsmmmksf.supabase.co';
+    await fetch(`${base}/storage/v1/object/soundcore-media/${CACHE_DIR}/${key}.jpg`, {
+      method: 'POST', headers: { apikey: sk, Authorization: `Bearer ${sk}`, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' }, body: buf, signal: AbortSignal.timeout(5000),
+    });
+  } catch (_) { /* hurtiglager er ein bonus */ }
+}
+function send(res, out) {
+  res.setHeader('Content-Type', 'image/jpeg');
+  res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400');
+  res.statusCode = 200;
+  return res.end(out);
+}
 
 function allowedHost(h) {
   try { if (process.env.SUPABASE_URL && new URL(process.env.SUPABASE_URL).host === h) return true; } catch (_) {}
@@ -15,6 +43,9 @@ module.exports = async function coverHandler(req, res) {
     if (u.protocol !== 'https:' || !allowedHost(u.host) || !u.pathname.startsWith('/storage/v1/object/public/')) {
       res.statusCode = 400; return res.end('bad url');
     }
+    const key = crypto.createHash('sha1').update(u.href).digest('hex');
+    const hit = await cacheGet(key);
+    if (hit) return send(res, hit);
     const r = await fetch(u.href);
     if (!r.ok) { res.statusCode = 404; return res.end('not found'); }
     const buf = Buffer.from(await r.arrayBuffer());
@@ -23,10 +54,8 @@ module.exports = async function coverHandler(req, res) {
     const bg = await sharp(buf, { pages: 1 }).resize(W, H, { fit: 'cover' }).blur(40).modulate({ brightness: 0.55 }).jpeg({ quality: 80 }).toBuffer();
     const fg = await sharp(buf, { pages: 1 }).resize(H, H, { fit: 'inside' }).flatten({ background: '#0a0f2a' }).png().toBuffer();
     const out = await sharp(bg).composite([{ input: fg, gravity: 'center' }]).jpeg({ quality: 84 }).toBuffer();
-    res.setHeader('Content-Type', 'image/jpeg');
-    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400');
-    res.statusCode = 200;
-    return res.end(out);
+    await cachePut(key, out);
+    return send(res, out);
   } catch (e) {
     res.statusCode = 500; return res.end('error');
   }
