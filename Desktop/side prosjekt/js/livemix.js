@@ -229,7 +229,7 @@ const LiveMix = (() => {
   // som signaling). State er modul-scopet så sendingen/lyden overlever at
   // modalen lukkes (App.closeModal() skjuler bare overlayet, tømmer ikke DOM).
   const _bc = { dj: null, ln: null, stream: null, ctx: null, analL: null, analR: null, raf: null, room: 'test', activeBooking: null, devBypass: false, ownerBypass: false, freeLive: false,
-    visual: 'image', coverUrl: '', coverImg: null, canvas: null, canvasRaf: null, camStream: null, outStream: null, presenterName: '', trackTitle: '', linkUrl: '', heartbeatTimer: null,
+    visual: 'image', coverUrl: '', coverImg: null, canvas: null, canvasRaf: null, camStream: null, outStream: null, presenterName: '', genre: '', trackTitle: '', linkUrl: '', heartbeatTimer: null,
     listening: false, ended: false, permGranted: false };
   let _lnReconnecting = false;
 
@@ -282,7 +282,7 @@ const LiveMix = (() => {
         p_is_live:        !!isLive,
         p_presenter_name: isLive ? ((_bc.presenterName || '') + _zenMark(_zenSet())) : '',
         p_room:           isLive ? (_bc.room || '') : '',
-        p_track_title:    isLive ? (_bc.trackTitle || '') : '',
+        p_track_title:    isLive ? (_bcNow() || '') : '',
         p_link_url:       isLive ? (_bc.linkUrl || '') : '',
       });
       if (error) _bcLog('Global "go live" status not published: ' + error.message);
@@ -361,7 +361,7 @@ const LiveMix = (() => {
     const active = cur ? _activeBooking(cur) : null;
     const devBypass = _isLocalDev();
     const owner = _isOwner(cur);
-    const freeLive = typeof CONFIG !== 'undefined' && !!CONFIG.isFreeLiveEmail && CONFIG.isFreeLiveEmail(cur);
+    const freeLive = typeof CONFIG !== 'undefined' && ((!!CONFIG.isFreeLiveEmail && CONFIG.isFreeLiveEmail(cur)) || (!!CONFIG.isFreeGoLiveEmail && CONFIG.isFreeGoLiveEmail(cur)));
     return { user: cur, active, next: cur ? _nextBooking(cur) : null, devBypass, owner, freeLive, ok: !!active || devBypass || owner || freeLive };
   }
 
@@ -442,7 +442,11 @@ const LiveMix = (() => {
           : (_bc.devBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">🧪 Local test — booking gate bypassed</div>`
               : (_bc.ownerBypass ? `<div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:999px;background:rgba(245,158,11,0.14);color:var(--accent);margin:0 0 1rem">${_I('radio')} ${_bc.freeLive ? 'Free broadcaster' : 'Owner'} — broadcasting without booking</div>` : ''))}
         <label style="${lbl}">Your artist/presenter name</label>
-        <input id="bc-presenter" value="${_esc(_bc.presenterName || '')}" placeholder="Your artist name" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
+        <input id="bc-presenter" list="bc-names" value="${_esc(_bc.presenterName || '')}" placeholder="Your artist name" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
+        <datalist id="bc-names">${_nameHistory().map(n => `<option value="${_esc(n)}">`).join('')}</datalist>
+        <label style="${lbl}">Genre</label>
+        <input id="bc-genre" list="bc-genres" value="${_esc(_bc.genre || '')}" placeholder="e.g. Psytrance, Dark Psy, Ambient" style="${inp};margin:0 0 0.9rem">
+        <datalist id="bc-genres"><option value="Psytrance"><option value="Dark Psy"><option value="Psychill"><option value="Goa Trance"><option value="Ambient"><option value="Dark Drone"><option value="Techno"><option value="House"><option value="Drum &amp; Bass"><option value="Downtempo"></datalist>
         <p style="font-size:0.74rem;color:var(--text3);margin:-0.55rem 0 0.9rem">Shown to ALL visitors on the site as "with {your name}" while you're live — they get automatically switched over from their station to your broadcast.</p>
         <label style="${lbl}">Room name</label>
         <input id="bc-room" value="${_esc(_bc.room || 'live')}" ${live ? 'disabled' : ''} style="${inp};margin:0 0 0.9rem">
@@ -646,12 +650,19 @@ const LiveMix = (() => {
   }
   if (typeof window !== 'undefined') window.addEventListener('pagehide', () => { if (_bc && _bc.dj) _djFlag(false); });
 
+  // Artistnamn kan byttast kvar sending: hugs dei brukte (datalist) og sjanger blir del av «now playing»-teksten.
+  function _nameHistory() { try { return JSON.parse(localStorage.getItem('sfm_bc_names') || '[]') || []; } catch (e) { return []; } }
+  function _nameRemember(n) { n = String(n || '').trim(); if (!n) return; try { localStorage.setItem('sfm_bc_names', JSON.stringify([n].concat(_nameHistory().filter(x => x !== n)).slice(0, 12))); } catch (e) {} }
+  function _bcNow() { return [_bc.genre, _bc.trackTitle].filter(Boolean).join(' · '); }
+
   async function bcGo() {
     try {
       const sel = _byId('bc-dev'), roomEl = _byId('bc-room'), presEl = _byId('bc-presenter'), trackEl = _byId('bc-track'), linkEl = _byId('bc-link');
       const room = (roomEl && roomEl.value.trim()) || 'live'; _bc.room = room;
       _bc.presenterName = (presEl && presEl.value.trim()) || '';
       _bc.trackTitle = (trackEl && trackEl.value.trim()) || '';
+      { const gEl = _byId('bc-genre'); _bc.genre = (gEl && gEl.value.trim()) || ''; }
+      _nameRemember(_bc.presenterName);
       _bc.linkUrl = _cleanLink(linkEl && linkEl.value);
       _bc.stream = await navigator.mediaDevices.getUserMedia({ audio: {
         deviceId: { exact: sel.value }, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2,
@@ -698,7 +709,7 @@ const LiveMix = (() => {
       _notifyLiveStart();
       // Opptak + arkivrad (js/liveSets.js) — stoppar aldri sendinga, feil her ignorerast.
       const recEl = _byId('bc-record'), wantRec = recEl ? !!recEl.checked : _recordPref();
-      if (wantRec) { try { window.LiveSets?.begin({ stream: _bc.outStream, displayName: _bc.presenterName, room, isOwner: true, trackTitle: _bc.trackTitle, linkUrl: _bc.linkUrl }); } catch (e) {} }
+      if (wantRec) { try { window.LiveSets?.begin({ stream: _bc.outStream, displayName: _bc.presenterName, room, isOwner: true, trackTitle: _bcNow(), linkUrl: _bc.linkUrl }); } catch (e) {} }
       else _bcLog('Recording is OFF for this broadcast.');
       // Hjarteslag: re-publiser med jamne mellomrom mens sendinga pågår, så
       // updated_at-kolonna held seg fersk. Krasjar/lukkast fana (eller
@@ -720,7 +731,7 @@ const LiveMix = (() => {
   function bcStop() {
     _djFlag(false);
     // Stopp opptaket og last det opp FØR lydspora blir stoppa lenger ned (fire-and-forget).
-    try { window.LiveSets?.end({ trackTitle: _bc.trackTitle, linkUrl: _bc.linkUrl }); } catch (e) {}
+    try { window.LiveSets?.end({ trackTitle: _bcNow(), linkUrl: _bc.linkUrl }); } catch (e) {}
     // Fire-and-forget: fjern den globale live-statusen FØRST, slik at besøkende
     // byttes tilbake til stasjonen sin selv om resten av oppryddingen under feiler.
     _publishLiveStatus(false);
@@ -759,6 +770,7 @@ const LiveMix = (() => {
     if (!_bc.dj) return;
     const trackEl = _byId('bc-track');
     _bc.trackTitle = (trackEl && trackEl.value.trim()) || '';
+    { const gEl = _byId('bc-genre'); _bc.genre = (gEl && gEl.value.trim()) || ''; }
     const linkEl = _byId('bc-link');
     _bc.linkUrl = _cleanLink(linkEl && linkEl.value);
     _publishLiveStatus(true);
@@ -786,7 +798,7 @@ const LiveMix = (() => {
   let _ownerBtn = null;
   function _mountOwnerButton() {
     const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
-    const freeLive = typeof CONFIG !== 'undefined' && !!CONFIG.isFreeLiveEmail && CONFIG.isFreeLiveEmail(cur);
+    const freeLive = typeof CONFIG !== 'undefined' && ((!!CONFIG.isFreeLiveEmail && CONFIG.isFreeLiveEmail(cur)) || (!!CONFIG.isFreeGoLiveEmail && CONFIG.isFreeGoLiveEmail(cur)));
     if (!_isOwner(cur) && !freeLive) { _removeOwnerButton(); return; }
     if (!_ownerBtn) {
       _ownerBtn = document.createElement('button');
@@ -973,7 +985,7 @@ const LiveMix = (() => {
     // js/liveGlobal.js som hindrar sjølv-ekko).
     getZenSet: () => { try { const cur = Auth.current(); if (_isOwnerJingleUser(cur)) return 3; return (CONFIG.isFreeLiveEmail(cur) && typeof _bc.zenSet === 'number') ? _bc.zenSet : -1; } catch (e) { return -1; } },   // eigar: ALLTID sett 3 (live-intro.mp3 inn og ut), uavhengig av _bc.zenSet
     getBroadcastPresenterName: () => (_bc.dj ? (_bc.presenterName || '') : ''),
-    getBroadcastTrackTitle: () => (_bc.dj ? (_bc.trackTitle || '') : ''),
+    getBroadcastTrackTitle: () => (_bc.dj ? (_bcNow() || '') : ''),
     getBroadcastLinkUrl: () => (_bc.dj ? (_bc.linkUrl || '') : ''),
   };
 })();

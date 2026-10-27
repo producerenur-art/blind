@@ -58,6 +58,13 @@ const CONFIG = {
   // ingen booking, ingen godkjenning frå eigar, ingen tidsvindauge (js/livemix.js canGoLive()).
   // Får IKKJE moderering/rediger-rett (det er ADMIN_EMAILS). Samanlikning er små bokstavar/trimma.
   FREE_LIVE_EMAILS: ['shinichizen@gmail.com'],
+  // Gå live utan booking, men UTAN shinichizen sine zen-jingler/live-lite (astrodim78 = Dim Day, 27.10.2026).
+  // Opptak går automatisk til «What went live»; han kan redigere sett etterpå (FREE_PRO_EMAILS).
+  FREE_GOLIVE_EMAILS: ['astrodim78@gmail.com'],
+  isFreeGoLiveEmail(user) {
+    try { return !!user && this.FREE_GOLIVE_EMAILS.includes(String(user.email || '').toLowerCase().trim()); }
+    catch (_) { return false; }
+  },
   isFreeLiveEmail(user) {
     try { return !!user && this.FREE_LIVE_EMAILS.includes(String(user.email || '').toLowerCase().trim()); }
     catch (_) { return false; }
