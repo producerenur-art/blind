@@ -1503,7 +1503,8 @@ const Discover = (() => {
     // framover — festa først, uansett kor mange nyare opptak (Lemonchill m.fl.) som kjem til.
     // Admin-bestemt rekkefølgje (sort_order, migrasjon 0039) går føre festinga og datoen. Utan sort_order: som før.
     if (sets.some(x => x.sort_order != null)) {
-      sets = sets.slice().sort((a, b) => ((a.sort_order == null ? 1e9 : a.sort_order) - (b.sort_order == null ? 1e9 : b.sort_order)) || ((Date.parse(b.ended_at) || 0) - (Date.parse(a.ended_at) || 0)));
+      // Nye opptak har ingen sort_order enno → øverst (nyast først), så kjem dei manuelt ordna under.
+      sets = sets.slice().sort((a, b) => ((a.sort_order == null ? -1e9 : a.sort_order) - (b.sort_order == null ? -1e9 : b.sort_order)) || ((Date.parse(b.ended_at) || 0) - (Date.parse(a.ended_at) || 0)));
     } else {
       const _pin = sets.find(x => Number(x.wwl_no) === 1);
       if (_pin) sets = [_pin].concat(sets.filter(x => x !== _pin));
