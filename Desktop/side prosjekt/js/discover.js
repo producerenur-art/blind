@@ -1304,7 +1304,7 @@ const Discover = (() => {
   const _WWL_SLUG_ALIAS = { djarcturiagenetics: 'djarcturiangenetics', djarctruriagenetics: 'djarcturiangenetics', djarcturuangenetics: 'djarcturiangenetics', arcturiangenetics: 'djarcturiangenetics', arcturiagenetics: 'djarcturiangenetics' };
   function _wwlSlug(name) {
     let x = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/(?<=[a-z])\d+$/, '');   // «Spectrum 002»/«… Genetics 001» → same DJ-lenke (sluttnummer droppes)
-    x = _WWL_SLUG_ALIAS[x] || x;   // kjende skrivemåtar → éin fast DJ-lenke (hald lik lista i api/share.js)
+    x = _WWL_SLUG_ALIAS[x] || (/^djarc[a-z]{2,12}genetics$/.test(x) ? 'djarcturiangenetics' : x);   // kjende skrivemåtar (òg nye feilstavingar) → éin fast DJ-lenke (hald lik api/share.js)
     return /^[a-z]/.test(x) ? x.slice(0, 60) : '';   // må starte med bokstav (ikkje kollidere med nummerlenker)
   }
   function _wwlUrl(st, plain) {

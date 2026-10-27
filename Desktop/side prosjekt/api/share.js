@@ -117,7 +117,7 @@ module.exports = async (req, res) => {
       const base = process.env.SUPABASE_URL || 'https://qefdyxpyjwpohsmmmksf.supabase.co';
       const anon = 'sb_publishable_JEV-NS9FGZ_KpSvQTPwlZg_LlyVy_eS';
       const _ALIAS = { djarcturiagenetics: 'djarcturiangenetics', djarctruriagenetics: 'djarcturiangenetics', djarcturuangenetics: 'djarcturiangenetics', arcturiangenetics: 'djarcturiangenetics', arcturiagenetics: 'djarcturiangenetics' };   // hald lik lista i js/discover.js
-      const _slugify = (x) => { const y = String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/(?<=[a-z])\d+$/, ''); return _ALIAS[y] || y; };
+      const _slugify = (x) => { const y = String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/(?<=[a-z])\d+$/, ''); return _ALIAS[y] || (/^djarc[a-z]{2,12}genetics$/.test(y) ? 'djarcturiangenetics' : y); };   // alle skrivemåtar av Arcturian Genetics → éin DJ-lenke (hald lik js/discover.js)
       const _sel = 'select=id,display_name,track_title,cover_url,audio_url,tracklist,link_url';
       const _q = wwlN ? `ended_at=not.is.null&audio_url=neq.&order=ended_at.desc&${_sel}&limit=300`
         : `${wwlM ? 'wwl_no=eq.' + wwlM[1] : slugM && !/^set_/i.test(d) ? 'id=like.set_*' + slugM[1].toLowerCase() + '&order=created_at.desc' : 'id=eq.' + encodeURIComponent(d)}&${_sel}&limit=1`;
