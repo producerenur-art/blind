@@ -132,7 +132,20 @@ module.exports = async (req, res) => {
       if (!row && wwlN) {
         try {
           const _sh = require('../js/specialShows.js').SHOWS.find(s => _slugify(s.title) === _want);
-          if (_sh) p = { k: 'audio', t: _sh.title, a: 'Airing on the SiriusFM 24/7 Cycle', i: _sh.coverUrl, dsc: _sh.about };
+          if (_sh) {
+            // Bilete/tekst hentast AUTOMATISK frå den skjulte arkivposten (det admin set via «Replace image»/«Edit text»).
+            // Berre metadata — aldri audio_url — så lyden lekk ikkje før posten er publisert.
+            let meta = null;
+            const _sk = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            if (_sk) {
+              try {
+                const mr = await fetch(`${base}/rest/v1/live_sets?id=eq.${encodeURIComponent('set_special_' + _sh.id)}&select=cover_url,track_title&limit=1`, { headers: { apikey: _sk, Authorization: `Bearer ${_sk}` } });
+                const mj = mr.ok ? await mr.json() : [];
+                meta = Array.isArray(mj) && mj[0] ? mj[0] : null;
+              } catch (_) { /* bruk konfigen */ }
+            }
+            p = { k: 'audio', t: _sh.title, a: 'Airing on the SiriusFM 24/7 Cycle', i: (meta && meta.cover_url) || _sh.coverUrl, dsc: _sh.about || '' };
+          }
         } catch (_) { /* generisk side */ }
       }
       if (row && row.id) shareKey = row.id;
