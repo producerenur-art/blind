@@ -87,7 +87,7 @@ const SpecialShows = (() => {
       audioUrl: 'https://qefdyxpyjwpohsmmmksf.supabase.co/storage/v1/object/public/soundcore-media/special-mixes/dim-day-001.m4a',
       durationSec: 3224,
       coverUrl: 'https://qefdyxpyjwpohsmmmksf.supabase.co/storage/v1/object/public/soundcore-media/live-sets-covers/1c1c8f51-4291-434d-a6db-f4c9a5ce1074.jpeg',   // same bilete som arkivkortet (live_sets.cover_url)
-      linkUrl: '',
+      linkUrl: 'https://www.deepphase.net/dim-day',
       // Fire laurdagar kl 21:00 CET (UTC+1, brukaren sitt ord 24.10.2026) = 20:00Z, 31.10–21.11.2026.
       slots: [
         '2026-10-31T20:00:00Z',
