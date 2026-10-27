@@ -1355,6 +1355,22 @@ const Discover = (() => {
     const a = document.getElementById('audio-engine'); if (!a) return;
     _wwlBound = true;
     ['timeupdate', 'durationchange', 'loadedmetadata', 'pause', 'play', 'emptied'].forEach(ev => a.addEventListener(ev, _wwlTick));
+    // Nettfeil midt i eit opptak (mobil som skifter Wi-Fi/5G, kort utfall) stoppar lyden for godt. Gjenoppta frå same stad, maks 3 gonger per opptak.
+    // Gjeld berre WWL-opptak (live-sets/) og berre ekte feil — vanleg pause, Stop og radio er upåverka.
+    let _retry = { url: '', n: 0 };
+    a.addEventListener('error', () => {
+      const url = a.currentSrc || a.src || '';
+      if (!/\/storage\/v1\/object\/public\/soundcore-media\/live-sets\//.test(url) || a.ended || !(a.currentTime > 1)) return;
+      if (_retry.url !== url) _retry = { url, n: 0 };
+      if (_retry.n >= 3) return;
+      _retry.n++;
+      const t = a.currentTime;
+      setTimeout(() => {
+        if ((a.currentSrc || a.src || '') !== url) return;   // brukaren har bytta opptak
+        a.addEventListener('loadedmetadata', () => { try { a.currentTime = t; } catch (_) {} const pr = a.play(); if (pr && pr.catch) pr.catch(() => {}); }, { once: true });
+        a.src = url; a.load();
+      }, 1500 * _retry.n);
+    });
     // Dra i spolelinja: marker at brukaren held (pointer/touch/mus), slepp ved loslating — gjeld alle .wwl-seek-felt, også nyrenderte.
     const isSeek = e => !!(e.target && e.target.closest && e.target.closest('.wwl-seek'));
     // Eigen peikar-dra-støtte (mobil: nokre nettlesarar drar ikkje <input type=range> av seg sjølv, eller scroll stjel draget).
@@ -1408,7 +1424,7 @@ const Discover = (() => {
     const id = _lcEsc(st.id);
     // Offentleg (gjester og vanlege brukarar): berre Play og Stopp — inga tekst, ingen deling, ingen redigering.
     if (!_wwlIsAdmin()) {
-      const pubImg = st.cover_url ? `<div class="wwl-art wwl-art-public" style="cursor:zoom-in" onclick="Discover.wwlZoom('${id}')"><img src="${_lcEsc(st.cover_url)}" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover"></div>` : '';
+      const pubImg = st.cover_url ? `<div class="wwl-art wwl-art-public" style="cursor:zoom-in" onclick="Discover.wwlZoom('${id}')"><img src="${_lcEsc(st.cover_url)}" alt="" loading="lazy" decoding="async" fetchpriority="low" style="width:100%;height:100%;object-fit:cover"></div>` : '';
       return `
       <div class="wwl-card wwl-card-public" id="wwl-${id}">
         ${pubImg}
@@ -1434,7 +1450,7 @@ const Discover = (() => {
         </div>
       </div>`;
     }
-    const art = st.cover_url ? `<img src="${_lcEsc(st.cover_url)}" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="Discover.wwlZoom('${id}')">` : '<span style="font-size:2rem">🎧</span>';
+    const art = st.cover_url ? `<img src="${_lcEsc(st.cover_url)}" alt="" loading="lazy" decoding="async" fetchpriority="low" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="Discover.wwlZoom('${id}')">` : '<span style="font-size:2rem">🎧</span>';
     const mins = (st._dur || st.duration_sec) ? _wwlClock(st._dur || st.duration_sec) : '';
     return `
       <div class="wwl-card" id="wwl-${id}"${st.hidden ? ' style="opacity:.6;outline:1px dashed #f59e0b"' : ''}>
@@ -1484,6 +1500,9 @@ const Discover = (() => {
     _wwlTick();
   }
   function _wwlProbeDurations(sets) {
+    // Ikkje stjel linja frå lyden: medan avspeling lastar/buffrar (treg mobil) ventar vi og prøver igjen.
+    const eng = document.getElementById('audio-engine');
+    if (eng && !eng.paused && eng.readyState < 3) { setTimeout(() => _wwlProbeDurations(sets), 2500); return; }
     (sets || []).forEach(st => {
       if (!st || !st.audio_url) return;
       if (_wwlDurCache[st.audio_url]) { _wwlApplyDur(st, _wwlDurCache[st.audio_url]); return; }
