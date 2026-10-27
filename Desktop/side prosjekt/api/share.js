@@ -127,6 +127,14 @@ module.exports = async (req, res) => {
       const _want = wwlN ? _slugify(wwlN[1]) : '';
       const row = wwlN ? (Array.isArray(rows) ? rows.find(x => x && _want && _slugify(x.display_name) === _want) : null) : (rows && rows[0]);
       if (!row && slugM && !wwlM) { isSet = false; p = decodePayload(d) || {}; }   // slug-liknande men ikkje eit sett → gammal nyttelast-lenke
+      // Spesialprogram (js/specialShows.js) er skjult i databasen til siste sending er over → ingen rad for gjester.
+      // Då viser delesida tittel, bilete og tekst frå konfigen (utan lyd) i staden for den generiske «Shared on SiriusFM».
+      if (!row && wwlN) {
+        try {
+          const _sh = require('../js/specialShows.js').SHOWS.find(s => _slugify(s.title) === _want);
+          if (_sh) p = { k: 'audio', t: _sh.title, a: 'Airing on the SiriusFM 24/7 Cycle', i: _sh.coverUrl, dsc: _sh.about };
+        } catch (_) { /* generisk side */ }
+      }
       if (row && row.id) shareKey = row.id;
       if (row) p = { k: 'audio', t: row.display_name, a: row.track_title, i: row.cover_url, m: row.audio_url, mt: mimeFromUrl(row.audio_url), tl: row.tracklist };
     } catch (_) { /* fall tilbake til generisk side */ }
