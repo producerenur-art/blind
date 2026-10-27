@@ -141,7 +141,7 @@ module.exports = async (req, res) => {
             meta = (Array.isArray(mj) ? mj : []).find(x => x && _want && _slugify(x.display_name) === _want) || null;
           }
           const _sh = (meta && SS.find(s => 'set_special_' + s.id === meta.id)) || SS.find(s => _slugify(s.title) === _want || _slugify(s.artist) === _want);
-          if (meta || _sh) p = { k: 'audio', t: (meta && meta.display_name) || _sh.title, a: 'Airing on the SiriusFM 24/7 Cycle', i: (meta && meta.cover_url) || (_sh && _sh.coverUrl), dsc: (_sh && _sh.about) || '', l: (meta && meta.link_url) || (_sh && _sh.linkUrl) || '', ...((_sh && _sh.audioUrl && Date.now() >= Date.parse((_sh.slots || [])[0] || '')) ? { m: _sh.audioUrl, mt: mimeFromUrl(_sh.audioUrl) } : {}) };   // lyden først ope etter første sending (ikkje lekk før programmet har gått)
+          if (meta || _sh) p = { k: 'audio', t: (meta && meta.display_name) || _sh.title, a: 'Airing on the SiriusFM 24/7 Cycle', i: (meta && meta.cover_url) || (_sh && _sh.coverUrl), dsc: (_sh && _sh.about) || '', l: (meta && meta.link_url) || (_sh && _sh.linkUrl) || '', ...((_sh && _sh.audioUrl) ? { m: _sh.audioUrl, mt: mimeFromUrl(_sh.audioUrl) } : {}) };   // spelar på eiga lenke òg for planlagde program (brukarønske 27.10.2026; audioUrl ligg uansett ope i js/specialShows.js)
         } catch (_) { /* generisk side */ }
       }
       if (row && row.id) shareKey = row.id;
