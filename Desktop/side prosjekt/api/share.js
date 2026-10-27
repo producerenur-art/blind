@@ -196,7 +196,7 @@ module.exports = async (req, res) => {
   const ogImg = (() => {
     try {
       const u = new URL(image);
-      if (/\.supabase\.co$/i.test(u.hostname) && u.pathname.startsWith('/storage/v1/object/public/') && /\.(png|jpe?g|webp|gif)$/i.test(u.pathname)) {
+      if (/\.supabase\.co$/i.test(u.hostname) && u.pathname.startsWith('/storage/v1/object/public/') && /\.(png|jpe?g|webp|gif|svg)$/i.test(u.pathname)) {
         return `${SITE}/api/share?cover=${encodeURIComponent(image)}`;
       }
     } catch (_) { /* behald original */ }
