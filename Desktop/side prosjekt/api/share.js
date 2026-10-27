@@ -615,7 +615,7 @@ ${tags.join('\n')}
 </html>`;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  // Crawlere (OG-tagger) kan cache i 5 min / CDN 1 t; kommentarane hentast klientside, så dei er alltid ferske.
-  res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600');
+  // Kort cache (1 min) så nytt bilete/tekst vises raskt; kommentarane hentast klientside, så dei er alltid ferske.
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
   res.status(200).send(html);
 };

@@ -1307,7 +1307,14 @@ const Discover = (() => {
     x = _WWL_SLUG_ALIAS[x] || x;   // kjende skrivemåtar → éin fast DJ-lenke (hald lik lista i api/share.js)
     return /^[a-z]/.test(x) ? x.slice(0, 60) : '';   // må starte med bokstav (ikkje kollidere med nummerlenker)
   }
-  function _wwlUrl(st) {
+  function _wwlUrl(st, plain) {
+    // Delte lenker får ?v=<updated_at> slik at Facebook/X/iMessage hentar NYTT bilete/tekst etter «Replace image»/«Edit text»
+    // (dei mellomlagrar forhandsvisninga per URL). `plain` = rein lenke utan versjon (visning i kortet).
+    const u = _wwlUrlBase(st);
+    const t = !plain && st && st.updated_at ? Date.parse(st.updated_at) : 0;
+    return t ? u + '?v=' + t.toString(36) : u;
+  }
+  function _wwlUrlBase(st) {
     // Kort delingslenke (ikkje den lange base64-lenka): serveren slår opp opptaket og lagar forhandsvisning med bildet.
     const slug = (typeof LiveSets !== 'undefined' && LiveSets.shareSlug) ? LiveSets.shareSlug(st) : st.id;
     // DJ-lenke (brukarønske 2026-10-12): NYASTE sett til ein DJ får /what-went-live-<namn> (namnet frå «Edit text»,
@@ -1418,7 +1425,7 @@ const Discover = (() => {
           ${_wwlCanEditSet(st) ? `<div class="wwl-edit" id="wwl-edit-${id}"></div>` : ''}
           ${st.track_title ? `<div class="wwl-public-text">${_lcLink(st.track_title)}</div>` : ''}
           ${_wwlTracks(st)}
-          <div class="wwl-url" style="font-size:.75rem;margin:.15rem 0 .4rem;word-break:break-all"><a href="${_lcEsc(_wwlUrl(st))}" target="_blank" rel="noopener noreferrer" style="color:var(--text2)">${_lcEsc(_wwlUrl(st))}</a></div>
+          <div class="wwl-url" style="font-size:.75rem;margin:.15rem 0 .4rem;word-break:break-all"><a href="${_lcEsc(_wwlUrl(st, 1))}" target="_blank" rel="noopener noreferrer" style="color:var(--text2)">${_lcEsc(_wwlUrl(st, 1))}</a></div>
           <div class="wwl-seek" id="wwl-seek-${id}">
           <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlPreview('${id}', this.value)" onchange="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
           <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st._dur || st.duration_sec)}</span>
@@ -1438,7 +1445,7 @@ const Discover = (() => {
           <div class="wwl-text">${_lcLink(st.track_title || '')}</div>
           ${_wwlTracks(st)}
           <div class="wwl-meta">${_lcEsc(_wwlFmtDate(st.ended_at))}${mins ? ' · <span class="wwl-dur">' + mins + '</span>' : ''}${st.room === 'upload' ? ' · upload' : ''}</div>
-          <div class="wwl-url" style="font-size:.75rem;margin:.15rem 0 .4rem;word-break:break-all"><a href="${_lcEsc(_wwlUrl(st))}" target="_blank" rel="noopener noreferrer" style="color:var(--text2)">${_lcEsc(_wwlUrl(st))}</a></div>
+          <div class="wwl-url" style="font-size:.75rem;margin:.15rem 0 .4rem;word-break:break-all"><a href="${_lcEsc(_wwlUrl(st, 1))}" target="_blank" rel="noopener noreferrer" style="color:var(--text2)">${_lcEsc(_wwlUrl(st, 1))}</a></div>
           <div class="wwl-seek" id="wwl-seek-${id}">
           <input type="range" min="0" max="1000" value="0" step="1" disabled oninput="Discover.wwlPreview('${id}', this.value)" onchange="Discover.wwlSeek('${id}', this.value)" aria-label="Position">
           <span class="wwl-time" id="wwl-time-${id}">0:00 / ${_wwlClock(st._dur || st.duration_sec)}</span>
