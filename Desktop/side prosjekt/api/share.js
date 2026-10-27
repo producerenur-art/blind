@@ -127,25 +127,21 @@ module.exports = async (req, res) => {
       const _want = wwlN ? _slugify(wwlN[1]) : '';
       const row = wwlN ? (Array.isArray(rows) ? rows.find(x => x && _want && _slugify(x.display_name) === _want) : null) : (rows && rows[0]);
       if (!row && slugM && !wwlM) { isSet = false; p = decodePayload(d) || {}; }   // slug-liknande men ikkje eit sett → gammal nyttelast-lenke
-      // Spesialprogram (js/specialShows.js) er skjult i databasen til siste sending er over → ingen rad for gjester.
-      // Då viser delesida tittel, bilete og tekst frå konfigen (utan lyd) i staden for den generiske «Shared on SiriusFM».
+      // Skjulte opptak (t.d. spesialprogram som ikkje er publisert enno) gir ingen rad for gjester → delesida skal likevel
+      // vise tittel, bilete, lenke og tekst AUTOMATISK. Slår opp på namn (display_name) med service role — berre metadata,
+      // aldri audio_url/tracklist — så lyden lekk ikkje før posten er publisert.
       if (!row && wwlN) {
         try {
-          const _sh = require('../js/specialShows.js').SHOWS.find(s => _slugify(s.title) === _want);
-          if (_sh) {
-            // Bilete/tekst hentast AUTOMATISK frå den skjulte arkivposten (det admin set via «Replace image»/«Edit text»).
-            // Berre metadata — aldri audio_url — så lyden lekk ikkje før posten er publisert.
-            let meta = null;
-            const _sk = process.env.SUPABASE_SERVICE_ROLE_KEY;
-            if (_sk) {
-              try {
-                const mr = await fetch(`${base}/rest/v1/live_sets?id=eq.${encodeURIComponent('set_special_' + _sh.id)}&select=cover_url,track_title&limit=1`, { headers: { apikey: _sk, Authorization: `Bearer ${_sk}` } });
-                const mj = mr.ok ? await mr.json() : [];
-                meta = Array.isArray(mj) && mj[0] ? mj[0] : null;
-              } catch (_) { /* bruk konfigen */ }
-            }
-            p = { k: 'audio', t: _sh.title, a: 'Airing on the SiriusFM 24/7 Cycle', i: (meta && meta.cover_url) || _sh.coverUrl, dsc: _sh.about || '', l: _sh.linkUrl || '' };
+          const SS = require('../js/specialShows.js').SHOWS;
+          let meta = null;
+          const _sk = process.env.SUPABASE_SERVICE_ROLE_KEY;
+          if (_sk) {
+            const mr = await fetch(`${base}/rest/v1/live_sets?order=ended_at.desc.nullslast&select=id,display_name,cover_url,link_url&limit=300`, { headers: { apikey: _sk, Authorization: `Bearer ${_sk}` } });
+            const mj = mr.ok ? await mr.json() : [];
+            meta = (Array.isArray(mj) ? mj : []).find(x => x && _want && _slugify(x.display_name) === _want) || null;
           }
+          const _sh = (meta && SS.find(s => 'set_special_' + s.id === meta.id)) || SS.find(s => _slugify(s.title) === _want || _slugify(s.artist) === _want);
+          if (meta || _sh) p = { k: 'audio', t: (meta && meta.display_name) || _sh.title, a: 'Airing on the SiriusFM 24/7 Cycle', i: (meta && meta.cover_url) || (_sh && _sh.coverUrl), dsc: (_sh && _sh.about) || '', l: (meta && meta.link_url) || (_sh && _sh.linkUrl) || '' };
         } catch (_) { /* generisk side */ }
       }
       if (row && row.id) shareKey = row.id;
