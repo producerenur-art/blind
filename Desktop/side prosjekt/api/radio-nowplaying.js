@@ -15,6 +15,12 @@ function allowed(url) {
 }
 
 module.exports = async (req, res) => {
+  // CORS (rett 2026-11-01): sida kallar dette frå ein annan vert enn API-et (siriusfm.no ↔ www.siriusfm.no) — utan desse
+  // headerane blokkerte nettlesaren svaret, og reklamevakten (_adGuardTick) fekk aldri ein tittel.
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate=10');
   const url = String((req.query && req.query.url) || '');
   if (!/^https:\/\//.test(url) || !allowed(url)) { res.status(400).json({ ok: false, error: 'ukjend strøym' }); return; }
