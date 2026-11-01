@@ -32,7 +32,8 @@ const Radio247 = (() => {
   // 'ambient-abyss' fjerna frå hjulet 11.10.2026 — broadcast.shoutstream.co.uk:8068 gir connection
   // refused (stadfesta curl, både http og https); stasjonen står framleis i STATIONS i js/radio.js.
   const DARK_DRONE_IDS  = ['dark-city-signal', 'systrum-ssr1', 'indiebeat-ambient'];
-  const PSYCHILL_IDS    = ['ambientpsy-1fm', 'multihuman', 'diceradio-psybient', 'paradisehunter-chillout'];
+  // 01.11.2026: 'diceradio-psybient' (DiceRadio) fjerna frå hjulet, brukarønske.
+  const PSYCHILL_IDS    = ['ambientpsy-1fm', 'multihuman', 'paradisehunter-chillout'];
   // smoothchill (icy-genre: Soul) og anon-fm (icy-genre inkluderer rock) fjerna
   // 20.09.2026 — live ICY-metadata stadfesta ikkje-elektronisk innhald,
   // brukarønske: ALDRI rock/metal/hip-hop/R&B i 24/7-hjulet.
