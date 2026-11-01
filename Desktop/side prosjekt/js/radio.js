@@ -897,7 +897,7 @@ const Radio = (() => {
     if (!_adBreak) return;
     const b = _adBreak; _adBreak = null;
     clearTimeout(b.maxT); clearTimeout(b.tailT);
-    try { b.clip.pause(); } catch (e) {}
+    try { if (b.clip) { b.clip.onended = null; b.clip.pause(); } } catch (e) {}
     _jingleBusy = false;
     const audio = getAudio();
     if (audio && isPlaying && !_liveTakeover) _fadeVolume(audio, volume * (currentStation?.gain ?? 1), AD_FADE_MS);
@@ -906,12 +906,22 @@ const Radio = (() => {
     if (_adBreak || _jingleBusy || _liveTakeover || _special || _liveStatusPending() || !window._radioMode || !isPlaying || muted) return;
     const audio = getAudio(); if (!audio || audio.paused) return;
     _jingleBusy = true;
-    const url = SIREN_ADS[(_adGuardN++) % SIREN_ADS.length];
-    const clip = _preloaded.get(url) || new Audio(url);
-    _preloaded.delete(url);
-    clip.volume = Math.max(0, Math.min(1, volume));
-    _adBreak = { clip, t0: Date.now(), maxT: setTimeout(_adBreakEnd, ADGUARD_MAX_MS), tailT: null };
-    _fadeVolume(audio, 0, AD_FADE_MS, () => { try { const p = clip.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} });
+    _adBreak = { clip: null, t0: Date.now(), maxT: setTimeout(_adBreakEnd, ADGUARD_MAX_MS), tailT: null };
+    // Aldri stille (brukarønske 2026-11-01): står deira reklame på etter at vårt klipp er ferdig, startar
+    // neste Siren-klipp rett etter — heilt til stasjonen er tilbake til musikk (eller maks-tida går ut).
+    const br = _adBreak;
+    const playNext = () => {
+      if (_adBreak !== br) return;
+      const url = SIREN_ADS[(_adGuardN++) % SIREN_ADS.length];
+      const clip = _preloaded.get(url) || new Audio(url);
+      _preloaded.delete(url);
+      clip.volume = Math.max(0, Math.min(1, volume));
+      _adBreak.clip = clip;
+      clip.addEventListener('ended', playNext, { once: true });
+      clip.addEventListener('error', playNext, { once: true });
+      try { const p = clip.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+    };
+    _fadeVolume(audio, 0, AD_FADE_MS, playNext);
   }
   async function _adGuardTick() {
     const st = currentStation;
