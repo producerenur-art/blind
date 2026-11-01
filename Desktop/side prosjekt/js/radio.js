@@ -3770,7 +3770,11 @@ const Radio = (() => {
     if (!frame) return;
     const id = VIS_VIDEOS[mode] || AI_VIDEOS[mode]
       || VIS_VIDEOS[isVideoMode(visMode) ? visMode : 'video'] || AI_VIDEOS[visMode];
-    if (visVideoLoaded !== id) {
+    if (visVideoLoaded !== id && _visSwapInPreloaded(id)) {
+      // Førehandslasta (og ferdig oppvarma) iframe tok over — ingen kald start med 480p-oppstart.
+      const nf = document.getElementById('radio-vis-video');
+      if (nf) { _visPlIdx = -1; _visPlLen = 0; visVideoLoaded = id; try { nf.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (_) {} [200, 1000].forEach(ms => setTimeout(() => applyVisQuality(nf), ms)); }
+    } else if (visVideoLoaded !== id) {
       _visPlIdx = -1; _visPlLen = 0;
       frame.onload = () => { try { frame.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (_) {} };   // få onStateChange (ended)
       frame.src = visVideoSrc(id);
@@ -3779,9 +3783,10 @@ const Radio = (() => {
       // koble lytteren — spilleren ignorerer kommandoer den ikke er klar for.
       [500, 1200, 2500].forEach(ms => setTimeout(() => applyVisQuality(frame), ms));
     }
-    frame.classList.add('active');
+    const frameNow = document.getElementById('radio-vis-video') || frame;
+    frameNow.classList.add('active');
     sizeVisVideo();
-    forceVisRepaint(frame);   // mal den nye videoen med en gang (ikke først ved muse-hover)
+    forceVisRepaint(frameNow);   // mal den nye videoen med en gang (ikke først ved muse-hover)
     document.getElementById('radio-idle')?.classList.add('hidden');
     updateVisCredit(mode);
     updateVisVolumeUI(id);
@@ -3815,6 +3820,7 @@ const Radio = (() => {
   function hideVisVideo() {
     document.getElementById('vis-vol')?.classList.add('vis-vol-gone');
     _visDuckSet(false);
+    _visDropPreloaded();
     const frame = document.getElementById('radio-vis-video');
     if (!frame) return;
     frame.classList.remove('active');
@@ -3912,6 +3918,7 @@ const Radio = (() => {
     const step = Math.floor(Date.now() / VIS_AUTO_STEP_MS);
     const it = full.length ? full[_visCycleIndex(step, full.length)] : _autoList[step % _autoList.length];
     if (!it) return;
+    try { _visMaybePreload(full, step); } catch (e) { /* best-effort */ }
     const mode = it.mode || aiModeOf(it.id);
     if (!it.mode) { AI_VIDEOS[mode] = it.id; visMeta[it.id] = { emoji: it.emoji, label: it.label, channel: it.channel || null }; }
     if (mode === visMode || !isVideoMode(mode)) return;
@@ -3942,6 +3949,56 @@ const Radio = (() => {
   function _visCycleIndex(step, len) {
     if (len < 3) return step % len;
     return _visPerm(len, Math.floor(step / len))[step % len];
+  }
+  // ── Førehandslasting av NESTE visual (2026-11-02): YouTube startar kvar ny video på ~480p og klatrar sakte opp, så
+  // første halvminutt etter kvart bytte såg grumsete ut. Rett før neste 5-min-bytte (≤40 s) lastar vi derfor neste video i ein
+  // skjult, lydlaus (mute=1) iframe med same storleik, lar han varmast opp, og byter så rolla (ingen kald start). Berre PC,
+  // godt nett, ingen lyd-hakk; hoppar over spesial-spelelister og videoar med valfri lyd. Ingenting vert fjerna.
+  let _visPre = null;   // { id, frame, at }
+  function _visDropPreloaded() {
+    if (!_visPre) return;
+    try { _visPre.frame.src = 'about:blank'; _visPre.frame.remove(); } catch (_) {}
+    _visPre = null;
+  }
+  function _visPreload(id) {
+    if (_visPre && _visPre.id === id) return;
+    _visDropPreloaded();
+    const main = document.getElementById('radio-vis-video'), wrap = document.getElementById('radio-vis-wrap');
+    if (!main || !wrap) return;
+    const f = document.createElement('iframe');
+    f.id = 'radio-vis-video-next'; f.title = 'next visual (muted preload)'; f.setAttribute('allow', 'autoplay; encrypted-media'); f.setAttribute('frameborder', '0');
+    f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+    f.style.cssText = main.style.cssText + ';position:absolute;top:' + (main.style.top || '50%') + ';left:50%;display:block;opacity:0;pointer-events:none;z-index:0;transform:' + (main._vBase || 'translate(-50%, -50%) translateZ(0)');
+    f.src = visVideoSrc(id);
+    wrap.insertBefore(f, main);
+    _visPre = { id, frame: f, at: Date.now() };
+  }
+  function _visSwapInPreloaded(id) {
+    if (!_visPre || _visPre.id !== id || Date.now() - _visPre.at < 8000) return false;   // for ferske → vanleg lasting
+    const main = document.getElementById('radio-vis-video'), nf = _visPre.frame;
+    if (!main || !nf.isConnected) { _visDropPreloaded(); return false; }
+    _visPre = null;
+    nf._vBase = main._vBase;
+    nf.id = 'radio-vis-video';
+    nf.title = main.title;
+    nf.removeAttribute('aria-hidden'); nf.removeAttribute('tabindex');
+    nf.style.cssText = main.style.cssText;
+    nf.className = main.className;
+    nf.style.opacity = '';
+    main.id = 'radio-vis-video-old';
+    try { main.src = 'about:blank'; } catch (_) {}
+    main.remove();
+    return true;
+  }
+  function _visMaybePreload(full, step) {
+    if (IS_TOUCH_MOBILE || _visStallLevel !== 0 || !full.length) return;
+    const c = (typeof navigator !== 'undefined' && navigator.connection) || {};
+    if (c.saveData || /(^|-)2g|3g/.test(c.effectiveType || '')) return;
+    const toNext = VIS_AUTO_STEP_MS - (Date.now() % VIS_AUTO_STEP_MS);
+    if (toNext > 40000) { if (_visPre && Date.now() - _visPre.at > 150000) _visDropPreloaded(); return; }
+    const nxt = full[_visCycleIndex(step + 1, full.length)];
+    if (!nxt || !nxt.id || nxt.id === visVideoLoaded || SPECIAL_SETS.some(v => v.id === nxt.id) || VIS_SOUND_IDS.has(nxt.id)) return;
+    _visPreload(nxt.id);
   }
   let _fullVisKey = '', _fullVisList = [];
   function _fullVisRotation() {
