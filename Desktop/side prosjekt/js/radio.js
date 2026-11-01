@@ -3600,6 +3600,7 @@ const Radio = (() => {
       if (c.downlink < 5) return 'medium';
       if (c.downlink < 10) return 'large';
     }
+    if (IS_TOUCH_MOBILE) return 'hd1080';   // mobil/nettbrett: ingen 1440p/4K-ønske (iframen blir ikkje oppskalert der)
     const tw = _visTargetW();
     return tw > 2560 ? 'hd2160' : tw > 1920 ? 'hd1440' : 'hd1080';
   }
@@ -3919,19 +3920,22 @@ const Radio = (() => {
   // så same videoar gjekk att dagleg i same orden). Seedet på rundenummeret → lik for alle lyttarar. Siste video i ei
   // runde blir aldri første i neste.
   const _visPermCache = {};
-  function _visPerm(len, cycle) {
+  function _visRawPerm(len, cycle) {
     const key = len + ':' + cycle;
     if (_visPermCache[key]) return _visPermCache[key];
     let a = (cycle * 2654435761 + len * 40503) >>> 0;
     const rnd = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
     const perm = Array.from({ length: len }, (_, i) => i);
     for (let i = len - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
-    if (len > 2 && cycle > 0) {
-      const prevLast = _visPerm(len, cycle - 1)[len - 1];
-      if (perm[0] === prevLast) [perm[0], perm[1]] = [perm[1], perm[0]];
-    }
-    const keys = Object.keys(_visPermCache); if (keys.length > 6) delete _visPermCache[keys[0]];
+    const keys = Object.keys(_visPermCache); if (keys.length > 8) delete _visPermCache[keys[0]];
     return (_visPermCache[key] = perm);
+  }
+  // Ingen rekursjon (første versjon rekursa gjennom ALLE tidlegare rundar → «Maximum call stack size exceeded», rett 2026-11-01).
+  // Grense-vernet byter berre plass 0/1, så siste plass i førre runde er alltid rå-permutasjonen sin siste.
+  function _visPerm(len, cycle) {
+    const perm = _visRawPerm(len, cycle);
+    if (len > 2 && cycle > 0 && perm[0] === _visRawPerm(len, cycle - 1)[len - 1]) return [perm[1], perm[0]].concat(perm.slice(2));
+    return perm;
   }
   function _visCycleIndex(step, len) {
     if (len < 3) return step % len;
