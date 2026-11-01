@@ -1162,7 +1162,7 @@ const Discover = (() => {
     const _byId = id => (typeof SpecialShows !== 'undefined' && SpecialShows.byId) ? SpecialShows.byId(id) : null;
     const _chl = (typeof ChlorophilLive !== 'undefined') ? ChlorophilLive.slots(_now, 1)[0] : undefined;
     const cards = [
-      { t: _chl == null ? Infinity : _chl, html: renderChlorophilLive() },
+      // Chlorophil-kortet fjerna frå Discover 01.11.2026 (brukarønske; han gjekk ikkje live). renderChlorophilLive() ligg att ubrukt.
       { t: _next(_byId('ambientmann-dark-drone-001')), html: renderDarkDroneAd() },
       { t: _next(_byId('dimday-001')), html: renderDimDayAd() },
       { t: _next(show), html: lcCard },
