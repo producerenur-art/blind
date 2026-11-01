@@ -888,10 +888,11 @@ const Radio = (() => {
 
   // ── Reklamevakt for tredjeparts-stasjonar (brukarønske 2026-11-01) ───────────────────────
   // Alle stasjonar i 24/7 Cycle (og stasjonar merka `adGuard: true`) blir polla via /api/radio-nowplaying (ICY-tittel,
-  // tenaren ligg få sekund FØR avspelinga). Ser tittelen ut som reklame/stasjons-ID: tone stasjonen ut på 230 ms
+  // tenaren ligg få sekund FØR avspelinga). Ser tittelen ut som NORSK reklame (sjå ADGUARD_RE): tone stasjonen ut på 230 ms
   // (strøymen blir ståande kopla til — ingen reconnect, difor ingen hakk), spel EIN kort Siren-reklame frå oss
   // i eit eige element, la det vere stille til deira reklame er over, og tone stasjonen inn att på 230 ms.
-  const ADGUARD_RE = /advert|reklame|commercial|sponsor|station.?id|\bident\b|jingle|promo|\bspot\b|werbung|publicit|реклам|moderation|telenor\.no/i;
+  // Brukarregel 2026-11-01: berre NORSKE reklamar skal byttast ut med våre klipp (stasjonar får gjerne reklamere for seg sjølve / andre ting på andre språk).
+  const ADGUARD_RE = /telenor|\.no\s+-\s|\breklame|annonse|\btilbud\b|kampanje|sponset av|norsk reklame/i;
   const ADGUARD_POLL_MS = 6000;
   const ADGUARD_TAIL_MS = 6000;       // tittelen leier avspelinga i nettlesaren med bufferet → vent før inntoning
   const ADGUARD_MAX_MS = 150 * 1000;  // aldri lenger stille enn dette, same kva tittelen seier
@@ -3247,6 +3248,23 @@ const Radio = (() => {
     { mode: 'video97', id: 'exbfXyJJj4o', emoji: '✨', label: 'Magical Mushroom', group: 'psy' }, // Psychedelic Zen
     { mode: 'video98', id: '8CpA-h_lXcs', emoji: '🍄', label: 'Shroom Trip', group: 'psy' }, // DMT Enlightenment
     { mode: 'video99', id: 'eV7FXMkMIVQ', emoji: '⚡', label: 'Shock Therapy', group: 'psy' }, // Trancentral
+    { mode: 'video100', id: 'OcHPQqfuC84', emoji: '🧊', label: 'Iceland Aerial', group: 'nature' }, // Iceland aerial (DJI)
+    { mode: 'video101', id: 'CxwJrzEdw1U', emoji: '🏔️', label: 'Norway 4K', group: 'nature' }, // Norway scenic film
+    { mode: 'video102', id: '6KL2QZ91kAM', emoji: '🌍', label: 'Around The World', group: 'nature' }, // Around the World 4K
+    { mode: 'video103', id: 'lM02vNMRRB0', emoji: '🌏', label: 'Earth From Above', group: 'nature' }, // 7 h 4K drone film
+    { mode: 'video104', id: 'kcfs1-ryKWE', emoji: '🚁', label: 'Iceland Canyon FPV', group: 'nature' }, // FPV drone, Iceland canyon
+    { mode: 'video105', id: 'x4pgz4fryI8', emoji: '🏝️', label: 'Lofoten', group: 'nature' }, // Lofoten Islands 4K drone
+    { mode: 'video106', id: 'a-8XiE7W7u4', emoji: '🌅', label: 'Beautiful Places', group: 'nature' }, // Smukkeste steder i 4K
+    { mode: 'video107', id: 'AAPonOEcb6I', emoji: '📺', label: 'OLED 8K Test', group: 'space' }, // Ultimate OLED display test, 8K HDR 60fps
+    { mode: 'video108', id: 'YFmV_MRSD7M', emoji: '🌊', label: 'The Ocean', group: 'ocean' }, // The Ocean 4K
+    { mode: 'video109', id: 'QZl_HuHjfnQ', emoji: '🌿', label: 'Unreal Places', group: 'nature' }, // Unreal places 4K HDR 60fps
+    { mode: 'video110', id: 'tKWBJALqHE8', emoji: '🐠', label: 'Tropical Ocean', group: 'ocean' }, // Tropical ocean 4K
+    { mode: 'video111', id: '5yOpTf4LTAk', emoji: '🦈', label: 'Aquarium 8K', group: 'ocean' }, // Aquarium 8K
+    { mode: 'video112', id: 'eSdUE2ukA3s', emoji: '🪸', label: 'Marine Life', group: 'ocean' }, // Marine life 4K reef
+    { mode: 'video113', id: 'CIW81g47fyE', emoji: '🛸', label: 'Never Seen Before', group: 'nature' }, // World from above 4K drone
+    { mode: 'video114', id: 'wVMLN3WEJiw', emoji: '🇳🇴', label: 'Flying Over Norway', group: 'nature' }, // Flying over Norway 4K
+    { mode: 'video115', id: 'vhHpb0iVfeU', emoji: '🕊️', label: 'Israel Nature', group: 'nature' }, // Israel 4K drone nature film
+    { mode: 'video116', id: 'AQM-jqHBrM8', emoji: '⛰️', label: 'The Fjords', group: 'nature' }, // The Fjords 4K drone
   ];
   const VIS_VIDEOS = {};
   VIS_CLASSICS.forEach(v => { VIS_VIDEOS[v.mode] = v.id; });
