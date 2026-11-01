@@ -739,8 +739,8 @@ function liveNowHtml(name, siteUrl, unsubscribeUrl, data) {
       </td>
     </tr>`;
 
-  const stationRows   = stations.map(x => Array.isArray(x) ? stationRow(x[0], x[1], x[2])
-                                                           : stationRow(x.emoji || '📻', x.name || '', x.desc || '')).join('');
+  // Brukarønske 2026-11-01: ingen stasjonsnamn/«Playing right now»-liste i e-postane (tom rad → seksjonen blir utelaten).
+  const stationRows   = '';
   const showRows      = shows.map(showRow).join('');
   const magazineRows  = magazine.map(a => articleRow(a, magUrl)).join('');
   const festivalRows  = festivals.map(a => articleRow(a, worldUrl)).join('');
