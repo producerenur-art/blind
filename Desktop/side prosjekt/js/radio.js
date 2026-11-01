@@ -3220,7 +3220,6 @@ const Radio = (() => {
     { mode: 'video69', id: 'R2PiVXjanws', emoji: '🔮', label: 'Deep Exploration', group: 'fractal' }, // Trippy Everything
     { mode: 'video71', id: 'DkcrmzHhsy4', emoji: '🎢', label: 'Flight of Fantasy', group: 'coaster' }, // Tommy T\'s Extreme Roller Coasters
     { mode: 'video72', id: 'W9as7QP8GkM', emoji: '🌆', label: 'Cyberpunk Coaster', group: 'coaster' }, // Neon 4K
-    { mode: 'video73', id: 'pbQ3okrpexA', emoji: '🎢', label: 'Trippy Coaster', group: 'coaster' }, // Hofmann\'s Dream Lab
     { mode: 'video74', id: 'oAJLKDMihnU', emoji: '🎢', label: 'Twister Coaster', group: 'coaster' }, // Theme Park Review
     { mode: 'video75', id: 'yUGwvwG9fFk', emoji: '🎢', label: 'Raiders Coaster', group: 'coaster' }, // Tommy T\'s Extreme Roller Coasters
     { mode: 'video76', id: 'UYJIqBZENjU', emoji: '🐠', label: 'Sea Life Coaster', group: 'coaster' }, // HIKAWA RIDES
