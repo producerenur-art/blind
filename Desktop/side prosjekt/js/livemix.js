@@ -258,7 +258,7 @@ const LiveMix = (() => {
   function _zenSet() {
     try {
       const cur = (typeof Auth !== 'undefined' && Auth.current) ? Auth.current() : null;
-      // Eigar (producerenur@gmail.com): fast sett 3 = live-intro.mp3 inn og ut (brukarønske 2026-10-11) — aldri rotert.
+      // Eigar (producerenur@gmail.com): fast sett 3 = live-intro-l14.m4a?v=20261101 inn og ut (brukarønske 2026-10-11) — aldri rotert.
       if (_isOwnerJingleUser(cur)) { _bc.zenSet = 3; return 3; }
       if (!(typeof CONFIG !== 'undefined' && CONFIG.isFreeLiveEmail && CONFIG.isFreeLiveEmail(cur))) { _bc.zenSet = null; return -1; }
       if (_bc.zenSet == null) {
@@ -983,7 +983,7 @@ const LiveMix = (() => {
     // {namn}» på BROADCASTERENS EIGEN fane også — reint visuelt, kobler
     // ALDRI til lyden der (det er nettopp isBroadcastingHere()-sjekken i
     // js/liveGlobal.js som hindrar sjølv-ekko).
-    getZenSet: () => { try { const cur = Auth.current(); if (_isOwnerJingleUser(cur)) return 3; return (CONFIG.isFreeLiveEmail(cur) && typeof _bc.zenSet === 'number') ? _bc.zenSet : -1; } catch (e) { return -1; } },   // eigar: ALLTID sett 3 (live-intro.mp3 inn og ut), uavhengig av _bc.zenSet
+    getZenSet: () => { try { const cur = Auth.current(); if (_isOwnerJingleUser(cur)) return 3; return (CONFIG.isFreeLiveEmail(cur) && typeof _bc.zenSet === 'number') ? _bc.zenSet : -1; } catch (e) { return -1; } },   // eigar: ALLTID sett 3 (live-intro-l14.m4a?v=20261101 inn og ut), uavhengig av _bc.zenSet
     getBroadcastPresenterName: () => (_bc.dj ? (_bc.presenterName || '') : ''),
     getBroadcastTrackTitle: () => (_bc.dj ? (_bcNow() || '') : ''),
     getBroadcastLinkUrl: () => (_bc.dj ? (_bc.linkUrl || '') : ''),

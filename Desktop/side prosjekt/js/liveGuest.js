@@ -38,13 +38,13 @@ const LiveGuest = (() => {
   // BÅDE teksten som vises i modalen OG hvilket klipp som spilles.
   const JINGLE_BASE = 'assets/jingles/';
   const LIVE_JINGLES = {
-    ambientmann:      JINGLE_BASE + 'live-ambientmann.mp3',
-    noah:             JINGLE_BASE + 'live-noah.mp3',
-    therollingstoned: JINGLE_BASE + 'live-therollingstoned.mp3',
+    ambientmann:      JINGLE_BASE + 'live-ambientmann-l14.m4a?v=20261101',
+    noah:             JINGLE_BASE + 'live-noah-l14.m4a?v=20261101',
+    therollingstoned: JINGLE_BASE + 'live-therollingstoned-l14.m4a?v=20261101',
   };
-  const LIVE_JINGLE_GENERIC = JINGLE_BASE + 'live-generic.mp3';
-  const LIVE_INTRO = JINGLE_BASE + 'live-intro.mp3';
-  const LIVE_STANDALONE = { gagaringproject: JINGLE_BASE + 'live-gagaringproject.mp3' };
+  const LIVE_JINGLE_GENERIC = JINGLE_BASE + 'live-generic-l14.m4a?v=20261101';
+  const LIVE_INTRO = JINGLE_BASE + 'live-intro-l14.m4a?v=20261101';
+  const LIVE_STANDALONE = { gagaringproject: JINGLE_BASE + 'live-gagaringproject-l14.m4a?v=20261101' };
   function _normalizeName(name) { return String(name || '').toLowerCase().replace(/[^a-z]/g, ''); }
 
   // Spel intro (+ evt. navneklipp) lokalt, kall så `done()` — feiler ALDRI høyt:
