@@ -55,6 +55,35 @@ module.exports = async (req, res) => {
     }
   }
 
+  // Chlorophil betaler 200 kr per live-sending (brukarønske 01.11.2026). Engangsbetaling, beløpet er fast server-side.
+  // Eigen success_url (IKKJE ?payment_success=) slik at Pro-/timekreditt-flyten i js/payment.js ikkje blir trigga.
+  if (product === 'live-fee') {
+    const slot = String((req.body && req.body.slot) || '').slice(0, 40);
+    try {
+      const session = await stripe.checkout.sessions.create({
+        line_items: [{
+          price_data: {
+            currency: 'nok',
+            product_data: {
+              name: 'SiriusFM live broadcast fee',
+              description: slot ? `Live broadcast ${slot}` : 'One live broadcast on SiriusFM',
+            },
+            unit_amount: 20000, // 200 kr per sending
+          },
+          quantity: 1,
+        }],
+        mode: 'payment',
+        success_url: `${siteUrl}/betal-live.html?paid=1`,
+        cancel_url:  `${siteUrl}/betal-live.html`,
+        metadata: { username, product: 'live-fee', slot },
+      });
+      return res.status(200).json({ url: session.url });
+    } catch (err) {
+      console.error('Stripe live-fee checkout error:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   const planKey = PLANS[plan] ? plan : 'monthly';
   const p = PLANS[planKey];
 

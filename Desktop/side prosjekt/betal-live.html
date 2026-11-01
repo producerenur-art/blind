@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Live broadcast fee — SiriusFM</title>
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d1a;color:#e8eaf6;font-family:system-ui,sans-serif}
+  .box{max-width:420px;margin:1rem;padding:2rem;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);text-align:center}
+  h1{font-size:1.3rem;margin:0 0 .5rem} p{opacity:.85;line-height:1.5}
+  button{margin-top:1rem;padding:.8rem 1.6rem;border:0;border-radius:999px;background:#7c5cff;color:#fff;font-size:1rem;font-weight:700;cursor:pointer}
+  button[disabled]{opacity:.5;cursor:wait} #err{color:#ff8a8a;min-height:1.2em;font-size:.9rem}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>Live broadcast fee</h1>
+  <p id="msg">Each live broadcast on SiriusFM costs <b>200 NOK</b>.</p>
+  <p id="slot"></p>
+  <button id="pay">Pay 200 NOK</button>
+  <p id="err"></p>
+</div>
+<script src="js/chlorophilLive.js"></script>
+<script>
+(function () {
+  var msg = document.getElementById('msg'), btn = document.getElementById('pay'), err = document.getElementById('err');
+  if (/[?&]paid=1/.test(location.search)) {
+    msg.textContent = 'Thank you — payment received. Have a great show!';
+    btn.style.display = 'none';
+    return;
+  }
+  var slotLabel = '';
+  try {
+    var next = ChlorophilLive.slots(Date.now(), 1)[0];
+    if (next) {
+      var d = ChlorophilLive.describe(next);
+      slotLabel = d.weekday + ' ' + d.date + ', ' + d.clock + ' ' + d.tz;
+      document.getElementById('slot').textContent = 'Next show: ' + slotLabel;
+    }
+  } catch (e) {}
+  btn.onclick = function () {
+    btn.disabled = true; err.textContent = '';
+    fetch('/api/create-checkout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'chlorophil', product: 'live-fee', slot: slotLabel })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (j && j.url) location.href = j.url; else throw new Error((j && j.error) || 'Could not start payment');
+    }).catch(function (e) { err.textContent = e.message; btn.disabled = false; });
+  };
+})();
+</script>
+</body>
+</html>
