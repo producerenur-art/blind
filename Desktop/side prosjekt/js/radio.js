@@ -3895,13 +3895,35 @@ const Radio = (() => {
     // Same rekkjefølgje for alle lyttarar (klokkestyrt), så ingen ser same video to gonger på rad.
     const full = _fullVisRotation();
     const step = Math.floor(Date.now() / VIS_AUTO_STEP_MS);
-    const it = full.length ? full[step % full.length] : _autoList[step % _autoList.length];
+    const it = full.length ? full[_visCycleIndex(step, full.length)] : _autoList[step % _autoList.length];
     if (!it) return;
     const mode = it.mode || aiModeOf(it.id);
     if (!it.mode) { AI_VIDEOS[mode] = it.id; visMeta[it.id] = { emoji: it.emoji, label: it.label, channel: it.channel || null }; }
     if (mode === visMode || !isVideoMode(mode)) return;
     const btn = [...document.querySelectorAll('.vis-style-row .vis-btn')].find(b => (b.getAttribute('onclick') || '').includes("'" + mode + "'"));
     setVisMode(mode, btn, true);
+  }
+  // 2026-11-02: stokk rekkjefølgja på nytt for HVER runde gjennom poolen (var same fast rekkjefølgje kvar ~7. time,
+  // så same videoar gjekk att dagleg i same orden). Seedet på rundenummeret → lik for alle lyttarar. Siste video i ei
+  // runde blir aldri første i neste.
+  const _visPermCache = {};
+  function _visPerm(len, cycle) {
+    const key = len + ':' + cycle;
+    if (_visPermCache[key]) return _visPermCache[key];
+    let a = (cycle * 2654435761 + len * 40503) >>> 0;
+    const rnd = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const perm = Array.from({ length: len }, (_, i) => i);
+    for (let i = len - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
+    if (len > 2 && cycle > 0) {
+      const prevLast = _visPerm(len, cycle - 1)[len - 1];
+      if (perm[0] === prevLast) [perm[0], perm[1]] = [perm[1], perm[0]];
+    }
+    const keys = Object.keys(_visPermCache); if (keys.length > 6) delete _visPermCache[keys[0]];
+    return (_visPermCache[key] = perm);
+  }
+  function _visCycleIndex(step, len) {
+    if (len < 3) return step % len;
+    return _visPerm(len, Math.floor(step / len))[step % len];
   }
   let _fullVisKey = '', _fullVisList = [];
   function _fullVisRotation() {
