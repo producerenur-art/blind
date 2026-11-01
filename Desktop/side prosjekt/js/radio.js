@@ -1003,6 +1003,48 @@ const Radio = (() => {
   }
   if (typeof document !== 'undefined') setInterval(_silenceFillTick, 1000);
 
+  // ── Tilkoblings-maske for 1.FM-strøymar i 24/7 (brukarønske 2026-11-01) ───────────────────
+  // 1.FM sender (norsk, geo-retta) reklame i strøymen, truleg som pre-roll rett etter tilkobling — utan tittel-markør, så
+  // ADGUARD_RE kan ikkje fange han. I 24/7 held vi derfor 1.FM-strøymen dempa (kopla til, men lydlaus) dei første ~32 s etter
+  // kvar tilkobling, spelar Siren-klipp frå oss i eit eige element i staden, og tonar strøymen inn på 230 ms. Reklamar
+  // seinare i programmet slepp gjennom (ikkje oppdagbare). Gjeld berre 24/7, aldri manuelt stasjonsval.
+  const CONNECT_MASK_MS = 32000;
+  let _cmask = null, _cmaskN = 0;
+  function _connectMaskEnd(quick) {
+    if (!_cmask) return;
+    const m = _cmask; _cmask = null;
+    clearTimeout(m.t); clearInterval(m.watch);
+    try { if (m.clip) m.clip.pause(); } catch (e) {}
+    _jingleBusy = false;
+    if (quick) return;
+    const audio = getAudio();
+    if (audio && isPlaying && !_liveTakeover) _fadeVolume(audio, volume * (currentStation?.gain ?? 1), AD_FADE_MS);
+  }
+  function _connectMaskStart(audio, url, info) {
+    try {
+      const r247 = typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive();
+      if (!r247 || _liveTakeover || _special || _jingleBusy || muted || !/^https?:\/\/[a-z0-9-]*\.?1\.fm\//i.test(url)) return false;
+      const st = info && info.id;
+      _jingleBusy = true;
+      const m = _cmask = { clip: null, id: st };
+      const playNext = () => {
+        if (_cmask !== m) return;
+        const list = _fillBlobs && _fillBlobs.length ? _fillBlobs : SIREN_ADS;
+        const clip = new Audio(list[(_cmaskN++ + 3) % list.length]);
+        clip.volume = Math.max(0, Math.min(1, volume));
+        m.clip = clip;
+        clip.addEventListener('ended', playNext, { once: true });
+        clip.addEventListener('error', playNext, { once: true });
+        try { const p = clip.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+      };
+      audio.volume = 0;
+      m.t = setTimeout(() => _connectMaskEnd(false), CONNECT_MASK_MS);
+      m.watch = setInterval(() => { if (!isPlaying || !currentStation || currentStation.id !== st) _connectMaskEnd(true); }, 1000);
+      playNext();
+      return true;
+    } catch (e) { _cmask = null; _jingleBusy = false; return false; }
+  }
+
   // ── Electronic lock ───────────────────────────────────────────────────
   // The whole site is locked to electronic music, so the radio search is too.
   // A web result only passes if it carries one of these genre tags (exact tag
@@ -1940,6 +1982,7 @@ const Radio = (() => {
       return;
     }
     const audio = getAudio();
+    _connectMaskEnd(true);   // ny tilkobling: avslutt evt. pågåande tilkoblings-maske
     // Viss ein partnar-embed (t.d. Dice Radio-iframen) står open frå før, lukk
     // han fyrst — elles blir embed-ruta ståande over visualizeren for godt,
     // uansett kva stasjon brukaren vel etterpå.
@@ -2020,7 +2063,7 @@ const Radio = (() => {
       // valfri, default 1) trimmar akkurat DEN stasjonen ned mot same
       // opplevde styrke som resten, utan å røre brukaren sitt eige
       // volumval. Sjå STATIONS-oppslaget for kvar stasjon som har fått eit.
-      _fadeVolume(audio, volume * (info?.gain ?? 1), FADE_MS);
+      if (!_connectMaskStart(audio, url, info)) _fadeVolume(audio, volume * (info?.gain ?? 1), FADE_MS);
       updatePlayBtn(true);
       document.getElementById('radio-idle')?.classList.add('hidden');
       initAudioContext();

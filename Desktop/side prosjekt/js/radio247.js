@@ -22,8 +22,9 @@ const Radio247 = (() => {
   // legg til ein ny id her viss du har stadfesta at HEILE kjeda (ikkje berre
   // sluttmålet) har CORS, eller at URL-en ikkje omdirigerer i det heile.
   const GOA_IDS         = ['dmtfm', 'psyndora', 'babaganousha', 'jointil-beattrance', 'record-goa-psy', 'goanight'];
-  // 01.11.2026: 'trancearound' og 'atr' (1.FM) fjerna — 1.FM sender reklame i straumen (norsk, geo-retta), brukarønske.
-  const PROGRESSIVE_IDS = ['rr-progressive', 'record-trancemission', 'dfm-avb'];
+  // 01.11.2026: 'trancearound' og 'atr' (1.FM) tilbake i hjulet (brukarønske) — js/radio.js maskerer første ~32 s etter
+  // kvar tilkobling med våre klipp (_connectMaskStart), der 1.FM sin reklame (norsk, geo-retta) ligg.
+  const PROGRESSIVE_IDS = ['trancearound', 'atr', 'rr-progressive', 'record-trancemission', 'dfm-avb'];
   // 'alswin-ambient' fjerna 23.09.2026 — stadfesta CORS-blokkert i nettlesar
   // (ingen Access-Control-Allow-Origin frå server7.radio-streams.net), sjå
   // kommentaren ved stasjonen sitt tidlegare oppslag i js/radio.js STATIONS.
