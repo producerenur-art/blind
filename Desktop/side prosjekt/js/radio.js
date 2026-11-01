@@ -943,6 +943,44 @@ const Radio = (() => {
   }
   if (typeof document !== 'undefined') setInterval(_adGuardTick, ADGUARD_POLL_MS);
 
+  // ── Aldri stille i 24/7 Cycle (brukarønske 2026-11-01) ─────────────────────────────────
+  // Hakk, tregt nett, reconnect eller daud strøym kunne gi sekund (opptil 10 s før watchdog koplar til på nytt) med
+  // stillheit. No: står avspelinga stille >1,8 s i 24/7 (currentTime tikkar ikkje), speler vi Siren-klipp i eit
+  // eige element, ett etter anna, heilt til strøymen går att (då stoppar fyllet). Rører ikkje _jingleBusy, så
+  // watchdog/reconnect/skipDeadStation køyrer som før.
+  const SILENCE_FILL_AFTER_MS = 1800;
+  let _fill = null, _fillLastT = -1, _fillLastAt = 0, _fillN = 0;
+  function _silenceFillStop() {
+    if (!_fill) return;
+    const f = _fill; _fill = null;
+    try { if (f.clip) f.clip.pause(); } catch (e) {}
+  }
+  function _silenceFillStart() {
+    const br = _fill = { clip: null };
+    const playNext = () => {
+      if (_fill !== br) return;
+      const url = SIREN_ADS[(_fillN++ + 5) % SIREN_ADS.length];
+      const clip = new Audio(url);
+      clip.volume = Math.max(0, Math.min(1, volume));
+      br.clip = clip;
+      clip.addEventListener('ended', playNext, { once: true });
+      clip.addEventListener('error', playNext, { once: true });
+      try { const p = clip.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+    };
+    playNext();
+  }
+  function _silenceFillTick() {
+    const audio = getAudio();
+    const on = typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive();
+    if (!on || !isPlaying || !audio || _jingleBusy || _liveTakeover || _special || _adBreak || muted || !window._radioMode) {
+      _fillLastT = -1; _silenceFillStop(); return;
+    }
+    const t = audio.currentTime, now = Date.now();
+    if (t !== _fillLastT) { _fillLastT = t; _fillLastAt = now; _silenceFillStop(); return; }
+    if (!_fill && now - _fillLastAt >= SILENCE_FILL_AFTER_MS) _silenceFillStart();
+  }
+  if (typeof document !== 'undefined') setInterval(_silenceFillTick, 1000);
+
   // ── Electronic lock ───────────────────────────────────────────────────
   // The whole site is locked to electronic music, so the radio search is too.
   // A web result only passes if it carries one of these genre tags (exact tag
