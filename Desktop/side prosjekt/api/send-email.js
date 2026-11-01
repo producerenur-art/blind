@@ -9,7 +9,7 @@ const { SHOWS } = require('../js/shows.js');
 const { FESTIVALS } = require('../js/world.js');
 const SpecialShows = require('../js/specialShows.js');
 const ChlorophilLive = require('../js/chlorophilLive.js');
-const { scheduleFor: radio247ScheduleFor, pickStationId: r247PickStationId, stationName: r247StationName } = require('../js/radio247.js');
+const { scheduleFor: radio247ScheduleFor } = require('../js/radio247.js');
 
 // Kanonisk nettadresse for ALLE e-postlenker (aktivering, tilbakestilling, kjøp).
 // Brukes som standard slik at lenkene alltid peker til det offisielle domenet —
@@ -438,19 +438,12 @@ const MAG_TABLE = 'magazine_cache';
 // 00:00, blokkane ligg alt i stigande rekkefølge).
 function radio247Rows(SCHEDULE) {
   const fmt = h => String(Math.floor(h) % 24).padStart(2, '0') + ':00';
-  // Den kompakte stasjonsraden på lyttesida skjuler viljug den ekte
-  // strøymen bak «SiriusFM 24/7» (sjå kommentar ved updateNowPlaying() i
-  // js/radio.js) — det er rett der, sida er direkte/live. Her i e-posten,
-  // som berre er ein dagsoversikt, er det derimot nyttig å sjå kva ekte
-  // stasjon som faktisk ruller inn i kvar blokk i dag.
+  // Brukarønske 2026-11-01: ingen stasjonsnamn i 24/7-e-postane — berre klokkeslett + sjanger.
   return SCHEDULE.map(b => {
-    const sid  = r247PickStationId ? r247PickStationId(b) : null;
-    const name = sid && r247StationName ? r247StationName(sid) : null;
     return `<tr>
       <td style="padding:0.5rem 0.75rem;vertical-align:top;width:90px;color:#f59e0b;font-weight:700;font-size:0.85rem;border-top:1px solid rgba(255,255,255,0.06)">${fmt(b.start)}–${fmt(b.end)}</td>
       <td style="padding:0.5rem 0.75rem;vertical-align:top;border-top:1px solid rgba(255,255,255,0.06)">
         <div style="color:#e2e8f0;font-weight:600;font-size:0.9rem">${escHtml(b.label)}</div>
-        ${name ? `<div style="color:#64748b;font-size:0.78rem;margin-top:0.15rem">${escHtml(name)}</div>` : ''}
       </td>
     </tr>`;
   }).join('');
