@@ -21,10 +21,10 @@ const Radio247 = (() => {
   // avspeling. Sjå api/radio-healthcheck.js for framtidige kandidatar; berre
   // legg til ein ny id her viss du har stadfesta at HEILE kjeda (ikkje berre
   // sluttmålet) har CORS, eller at URL-en ikkje omdirigerer i det heile.
-  const GOA_IDS         = ['dmtfm', 'psyndora', 'babaganousha', 'jointil-beattrance', 'record-goa-psy', 'goanight'];
+  const GOA_IDS         = ['dmtfm', 'psyndora', 'babaganousha', 'jointil-beattrance'];
   // 01.11.2026: 'trancearound' og 'atr' (1.FM) UT IGJEN — ei stemme/reklame kom midt i programmet (kl ~18:34, ATR), utanfor
   // tilkoblings-masken i js/radio.js (_connectMaskStart) og utan tittel-markør, så ho kan ikkje oppdagast.
-  const PROGRESSIVE_IDS = ['rr-progressive', 'record-trancemission', 'dfm-avb'];
+  const PROGRESSIVE_IDS = ['rr-progressive'];
   // 'alswin-ambient' fjerna 23.09.2026 — stadfesta CORS-blokkert i nettlesar
   // (ingen Access-Control-Allow-Origin frå server7.radio-streams.net), sjå
   // kommentaren ved stasjonen sitt tidlegare oppslag i js/radio.js STATIONS.
@@ -34,7 +34,7 @@ const Radio247 = (() => {
   // refused (stadfesta curl, både http og https); stasjonen står framleis i STATIONS i js/radio.js.
   const DARK_DRONE_IDS  = ['dark-city-signal', 'systrum-ssr1', 'indiebeat-ambient'];
   // 01.11.2026: 'diceradio-psybient' (DiceRadio) fjerna frå hjulet, brukarønske.
-  const PSYCHILL_IDS    = ['ambientpsy-1fm', 'multihuman', 'paradisehunter-chillout'];
+  const PSYCHILL_IDS    = ['multihuman', 'paradisehunter-chillout'];
   // smoothchill (icy-genre: Soul) og anon-fm (icy-genre inkluderer rock) fjerna
   // 20.09.2026 — live ICY-metadata stadfesta ikkje-elektronisk innhald,
   // brukarønske: ALDRI rock/metal/hip-hop/R&B i 24/7-hjulet.
@@ -44,7 +44,7 @@ const Radio247 = (() => {
   // 01.11.2026: '1fm-chillout' (Chillout Lounge, 1.FM) fjerna av same grunn som over.
   const CHILLOUT_IDS    = ['brokenbeats', 'cafedelmar'];
   // uzic-techno (Airtime - offline) og remember-vip-techno (401) fjerna frå hjulet 01.11.2026, erstatta av to stadfeste.
-  const TECHNO_IDS      = ['record-minimal', 'rominimal'];
+  const TECHNO_IDS      = ['rominimal'];
 
   // Visningsnamn for stasjonane over — same namn som STATIONS i js/radio.js
   // (shortName der han finst, elles name, «.FM»-endinga kutta), men ein
