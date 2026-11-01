@@ -663,7 +663,7 @@ const Radio = (() => {
   // held fram å spele, blir dempa til ~25 % (fade inn/ut), jingelen speler i eit eige
   // kortlevd element og stasjonen toner tilbake (same fade) når han er ferdig. Ingen
   // pause/reconnect. (iOS ignorerer audio.volume — der speler jingelen berre oppå.)
-  function _playJingleOverMusic(url, fadeMs) {
+  function _playJingleOverMusic(url, fadeMs, duckLevel) {
     if (_jingleBusy || _liveTakeover || _liveStatusPending() || !window._radioMode || !isPlaying || muted) return;
     const audio = getAudio();
     if (!audio || audio.paused) return;
@@ -682,7 +682,7 @@ const Radio = (() => {
     j.addEventListener('ended', restore);
     j.addEventListener('error', restore);
     j.addEventListener('loadedmetadata', () => { setTimeout(restore, (j.duration || 60) * 1000 + 3000); }, { once: true });
-    _fadeVolume(audio, audio.volume * JINGLE_DUCK, ms, () => {
+    _fadeVolume(audio, audio.volume * (typeof duckLevel === 'number' ? duckLevel : JINGLE_DUCK), ms, () => {
       const p = j.play();
       if (p && p.catch) p.catch(restore);
     });
@@ -831,8 +831,14 @@ const Radio = (() => {
   function _liveStatusPending() {
     try { return !!window.LiveGlobal && !window._liveStatusChecked && performance.now() < 10000; } catch (e) { return false; }
   }
+  // Brukarønske 2026-11-01: reklamane (:05 og :20-slottane) kuttar ikkje lenger musikken — han blir dempa til AD_DUCK (≈ −14 dB)
+  // mens reklamen speler over, og toner attende (230 ms inn/ut). Strøymen held seg kopla til (ingen reconnect/hakk). Gjeld ALLE
+  // slike reklamar (ADS, booking, vekentleg David). iOS ignorerer audio.volume → der held vi den gamle «åleine»-oppførselen.
+  const AD_DUCK = 0.2;
+  const IS_IOS_AUDIO = typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/i.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
   function _playAdAlone(url) {
     if (_jingleBusy || _liveTakeover || _special || _liveStatusPending() || !window._radioMode || !isPlaying || muted) return;
+    if (!IS_IOS_AUDIO) { _playJingleOverMusic(url, AD_FADE_MS, AD_DUCK); return; }
     _jingleBusy = true;
     _playLocalClip(url, () => {
       _jingleBusy = false;
