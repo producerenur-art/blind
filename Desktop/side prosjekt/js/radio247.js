@@ -219,7 +219,7 @@ const Radio247 = (() => {
   // Kort lokal jingle-fil (same som stasjons-ID-jinglane A/C/D) — brukast som
   // ei bru mellom sjangrar ved AUTOMATISKE bytte, så overgangen aldri blir
   // stille dødtid mens den nye strøymen koblar til.
-  const TRANSITION_JINGLE = 'assets/jingles/jingle-a-l14.m4a?v=20261101';
+  const TRANSITION_JINGLE = 'assets/jingles/jingle-a-l16.m4a?v=20261102';
   // Brukarønske 2026-09-19: gjer overgangen til/frå jingelen mjukare — mange
   // av sporene i rotasjonen ligg i 4/4-takt, men me har ingen tilgang til
   // taktrutenettet til dei eksterne strøymane (tredjeparts-radio, ikkje vårt
