@@ -3589,13 +3589,15 @@ const Radio = (() => {
   // (nivå 1) eller pausar videoen heilt (nivå 2) så lenge lyden hakkar.
   let _visStallLevel = 0;
   function _visQuality() {
-    if (_visStallLevel >= 1) return 'tiny';
+    if (_visStallLevel >= 1) return 'medium';   // 2026-11-02: var 'tiny' (144p, ser grumsete ut); lyd-hakk gir 480p, nivå 2 pausar framleis
     const c = (typeof navigator !== 'undefined' && navigator.connection) || {};
     if (c.saveData) return 'small';
     const t = c.effectiveType;
     if (t === 'slow-2g' || t === '2g') return 'tiny';
     if (t === '3g') return 'small';
-    if (typeof c.downlink === 'number') {
+    // PC: navigator.downlink er eit grovt, ofte altfor lavt anslag i Chrome (hamna på 480p/720p på rask linje) — der
+    // held saveData/effectiveType og lyd-hakk-vernet (_visStallLevel) som vern. Mobil/nettbrett beheld downlink-trappa.
+    if (IS_TOUCH_MOBILE && typeof c.downlink === 'number') {
       if (c.downlink < 2) return 'small';
       if (c.downlink < 5) return 'medium';
       if (c.downlink < 10) return 'large';
@@ -3850,7 +3852,7 @@ const Radio = (() => {
     let k = 1;
     try {
       const c = (typeof navigator !== 'undefined' && navigator.connection) || {};
-      const okNet = !c.saveData && !(typeof c.downlink === 'number' && c.downlink < 3) && !/(^|-)2g|3g/.test(c.effectiveType || '');
+      const okNet = !c.saveData && !/(^|-)2g|3g/.test(c.effectiveType || '');   // downlink-krav fjerna (Chrome anslår han ofte for lavt)
       if (!IS_TOUCH_MOBILE && okNet && _visStallLevel === 0) { const tw = _visTargetW(); if (w < tw - 50) k = Math.min(3, tw / w); }
     } catch (e) {}
     if (k < 1.05) k = 1;
