@@ -950,17 +950,29 @@ const Radio = (() => {
   // eige element, ett etter anna, heilt til strøymen går att (då stoppar fyllet). Rører ikkje _jingleBusy, så
   // watchdog/reconnect/skipDeadStation køyrer som før.
   const SILENCE_FILL_AFTER_MS = 1800;
-  let _fill = null, _fillLastT = -1, _fillLastAt = 0, _fillN = 0;
+  let _fill = null, _fillLastT = -1, _fillLastAt = 0, _fillN = 0, _fillLastSwitch = 0;
+  // Trygg måte (lag 2): 4 Siren-klipp ligg ferdig i minnet som blob-URL-ar, så fyllet speler også når nettet
+  // er nede/tregt (då ville ein vanleg nettverksfil aldri kome). Lasta stille i bakgrunnen når 24/7 er på.
+  // Lag 3 (under): har fyllet gått >12 s, byt til ein annan stasjon i hjulet i staden for å vente på reconnect.
+  const FILL_ESCALATE_MS = 12000;
+  let _fillBlobs = null, _fillBlobsLoading = false;
+  function _loadFillBlobs() {
+    if (_fillBlobs || _fillBlobsLoading || typeof fetch === 'undefined') return;
+    _fillBlobsLoading = true;
+    Promise.all(SIREN_ADS.slice(0, 4).map(u => fetch(u).then(r => r.blob()).then(b => URL.createObjectURL(b)).catch(() => null)))
+      .then(urls => { _fillBlobs = urls.filter(Boolean); if (!_fillBlobs.length) _fillBlobs = null; })
+      .finally(() => { _fillBlobsLoading = false; });
+  }
   function _silenceFillStop() {
     if (!_fill) return;
     const f = _fill; _fill = null;
     try { if (f.clip) f.clip.pause(); } catch (e) {}
   }
   function _silenceFillStart() {
-    const br = _fill = { clip: null };
+    const br = _fill = { clip: null, t0: Date.now() };
     const playNext = () => {
       if (_fill !== br) return;
-      const url = SIREN_ADS[(_fillN++ + 5) % SIREN_ADS.length];
+      const url = _fillBlobs ? _fillBlobs[_fillN++ % _fillBlobs.length] : SIREN_ADS[(_fillN++ + 5) % SIREN_ADS.length];
       const clip = new Audio(url);
       clip.volume = Math.max(0, Math.min(1, volume));
       br.clip = clip;
@@ -976,9 +988,15 @@ const Radio = (() => {
     if (!on || !isPlaying || !audio || _jingleBusy || _liveTakeover || _special || _adBreak || muted || !window._radioMode) {
       _fillLastT = -1; _silenceFillStop(); return;
     }
+    _loadFillBlobs();
     const t = audio.currentTime, now = Date.now();
     if (t !== _fillLastT) { _fillLastT = t; _fillLastAt = now; _silenceFillStop(); return; }
     if (!_fill && now - _fillLastAt >= SILENCE_FILL_AFTER_MS) _silenceFillStart();
+    // Lag 3: stasjonen kjem ikkje attende → hopp til ein annan (fyllet held fram til lyden går att).
+    if (_fill && now - _fill.t0 >= FILL_ESCALATE_MS && now - _fillLastSwitch >= FILL_ESCALATE_MS && currentStation) {
+      _fillLastSwitch = now;
+      try { Radio247.skipDeadStation(currentStation.id, { noBridge: true }); } catch (e) { /* stille */ }
+    }
   }
   if (typeof document !== 'undefined') setInterval(_silenceFillTick, 1000);
 
