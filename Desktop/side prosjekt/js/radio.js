@@ -3600,7 +3600,19 @@ const Radio = (() => {
       if (c.downlink < 5) return 'medium';
       if (c.downlink < 10) return 'large';
     }
-    return 'hd1080';
+    const tw = _visTargetW();
+    return tw > 2560 ? 'hd2160' : tw > 1920 ? 'hd1440' : 'hd1080';
+  }
+  // Mål-breidd for videoen i faktiske skjermpikslar (2026-11-02: «oppløysinga til det beste»): ramma sin CSS-breidd × skjermens
+  // pikseltettleik (retina = 2), minst 1920 og maks 3840. YouTube vel kvalitet etter iframen sin storleik, så sizeVisVideo bygger
+  // iframen opp til denne breidda og skalerer han tilbake — 1080p (vanleg skjerm) / 1440p / 4K (retina). Alle vernetiltak står att:
+  // mobil, svakt nett og lyd-hakk gir framleis lågare kvalitet (sjå _visQuality over og k-vilkåra i sizeVisVideo).
+  function _visTargetW() {
+    try {
+      const wrap = document.getElementById('radio-vis-wrap');
+      const cw = wrap ? wrap.clientWidth : 1400, dpr = Math.min(2, window.devicePixelRatio || 1);
+      return Math.max(1920, Math.min(3840, Math.round(cw * dpr)));
+    } catch (e) { return 1920; }
   }
   function applyVisQuality(frame) {
     postYtCommand(frame, 'setPlaybackQuality', [_visQuality()]);
@@ -3838,7 +3850,7 @@ const Radio = (() => {
     try {
       const c = (typeof navigator !== 'undefined' && navigator.connection) || {};
       const okNet = !c.saveData && !(typeof c.downlink === 'number' && c.downlink < 3) && !/(^|-)2g|3g/.test(c.effectiveType || '');
-      if (!IS_TOUCH_MOBILE && okNet && _visStallLevel === 0 && w < 1900) k = Math.min(2.5, 1920 / w);
+      if (!IS_TOUCH_MOBILE && okNet && _visStallLevel === 0) { const tw = _visTargetW(); if (w < tw - 50) k = Math.min(3, tw / w); }
     } catch (e) {}
     if (k < 1.05) k = 1;
     frame.style.width  = Math.ceil(w * k) + 'px';
