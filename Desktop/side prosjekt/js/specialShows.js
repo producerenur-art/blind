@@ -16,7 +16,7 @@ const SpecialShows = (() => {
       // Reklame (25s) rett FØR sjølve overtakinga, på alle 4 sendingane —
       // brukarønske 29.09.2026: reklame → «SiriusFM live now»-jingelen → miksen
       // startar. Sjå js/radio.js enterLiveTakeover() sin _special-gren.
-      preRollAd: 'assets/jingles/lemonchill-ad.mp3',
+      preRollAd: 'assets/jingles/lemonchill-ad-n.m4a',
       // v2 = brukaren sin eigen "lemonchill set for noah radio.wav" (Downloads, 29.09.2026),
       // transkoda til AAC 96kbps (afconvert) for å halde seg under Supabase Storage-grensa ~50MB.
       audioUrl: 'https://qefdyxpyjwpohsmmmksf.supabase.co/storage/v1/object/public/soundcore-media/special-mixes/lemonchill-001-v2.m4a',
@@ -80,8 +80,8 @@ const SpecialShows = (() => {
       title: 'Dim Day — resident set for SiriusFM',
       liveLabel: 'Dim Day on air',
       // Brukarønske 24.10.2026: eigen «Dim Day»-jingel (70 s) både INN og UT av sendinga, ingen reklame.
-      introJingle: 'assets/jingles/live-dimday.mp3',
-      outroJingle: 'assets/jingles/live-dimday.mp3',
+      introJingle: 'assets/jingles/live-dimday-n.m4a',
+      outroJingle: 'assets/jingles/live-dimday-n.m4a',
       prerollMs: 72000,   // jingelen er 70,5 s → startar ~72 s før sendestart så han er ferdig når settet går
       // AAC 96 kbps av «Dim Day 1 for siriusfm live.mp3» (53:44). MÅ lastast opp til Supabase før deploy.
       audioUrl: 'https://qefdyxpyjwpohsmmmksf.supabase.co/storage/v1/object/public/soundcore-media/special-mixes/dim-day-001.m4a',

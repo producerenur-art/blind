@@ -39,7 +39,8 @@ const Radio247 = (() => {
   // 12-16) reverte att 23.09.2026 etter brukarønske — Chill Out-blokka er no
   // attende til dei tre opphavlege stasjonane.
   const CHILLOUT_IDS    = ['1fm-chillout', 'brokenbeats', 'cafedelmar'];
-  const TECHNO_IDS      = ['uzic-techno', 'remember-vip-techno'];
+  // uzic-techno (Airtime - offline) og remember-vip-techno (401) fjerna frå hjulet 01.11.2026, erstatta av to stadfeste.
+  const TECHNO_IDS      = ['record-minimal', 'rominimal'];
 
   // Visningsnamn for stasjonane over — same namn som STATIONS i js/radio.js
   // (shortName der han finst, elles name, «.FM»-endinga kutta), men ein
@@ -59,7 +60,7 @@ const Radio247 = (() => {
     'ambientpsy-1fm': 'Ambient Psychill', multihuman: 'MultiHuman EntheoMusic',
     'diceradio-psybient': 'DiceRadio', 'paradisehunter-chillout': 'Paradisehunter Chillout',
     '1fm-chillout': 'Chillout Lounge', brokenbeats: 'Brokenbeats', cafedelmar: 'Café del Mar',
-    'uzic-techno': 'UZIC Techno Minimal', 'remember-vip-techno': 'Remember VIP Techno',
+    'record-minimal': 'Record Minimal', rominimal: 'ROminimal.club',
   };
 
   // Ukeplan (brukarønske 20.10.2026): kvar vekedag har EI EGEN rekkjefølgje av sjangrar, så hjulet

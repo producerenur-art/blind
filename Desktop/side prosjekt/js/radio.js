@@ -293,6 +293,22 @@ const Radio = (() => {
       emoji: '🕳️', color: '#a855f7',
       desc: 'Dark techno · hard techno · minimal',
     },
+    // 2026-11-01: erstatning for dei to daude techno-stasjonane i 24/7-hjulet. Stadfesta: HTTPS, ingen omdirigering,
+    // CORS (ekko av opphavet), ICY-metadata, ren techno/minimal i 7-min-skanning. 24/7 har reklamevakt (_adGuardTick).
+    {
+      id: 'record-minimal', cat: 'Techno Underground',
+      name: 'Record Minimal',
+      url:  'https://radiorecord.hostingradio.ru/mini96.aacp',
+      emoji: '🔲', color: '#a855f7',
+      desc: 'Minimal · tech house · techno',
+    },
+    {
+      id: 'rominimal', cat: 'Techno Underground',
+      name: 'ROminimal.club',
+      url:  'https://r4.rominimal.club/listen/rominimal.club/radio2.m4a',
+      emoji: '🌀', color: '#a855f7',
+      desc: 'Romanian minimal · microhouse · deep techno',
+    },
   ];
 
   // Group by category
@@ -420,7 +436,7 @@ const Radio = (() => {
   // spelaren står stille eller spelar av eit musikkspor via js/player.js.
   const JINGLE_BASE = 'assets/jingles/';
   const JINGLES = { a: JINGLE_BASE + 'jingle-a.mp3', c: JINGLE_BASE + 'jingle-c.mp3', d: JINGLE_BASE + 'jingle-d.mp3',
-    chat: JINGLE_BASE + 'live-chat.mp3', // brukarønske 2026-09-23: «open the live chat»-jingel
+    chat: JINGLE_BASE + 'live-chat-n.m4a', // brukarønske 2026-09-23: «open the live chat»-jingel
     // 29.09.2026: begge desse to var mastra ~7-8 dB stillare enn resten av
     // jingelpoolen (RMS -24,8/-24,9 dBFS mot -14 til -19 for dei andre) —
     // brukaren merka at «jingelen som gjekk» var lav samanlikna med resten.
@@ -690,9 +706,10 @@ const Radio = (() => {
     { url: JINGLES.promo,      fade: LIVE_FADE_MS },              // «Welcome to SiriusFM»-presentasjon (~80s)
     { url: JINGLES.c,          fade: LIVE_FADE_MS },              // «You don't need an account…»
     { url: JINGLE_BASE + 'jingle-sirius-sarah.mp3', fade: LIVE_FADE_MS }, // Sarah-jingel (23 s), lagt til 2026-09-24
-    { url: JINGLE_BASE + 'live-chat-2.mp3', fade: LIVE_FADE_MS }, // live chat (Laura, ~53s)
+    { url: JINGLE_BASE + 'live-chat-2-n.m4a', fade: LIVE_FADE_MS }, // live chat (Laura, ~53s)
     { url: JINGLE_BASE + 'jingle-steps-echo.m4a', fade: LIVE_FADE_MS }, // «Jingle Steps Echo», lagt til 2026-09-27
     { url: JINGLE_BASE + 'jingle-sirius-beat.m4a', fade: LIVE_FADE_MS }, // «This is SiriusFM…» over beat, lagt til 2026-09-28
+    { url: JINGLE_BASE + 'jingle-hale.m4a?v=20261101', fade: LIVE_FADE_MS }, // Hale (ElevenLabs, 3,5 s), lagt til 2026-11-01
   ];
   // 2026-10-02: 12 DJ-/Arcturia Genetics-promoklipp (10–28 s, stemmer Roger/Jessica/Jack), løfta til RMS ≈ −18 dBFS
   // (originalane låg på −24) med toppgrense −1 dBFS. Flettast jamt inn mellom dei andre jinglane (ikkje etter kvarandre),
@@ -794,8 +811,11 @@ const Radio = (() => {
   // Brukarønske 2026-10-21: 12 korte Siren-reklamar (8–13 s, ElevenLabs) rullerer med dei tre over i
   // same reklameslottar (ingen eigne klokkeslett). Slot nr. n (talt frå UTC-epoken, tre per 7-timarsrunde)
   // spelar AD_POOL[n % lengda] — same klipp for alle lyttarar, aldri same klipp to gonger på rad.
-  const SIREN_ADS = Array.from({ length: 12 }, (_, i) => JINGLE_BASE + 'reklame-siren-' + String(i + 1).padStart(2, '0') + '.mp3?v=20261021');
-  const AD_POOL = ADS.map(a => a.url).concat(SIREN_ADS);
+  // 2026-11-01: løfta til RMS ≈ −18 dBFS (var −22, for lågt mot resten) → «-n.m4a», topp −1 dBFS.
+  const SIREN_ADS = Array.from({ length: 12 }, (_, i) => JINGLE_BASE + 'reklame-siren-' + String(i + 1).padStart(2, '0') + '-n.m4a?v=20261101');
+  // 2026-11-01: 3 nye ElevenLabs-reklamar (Siren ~45 s ×2, David ~11 s) i same rotasjon; David nr. 2 speler 1 gong i veka (under).
+  const ELEVEN_ADS = ['siren-1', 'david-1', 'siren-2'].map(n => JINGLE_BASE + 'reklame-eleven-' + n + '.m4a?v=20261101');
+  const AD_POOL = ADS.map(a => a.url).concat(SIREN_ADS, ELEVEN_ADS);
 
   // Brukarønske 2026-09-26: reklamar (og krisereklamen under) kuttar inn med 230 ms ut-/inn-toning.
   const AD_FADE_MS = 230;
@@ -844,10 +864,74 @@ const Radio = (() => {
   const BOOKING_ADS = [
     { url: JINGLE_BASE + 'book-residents-1.mp3',      shiftMs: 0 },
     { url: JINGLE_BASE + 'book-residents-2.mp3',      shiftMs: 6 * HOUR_MS },
-    { url: JINGLE_BASE + 'book-residents-dame-1.mp3', shiftMs: 12 * HOUR_MS },
-    { url: JINGLE_BASE + 'book-residents-dame-2.mp3', shiftMs: 18 * HOUR_MS },
+    { url: JINGLE_BASE + 'book-residents-dame-1-n.m4a', shiftMs: 12 * HOUR_MS },
+    { url: JINGLE_BASE + 'book-residents-dame-2-n.m4a', shiftMs: 18 * HOUR_MS },
   ];
   if (typeof document !== 'undefined') BOOKING_ADS.forEach(a => _scheduleAd(a, BOOKING_AD_SLOT_MS, BOOKING_AD_SLOT_OFFSET_MS));
+
+  // ── Vekentleg David-reklame (brukarønske 2026-11-01): éin gong i veka, tysdag 18:40 norsk vintertid (19:40 sommartid)
+  // (17:40 UTC), :40 ligg langt frå :05/:15/:20/:10/:30/:50 og timeskiftet. Same klokkestyrte mekanisme
+  // som _scheduleAd (alle lyttarar høyrer han samtidig), men eige 7-dagars slot og éin fast fil.
+  const WEEKLY_AD_URL = JINGLE_BASE + 'reklame-eleven-david-2.m4a?v=20261101';
+  const WEEK_MS = 7 * 24 * HOUR_MS;
+  const WEEKLY_AD_AT = 5 * 24 * HOUR_MS + 17 * HOUR_MS + 40 * 60 * 1000;   // epoke (tors 00:00 UTC) + tys 17:40 UTC
+  function _scheduleWeeklyAd() {
+    const now = Date.now();
+    const nextAt = Math.ceil((now - WEEKLY_AD_AT) / WEEK_MS) * WEEK_MS + WEEKLY_AD_AT;
+    _preloadAt(WEEKLY_AD_URL, nextAt);
+    setTimeout(() => { _playAdAlone(WEEKLY_AD_URL); _scheduleWeeklyAd(); }, Math.max(1000, nextAt - now));
+  }
+  if (typeof document !== 'undefined') _scheduleWeeklyAd();
+
+  // ── Reklamevakt for tredjeparts-stasjonar (brukarønske 2026-11-01) ───────────────────────
+  // Alle stasjonar i 24/7 Cycle (og stasjonar merka `adGuard: true`) blir polla via /api/radio-nowplaying (ICY-tittel,
+  // tenaren ligg få sekund FØR avspelinga). Ser tittelen ut som reklame/stasjons-ID: tone stasjonen ut på 230 ms
+  // (strøymen blir ståande kopla til — ingen reconnect, difor ingen hakk), spel EIN kort Siren-reklame frå oss
+  // i eit eige element, la det vere stille til deira reklame er over, og tone stasjonen inn att på 230 ms.
+  const ADGUARD_RE = /advert|reklame|commercial|sponsor|station.?id|\bident\b|jingle|promo|\bspot\b|werbung|publicit|реклам|moderation|telenor\.no/i;
+  const ADGUARD_POLL_MS = 6000;
+  const ADGUARD_TAIL_MS = 6000;       // tittelen leier avspelinga i nettlesaren med bufferet → vent før inntoning
+  const ADGUARD_MAX_MS = 150 * 1000;  // aldri lenger stille enn dette, same kva tittelen seier
+  let _adBreak = null, _adGuardN = 0, _adGuardPolling = false;
+  function _adBreakEnd() {
+    if (!_adBreak) return;
+    const b = _adBreak; _adBreak = null;
+    clearTimeout(b.maxT); clearTimeout(b.tailT);
+    try { b.clip.pause(); } catch (e) {}
+    _jingleBusy = false;
+    const audio = getAudio();
+    if (audio && isPlaying && !_liveTakeover) _fadeVolume(audio, volume * (currentStation?.gain ?? 1), AD_FADE_MS);
+  }
+  function _adBreakStart() {
+    if (_adBreak || _jingleBusy || _liveTakeover || _special || _liveStatusPending() || !window._radioMode || !isPlaying || muted) return;
+    const audio = getAudio(); if (!audio || audio.paused) return;
+    _jingleBusy = true;
+    const url = SIREN_ADS[(_adGuardN++) % SIREN_ADS.length];
+    const clip = _preloaded.get(url) || new Audio(url);
+    _preloaded.delete(url);
+    clip.volume = Math.max(0, Math.min(1, volume));
+    _adBreak = { clip, t0: Date.now(), maxT: setTimeout(_adBreakEnd, ADGUARD_MAX_MS), tailT: null };
+    _fadeVolume(audio, 0, AD_FADE_MS, () => { try { const p = clip.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} });
+  }
+  async function _adGuardTick() {
+    const st = currentStation;
+    const guard = !!(st && (st.adGuard || (typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive())));
+    if (!guard || !isPlaying || _adGuardPolling) { if (_adBreak && (!guard || !isPlaying)) _adBreakEnd(); return; }
+    _adGuardPolling = true;
+    try {
+      const r = await fetch('/api/radio-nowplaying?url=' + encodeURIComponent(st.url));
+      const d = await r.json();
+      if (currentStation !== st || !d || !d.ok) return;
+      if (ADGUARD_RE.test(d.title || '')) {
+        if (_adBreak) { clearTimeout(_adBreak.tailT); _adBreak.tailT = null; }
+        else _adBreakStart();
+      } else if (_adBreak && !_adBreak.tailT) {
+        _adBreak.tailT = setTimeout(_adBreakEnd, ADGUARD_TAIL_MS);
+      }
+    } catch (e) { /* stille: ingen vakt denne runden */ }
+    finally { _adGuardPolling = false; }
+  }
+  if (typeof document !== 'undefined') setInterval(_adGuardTick, ADGUARD_POLL_MS);
 
   // ── Electronic lock ───────────────────────────────────────────────────
   // The whole site is locked to electronic music, so the radio search is too.
