@@ -710,6 +710,7 @@ const Radio = (() => {
     { url: JINGLE_BASE + 'jingle-steps-echo.m4a', fade: LIVE_FADE_MS }, // «Jingle Steps Echo», lagt til 2026-09-27
     { url: JINGLE_BASE + 'jingle-sirius-beat.m4a', fade: LIVE_FADE_MS }, // «This is SiriusFM…» over beat, lagt til 2026-09-28
     { url: JINGLE_BASE + 'jingle-hale.m4a?v=20261101', fade: LIVE_FADE_MS }, // Hale (ElevenLabs, 3,5 s), lagt til 2026-11-01
+    { url: JINGLE_BASE + 'jingle-hale-2.m4a?v=20261101', fade: LIVE_FADE_MS }, // Hale nr. 2 (ElevenLabs), lagt til 2026-11-01
   ];
   // 2026-10-02: 12 DJ-/Arcturia Genetics-promoklipp (10–28 s, stemmer Roger/Jessica/Jack), løfta til RMS ≈ −18 dBFS
   // (originalane låg på −24) med toppgrense −1 dBFS. Flettast jamt inn mellom dei andre jinglane (ikkje etter kvarandre),
