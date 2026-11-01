@@ -9,7 +9,7 @@
 //   • Manuelt: POST /api/radio247-digest med header  x-cron-secret: <CRON_SECRET>
 //   • Tørrkøyring (sender ingenting, berre tel):  ?dry=1
 const { createClient } = require('@supabase/supabase-js');
-const { scheduleFor } = require('../js/radio247.js');
+const { scheduleForEmail: scheduleFor } = require('../js/radio247.js');
 
 const BATCH_SIZE  = 8;
 const BATCH_PAUSE = 1100;

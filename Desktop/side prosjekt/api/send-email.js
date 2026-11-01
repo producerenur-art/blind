@@ -9,7 +9,7 @@ const { SHOWS } = require('../js/shows.js');
 const { FESTIVALS } = require('../js/world.js');
 const SpecialShows = require('../js/specialShows.js');
 const ChlorophilLive = require('../js/chlorophilLive.js');
-const { scheduleFor: radio247ScheduleFor } = require('../js/radio247.js');
+const { scheduleForEmail: radio247ScheduleFor } = require('../js/radio247.js');
 
 // Kanonisk nettadresse for ALLE e-postlenker (aktivering, tilbakestilling, kjøp).
 // Brukes som standard slik at lenkene alltid peker til det offisielle domenet —

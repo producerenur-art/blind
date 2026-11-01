@@ -22,9 +22,9 @@ const Radio247 = (() => {
   // legg til ein ny id her viss du har stadfesta at HEILE kjeda (ikkje berre
   // sluttmålet) har CORS, eller at URL-en ikkje omdirigerer i det heile.
   const GOA_IDS         = ['dmtfm', 'psyndora', 'babaganousha', 'jointil-beattrance', 'record-goa-psy', 'goanight'];
-  // 01.11.2026: 'trancearound' og 'atr' (1.FM) tilbake i hjulet (brukarønske) — js/radio.js maskerer første ~32 s etter
-  // kvar tilkobling med våre klipp (_connectMaskStart), der 1.FM sin reklame (norsk, geo-retta) ligg.
-  const PROGRESSIVE_IDS = ['trancearound', 'atr', 'rr-progressive', 'record-trancemission', 'dfm-avb'];
+  // 01.11.2026: 'trancearound' og 'atr' (1.FM) UT IGJEN — ei stemme/reklame kom midt i programmet (kl ~18:34, ATR), utanfor
+  // tilkoblings-masken i js/radio.js (_connectMaskStart) og utan tittel-markør, så ho kan ikkje oppdagast.
+  const PROGRESSIVE_IDS = ['rr-progressive', 'record-trancemission', 'dfm-avb'];
   // 'alswin-ambient' fjerna 23.09.2026 — stadfesta CORS-blokkert i nettlesar
   // (ingen Access-Control-Allow-Origin frå server7.radio-streams.net), sjå
   // kommentaren ved stasjonen sitt tidlegare oppslag i js/radio.js STATIONS.
@@ -590,6 +590,25 @@ const Radio247 = (() => {
     refresh: () => { _rerenderHost(); try { if (typeof Radio !== 'undefined' && Radio.syncLiveHero) Radio.syncLiveHero(); } catch (_) {} },
     get schedule() { return _sched(); },
     scheduleFor: day => _sched(day),
+    // E-post-versjonen: same som hjulet faktisk speler, INKL. partnar-slottane (Babaganousha søn 07–10 / ons 03–06 overstyrer
+    // blokka) — utan stasjonsnamn (berre sjanger). Brukarkrav 2026-11-01: e-post-planen skal matche endringane.
+    scheduleForEmail: day => {
+      const d = day === undefined ? _osloWeekday() : day;
+      let rows = _sched(d).map(b => ({ ...b }));
+      for (const p of PARTNER_SLOTS.filter(x => x.day === d)) {
+        const out = [];
+        for (const b of rows) {
+          if (p.end <= b.start || p.start >= b.end) { out.push(b); continue; }
+          if (b.start < p.start) out.push({ ...b, end: p.start });
+          const seg = { start: Math.max(b.start, p.start), end: Math.min(b.end, p.end), genre: p.genre, label: 'Psytrance / Goa', stationIds: p.stationIds, partner: true };
+          const last = out[out.length - 1];
+          if (last && last.partner && last.end === seg.start) last.end = seg.end; else out.push(seg);
+          if (b.end > p.end) out.push({ ...b, start: p.end });
+        }
+        rows = out;
+      }
+      return rows;
+    },
     get week() { return WEEK; },
     // Eksponert for server-side gjenbruk (sjå module.exports under) — ikkje
     // meint for UI-kode, som allereie har currentBlock()/archiveHtml().
@@ -604,5 +623,5 @@ if (typeof document !== 'undefined') Radio247.init();
 // kan vise den ekte stasjonen bak kvar blokk — same reknestykke/namn som
 // arkiv-visninga på /radio, ikkje ein separat kopi av utrekninga.
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { get SCHEDULE() { return Radio247.schedule; }, scheduleFor: Radio247.scheduleFor, WEEK: Radio247.week, pickStationId: Radio247.pickStationId, stationName: Radio247.stationName };
+  module.exports = { get SCHEDULE() { return Radio247.schedule; }, scheduleFor: Radio247.scheduleFor, scheduleForEmail: Radio247.scheduleForEmail, WEEK: Radio247.week, pickStationId: Radio247.pickStationId, stationName: Radio247.stationName };
 }
