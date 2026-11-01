@@ -3200,7 +3200,6 @@ const Radio = (() => {
     { mode: 'video49', id: 'V8tchO267lU', emoji: '🌫️', label: 'Hallucinated Nebula', group: 'ai'       }, // AI Manifest
     { mode: 'video50', id: 'Kyb5C4KzH08', emoji: '📼', label: 'Vintage Future',      group: 'ai'       }, // Wakening Dreams
     { mode: 'video51', id: 'sAiLaFaYTxU', emoji: '🛸', label: 'Cosmic Dreamscape',   group: 'ai'       }, // Wakening Dreams
-    { mode: 'video52', id: 'VBwBg9g7Yog', emoji: '🏰', label: 'Quiet Gardens',       group: 'surreal'  }, // Surreal AI
     { mode: 'video53', id: 'Gqfx-yw9H0E', emoji: '🎭', label: 'Mistress of Nonsense', group: 'surreal' }, // Kelly Boesch AI Art
     // Brukarens lenkjebatch 08.10.2026 (alle målt innbyggbare + HD/4K, mute=1 uansett):
     { mode: 'video54', id: 'Em3HCTeTlQg', emoji: '🕳️', label: 'TON 618', group: 'space' }, // Cosmic Void
@@ -3227,7 +3226,6 @@ const Radio = (() => {
     { mode: 'video76', id: 'UYJIqBZENjU', emoji: '🐠', label: 'Sea Life Coaster', group: 'coaster' }, // HIKAWA RIDES
     { mode: 'video77', id: 'hU-UGvU8Y6I', emoji: '🌊', label: 'Ocean Coaster', group: 'coaster' }, // Tommy T\'s Extreme Roller Coasters
     { mode: 'video78', id: 'KTji1hOICEI', emoji: '🏔️', label: 'Expedition Everest', group: 'coaster' }, // CoasterForce
-    { mode: 'video79', id: 'hti152LSw90', emoji: '🎢', label: 'The Beast', group: 'coaster' }, // CoasterForce
     // Lenkjer 08.10.2026 (fortellar-/forklaringsvideoar, mute=1; alle HD/4K):
     { mode: 'video80', id: 'X7otJuJ_7Wk', emoji: '⭐', label: 'Sirius Star', group: 'space' }, // Explified Labs
     { mode: 'video81', id: 'ZTX64qW_LK0', emoji: '🧭', label: 'Polaris', group: 'space' }, // Astrum
