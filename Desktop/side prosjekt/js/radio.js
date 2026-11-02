@@ -294,7 +294,7 @@ const Radio = (() => {
       desc: 'Dark techno · hard techno · minimal',
     },
     // 2026-11-01: erstatning for dei to daude techno-stasjonane i 24/7-hjulet. Stadfesta: HTTPS, ingen omdirigering,
-    // CORS (ekko av opphavet), ICY-metadata, ren techno/minimal i 7-min-skanning. 24/7 har reklamevakt (_adGuardTick).
+    // CORS (ekko av opphavet), ICY-metadata, ren techno/minimal i 7-min-skanning.
     {
       id: 'record-minimal', cat: 'Techno Underground',
       name: 'Record Minimal',
@@ -726,13 +726,29 @@ const Radio = (() => {
     return out;
   })();
 
+  // Brukarkrav 2026-11-02: éin jingel kvar 1 time og 5 min (65 min, ca. 22 per døgn) — ikkje fleire. Slotane reknast frå
+  // UTC-epoken (same for alle lyttarar). Landar slotten nær timeskiftet (24/7 byter sjanger), reklameslottane :05/:20 eller
+  // synchronos-slotten :40, flyttast han til slutten av det skadelege vindauget så jinglar og reklamer aldri overlappar.
+  const JINGLE_INTERVAL_MS = 65 * 60 * 1000;
+  const JINGLE_AVOID_MIN = [[57, 60], [0, 10], [19, 22], [38, 43]];   // [frå, til) minutt i timen
+  function _jingleSlotTime(idx) {
+    let t = idx * JINGLE_INTERVAL_MS;
+    for (let k = 0; k < 4; k++) {
+      const m = new Date(t).getUTCMinutes() + new Date(t).getUTCSeconds() / 60;
+      const w = JINGLE_AVOID_MIN.find(([a, b]) => m >= a && m < b);
+      if (!w) break;
+      t += Math.ceil((w[1] - m) * 60000) + 30000;
+    }
+    return t;
+  }
   function _scheduleJingleSlots() {
     const now = Date.now();
-    const slotIdx = Math.floor((now - JINGLE_SLOT_OFFSET_MS) / JINGLE_SLOT_MS) + 1;
-    const nextAt = slotIdx * JINGLE_SLOT_MS + JINGLE_SLOT_OFFSET_MS;
-    _preloadAt(JINGLE_CYCLE[slotIdx % JINGLE_CYCLE.length].url, nextAt);
+    let slotIdx = Math.floor(now / JINGLE_INTERVAL_MS);
+    while (_jingleSlotTime(slotIdx) <= now + 500) slotIdx++;
+    const nextAt = _jingleSlotTime(slotIdx);
+    const j = JINGLE_CYCLE[slotIdx % JINGLE_CYCLE.length];
+    _preloadAt(j.url, nextAt);
     setTimeout(() => {
-      const j = JINGLE_CYCLE[slotIdx % JINGLE_CYCLE.length];
       if (!_liveTakeover) _playJingleOverMusic(j.url, j.fade);   // aldri under live/mix
       _scheduleJingleSlots();
     }, nextAt - now);
@@ -817,10 +833,10 @@ const Radio = (() => {
   // same reklameslottar (ingen eigne klokkeslett). Slot nr. n (talt frå UTC-epoken, tre per 7-timarsrunde)
   // spelar AD_POOL[n % lengda] — same klipp for alle lyttarar, aldri same klipp to gonger på rad.
   // 2026-11-01: løfta til RMS ≈ −18 dBFS (var −22, for lågt mot resten) → «-n.m4a», topp −1 dBFS.
-  const SIREN_ADS = Array.from({ length: 12 }, (_, i) => JINGLE_BASE + 'reklame-siren-' + String(i + 1).padStart(2, '0') + '-l16.m4a?v=20261102');
+  // 2026-11-02: ALLE Siren-reklameklippa er tatt ut (klipt feil, brukaren fiksar dei sjølv) — filene ligg att i assets/jingles.
   // 2026-11-01: 3 nye ElevenLabs-reklamar (Siren ~45 s ×2, David ~11 s) i same rotasjon; David nr. 2 speler 1 gong i veka (under).
-  const ELEVEN_ADS = ['siren-1', 'david-1', 'siren-2'].map(n => JINGLE_BASE + 'reklame-eleven-' + n + '-l16.m4a?v=20261102');
-  const AD_POOL = ADS.map(a => a.url).concat(SIREN_ADS, ELEVEN_ADS);
+  const ELEVEN_ADS = ['david-1'].map(n => JINGLE_BASE + 'reklame-eleven-' + n + '-l16.m4a?v=20261102');
+  const AD_POOL = ADS.map(a => a.url).concat(ELEVEN_ADS);
 
   // Brukarønske 2026-09-26: reklamar (og krisereklamen under) kuttar inn med 230 ms ut-/inn-toning.
   const AD_FADE_MS = 230;
@@ -894,72 +910,17 @@ const Radio = (() => {
   }
   if (typeof document !== 'undefined') _scheduleWeeklyAd();
 
-  // ── Reklamevakt for tredjeparts-stasjonar (brukarønske 2026-11-01) ───────────────────────
-  // Alle stasjonar i 24/7 Cycle (og stasjonar merka `adGuard: true`) blir polla via /api/radio-nowplaying (ICY-tittel,
-  // tenaren ligg få sekund FØR avspelinga). Ser tittelen ut som NORSK reklame (sjå ADGUARD_RE): tone stasjonen ut på 230 ms
-  // (strøymen blir ståande kopla til — ingen reconnect, difor ingen hakk), spel EIN kort Siren-reklame frå oss
-  // i eit eige element, la det vere stille til deira reklame er over, og tone stasjonen inn att på 230 ms.
-  // Brukarregel 2026-11-01: berre NORSKE reklamar skal byttast ut med våre klipp (stasjonar får gjerne reklamere for seg sjølve / andre ting på andre språk).
-  const ADGUARD_RE = /telenor|\.no\s+-\s|\breklame|annonse|\btilbud\b|kampanje|sponset av|norsk reklame/i;
-  const ADGUARD_POLL_MS = 6000;
-  const ADGUARD_TAIL_MS = 6000;       // tittelen leier avspelinga i nettlesaren med bufferet → vent før inntoning
-  const ADGUARD_MAX_MS = 150 * 1000;  // aldri lenger stille enn dette, same kva tittelen seier
-  let _adBreak = null, _adGuardN = 0, _adGuardPolling = false;
-  function _adBreakEnd() {
-    if (!_adBreak) return;
-    const b = _adBreak; _adBreak = null;
-    clearTimeout(b.maxT); clearTimeout(b.tailT);
-    try { if (b.clip) { b.clip.onended = null; b.clip.pause(); } } catch (e) {}
-    _jingleBusy = false;
-    const audio = getAudio();
-    if (audio && isPlaying && !_liveTakeover) _fadeVolume(audio, volume * (currentStation?.gain ?? 1), AD_FADE_MS);
-  }
-  function _adBreakStart() {
-    if (_adBreak || _jingleBusy || _liveTakeover || _special || _liveStatusPending() || !window._radioMode || !isPlaying || muted) return;
-    const audio = getAudio(); if (!audio || audio.paused) return;
-    _jingleBusy = true;
-    _adBreak = { clip: null, t0: Date.now(), maxT: setTimeout(_adBreakEnd, ADGUARD_MAX_MS), tailT: null };
-    // Aldri stille (brukarønske 2026-11-01): står deira reklame på etter at vårt klipp er ferdig, startar
-    // neste Siren-klipp rett etter — heilt til stasjonen er tilbake til musikk (eller maks-tida går ut).
-    const br = _adBreak;
-    const playNext = () => {
-      if (_adBreak !== br) return;
-      const url = SIREN_ADS[(_adGuardN++) % SIREN_ADS.length];
-      const clip = _preloaded.get(url) || new Audio(url);
-      _preloaded.delete(url);
-      clip.volume = Math.max(0, Math.min(1, volume));
-      _adBreak.clip = clip;
-      clip.addEventListener('ended', playNext, { once: true });
-      clip.addEventListener('error', playNext, { once: true });
-      try { const p = clip.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
-    };
-    _fadeVolume(audio, 0, AD_FADE_MS, playNext);
-  }
-  async function _adGuardTick() {
-    const st = currentStation;
-    const guard = !!(st && (st.adGuard || (typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive())));
-    if (!guard || !isPlaying || _adGuardPolling) { if (_adBreak && (!guard || !isPlaying)) _adBreakEnd(); return; }
-    _adGuardPolling = true;
-    try {
-      const r = await fetch('/api/radio-nowplaying?url=' + encodeURIComponent(st.url));
-      const d = await r.json();
-      if (currentStation !== st || !d || !d.ok) return;
-      if (ADGUARD_RE.test(d.title || '')) {
-        if (_adBreak) { clearTimeout(_adBreak.tailT); _adBreak.tailT = null; }
-        else _adBreakStart();
-      } else if (_adBreak && !_adBreak.tailT) {
-        _adBreak.tailT = setTimeout(_adBreakEnd, ADGUARD_TAIL_MS);
-      }
-    } catch (e) { /* stille: ingen vakt denne runden */ }
-    finally { _adGuardPolling = false; }
-  }
-  if (typeof document !== 'undefined') setInterval(_adGuardTick, ADGUARD_POLL_MS);
+  // Reklamevakten (bytte norsk reklame frå tredjeparts-stasjonar med eigne klipp) er FJERNA 2026-11-02 (brukarkrav).
+  // Stasjonar som sender norsk reklame blir tatt ut av hjulet i staden for — vi bytter aldri ut innhaldet deira.
+  let _adBreak = null;   // alltid null; behalden fordi stillhets-fyllet under sjekkar han
 
   // ── Aldri stille i 24/7 Cycle (brukarønske 2026-11-01) ─────────────────────────────────
   // Hakk, tregt nett, reconnect eller daud strøym kunne gi sekund (opptil 10 s før watchdog koplar til på nytt) med
   // stillheit. No: står avspelinga stille >1,8 s i 24/7 (currentTime tikkar ikkje), speler vi Siren-klipp i eit
   // eige element, ett etter anna, heilt til strøymen går att (då stoppar fyllet). Rører ikkje _jingleBusy, så
   // watchdog/reconnect/skipDeadStation køyrer som før.
+  // Fyll-klipp = korte stasjonsjinglar (Siren-reklamane er tatt ut 2026-11-02). Berre ved feil/stillstand.
+  const FILL_CLIPS = [JINGLES.a, JINGLES.d, JINGLES.c, JINGLE_BASE + 'jingle-sirius-sarah-l16.m4a?v=20261102'];
   const SILENCE_FILL_AFTER_MS = 1800;
   let _fill = null, _fillLastT = -1, _fillLastAt = 0, _fillN = 0, _fillLastSwitch = 0;
   // Trygg måte (lag 2): 4 Siren-klipp ligg ferdig i minnet som blob-URL-ar, så fyllet speler også når nettet
@@ -970,20 +931,20 @@ const Radio = (() => {
   function _loadFillBlobs() {
     if (_fillBlobs || _fillBlobsLoading || typeof fetch === 'undefined') return;
     _fillBlobsLoading = true;
-    Promise.all(SIREN_ADS.slice(0, 4).map(u => fetch(u).then(r => r.blob()).then(b => URL.createObjectURL(b)).catch(() => null)))
+    Promise.all(FILL_CLIPS.map(u => fetch(u).then(r => r.blob()).then(b => URL.createObjectURL(b)).catch(() => null)))
       .then(urls => { _fillBlobs = urls.filter(Boolean); if (!_fillBlobs.length) _fillBlobs = null; })
       .finally(() => { _fillBlobsLoading = false; });
   }
   function _silenceFillStop() {
     if (!_fill) return;
     const f = _fill; _fill = null;
-    try { if (f.clip) f.clip.pause(); } catch (e) {}
+    // 2026-11-02: klippet får spele ferdig (jinglar skal aldri klippast); _fill=null hindrar berre neste klipp.
   }
   function _silenceFillStart() {
     const br = _fill = { clip: null, t0: Date.now() };
     const playNext = () => {
       if (_fill !== br) return;
-      const url = _fillBlobs ? _fillBlobs[_fillN++ % _fillBlobs.length] : SIREN_ADS[(_fillN++ + 5) % SIREN_ADS.length];
+      const url = _fillBlobs ? _fillBlobs[_fillN++ % _fillBlobs.length] : FILL_CLIPS[(_fillN++ + 1) % FILL_CLIPS.length];
       const clip = new Audio(url);
       clip.volume = Math.max(0, Math.min(1, volume));
       br.clip = clip;
@@ -1028,30 +989,8 @@ const Radio = (() => {
     const audio = getAudio();
     if (audio && isPlaying && !_liveTakeover) _fadeVolume(audio, volume * (currentStation?.gain ?? 1), AD_FADE_MS);
   }
-  function _connectMaskStart(audio, url, info) {
-    try {
-      const r247 = typeof Radio247 !== 'undefined' && Radio247.isActive && Radio247.isActive();
-      if (!r247 || _liveTakeover || _special || _jingleBusy || muted || !/^https?:\/\/[a-z0-9-]*\.?1\.fm\//i.test(url)) return false;
-      const st = info && info.id;
-      _jingleBusy = true;
-      const m = _cmask = { clip: null, id: st };
-      const playNext = () => {
-        if (_cmask !== m) return;
-        const list = _fillBlobs && _fillBlobs.length ? _fillBlobs : SIREN_ADS;
-        const clip = new Audio(list[(_cmaskN++ + 3) % list.length]);
-        clip.volume = Math.max(0, Math.min(1, volume));
-        m.clip = clip;
-        clip.addEventListener('ended', playNext, { once: true });
-        clip.addEventListener('error', playNext, { once: true });
-        try { const p = clip.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
-      };
-      audio.volume = 0;
-      m.t = setTimeout(() => _connectMaskEnd(false), CONNECT_MASK_MS);
-      m.watch = setInterval(() => { if (!isPlaying || !currentStation || currentStation.id !== st) _connectMaskEnd(true); }, 1000);
-      playNext();
-      return true;
-    } catch (e) { _cmask = null; _jingleBusy = false; return false; }
-  }
+  // Tilkoblings-masken (Siren-klipp dei første 32 s av 1.FM) er FJERNA 2026-11-02 — ingen Siren-klipp.
+  function _connectMaskStart() { return false; }
 
   // ── Electronic lock ───────────────────────────────────────────────────
   // The whole site is locked to electronic music, so the radio search is too.

@@ -272,8 +272,7 @@ const Radio247 = (() => {
       _selfCall = true;
       try { Radio.playStation(sid); } finally { _selfCall = false; }
     };
-    if (opts.transition) _switchWithJingle(doSwitch, TRANSITION_FADE_MS);
-    else doSwitch();
+    doSwitch();   // 2026-11-02: ingen overgangsjingel ved planlagte bytte (kun 1 jingel per 65 min, sjå radio.js)
   }
 
   // Kalt frå Radio.playStation() (js/radio.js) kvar gong NOKON startar ein
