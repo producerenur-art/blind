@@ -3635,8 +3635,17 @@ const Radio = (() => {
       return Math.max(1920, Math.min(3840, Math.round(cw * dpr)));
     } catch (e) { return 1920; }
   }
-  function applyVisQuality(frame) {
+  function applyVisQuality(frame, force) {
+    if (!frame) return;
     const q = _visQuality();
+    // 2026-11-02: meldingsbehandlaren kalla denne for HVER infoDelivery (fleire gonger i sekundet) og sende setPlaybackQuality +
+    // play kvar gong — det kan halde spelaren i evig kvalitets-omstart (alle visuals stod på 360p). No: same tilstand sendast
+    // maks kvart 20. sekund; endra tilstand (nytt nivå, pause/spel) går alltid rett ut. ?vq=off i adressa = ingen kvalitetskommandoar (test).
+    const pauseNow = !!(_visStallLevel >= 2 || _liveLite || (_liveTakeover && IS_TOUCH_MOBILE));
+    const key = q + '|' + pauseNow, now = Date.now();
+    if (!force && frame._vqKey === key && now - (frame._vqAt || 0) < 20000) return;
+    frame._vqKey = key; frame._vqAt = now;
+    if (/[?&]vq=off/.test(location.search)) { postYtCommand(frame, pauseNow ? 'pauseVideo' : 'playVideo'); return; }
     postYtCommand(frame, 'setPlaybackQuality', [q]);
     // 2026-11-02: setPlaybackQuality er utfasa og blir ofte ignorert (Full viste 360p på 3734 px-ramme). Spelaren har
     // framleis setPlaybackQualityRange — gulvet 1080p/maks ønska nivå når vi vil ha HD, elles same nivå begge vegar.
@@ -3720,7 +3729,7 @@ const Radio = (() => {
     if (st === 0 && _visPlLen > 1 && _visPlIdx < _visPlLen - 1) return;   // meir att i lista → YouTube spelar neste sjølv
     if (st === 0 && (data.event === 'onStateChange' || data.event === 'infoDelivery')) { _visAdvanceOnEnd(); return; }
     if (data.event !== 'onReady' && data.event !== 'infoDelivery') return;
-    applyVisQuality(frame);
+    applyVisQuality(frame, data.event === 'onReady');
   });
   let _visPlIdx = -1, _visPlLen = 0;   // posisjon i YouTube-avspelingslista (nullstilles ved ny video)
   // Hvilken video-ID iframen viser nå (for å unngå unødig reload ved re-vis).
@@ -3826,7 +3835,7 @@ const Radio = (() => {
     if (visVideoLoaded !== id && _visSwapInPreloaded(id)) {
       // Førehandslasta (og ferdig oppvarma) iframe tok over — ingen kald start med 480p-oppstart.
       const nf = document.getElementById('radio-vis-video');
-      if (nf) { _visPlIdx = -1; _visPlLen = 0; visVideoLoaded = id; try { nf.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (_) {} [200, 1000].forEach(ms => setTimeout(() => applyVisQuality(nf), ms)); }
+      if (nf) { _visPlIdx = -1; _visPlLen = 0; visVideoLoaded = id; try { nf.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (_) {} [200, 1000].forEach(ms => setTimeout(() => applyVisQuality(nf, true), ms)); }
     } else if (visVideoLoaded !== id) {
       _visPlIdx = -1; _visPlLen = 0;
       frame.onload = () => { try { frame.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*'); } catch (_) {} };   // få onStateChange (ended)
@@ -3834,7 +3843,7 @@ const Radio = (() => {
       visVideoLoaded = id;
       // Reserve i tilfelle onReady-meldingen kommer før/uten at vi rekker å
       // koble lytteren — spilleren ignorerer kommandoer den ikke er klar for.
-      [500, 1200, 2500].forEach(ms => setTimeout(() => applyVisQuality(frame), ms));
+      [500, 1200, 2500].forEach(ms => setTimeout(() => applyVisQuality(frame, true), ms));
     }
     const frameNow = document.getElementById('radio-vis-video') || frame;
     frameNow.classList.add('active');
