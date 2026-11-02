@@ -1117,44 +1117,8 @@ const Discover = (() => {
   function renderLemonchillAd() {
     const show = (typeof SpecialShows !== 'undefined' && SpecialShows.SHOWS && SpecialShows.SHOWS[0]) || null;
     if (!show) return '';
-    const fmtDay = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long' });
-    const fmtClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit', hour12: false });
-    const lines = show.slots.map(iso => {
-      const st = new Date(iso), en = new Date(st.getTime() + Math.ceil(show.durationSec / 60) * 60000);
-      return `${fmtDay.format(st)} ${fmtClock.format(st)}–${fmtClock.format(en)} CEST`;
-    });
-    let site = ''; try { site = new URL(show.linkUrl).origin; } catch (_) {}
-    // Tracklisten skal IKKJE avslørast før HEILE serien er ferdig (brukarønske
-    // 29.09.2026) — «Listen to the mix»-knappen (mixOpen, sjå under) er skjult til 24.10 21:04 —
-    // (synleg alt etter FYRSTE sending), berre sjølve songnavn-lista ventar til
-    // siste slot + varigheit er passert, same tidspunkt som arkivposten i
-    // «What went live» blir synleg (sjå tools/publish-special-set.js).
-    const lastSlotEnd = Date.parse(show.slots[show.slots.length - 1]) + show.durationSec * 1000;
-    const allAired = Date.now() >= lastSlotEnd;
-    // Brukarønske 05.10.2026: «Listen to the mix» + Play skal IKKJE vere der (heller ingen
-    // «available after…»-tekst) før etter siste sending: 24.10 kl 21:04 CEST = 19:04Z.
-    const mixOpen = Date.now() >= Date.parse('2026-10-24T19:04:00Z');
-    const mins = Math.round(show.durationSec / 60);
-    const tracks = (show.tracklist || []).map(t => `<li>${_lcEsc(t)}</li>`).join('');
+    // Lemonchill-kortet fjerna frå Discover 01.11.2026 (brukarønske); showLemonchillAbout() ligg att.
     setTimeout(_loadWhatWentLive, 0);   // container #disc-wwl finst når innerHTML er sett
-    // Rekkjefølgje: Dark Drone-kortet over Lemonchill FØRST når Lemonchill sin siste sending er ferdig (24.10.2026 21:02 CEST);
-    // fram til då står Lemonchill øverst og Dark Drone rett under.
-    const lcCard = `
-        <div class="lc-ad" id="lc-ad">
-          <div class="lc-ad-tag">Live Broadcast / Podcast</div>
-          <h2 class="lc-ad-title">Welcome to — ${_lcEsc(show.artist)} on SiriusFM</h2>
-          <p class="lc-ad-on">Airing on the SiriusFM 24/7 Cycle</p>
-          <p class="lc-ad-lines">${lines.map(_lcEsc).join('<br>')}</p>
-          <p class="lc-ad-note">Norwegian time (CEST)</p>
-          <div class="lc-ad-actions">
-            ${mixOpen
-              ? `<button class="btn btn-primary lc-ad-play" onclick="Player.playExternal('${_lcEsc(show.audioUrl)}','${_lcEsc(show.title)}','${_lcEsc(show.artist)}')">▶ Listen to the mix · ${mins} min</button>`
-              : ''}
-            ${site ? `<a class="lc-ad-link" href="${_lcEsc(site)}" target="_blank" rel="noopener noreferrer">${_lcEsc(site.replace(/^https?:\/\//, ''))}</a>` : ''}
-            <button class="btn btn-ghost btn-sm" onclick="Discover.showLemonchillAbout()">About Lemonchill</button>
-          </div>
-          ${allAired && tracks ? `<details class="lc-ad-tracks"><summary>Tracklist</summary><ol>${tracks}</ol></details>` : ''}
-        </div>`;
     // Timeplan (brukarønske 25.10.2026): alle sendekort står i rekkjefølgje etter NESTE sending —
     // Chlorophil (direkte), Ambient Mann, Dim Day; Lemonchill (alle 4 spelt) til slutt.
     const _now = Date.now();
@@ -1165,7 +1129,6 @@ const Discover = (() => {
       // Chlorophil-kortet fjerna frå Discover 01.11.2026 (brukarønske; han gjekk ikkje live). renderChlorophilLive() ligg att ubrukt.
       { t: _next(_byId('ambientmann-dark-drone-001')), html: renderDarkDroneAd() },
       { t: _next(_byId('dimday-001')), html: renderDimDayAd() },
-      { t: _next(show), html: lcCard },
     ].sort((x, y) => x.t - y.t);
     return `
         ${cards.map(c => c.html).join('')}

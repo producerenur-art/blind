@@ -748,13 +748,14 @@ const Radio = (() => {
   // per dag, aldri same klipp to gonger på rad, òg ikkje over dagsskiftet). Slot ved :40 — ikkje :05
   // (reklame), :15 (jingel-sirkel), :20 (booking-reklame) eller timeskiftet i 24/7.
   const SYNC_JINGLES = [1, 2, 3, 4].map(n => JINGLE_BASE + 'synchronos-' + n + '-l16.m4a?v=20261102');
-  const SYNC_HOURS = [4, 8, 12, 16, 20];
+  const SYNC_HOURS = [12];   // 2026-11-02: 1 gong i veka (var 5 per døgn) — laurdag kl. 12:40 norsk tid
+  const SYNC_WEEKDAY = 'Sat';
   const SYNC_MINUTE_MS = 40 * 60 * 1000;
   function _osloParts(t) {
     try {
-      const f = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Oslo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' });
+      const f = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Oslo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23', weekday: 'short' });
       const o = {}; f.formatToParts(new Date(t)).forEach(p => { o[p.type] = p.value; });
-      return { day: o.year + o.month + o.day, hour: parseInt(o.hour, 10) % 24 };
+      return { day: o.year + o.month + o.day, hour: parseInt(o.hour, 10) % 24, weekday: o.weekday };
     } catch (e) { const d = new Date(t); return { day: d.toISOString().slice(0, 10).replace(/-/g, ''), hour: d.getHours() }; }
   }
   function _syncOrder(dayKey) {            // stokka rekkefølge av klippindeksar, same for alle for ein gitt dato
@@ -779,9 +780,10 @@ const Radio = (() => {
     const HOUR = 60 * 60 * 1000;
     let t = Math.floor(now / HOUR) * HOUR + SYNC_MINUTE_MS;   // :40 i inneverande time (UTC-timar = Oslo-timar + heiltalsforskyving)
     if (t <= now) t += HOUR;
-    for (let k = 0; k < 30; k++, t += HOUR) {
+    for (let k = 0; k < 24 * 8; k++, t += HOUR) {
       const p = _osloParts(t), idx = SYNC_HOURS.indexOf(p.hour);
-      if (idx >= 0) return { at: t, url: SYNC_JINGLES[_syncPick(p.day, idx, _osloParts(t - 24 * HOUR).day)] };
+      // Klippet rullerer veke for veke (same for alle lyttarar, aldri same klipp to veker på rad)
+      if (idx >= 0 && p.weekday === SYNC_WEEKDAY) return { at: t, url: SYNC_JINGLES[Math.floor(t / (7 * 24 * HOUR)) % SYNC_JINGLES.length] };
     }
     return null;
   }
