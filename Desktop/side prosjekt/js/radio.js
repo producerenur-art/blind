@@ -1986,9 +1986,10 @@ const Radio = (() => {
 
     if (!audio._sfxStallBound) {
       audio._sfxStallBound = true;
-      ['waiting', 'stalled'].forEach(ev => audio.addEventListener(ev, _noteAudioStall));
+      audio.addEventListener('waiting', _noteAudioStall);   // 2026-11-02: berre «waiting» (ekte buffer-tomt) — «stalled» kjem av og til på heilt sunne radiostraumar og heldt videoen på 360p
     }
     audio.src  = url;
+    _audioLoadAt = Date.now();
     audio.load();
     // Start lydlaust og ton inn når strøymen faktisk byrjar spele (sjå
     // onStarted under) — unngår at ein ny stasjon smell inn i full styrke
@@ -3602,7 +3603,7 @@ const Radio = (() => {
   // (nivå 1) eller pausar videoen heilt (nivå 2) så lenge lyden hakkar.
   let _visStallLevel = 0;
   function _visQuality() {
-    if (_visStallLevel >= 1) return 'medium';   // 2026-11-02: var 'tiny' (144p, ser grumsete ut); lyd-hakk gir 480p, nivå 2 pausar framleis
+    if (_visStallLevel >= 1) return 'large';   // 2026-11-02: var 'medium' (360p) og 'tiny' før det; lyd-hakk gir 480p, nivå 2 pausar framleis
     const c = (typeof navigator !== 'undefined' && navigator.connection) || {};
     if (c.saveData) return 'small';
     const t = c.effectiveType;
@@ -3642,14 +3643,15 @@ const Radio = (() => {
   }
   // Lyden hakkar (waiting/stalled): 2 hendingar på 30 s → lågaste videokvalitet; 4 → pause videoen.
   // Etter 3 min utan hakk går alt attende til normalt (sjekka frå _watchdogTick).
-  let _stallTimes = [], _lastStallAt = 0;
+  let _stallTimes = [], _lastStallAt = 0, _audioLoadAt = 0;
   function _noteAudioStall() {
     if (!window._radioMode || !isPlaying || _jingleBusy || _liveTakeover) return;
     const now = Date.now();
+    if (now - _audioLoadAt < 10000) return;   // oppstart/stasjonsbytte gir alltid «waiting» — ikkje hakking
     _stallTimes = _stallTimes.filter(t => now - t < 30000);
     _stallTimes.push(now);
     _lastStallAt = now;
-    const lvl = _stallTimes.length >= 4 ? 2 : _stallTimes.length >= 2 ? 1 : 0;
+    const lvl = _stallTimes.length >= 6 ? 2 : _stallTimes.length >= 3 ? 1 : 0;   // var 4/2 — to hendingar på 30 s heldt videoen på 360p nesten heile tida
     if (lvl > _visStallLevel) {
       _visStallLevel = lvl;
       applyVisQuality(document.getElementById('radio-vis-video'));
@@ -3692,7 +3694,7 @@ const Radio = (() => {
     if (!el || !_visQNow) return;
     const dpr = window.devicePixelRatio || 1;
     el.textContent = (_VQ_LABEL[_visQNow] || _visQNow) + (_visQMax ? ' · maks ' + (_VQ_LABEL[_visQMax] || _visQMax) : '') +
-      ' · ramme ' + Math.round(frame.getBoundingClientRect().width * dpr) + ' px';
+      ' · ramme ' + Math.round(frame.getBoundingClientRect().width * dpr) + ' px' + (_visStallLevel ? ' · hakkevern ' + _visStallLevel : '');
     el.hidden = false;
   }
   // Spilleren svarer med onReady/infoDelivery-meldinger når den faktisk er
