@@ -706,7 +706,7 @@ const Radio = (() => {
     { url: JINGLES.arcturians, fade: LIVE_FADE_MS },              // Arcturians-reklame
     { url: JINGLES.chat,       fade: LIVE_FADE_MS },              // live chat (Roger)
     { url: JINGLES.d,          fade: LIVE_FADE_MS },
-    { url: JINGLES.promo,      fade: LIVE_FADE_MS },              // «Welcome to SiriusFM»-presentasjon (~80s)
+    // «Welcome to SiriusFM»-presentasjon (~80s) FJERNA frå sirkelen 2026-11-02 (brukarkrav: lengste jingel ut)
     { url: JINGLES.c,          fade: LIVE_FADE_MS },              // «You don't need an account…»
     { url: JINGLE_BASE + 'jingle-sirius-sarah-l16.m4a?v=20261102', fade: LIVE_FADE_MS }, // Sarah-jingel (23 s), lagt til 2026-09-24
     { url: JINGLE_BASE + 'live-chat-2-l16.m4a?v=20261102', fade: LIVE_FADE_MS }, // live chat (Laura, ~53s)
