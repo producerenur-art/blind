@@ -436,6 +436,31 @@ const MAG_TABLE = 'magazine_cache';
 // SCHEDULE-blokkane (js/radio247.js) er i norsk lokaltid (Europe/Oslo) —
 // bygg dagens rekkefølge, roter til dagens starttidspunkt (dagen begynner
 // 00:00, blokkane ligg alt i stigande rekkefølge).
+// Planlagte spesialprogram (js/specialShows.js) som startar i dag (norsk tid) tar over genrehjulet i sitt tidsrom —
+// same som hjulet speler. Berre tid + tittel, runda opp til heile timar (e-posten viser heile timar).
+function radio247WithSpecials(SCHEDULE, nowMs) {
+  const osloParts = ms => {
+    const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date(ms)).map(x => [x.type, x.value]));
+    return { day: p.year + '-' + p.month + '-' + p.day, h: (+p.hour % 24) + (+p.minute) / 60 };
+  };
+  const today = osloParts(nowMs).day;
+  let rows = SCHEDULE.map(b => ({ ...b }));
+  for (const show of SpecialShows.SHOWS) for (const slot of show.slots) {
+    const st = osloParts(new Date(slot).getTime());
+    if (st.day !== today) continue;
+    const start = Math.floor(st.h), end = Math.min(24, Math.ceil(st.h + show.durationSec / 3600));
+    const out = [];
+    for (const b of rows) {
+      if (end <= b.start || start >= b.end) { out.push(b); continue; }
+      if (b.start < start) out.push({ ...b, end: start });
+      out.push({ start: Math.max(b.start, start), end: Math.min(b.end, end), label: show.artist + ' — live mix' });
+      if (b.end > end) out.push({ ...b, start: end });
+    }
+    rows = out;
+  }
+  return rows;
+}
+
 function radio247Rows(SCHEDULE) {
   const fmt = h => String(Math.floor(h) % 24).padStart(2, '0') + ':00';
   // Brukarønske 2026-11-01: ingen stasjonsnamn i 24/7-e-postane — berre klokkeslett + sjanger.
@@ -1202,7 +1227,7 @@ module.exports = async (req, res) => {
     }
     subject = "🌘 Today's 24-Hour Cycle schedule — SiriusFM";
     const unsubUrl = req.body?.unsubscribeUrl || `${siteUrl}/api/radio247-unsubscribe?email=${encodeURIComponent(toEmail)}`;
-    html = radio247Html(toName, siteUrl, unsubUrl, radio247ScheduleFor());
+    html = radio247Html(toName, siteUrl, unsubUrl, radio247WithSpecials(radio247ScheduleFor(), Date.now()));
   } else if (type === 'live_started') {
     // Øyeblikkelig "vi er live no"-varsel — api/live-start-notify.js. Same
     // avmeldingsregel som resten av nyhetsbrevet.

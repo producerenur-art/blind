@@ -3631,7 +3631,11 @@ const Radio = (() => {
     } catch (e) { return 1920; }
   }
   function applyVisQuality(frame) {
-    postYtCommand(frame, 'setPlaybackQuality', [_visQuality()]);
+    const q = _visQuality();
+    postYtCommand(frame, 'setPlaybackQuality', [q]);
+    // 2026-11-02: setPlaybackQuality er utfasa og blir ofte ignorert (Full viste 360p på 3734 px-ramme). Spelaren har
+    // framleis setPlaybackQualityRange — gulvet 1080p/maks ønska nivå når vi vil ha HD, elles same nivå begge vegar.
+    postYtCommand(frame, 'setPlaybackQualityRange', [/^hd(1080|1440|2160)$/.test(q) ? 'hd1080' : q, q]);
     // Mobil under direktesending: pause bakgrunnsvideoen (YouTube-dekoding + animasjon tek CPU frå lyden).
     const pauseForLive = _liveLite || (_liveTakeover && IS_TOUCH_MOBILE);
     postYtCommand(frame, (_visStallLevel >= 2 || pauseForLive) ? 'pauseVideo' : 'playVideo');
@@ -3659,6 +3663,18 @@ const Radio = (() => {
       sizeVisVideo();
     }
   }
+  // Held kvaliteten oppe (2026-11-02): YouTube startar ofte på 360p og blir ståande. Står målt kvalitet under ønska
+  // nivå (og lyden ikkje hakkar) spør vi på nytt kvart 8. sekund — stoppar av seg sjølv når nivået er nådd.
+  const _VQ_RANK = ['tiny', 'small', 'medium', 'large', 'hd720', 'hd1080', 'hd1440', 'hd2160', 'highres'];
+  setInterval(() => {
+    try {
+      if (document.hidden || _visStallLevel !== 0 || !_visQNow) return;
+      const frame = document.getElementById('radio-vis-video');
+      if (!frame || !frame.classList.contains('active')) return;
+      const want = _VQ_RANK.indexOf(_visQuality()), cap = _visQMax ? _VQ_RANK.indexOf(_visQMax) : want;
+      if (_VQ_RANK.indexOf(_visQNow) < Math.min(want, cap)) applyVisQuality(frame);
+    } catch (e) { /* best-effort */ }
+  }, 8000);
   if (typeof navigator !== 'undefined' && navigator.connection && navigator.connection.addEventListener) {
     navigator.connection.addEventListener('change', () => applyVisQuality(document.getElementById('radio-vis-video')));
   }
