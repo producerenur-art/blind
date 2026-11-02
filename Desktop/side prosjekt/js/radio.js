@@ -3632,7 +3632,8 @@ const Radio = (() => {
       const ov = parseInt((location.search.match(/[?&]vtw=(\d{3,4})/) || location.hash.match(/[?&]vtw=(\d{3,4})/) || [])[1], 10);
       if (ov >= 640 && ov <= 3840) return ov;
       const cw = wrap ? wrap.clientWidth : 1400, dpr = Math.min(2, window.devicePixelRatio || 1);
-      return Math.max(1920, Math.min(3840, Math.round(cw * dpr)));
+      // 2026-11-02: tak 1920 (var 3840) — 4K-dekoding i 3361 px-ramme fekk YouTube til å nedgradere til 360p. ?vtw=3840 gir gammal oppførsel.
+      return Math.max(1920, Math.min(1920, Math.round(cw * dpr)));
     } catch (e) { return 1920; }
   }
   function applyVisQuality(frame, force) {
