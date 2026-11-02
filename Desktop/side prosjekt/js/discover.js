@@ -1135,12 +1135,19 @@ const Discover = (() => {
         <div id="disc-wwl"></div>`;
   }
 
+  // Sendekort (Ambient Mann / Dim Day) vises KUN på sjølve sendedagen (norsk dato) — frå midnatt til showet er ferdig.
+  // Resten av tida er Discover utan kort og 24/7 er vanleg (brukarkrav 2026-11-02).
+  function _showIsToday(show) {
+    const day = ms => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Oslo' }).format(new Date(ms));
+    const now = Date.now(), today = day(now);
+    return show.slots.some(iso => day(Date.parse(iso)) === today && now < Date.parse(iso) + show.durationSec * 1000);
+  }
+
   // ── Dim Day (astrodim78, resident) — 4 laurdagar frå 31.10.2026 (brukarønske 24.10.2026) ──
   function renderDimDayAd() {
     const show = (typeof SpecialShows !== 'undefined' && SpecialShows.byId) ? SpecialShows.byId('dimday-001') : null;
     if (!show) return '';
-    const lastEnd = Date.parse(show.slots[show.slots.length - 1]) + show.durationSec * 1000;
-    if (Date.now() >= lastEnd) return '';
+    if (!_showIsToday(show)) return '';
     const fmtDay = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long' });
     const fmtClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit', hour12: false });
     const fmtTz = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', timeZoneName: 'short' });
@@ -1171,8 +1178,7 @@ const Discover = (() => {
   function renderDarkDroneAd() {
     const show = (typeof SpecialShows !== 'undefined' && SpecialShows.byId) ? SpecialShows.byId('ambientmann-dark-drone-001') : null;
     if (!show) return '';
-    const lastEnd = Date.parse(show.slots[show.slots.length - 1]) + show.durationSec * 1000;
-    if (Date.now() >= lastEnd) return '';
+    if (!_showIsToday(show)) return '';
     const fmtDay = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long' });
     const fmtClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit', hour12: false });
     const fmtTz = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Oslo', timeZoneName: 'short' });
