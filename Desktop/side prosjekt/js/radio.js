@@ -3229,6 +3229,40 @@ const Radio = (() => {
     { mode: 'video114', id: 'wVMLN3WEJiw', emoji: '🇳🇴', label: 'Flying Over Norway', group: 'nature' }, // Flying over Norway 4K
     { mode: 'video115', id: 'vhHpb0iVfeU', emoji: '🕊️', label: 'Israel Nature', group: 'nature' }, // Israel 4K drone nature film
     { mode: 'video116', id: 'AQM-jqHBrM8', emoji: '⛰️', label: 'The Fjords', group: 'nature' }, // The Fjords 4K drone
+    // 2026-11-02: 33 nye 4K-visuals (målt hd2160+, embeddbare, lydlause — mute=1 som alle klassikarar).
+    { mode: 'video117', id: 'XGqU9xYSUBI', emoji: '🫧', label: 'Neon Lava Lamp', group: 'flow' },
+    { mode: 'video118', id: '4WQTqOR55vk', emoji: '🌀', label: 'Gradient Tunnel', group: 'flow' },
+    { mode: 'video119', id: 'hKckckhpbYY', emoji: '⚡', label: 'Electric Space', group: 'space' },
+    { mode: 'video120', id: 'JwU7bxQwSHo', emoji: '🎨', label: 'Liquid Splash', group: 'flow' },
+    { mode: 'video121', id: 'mpxRmRs7CaI', emoji: '🔷', label: 'Neon Quantum', group: 'flow' },
+    { mode: 'video122', id: 'dF4aLbGNGnc', emoji: '⭐', label: 'Neon Star', group: 'flow' },
+    { mode: 'video123', id: 'N4f8P7GQWp0', emoji: '🔶', label: 'Neon Hexa', group: 'flow' },
+    { mode: 'video124', id: 'j_K8muAFpE0', emoji: '🕳️', label: 'Neon Orbital Cave', group: 'flow' },
+    { mode: 'video125', id: 'jgm58cbu0kw', emoji: '💧', label: 'Liquid Abstract', group: 'flow' },
+    { mode: 'video126', id: 'nHO2wDwac0A', emoji: '🌸', label: 'Flower Animation', group: 'flow' },
+    { mode: 'video127', id: 'cYfRdqQ4lvQ', emoji: '🌊', label: 'Blue Cosmic Waves', group: 'space' },
+    { mode: 'video128', id: '9N7bhFycatU', emoji: '🎢', label: 'Cyberpunk Sunset Coaster', group: 'coaster' },
+    { mode: 'video129', id: '2AtAB-HTKQU', emoji: '🌀', label: 'Fractal Coast', group: 'fractal' },
+    { mode: 'video130', id: 'A6u9qw-kbHE', emoji: '🔮', label: 'Fractal 60fps', group: 'fractal' },
+    { mode: 'video131', id: 'Lt-erdcwMMo', emoji: '👁️', label: 'Trippy Visuals', group: 'psy' },
+    { mode: 'video132', id: 'XebI3THByOY', emoji: '🧑‍🚀', label: 'Astronaut Deep Space', group: 'space' },
+    { mode: 'video133', id: 'eFzElF_tHAM', emoji: '🌌', label: 'Astronaut Portal', group: 'space' },
+    { mode: 'video134', id: 'znNllvBt_Jg', emoji: '🛸', label: 'Floating In Space', group: 'space' },
+    { mode: 'video135', id: 'tPC29fWBGek', emoji: '🌠', label: 'Galaxies Timelapse', group: 'space' },
+    { mode: 'video136', id: 'vGY5sLdyajk', emoji: '✨', label: 'Starlight Chile', group: 'space' },
+    { mode: 'video137', id: 'S81GsynBCZw', emoji: '🌟', label: 'Starlight Namibia', group: 'space' },
+    { mode: 'video138', id: 'V6TqGLBY4hI', emoji: '🌃', label: 'Nox Atacama', group: 'space' },
+    { mode: 'video139', id: 'AnCf2J0V4js', emoji: '🪐', label: 'Cosmic Ambient', group: 'space' },
+    { mode: 'video140', id: 'taJr7qZGHPI', emoji: '🌌', label: 'Aurora 4K', group: 'nature' },
+    { mode: 'video141', id: '8V1ZatIkh1Y', emoji: '🏔️', label: 'Senja', group: 'nature' },
+    { mode: 'video142', id: 'NZA0DtQr0HU', emoji: '🏜️', label: 'Sedona', group: 'nature' },
+    { mode: 'video143', id: 'oQDdX6_WLw4', emoji: '🌴', label: 'Golden Oasis', group: 'nature' },
+    { mode: 'video144', id: 'uD0ww8E0Za8', emoji: '🐪', label: 'Sahara', group: 'nature' },
+    { mode: 'video145', id: 'sOtz5UKIzrs', emoji: '🍂', label: 'Autumn Forest', group: 'nature' },
+    { mode: 'video146', id: 's5PBGx_Yhaw', emoji: '🍁', label: 'Aspen Autumn', group: 'nature' },
+    { mode: 'video147', id: 'Lldja7JJVHE', emoji: '🦇', label: 'Vampire Castle', group: 'darkdrone' },
+    { mode: 'video148', id: 'POcrpdNYIH8', emoji: '🌧️', label: 'Nova Prime Rain', group: 'darkdrone' },
+    { mode: 'video149', id: 'ACdxsbGVeNE', emoji: '🏙️', label: 'Golden Future', group: 'darkdrone' },
   ];
   const VIS_VIDEOS = {};
   VIS_CLASSICS.forEach(v => { VIS_VIDEOS[v.mode] = v.id; });
