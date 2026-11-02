@@ -1477,6 +1477,8 @@ const Radio = (() => {
           <div class="radio-visualizer-wrap" id="radio-vis-wrap">
             <!-- Avslutt fullskjerm — vises kun i full-modus (via CSS) -->
             <button class="vis-exit-full" id="vis-exit-full" onclick="Radio.exitVisFull()" title="Exit fullscreen (Esc)">⤢ Exit fullscreen</button>
+            <!-- Måling (2026-11-02): kvaliteten YouTube faktisk leverer akkurat no -->
+            <div class="vis-q-badge" id="vis-q-badge" hidden></div>
             <canvas id="radio-fractal"></canvas>
             <canvas id="radio-canvas"></canvas>
             <!-- Video-visualisering: lydløs, loopet 4K-kosmos fra YouTube.
@@ -3143,10 +3145,10 @@ const Radio = (() => {
   //   b) noen faste plasser i den roterende raden, så gamle favoritter som
   //      Mandala, Alex Grey og Portal aldri forsvinner helt.
   // `group` gjør at et roterende utsnitt alltid får en sjanger-miks.
+  // 2026-11-02: Ocean Coaster (maks 1080p, uklar i Full) og Magic Acid (maks 1080p, uklar) fjerna. Målt: 70 av 100 klassikarar har 4K — dei 28 andre som var maks 1080p/1440p er òg fjerna (brukarkrav: berre 4K).
   const VIS_CLASSICS = [
     { mode: 'video',   id: 'dfj1EmDLrto', emoji: '🎥', label: '4K Cosmos',    group: 'space'   }, // Deep Space Ambient — 4K HDR
     { mode: 'video3',  id: 'hOgVAYpHPCc', emoji: '🌊', label: 'Flow',         group: 'flow'    }, // Abstract Liquid — 4K UHD
-    { mode: 'video4',  id: 'iDiUP7CFqh8', emoji: '🎆', label: 'Aurora',       group: 'surreal' },
     { mode: 'video5',  id: 'MPfYkRVAdGo', emoji: '🔮', label: 'Prism',        group: 'psy'     },
     { mode: 'video6',  id: '82D2IzOcmO0', emoji: '🪼', label: 'Jellyfish',    group: 'flow'    }, // maneter i 4K UHD
     { mode: 'video7',  id: 'S5vIFoBC-30', emoji: '🌄', label: 'Surreal',      group: 'surreal' },
@@ -3155,25 +3157,17 @@ const Radio = (() => {
     { mode: 'video10', id: '5p2YlnHHmUU', emoji: '🟣', label: 'Neon tunnel',  group: 'flow'    }, // 8K VJ-loop
     { mode: 'video11', id: 'UoVYRqFdCdY', emoji: '👁️', label: 'Cosmic eye',   group: 'psy'     },
     { mode: 'video12', id: 'PfXd4pUWgOE', emoji: '🎨', label: 'AI art',       group: 'ai'      },
-    { mode: 'video13', id: 'R3T3Z2BJYlc', emoji: '🍄', label: 'Psydub',       group: 'psy'     },
     { mode: 'video14', id: 'QsxVa1Z8Fz4', emoji: '🌈', label: 'Psychedelia',  group: 'psy'     },
     { mode: 'video15', id: '_HC6WIN4ssU', emoji: '🦋', label: 'Butterfly',    group: 'kaleido' },
     { mode: 'video16', id: 'XtfcYUE2Rj4', emoji: '🔷', label: 'Mandala',      group: 'kaleido' },
     { mode: 'video17', id: 'uWTZNYhF2uU', emoji: '🧬', label: 'Alex Grey',    group: 'psy'     },
-    { mode: 'video18', id: 'vOEEVlxugqk', emoji: '🏯', label: 'Tang',         group: 'ai'      }, // deforum-animasjon
     { mode: 'video19', id: 'CPu8pZPClww', emoji: '🌀', label: 'Portal',       group: 'kaleido' },
     { mode: 'video20', id: 'HtOUVYG9lw8', emoji: '🌌', label: 'Visual 20',    group: 'fractal' },
-    { mode: 'video21', id: 'RZu_n0osOEo', emoji: '✨', label: 'Visual 21',    group: 'psy'     },
     { mode: 'video22', id: 'HPtmuJRrAao', emoji: '💫', label: 'Visual 22',    group: 'fractal' },
     // Tidligere «AI-fersk»-reservepool — også verifiserte, lydløse looper.
     { mode: 'video23', id: 'Mol7VhZQn6s', emoji: '🌀', label: 'Psytrance',    group: 'psy'     },
-    { mode: 'video24', id: '7F3YaKFaC8A', emoji: '🌈', label: 'Trance vis',   group: 'psy'     },
-    { mode: 'video25', id: '-rocTj5Zr9I', emoji: '🍄', label: 'Trippy',       group: 'psy'     },
-    { mode: 'video26', id: 'QsSIBvcKEk4', emoji: '🔮', label: 'Fractal',      group: 'fractal' },
     { mode: 'video27', id: 'bbTgNS7_BVc', emoji: '👁️', label: 'Third eye',    group: 'psy'     },
     { mode: 'video28', id: 'xGsDRoDwYDw', emoji: '✨', label: 'Deforum',      group: 'ai'      },
-    { mode: 'video29', id: 'lKygub953UQ', emoji: '🌌', label: 'Cosmos',       group: 'space'   },
-    { mode: 'video30', id: 'IsnIhcE9HOs', emoji: '💫', label: 'Kaleidoscope', group: 'kaleido' },
     // Steampunk-serien (brukarønske 13.09.2026): heile spelelista «Steampunk Fantasy
     // Cities | Cinematic Clockwork Worlds in 4K» (Fantasy Realms), lagt inn i vanleg
     // rotasjon på lik linje med resten av klassikarane — IKKJE ein sjeldan spesial.
@@ -3191,53 +3185,32 @@ const Radio = (() => {
     { mode: 'video49', id: 'V8tchO267lU', emoji: '🌫️', label: 'Hallucinated Nebula', group: 'ai'       }, // AI Manifest
     { mode: 'video50', id: 'Kyb5C4KzH08', emoji: '📼', label: 'Vintage Future',      group: 'ai'       }, // Wakening Dreams
     { mode: 'video51', id: 'sAiLaFaYTxU', emoji: '🛸', label: 'Cosmic Dreamscape',   group: 'ai'       }, // Wakening Dreams
-    { mode: 'video53', id: 'Gqfx-yw9H0E', emoji: '🎭', label: 'Mistress of Nonsense', group: 'surreal' }, // Kelly Boesch AI Art
     // Brukarens lenkjebatch 08.10.2026 (alle målt innbyggbare + HD/4K, mute=1 uansett):
-    { mode: 'video54', id: 'Em3HCTeTlQg', emoji: '🕳️', label: 'TON 618', group: 'space' }, // Cosmic Void
-    { mode: 'video55', id: 'QOOkS0E9whU', emoji: '🌌', label: 'Universe Mysteries', group: 'space' }, // Science Channel
-    { mode: 'video56', id: '43z-9I_wgFY', emoji: '⚛️', label: 'Quantum Realm', group: 'space' }, // The Sleepy Scientist
     { mode: 'video57', id: 'DTGFWd2WKdg', emoji: '📜', label: 'Book of Enoch', group: 'darkdrone' }, // Deep Dive History
     { mode: 'video58', id: 'QxzU3FBy57k', emoji: '♾️', label: 'Multiverse Travel', group: 'fractal' }, // Relaxation Time
     { mode: 'video59', id: 'Ax1bbSlOBSU', emoji: '🍄', label: 'Ayahuasca Visions', group: 'ai' }, // AI Manifest
     { mode: 'video60', id: 'GhT4iFp-KpA', emoji: '🌀', label: 'Antithesis', group: 'psy' }, // Trippy Everything
-    { mode: 'video61', id: 'uNNk-V08J7k', emoji: '🍄', label: 'Magic Mushrooms', group: 'psy' }, // Speedsound
-    { mode: 'video62', id: 'HLem8E2dx6o', emoji: '🍄', label: 'Mushroom Trippy', group: 'psy' }, // Speedsound
-    { mode: 'video63', id: 'J0YZQNgkf9Y', emoji: '🔱', label: 'Andromeda LSD', group: 'psy' }, // Speedsound
     { mode: 'video64', id: 'WDU1UXiUZhs', emoji: '🎞️', label: 'Human Made Visuals', group: 'psy' }, // AllSeen
     { mode: 'video65', id: 'JKe0gryiCCw', emoji: '🚀', label: 'Interdimensional', group: 'fractal' }, // Trippy Everything
     { mode: 'video66', id: 'GzcTxjDo670', emoji: '🌀', label: 'Flying Portals', group: 'psy' }, // Psychedelic Tales
-    { mode: 'video67', id: '3BxiYkCPZwI', emoji: '🍄', label: 'Shroom Trip POV', group: 'psy' }, // Loka
     { mode: 'video68', id: '_7RLZAWxZCQ', emoji: '💎', label: 'Raytraced Supermix', group: 'psy' }, // UON Visuals
     { mode: 'video69', id: 'R2PiVXjanws', emoji: '🔮', label: 'Deep Exploration', group: 'fractal' }, // Trippy Everything
-    { mode: 'video71', id: 'DkcrmzHhsy4', emoji: '🎢', label: 'Flight of Fantasy', group: 'coaster' }, // Tommy T\'s Extreme Roller Coasters
     { mode: 'video72', id: 'W9as7QP8GkM', emoji: '🌆', label: 'Cyberpunk Coaster', group: 'coaster' }, // Neon 4K
     { mode: 'video74', id: 'oAJLKDMihnU', emoji: '🎢', label: 'Twister Coaster', group: 'coaster' }, // Theme Park Review
-    { mode: 'video75', id: 'yUGwvwG9fFk', emoji: '🎢', label: 'Raiders Coaster', group: 'coaster' }, // Tommy T\'s Extreme Roller Coasters
     { mode: 'video76', id: 'UYJIqBZENjU', emoji: '🐠', label: 'Sea Life Coaster', group: 'coaster' }, // HIKAWA RIDES
-    { mode: 'video77', id: 'hU-UGvU8Y6I', emoji: '🌊', label: 'Ocean Coaster', group: 'coaster' }, // Tommy T\'s Extreme Roller Coasters
     { mode: 'video78', id: 'KTji1hOICEI', emoji: '🏔️', label: 'Expedition Everest', group: 'coaster' }, // CoasterForce
     // Lenkjer 08.10.2026 (fortellar-/forklaringsvideoar, mute=1; alle HD/4K):
     { mode: 'video80', id: 'X7otJuJ_7Wk', emoji: '⭐', label: 'Sirius Star', group: 'space' }, // Explified Labs
     { mode: 'video81', id: 'ZTX64qW_LK0', emoji: '🧭', label: 'Polaris', group: 'space' }, // Astrum
     { mode: 'video82', id: 'vw4vQUVXb_8', emoji: '🌀', label: 'Gravity Explained', group: 'space' }, // Astrum Extra
-    { mode: 'video83', id: '9qZZJTYEE2k', emoji: '⚛️', label: 'Inside the Proton', group: 'space' }, // Cosmic Atoms
-    { mode: 'video84', id: 'fzHCtZGq7xM', emoji: '💥', label: 'Higgs Boson', group: 'space' }, // Cosmic Atoms
     // Brukarens lenkjebatch 08.10.2026 (psykedelisk, alle ≥1080p og målt innbyggbare; mute=1):
-    { mode: 'video85', id: 'y0ZzjPG_OHA', emoji: '🪩', label: 'Magic Acid', group: 'psy' }, // Chill Space
-    { mode: 'video86', id: '0hgha1Kgz4A', emoji: '🍄', label: 'Imaginarium', group: 'psy' }, // Trancentral
     { mode: 'video87', id: '6XGzJQKbV40', emoji: '📐', label: 'Sacred Geometry', group: 'fractal' }, // Trippy Everything
     { mode: 'video88', id: '-SfIrsJFHJE', emoji: '🌲', label: 'Forest Shroom High', group: 'psy' }, // AllSeen
-    { mode: 'video89', id: 'bxaX7Y_l5-M', emoji: '🌿', label: 'Psilocybin Nature', group: 'surreal' }, // Ocean Psychedelics
-    { mode: 'video90', id: '4a89rc-AulU', emoji: '🌙', label: 'Moonlight Purpose', group: 'psy' }, // Getafix Visuals
     { mode: 'video91', id: 'ZeFfg3_xqhQ', emoji: '🍄', label: 'Shroom Simulation', group: 'psy' }, // DMT Enlightenment
     { mode: 'video92', id: '1bgZT9OE8OQ', emoji: '🍄', label: 'Shroom Visuals 4K', group: 'psy' }, // DMT Enlightenment
     { mode: 'video93', id: '8MOZvVoKhh8', emoji: '🎞️', label: 'Hypnotic Visuals', group: 'psy' }, // AllSeen
     { mode: 'video94', id: 'MGwWHMDhh7M', emoji: '🧪', label: 'Experimental Shroom', group: 'psy' }, // DMT Enlightenment
-    { mode: 'video95', id: 'G1yK79qUcWk', emoji: '🍄', label: 'Trip Level 5', group: 'psy' }, // Victor Oliveira
     { mode: 'video96', id: 'nOhCNC_lhiA', emoji: '🏠', label: 'Indoor Shroom', group: 'psy' }, // DMT Enlightenment
-    { mode: 'video97', id: 'exbfXyJJj4o', emoji: '✨', label: 'Magical Mushroom', group: 'psy' }, // Psychedelic Zen
-    { mode: 'video98', id: '8CpA-h_lXcs', emoji: '🍄', label: 'Shroom Trip', group: 'psy' }, // DMT Enlightenment
-    { mode: 'video99', id: 'eV7FXMkMIVQ', emoji: '⚡', label: 'Shock Therapy', group: 'psy' }, // Trancentral
     { mode: 'video100', id: 'OcHPQqfuC84', emoji: '🧊', label: 'Iceland Aerial', group: 'nature' }, // Iceland aerial (DJI)
     { mode: 'video101', id: 'CxwJrzEdw1U', emoji: '🏔️', label: 'Norway 4K', group: 'nature' }, // Norway scenic film
     { mode: 'video102', id: '6KL2QZ91kAM', emoji: '🌍', label: 'Around The World', group: 'nature' }, // Around the World 4K
@@ -3654,6 +3627,23 @@ const Radio = (() => {
   if (typeof navigator !== 'undefined' && navigator.connection && navigator.connection.addEventListener) {
     navigator.connection.addEventListener('change', () => applyVisQuality(document.getElementById('radio-vis-video')));
   }
+  // Kvalitetsmåling (2026-11-02): viser kva YouTube faktisk spelar av (playbackQuality), høgste kvalitet videoen har
+  // (availableQualityLevels) og iframen sin pikselbreidd. Synleg i Stor/Full. Hugsar siste verdiar per video.
+  const _VQ_LABEL = { tiny: '144p', small: '240p', medium: '360p', large: '480p', hd720: '720p', hd1080: '1080p', hd1440: '1440p', hd2160: '2160p (4K)', highres: '4K+' };
+  let _visQNow = null, _visQMax = null, _visQId = null;
+  function _visQualityBadge(frame, data) {
+    const i = data && data.info;
+    if (!i || typeof i !== 'object') return;
+    if (_visQId !== visVideoLoaded) { _visQId = visVideoLoaded; _visQNow = null; _visQMax = null; }
+    if (i.playbackQuality) _visQNow = i.playbackQuality;
+    if (Array.isArray(i.availableQualityLevels) && i.availableQualityLevels.length) _visQMax = i.availableQualityLevels[0];
+    const el = document.getElementById('vis-q-badge');
+    if (!el || !_visQNow) return;
+    const dpr = window.devicePixelRatio || 1;
+    el.textContent = (_VQ_LABEL[_visQNow] || _visQNow) + (_visQMax ? ' · maks ' + (_VQ_LABEL[_visQMax] || _visQMax) : '') +
+      ' · ramme ' + Math.round(frame.getBoundingClientRect().width * dpr) + ' px';
+    el.hidden = false;
+  }
   // Spilleren svarer med onReady/infoDelivery-meldinger når den faktisk er
   // klar til å ta imot kommandoer — da ber vi om høy kvalitet med en gang.
   window.addEventListener('message', (e) => {
@@ -3663,6 +3653,7 @@ const Radio = (() => {
     if (!data) return;
     const frame = document.getElementById('radio-vis-video');
     if (!frame || frame.contentWindow !== e.source) return;
+    _visQualityBadge(frame, data);
     // Videoen/lista er ferdig (playerState 0 = ended) → neste visual i timens liste (ingen loop).
     if (data.info && typeof data.info === 'object') {           // avspelingsliste: hugs posisjon/lengd (ended kjem etter KVART klipp)
       if (typeof data.info.playlistIndex === 'number') _visPlIdx = data.info.playlistIndex;
@@ -3823,6 +3814,7 @@ const Radio = (() => {
     });
   }
   function hideVisVideo() {
+    { const qb = document.getElementById('vis-q-badge'); if (qb) qb.hidden = true; _visQNow = null; }
     document.getElementById('vis-vol')?.classList.add('vis-vol-gone');
     _visDuckSet(false);
     _visDropPreloaded();
@@ -4125,10 +4117,31 @@ const Radio = (() => {
     wrap.classList.remove('vis-size-small', 'vis-size-medium', 'vis-size-large', 'vis-size-full');
     wrap.classList.add('vis-size-' + visSize);
     // Esc avslutter fullskjerm + auto-skjul av kontroller (kun i full-modus)
-    if (visSize === 'full') { document.addEventListener('keydown', _visEsc); startVisAutoHide(); }
-    else                    { document.removeEventListener('keydown', _visEsc); stopVisAutoHide(); }
+    if (visSize === 'full') { document.addEventListener('keydown', _visEsc); startVisAutoHide(); _visEnterBrowserFs(); }
+    else                    { document.removeEventListener('keydown', _visEsc); stopVisAutoHide(); _visLeaveBrowserFs(); }
     resizeCanvas();
   }
+
+  // Ekte nettleser-fullskjerm (2026-11-02): «Full» var berre eit overlegg i fanen, så YouTube fekk ikkje heile skjermen.
+  // requestFullscreen krev eit brukarklikk — ved sidelasting med lagra «full» feilar han stille og overlegget står att.
+  // Esc i fullskjerm blir teke av nettlesaren (ingen keydown), difor fullscreenchange → tilbake til «Middels».
+  let _visBrowserFs = false;
+  function _visEnterBrowserFs() {
+    try {
+      const el = document.documentElement;
+      if (document.fullscreenElement || !el.requestFullscreen) return;
+      const p = el.requestFullscreen();
+      if (p && p.then) p.then(() => { _visBrowserFs = true; }).catch(() => {});
+    } catch (e) { /* stille */ }
+  }
+  function _visLeaveBrowserFs() {
+    _visBrowserFs = false;
+    try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); } catch (e) { /* stille */ }
+  }
+  if (typeof document !== 'undefined') document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && _visBrowserFs && visSize === 'full') { _visBrowserFs = false; exitVisFull(); return; }
+    [60, 400].forEach(ms => setTimeout(resizeCanvas, ms));   // ny skjermstorleik → bygg video-iframen om (sizeVisVideo)
+  });
 
   function _visEsc(e) {
     if (e.key === 'Escape') exitVisFull();
