@@ -3580,7 +3580,7 @@ const Radio = (() => {
       const list = WEEKLY_SPECIAL_IDS.slice(r).concat(WEEKLY_SPECIAL_IDS.slice(0, r));
       first = list[0]; rest = list.slice(1).join(',');
     }
-    return `https://www.youtube-nocookie.com/embed/${first}`
+    return `https://${/[?&]vhost=nocookie/.test(location.search) ? 'www.youtube-nocookie.com' : 'www.youtube.com'}/embed/${first}`
       + `?autoplay=1&mute=1${rest ? '&playlist=' + rest : ''}${startAt ? '&start=' + startAt : ''}`
       + (sset && sset.captions ? '&cc_load_policy=1&cc_lang_pref=en&hl=en' : '')
       + `&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3`
