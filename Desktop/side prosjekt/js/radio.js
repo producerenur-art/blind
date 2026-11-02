@@ -3627,6 +3627,10 @@ const Radio = (() => {
   function _visTargetW() {
     try {
       const wrap = document.getElementById('radio-vis-wrap');
+      // Test-bryter (2026-11-02): ?vtw=1920 / 2560 / 3840 i adressa tvingar iframe-breidda, så ein kan samanlikne kva YouTube
+      // vel (sjå merket øvst til venstre i Full) utan ny deploy per prøving. Utan parameter: som før.
+      const ov = parseInt((location.search.match(/[?&]vtw=(\d{3,4})/) || location.hash.match(/[?&]vtw=(\d{3,4})/) || [])[1], 10);
+      if (ov >= 640 && ov <= 3840) return ov;
       const cw = wrap ? wrap.clientWidth : 1400, dpr = Math.min(2, window.devicePixelRatio || 1);
       return Math.max(1920, Math.min(3840, Math.round(cw * dpr)));
     } catch (e) { return 1920; }
@@ -3694,7 +3698,7 @@ const Radio = (() => {
     if (!el || !_visQNow) return;
     const dpr = window.devicePixelRatio || 1;
     el.textContent = (_VQ_LABEL[_visQNow] || _visQNow) + (_visQMax ? ' · maks ' + (_VQ_LABEL[_visQMax] || _visQMax) : '') +
-      ' · ramme ' + Math.round(frame.getBoundingClientRect().width * dpr) + ' px' + (_visStallLevel ? ' · hakkevern ' + _visStallLevel : '');
+      ' · ramme ' + Math.round(frame.getBoundingClientRect().width * dpr) + ' px (iframe ' + frame.clientWidth + ')' + (_visStallLevel ? ' · hakkevern ' + _visStallLevel : '');
     el.hidden = false;
   }
   // Spilleren svarer med onReady/infoDelivery-meldinger når den faktisk er
