@@ -397,7 +397,8 @@ const Radio = (() => {
   // WebGL-visualiseringer (selv-animerende, lydfrie — kjører på tid alene)
   let fxCanvas = null, fxGl = null, fxFrame = null, fxBuf = null;
   let fxClock = 0, fxLastTs = 0, fxProgs = {}; // fxProgs[mode] = {prog, uni}
-  let visSize = localStorage.getItem('pv_vis_size') || 'medium'; // 'small'|'medium'|'large'|'full'
+  // 2026-11-02: siden startar ALDRI i «full» (ekte fullskjerm krev klikk) — lagra «full» blir «medium» ved sidelasting.
+  let visSize = (() => { const v = localStorage.getItem('pv_vis_size'); return !v || v === 'full' ? 'medium' : v; })(); // 'small'|'medium'|'large'|'full'
   // Egen farge (felles for ALLE modusene): null = regnbue/auto, ellers en fast hue 0..359.
   let visHue = localStorage.getItem('pv_vis_hue');
   visHue = (visHue === null || visHue === '') ? null : (parseInt(visHue, 10) || 0);
@@ -4224,7 +4225,14 @@ const Radio = (() => {
     const wrap = document.getElementById('radio-vis-wrap');
     if (!wrap) return;
     let saved; try { saved = JSON.parse(localStorage.getItem('pv_vis_free') || 'null'); } catch { saved = null; }
-    if (!saved || !saved.w || !saved.h) return;
+    if (!saved || !saved.w || !saved.h) {
+      // Standardutsjånad (brukarbilete 2026-11-02): visualizeren fyller heile innhaldskolonna, ca. 2,6:1 (≈540 px høg på ein 1400 px brei kolonne).
+      // Gjeld berre dei som ikkje har valt Small/Large eller dratt ei eiga storleik.
+      if (visSize !== 'medium') return;
+      const cw = wrap.parentElement?.clientWidth || 0;
+      if (cw < 700) return;
+      saved = { w: cw, h: Math.max(300, Math.min(640, Math.round(cw * 0.39))) };
+    }
     const maxW = (wrap.parentElement?.clientWidth || saved.w);
     wrap.classList.add('vis-size-free');
     wrap.style.width  = Math.max(VIS_MIN_W, Math.min(saved.w, maxW)) + 'px';
