@@ -443,8 +443,7 @@ const Radio = (() => {
     // brukaren merka at «jingelen som gjekk» var lav samanlikna med resten.
     // Bytt til komprimert+forsterka -boosted.m4a-versjon (RMS no -17,4 dBFS,
     // peak trygt under -0,8 dBFS, ORIGINAL .mp3 urørt/behalden som backup).
-    promo: JINGLE_BASE + 'jingle-promo-boosted-l16.m4a?v=20261102',
-    arcturians: JINGLE_BASE + 'jingle-arcturians-boosted-l16.m4a?v=20261102' }; // brukarønske 2026-09-23: «Arcturians står bak SiriusFM»-reklame // brukarønske 2026-09-23: «Welcome to SiriusFM»-presentasjon (Roger-stemme)
+    promo: JINGLE_BASE + 'jingle-promo-boosted-l16.m4a?v=20261102' };   // «SIGNAL FROM THE STARS» (jingle-arcturians-boosted) SLETTA 2026-11-04 på brukarkrav
   // Namn → fil for live-annonsen (B). Ukjende/nye presentatørnamn fell tilbake
   // på "generic" heilt til nokon lagar ei dedikert fil for dei (sjå CLAUDE.md-
   // notat i js/livemix.js om korleis nye stemmer legges til). Ambient Mann/The
@@ -554,7 +553,12 @@ const Radio = (() => {
   // standard FADE_MS, spesifikt for desse to overgangane.
   const LIVE_FADE_MS = 320;
   let _fadeTimer = null;
+  // 2026-11-04 (jingel-krasj med for høg lyd): medan ei jingel speler OVER musikken er musikken dempa til dette taket.
+  // Alle andre volumskriv (reconnect/stasjonsbytte sin inntoning til fullt volum, setVolume, vaktpost) blir klemt
+  // til taket, ellers hoppa musikken til full styrke oppå jingelen (dobbel lyd). null = ingen jingel aktiv.
+  let _jingleDuckCap = null;
   function _fadeVolume(audio, to, ms, onDone) {
+    if (_jingleDuckCap !== null && to > _jingleDuckCap) to = _jingleDuckCap;
     if (_fadeTimer) { clearInterval(_fadeTimer); _fadeTimer = null; }
     // Skjult fane/låst skjerm: nettlesaren struper setInterval, så ei fade kunne stått fast på lågt
     // volum (stille) i minutt. Sett verdien rett fram i staden (ingen høyrer overgangen likevel).
@@ -674,8 +678,16 @@ const Radio = (() => {
     _preloaded.delete(url);
     j.volume = Math.max(0, Math.min(1, volume));
     let done = false;
+    const duckTo = volume * (currentStation?.gain ?? 1) * (typeof duckLevel === 'number' ? duckLevel : JINGLE_DUCK);
+    _jingleDuckCap = duckTo + 0.01;
+    const capGuard = setInterval(() => {
+      if (done) return;
+      if (audio.volume > _jingleDuckCap) audio.volume = duckTo;   // nokon (reconnect/setVolume) løfta musikken under jingelen
+    }, 100);
     const restore = () => {
       if (done) return; done = true;
+      clearInterval(capGuard);
+      _jingleDuckCap = null;
       _jingleBusy = false;
       if (_liveTakeover || !isPlaying) return;
       _fadeVolume(audio, volume * (currentStation?.gain ?? 1), ms);   // tilbake til brukaren sitt volum
@@ -683,10 +695,23 @@ const Radio = (() => {
     j.addEventListener('ended', restore);
     j.addEventListener('error', restore);
     j.addEventListener('loadedmetadata', () => { setTimeout(restore, (j.duration || 60) * 1000 + 3000); }, { once: true });
-    _fadeVolume(audio, audio.volume * (typeof duckLevel === 'number' ? duckLevel : JINGLE_DUCK), ms, () => {
+    _fadeVolume(audio, duckTo, ms, () => {
       const p = j.play();
       if (p && p.catch) p.catch(restore);
     });
+  }
+
+  // 2026-11-04: klokkestyrte klipp (jingel-sirkel, synchronos, BigFreq/FeedFreq/Ambient Mann/Sirius-reklame) vart før
+  // stille DROPPA viss ei anna jingel/reklame/overgang var i gang eller første live-status venta ved sendetid — då blei
+  // dei aldri høyrt. No prøver vi på nytt kvar 3. s i opptil 60 s. Gir opp ved live/mix/pause/mute (då skal dei ikkje spele).
+  function _playJingleWithRetry(url, fadeMs, duckLevel, waitedMs) {
+    waitedMs = waitedMs || 0;
+    if (_liveTakeover || _special || !window._radioMode || !isPlaying || muted) return;
+    if (_jingleBusy || _liveStatusPending()) {
+      if (waitedMs < 60000) setTimeout(() => _playJingleWithRetry(url, fadeMs, duckLevel, waitedMs + 3000), 3000);
+      return;
+    }
+    _playJingleOverMusic(url, fadeMs, duckLevel);
   }
 
   // ── Jingel-rotasjon på FASTE klokkeslett (brukarønske 2026-09-24, frekvens
@@ -703,7 +728,6 @@ const Radio = (() => {
   const JINGLE_SLOT_OFFSET_MS = 15 * 60 * 1000;   // slot ved :15 kvar time
   const JINGLE_BASE_CYCLE = [
     { url: JINGLES.a,          fade: LIVE_FADE_MS },              // «You're listening to SiriusFM… Subscribe»
-    { url: JINGLES.arcturians, fade: LIVE_FADE_MS },              // Arcturians-reklame
     { url: JINGLES.chat,       fade: LIVE_FADE_MS },              // live chat (Roger)
     { url: JINGLES.d,          fade: LIVE_FADE_MS },
     // «Welcome to SiriusFM»-presentasjon (~80s) FJERNA frå sirkelen 2026-11-02 (brukarkrav: lengste jingel ut)
@@ -714,12 +738,13 @@ const Radio = (() => {
     { url: JINGLE_BASE + 'jingle-sirius-beat-l16.m4a?v=20261102', fade: LIVE_FADE_MS }, // «This is SiriusFM…» over beat, lagt til 2026-09-28
     { url: JINGLE_BASE + 'jingle-hale-l16.m4a?v=20261102', fade: LIVE_FADE_MS }, // Hale (ElevenLabs, 3,5 s), lagt til 2026-11-01
     { url: JINGLE_BASE + 'jingle-hale-2-l16.m4a?v=20261102', fade: LIVE_FADE_MS }, // Hale nr. 2 (ElevenLabs), lagt til 2026-11-01
+    { url: JINGLE_BASE + 'jingle-signal-from-the-stars-l16.m4a?v=20261104', fade: LIVE_FADE_MS }, // «SIGNAL FROM THE STARS» (18,8 s), ny fil frå Expansion 2026-11-04, normalisert −16 LUFS
+    { url: JINGLE_BASE + 'reklame-eleven-siren-3-l16.m4a?v=20261104', fade: LIVE_FADE_MS }, // ElevenLabs Siren 20:31:09 (9,4 s), lagt til 2026-11-04 (éi fil, ikkje dobbelt)
   ];
   // 2026-10-02: 12 DJ-/Arcturia Genetics-promoklipp (10–28 s, stemmer Roger/Jessica/Jack), løfta til RMS ≈ −18 dBFS
   // (originalane låg på −24) med toppgrense −1 dBFS. Flettast jamt inn mellom dei andre jinglane (ikkje etter kvarandre),
   // så éin jingel-slot ved :15 kvar time tek neste i den samanvevde rekka.
-  const PROMO_CLIPS = ['roger-a1', 'jessica-c1', 'jack-1', 'roger-b1', 'jessica-a1', 'jessica-c3',
-    'roger-a2', 'jack-2', 'jessica-c2', 'roger-b2', 'jessica-a2', 'jessica-c4']
+  const PROMO_CLIPS = ['jack-1', 'jack-2']   // Roger/Jessica-promoklippa SLETTA 2026-11-04 på brukarkrav (Jack behaldt)
     .map(n => ({ url: JINGLE_BASE + 'promo-' + n + '-l16.m4a?v=20261102', fade: LIVE_FADE_MS }));
   const JINGLE_CYCLE = (() => {
     const out = [], n = Math.max(JINGLE_BASE_CYCLE.length, PROMO_CLIPS.length);
@@ -730,10 +755,11 @@ const Radio = (() => {
   // Brukarkrav 2026-11-02: éin jingel kvar 1 time og 5 min (65 min, ca. 22 per døgn) — ikkje fleire. Slotane reknast frå
   // UTC-epoken (same for alle lyttarar). Landar slotten nær timeskiftet (24/7 byter sjanger), reklameslottane :05/:20 eller
   // synchronos-slotten :40, flyttast han til slutten av det skadelege vindauget så jinglar og reklamer aldri overlappar.
-  const JINGLE_INTERVAL_MS = 65 * 60 * 1000;
+  const JINGLE_INTERVAL_MS = 90 * 60 * 1000;   // 2026-11-03: 65 → 90 min (1 t 30 min)
+  const JINGLE_GRID_OFFSET_MS = 15 * 60 * 1000;   // rutenettet ligg på :15/:45 — utanfor alle AVOID-vindauge, så ingen flytting
   const JINGLE_AVOID_MIN = [[57, 60], [0, 10], [19, 22], [38, 43]];   // [frå, til) minutt i timen
   function _jingleSlotTime(idx) {
-    let t = idx * JINGLE_INTERVAL_MS;
+    let t = idx * JINGLE_INTERVAL_MS + JINGLE_GRID_OFFSET_MS;
     for (let k = 0; k < 4; k++) {
       const m = new Date(t).getUTCMinutes() + new Date(t).getUTCSeconds() / 60;
       const w = JINGLE_AVOID_MIN.find(([a, b]) => m >= a && m < b);
@@ -744,13 +770,13 @@ const Radio = (() => {
   }
   function _scheduleJingleSlots() {
     const now = Date.now();
-    let slotIdx = Math.floor(now / JINGLE_INTERVAL_MS);
+    let slotIdx = Math.floor((now - JINGLE_GRID_OFFSET_MS) / JINGLE_INTERVAL_MS);
     while (_jingleSlotTime(slotIdx) <= now + 500) slotIdx++;
     const nextAt = _jingleSlotTime(slotIdx);
     const j = JINGLE_CYCLE[slotIdx % JINGLE_CYCLE.length];
     _preloadAt(j.url, nextAt);
     setTimeout(() => {
-      if (!_liveTakeover) _playJingleOverMusic(j.url, j.fade);   // aldri under live/mix
+      if (!_liveTakeover) _playJingleWithRetry(j.url, j.fade);   // aldri under live/mix
       _scheduleJingleSlots();
     }, nextAt - now);
   }
@@ -809,11 +835,56 @@ const Radio = (() => {
     if (!slot) return;
     _preloadAt(slot.url, slot.at);
     setTimeout(() => {
-      if (!_liveTakeover) _playJingleOverMusic(slot.url, LIVE_FADE_MS);   // aldri under live/mix
+      if (!_liveTakeover) _playJingleWithRetry(slot.url, LIVE_FADE_MS);   // aldri under live/mix
       _scheduleSyncJingle();
     }, Math.max(1000, slot.at - now));
   }
   if (typeof document !== 'undefined') _scheduleSyncJingle();
+
+  // ── BigFreq-reklamar (brukarønske 2026-11-04): «big freq 1» BERRE mandagar, «big freq 2» BERRE fredagar, kl. 14:30 norsk
+  // tid (~5:46 kvar, speler over dempa musikk som reklamane elles; :30 ligg utanfor alle jingel-/reklame-/synchronos-slottar).
+  // Ligg ikkje i JINGLE_CYCLE. Aldri under live/mix (same vakt som dei andre).
+  // + FeedFreq-reklamar (2026-11-04): «feed freq com 2» BERRE søndag og onsdag, «feed freq com 1» BERRE tysdag og fredag, kl. 18:30 norsk tid
+  // (fredag har òg BigFreq 14:30, difor eige klokkeslett).
+  const BIGFREQ_SLOTS = [
+    { wd: 'Mon', hour: 14, url: JINGLE_BASE + 'bigfreq-1-l16.m4a?v=20261104' },
+    { wd: 'Fri', hour: 14, url: JINGLE_BASE + 'bigfreq-2-l16.m4a?v=20261104' },
+    { wd: 'Sun', hour: 18, url: JINGLE_BASE + 'feedfreq-2-l16.m4a?v=20261104' },
+    { wd: 'Wed', hour: 18, url: JINGLE_BASE + 'feedfreq-2-l16.m4a?v=20261104' },
+    { wd: 'Tue', hour: 18, url: JINGLE_BASE + 'feedfreq-1-l16.m4a?v=20261104' },
+    { wd: 'Fri', hour: 18, url: JINGLE_BASE + 'feedfreq-1-l16.m4a?v=20261104' },
+    // «ambient mann com 2» (2026-11-04): BERRE tysdag og torsdag, 16:30 norsk tid
+    { wd: 'Tue', hour: 16, url: JINGLE_BASE + 'ambientmann-com-2-l16.m4a?v=20261104' },
+    { wd: 'Thu', hour: 16, url: JINGLE_BASE + 'ambientmann-com-2-l16.m4a?v=20261104' },
+    // «ambient mann com 1» (2026-11-04): BERRE tysdag og laurdag, 10:30 norsk tid
+    { wd: 'Tue', hour: 10, url: JINGLE_BASE + 'ambientmann-com-1-l16.m4a?v=20261104' },
+    { wd: 'Sat', hour: 10, url: JINGLE_BASE + 'ambientmann-com-1-l16.m4a?v=20261104' },
+    // «sirius fm reklame» (2026-11-04): BERRE mandag, torsdag og laurdag, 20:30 norsk tid
+    { wd: 'Mon', hour: 20, url: JINGLE_BASE + 'sirius-reklame-3d-l16.m4a?v=20261104' },
+    { wd: 'Thu', hour: 20, url: JINGLE_BASE + 'sirius-reklame-3d-l16.m4a?v=20261104' },
+    { wd: 'Sat', hour: 20, url: JINGLE_BASE + 'sirius-reklame-3d-l16.m4a?v=20261104' },
+  ];
+  function _nextBigFreq(now) {
+    const HOUR = 60 * 60 * 1000;
+    let t = Math.floor(now / HOUR) * HOUR + 30 * 60 * 1000;
+    if (t <= now) t += HOUR;
+    for (let k = 0; k < 24 * 8; k++, t += HOUR) {
+      const p = _osloParts(t);
+      const hit = BIGFREQ_SLOTS.find(x => x.wd === p.weekday && x.hour === p.hour);
+      if (hit) return { at: t, url: hit.url };
+    }
+    return null;
+  }
+  function _scheduleBigFreq() {
+    const now = Date.now(), slot = _nextBigFreq(now);
+    if (!slot) return;
+    _preloadAt(slot.url, slot.at);
+    setTimeout(() => {
+      if (!_liveTakeover) _playJingleWithRetry(slot.url, AD_FADE_MS, AD_DUCK);
+      _scheduleBigFreq();
+    }, Math.max(1000, slot.at - now));
+  }
+  if (typeof document !== 'undefined') _scheduleBigFreq();
 
   // ── Reklamer ALENE, kvar 7. time kvar (brukarønske 2026-09-24) ─────────────────────
   // ~1,5–4 min reklame som speler HELT åleine (ikkje oppå musikk): det som spelar tonast ut
@@ -826,7 +897,7 @@ const Radio = (() => {
   const AD_SLOT_OFFSET_MS = 5 * 60 * 1000;
   const HOUR_MS = 60 * 60 * 1000;
   const ADS = [
-    { url: JINGLE_BASE + 'arcturians-ad-l16.m4a?v=20261102',   shiftMs: 0 },            // Arcturians (3:41)
+    // «history egypt»/Arcturians-reklamen (3:41, lengste) SLETTA 2026-11-04 på brukarkrav
     { url: JINGLE_BASE + 'reklame-sirius-l16.m4a?v=20261102',  shiftMs: 2 * HOUR_MS },  // «reklame sirius» (2:37)
     { url: JINGLE_BASE + 'reklame-2-sirius-v2-l16.m4a?v=20261102', shiftMs: 4 * HOUR_MS }, // «reklame 2 sirius» v2, Facebook-linja klipt bort 27.09 (1:16)
   ];
@@ -2122,7 +2193,7 @@ const Radio = (() => {
     volume = v;
     if (!muted) {
       const audio = getAudio();
-      if (audio) audio.volume = v;
+      if (audio) audio.volume = (_jingleDuckCap !== null && v > _jingleDuckCap) ? _jingleDuckCap : v;
       try { if (_liveDuckNodes && _liveDuckNodes.vol) _liveDuckNodes.vol.gain.value = v; } catch (e) {}
     }
     const volBar = document.getElementById('volume-bar');
