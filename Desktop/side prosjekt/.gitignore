@@ -5,3 +5,4 @@ node_modules
 # Sikkerhet: aldri commit løse API-nøkkel-filer
 sk-ant-*
 *api03*
+.DS_Store
